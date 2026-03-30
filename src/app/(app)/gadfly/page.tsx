@@ -10,7 +10,12 @@ export const metadata = {
   title: 'Gadfly — The Republic',
 }
 
-export default async function GadflyPage() {
+interface GadflyPageProps {
+  searchParams: Promise<{ documentId?: string; title?: string }>
+}
+
+export default async function GadflyPage({ searchParams }: GadflyPageProps) {
+  const { documentId: initialDocumentId, title: initialTitle } = await searchParams
   const headersList = await headers()
   const userId = headersList.get('x-user-id')!
 
@@ -56,7 +61,10 @@ export default async function GadflyPage() {
           </div>
         </div>
 
-        <NewSessionDialog />
+        <NewSessionDialog
+          initialDocumentId={initialDocumentId}
+          initialTitle={initialTitle ? decodeURIComponent(initialTitle) : undefined}
+        />
       </div>
 
       {/* Session list */}

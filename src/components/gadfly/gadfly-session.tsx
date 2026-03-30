@@ -2,10 +2,11 @@
 
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
-import { MessageCircleQuestion } from 'lucide-react'
+import { MessageCircleQuestion, FileText } from 'lucide-react'
 import { ChatThread } from './chat-thread'
 import { ChatInput } from './chat-input'
 import { SessionStats } from './session-stats'
+import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 
 interface Turn {
   id: string
@@ -25,6 +26,7 @@ interface InsightMarker {
 interface Session {
   id: string
   title: string
+  documentId: string | null
   mode: 'socratic' | 'direct'
   status: 'active' | 'completed' | 'abandoned'
   questionCount: number
@@ -136,6 +138,16 @@ export function GadflySession({
 
   const isActive = session.status === 'active'
 
+  // Build lever URL with session context
+  const leverUrl = (() => {
+    const params = new URLSearchParams({ sessionId: session.id })
+    if (session.documentId) params.set('documentId', session.documentId)
+    return `/lever?${params.toString()}`
+  })()
+
+  // Show "Take action" once citizen has engaged meaningfully (3+ turns)
+  const showTakeAction = turns.length >= 3
+
   return (
     <div className="flex h-full flex-col">
       {/* Top bar */}
@@ -191,7 +203,7 @@ export function GadflySession({
           />
 
           {/* Input */}
-          <div className="flex-shrink-0 border-t border-white/[0.06] p-4">
+          <div className="flex-shrink-0 border-t border-white/[0.06] p-4 space-y-3">
             {isActive ? (
               <ChatInput
                 value={inputValue}
@@ -203,6 +215,20 @@ export function GadflySession({
               <div className="rounded-xl border border-white/[0.06] bg-black/40 px-4 py-3 text-center text-xs text-neutral-500">
                 This inquiry is {session.status}. Start a new inquiry to continue.
               </div>
+            )}
+
+            {/* Cross-arm: Take action (visible after 3+ turns) */}
+            {showTakeAction && (
+              <CrossArmActions
+                actions={[
+                  {
+                    label: 'Take action',
+                    href: leverUrl,
+                    color: '#C85B5B',
+                    icon: FileText,
+                  },
+                ]}
+              />
             )}
           </div>
         </div>

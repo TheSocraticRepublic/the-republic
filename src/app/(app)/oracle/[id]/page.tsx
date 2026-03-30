@@ -3,8 +3,9 @@ import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { documents, analyses } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
-import { Eye, FileText, AlertTriangle } from 'lucide-react'
+import { Eye, FileText, AlertTriangle, MessageCircleQuestion, GitCompare } from 'lucide-react'
 import { OracleAnalysisPanel } from '@/components/oracle/oracle-analysis-panel'
+import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 
 export const metadata = {
   title: 'Oracle — The Republic',
@@ -115,11 +116,36 @@ export default async function OracleDocumentPage({ params }: PageProps) {
 
       {/* Analysis panel — handles ready state with streaming + saved analysis */}
       {doc.status === 'ready' && (
-        <OracleAnalysisPanel
-          documentId={doc.id}
-          savedAnalysis={savedAnalysis?.summary ?? null}
-          hasSavedAnalysis={!!savedAnalysis}
-        />
+        <>
+          <OracleAnalysisPanel
+            documentId={doc.id}
+            savedAnalysis={savedAnalysis?.summary ?? null}
+            hasSavedAnalysis={!!savedAnalysis}
+          />
+
+          {/* Cross-arm navigation */}
+          <div className="mt-6 border-t border-white/[0.06] pt-6">
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-neutral-600">
+              Continue your inquiry
+            </p>
+            <CrossArmActions
+              actions={[
+                {
+                  label: 'Ask about this',
+                  href: `/gadfly?documentId=${doc.id}&title=${encodeURIComponent(doc.title)}`,
+                  color: '#C8A84B',
+                  icon: MessageCircleQuestion,
+                },
+                {
+                  label: 'Compare with other jurisdictions',
+                  href: `/mirror?documentId=${doc.id}`,
+                  color: '#5BC88A',
+                  icon: GitCompare,
+                },
+              ]}
+            />
+          </div>
+        </>
       )}
     </div>
   )

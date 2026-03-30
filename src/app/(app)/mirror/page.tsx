@@ -5,7 +5,13 @@ export const metadata = {
   title: 'Mirror — The Republic',
 }
 
-export default function MirrorPage() {
+interface MirrorPageProps {
+  searchParams: Promise<{ documentId?: string }>
+}
+
+export default async function MirrorPage({ searchParams }: MirrorPageProps) {
+  const { documentId: initialDocumentId } = await searchParams
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
       {/* Header */}
@@ -31,7 +37,7 @@ export default function MirrorPage() {
       </div>
 
       {/* Comparison form + results */}
-      <ComparisonForm />
+      <ComparisonForm initialDocumentId={initialDocumentId} />
     </div>
   )
 }

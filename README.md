@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Republic
 
-## Getting Started
+**Making institutional power legible.**
 
-First, run the development server:
+The Republic is an open-source civic AI framework that helps citizens understand government documents, develop critical analysis skills through Socratic inquiry, generate real civic actions, and compare policies across jurisdictions.
+
+## The Four Arms
+
+| Arm | Function |
+|---|---|
+| **Oracle** | Upload government documents. Get plain-language analysis, power maps, and the questions no one is asking. |
+| **Gadfly** | Explore any document through Socratic inquiry. The Gadfly asks questions — it never gives answers. |
+| **Lever** | Generate ready-to-file FOI requests, public comments, and policy briefs. |
+| **Mirror** | Compare policies across jurisdictions. See what actually worked, where, and why. |
+
+## Quick Start
 
 ```bash
+git clone https://github.com/TheSocraticRepublic/the-republic.git
+cd the-republic
+cp .env.example .env.local
+# Fill in your credentials
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Next.js 16 · React 19 · TypeScript · Drizzle ORM · PostgreSQL + pgvector · Claude API · Tailwind CSS 4 · Radix UI
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Philosophy
 
-## Learn More
+Read [PHILOSOPHY.md](PHILOSOPHY.md) to understand why this exists.
 
-To learn more about Next.js, take a look at the following resources:
+## Contributing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[AGPLv3](LICENSE) — ensures institutional forks cannot strip transparency features.

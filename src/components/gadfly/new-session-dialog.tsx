@@ -12,11 +12,17 @@ interface Document {
   status: string
 }
 
-export function NewSessionDialog() {
-  const [open, setOpen] = useState(false)
+interface NewSessionDialogProps {
+  initialDocumentId?: string
+  initialTitle?: string
+}
+
+export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSessionDialogProps = {}) {
+  // Auto-open when pre-filled from cross-arm navigation
+  const [open, setOpen] = useState(!!initialDocumentId)
   const [documents, setDocuments] = useState<Document[]>([])
-  const [selectedDocId, setSelectedDocId] = useState('')
-  const [title, setTitle] = useState('')
+  const [selectedDocId, setSelectedDocId] = useState(initialDocumentId ?? '')
+  const [title, setTitle] = useState(initialTitle ?? '')
   const [mode, setMode] = useState<'socratic' | 'direct'>('socratic')
   const [loading, setLoading] = useState(false)
   const [fetchingDocs, setFetchingDocs] = useState(false)
@@ -62,6 +68,7 @@ export function NewSessionDialog() {
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v)
     if (!v) {
+      // Reset to empty (not initial values) after dialog is closed
       setSelectedDocId('')
       setTitle('')
       setMode('socratic')

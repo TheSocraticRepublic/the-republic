@@ -23,10 +23,14 @@ const POLICY_AREAS = [
   { value: 'other', label: 'Other' },
 ]
 
-export function ComparisonForm() {
+interface ComparisonFormProps {
+  initialDocumentId?: string
+}
+
+export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) {
   const [documents, setDocuments] = useState<Document[]>([])
   const [fetchingDocs, setFetchingDocs] = useState(false)
-  const [selectedDocId, setSelectedDocId] = useState('')
+  const [selectedDocId, setSelectedDocId] = useState(initialDocumentId ?? '')
   const [policyArea, setPolicyArea] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
@@ -43,10 +47,14 @@ export function ComparisonForm() {
       .then((data) => {
         const ready = (data.documents ?? []).filter((d: Document) => d.status === 'ready')
         setDocuments(ready)
+        // If initialDocumentId is set but not already selected, verify it exists
+        if (initialDocumentId && ready.some((d: Document) => d.id === initialDocumentId)) {
+          setSelectedDocId(initialDocumentId)
+        }
       })
       .catch(() => {})
       .finally(() => setFetchingDocs(false))
-  }, [])
+  }, [initialDocumentId])
 
   const handleCompare = useCallback(async () => {
     if (!description.trim() || loading) return

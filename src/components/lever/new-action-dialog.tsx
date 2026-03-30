@@ -32,12 +32,17 @@ const DESCRIPTION_PLACEHOLDERS: Record<ActionType, string> = {
   policy_brief: 'What policy problem are you addressing and what change do you recommend?',
 }
 
-export function NewActionDialog() {
-  const [open, setOpen] = useState(false)
+interface NewActionDialogProps {
+  initialDocumentId?: string
+  initialSessionId?: string
+}
+
+export function NewActionDialog({ initialDocumentId, initialSessionId }: NewActionDialogProps = {}) {
+  const [open, setOpen] = useState(!!(initialDocumentId || initialSessionId))
   const [actionType, setActionType] = useState<ActionType>('fippa_request')
   const [publicBodyName, setPublicBodyName] = useState('')
-  const [selectedDocId, setSelectedDocId] = useState('')
-  const [selectedSessionId, setSelectedSessionId] = useState('')
+  const [selectedDocId, setSelectedDocId] = useState(initialDocumentId ?? '')
+  const [selectedSessionId, setSelectedSessionId] = useState(initialSessionId ?? '')
   const [description, setDescription] = useState('')
   const [documents, setDocuments] = useState<Document[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
@@ -96,6 +101,9 @@ export function NewActionDialog() {
       setDescription('')
     }
   }, [])
+
+  // When pre-filled from cross-arm nav, trigger document/session fetch on mount
+  // The existing useEffect already handles this when open=true
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
