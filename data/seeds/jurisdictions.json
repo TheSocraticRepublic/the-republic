@@ -1,0 +1,22 @@
+[
+  { "name": "City of Vancouver", "country": "Canada", "province": "British Columbia", "municipalType": "city", "population": 662248, "dataPortalUrl": "https://opendata.vancouver.ca" },
+  { "name": "City of Victoria", "country": "Canada", "province": "British Columbia", "municipalType": "city", "population": 91867 },
+  { "name": "City of Surrey", "country": "Canada", "province": "British Columbia", "municipalType": "city", "population": 568322 },
+  { "name": "District of Squamish", "country": "Canada", "province": "British Columbia", "municipalType": "district", "population": 23819 },
+  { "name": "City of Kelowna", "country": "Canada", "province": "British Columbia", "municipalType": "city", "population": 144576 },
+  { "name": "District of North Vancouver", "country": "Canada", "province": "British Columbia", "municipalType": "district", "population": 88168 },
+  { "name": "City of Burnaby", "country": "Canada", "province": "British Columbia", "municipalType": "city", "population": 249125 },
+  { "name": "City of Richmond", "country": "Canada", "province": "British Columbia", "municipalType": "city", "population": 209937 },
+  { "name": "Resort Municipality of Whistler", "country": "Canada", "province": "British Columbia", "municipalType": "district", "population": 13982 },
+  { "name": "City of Nanaimo", "country": "Canada", "province": "British Columbia", "municipalType": "city", "population": 99863 },
+  { "name": "City of Kamloops", "country": "Canada", "province": "British Columbia", "municipalType": "city", "population": 97902 },
+  { "name": "City of Prince George", "country": "Canada", "province": "British Columbia", "municipalType": "city", "population": 76708 },
+  { "name": "Province of British Columbia", "country": "Canada", "province": "British Columbia", "municipalType": "province", "population": 5368784 },
+  { "name": "City of Toronto", "country": "Canada", "province": "Ontario", "municipalType": "city", "population": 2794356, "dataPortalUrl": "https://open.toronto.ca" },
+  { "name": "City of Montreal", "country": "Canada", "province": "Quebec", "municipalType": "city", "population": 1762949 },
+  { "name": "City of Calgary", "country": "Canada", "province": "Alberta", "municipalType": "city", "population": 1306784 },
+  { "name": "City of Edmonton", "country": "Canada", "province": "Alberta", "municipalType": "city", "population": 1010899 },
+  { "name": "City of Ottawa", "country": "Canada", "province": "Ontario", "municipalType": "city", "population": 1017449 },
+  { "name": "City of Portland", "country": "United States", "province": "Oregon", "municipalType": "city", "population": 652503 },
+  { "name": "City of Vienna", "country": "Austria", "province": null, "municipalType": "city", "population": 1982097 }
+]
