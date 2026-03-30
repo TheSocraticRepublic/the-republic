@@ -28,7 +28,7 @@ async function main() {
     process.exit(1)
   }
 
-  const client = postgres(databaseUrl)
+  const client = postgres(databaseUrl, { max: 1 })
   const db = drizzle(client)
 
   const seedPath = path.join(__dirname, '..', 'data', 'seeds', 'jurisdictions.json')
