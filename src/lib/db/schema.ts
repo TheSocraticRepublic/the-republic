@@ -10,6 +10,7 @@ import {
   numeric,
   date,
   index,
+  boolean,
 } from 'drizzle-orm/pg-core'
 import { customType } from 'drizzle-orm/pg-core'
 
@@ -355,5 +356,24 @@ export const policyOutcomes = pgTable(
   (t) => [
     index('policy_outcomes_policy_id_idx').on(t.policyId),
     index('policy_outcomes_measure_date_idx').on(t.measureDate),
+  ]
+)
+
+export const scoutSources = pgTable(
+  'scout_sources',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    jurisdictionName: text('jurisdiction_name').notNull(),
+    documentType: text('document_type').notNull(),
+    searchQuery: text('search_query').notNull(),
+    url: text('url').notNull(),
+    title: text('title'),
+    snippet: text('snippet'),
+    verified: boolean('verified').notNull().default(false),
+    cachedAt: timestamp('cached_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('scout_sources_jurisdiction_idx').on(t.jurisdictionName),
+    index('scout_sources_doc_type_idx').on(t.documentType),
   ]
 )

@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { SCOUT_SYSTEM_PROMPT, SCOUT_PROMPT_VERSION } from '@/lib/ai/prompts/scout-system'
-import { CONCERN_CATEGORIES, getDocumentStructureContext } from '@/lib/scout/document-structures'
+import {
+  CONCERN_CATEGORIES,
+  JURISDICTION_PORTALS,
+  getDocumentStructureContext,
+  getJurisdictionPortalContext,
+} from '@/lib/scout/document-structures'
 
 describe('Scout prompt', () => {
   it('includes all 5 required output sections', () => {
@@ -101,5 +106,42 @@ describe('Document structures', () => {
 describe('All prompts', () => {
   it('Scout prompt version is in semver format', () => {
     expect(SCOUT_PROMPT_VERSION).toMatch(/^\d+\.\d+\.\d+$/)
+  })
+})
+
+describe('Jurisdiction portals', () => {
+  const keyJurisdictions = [
+    'District of Squamish',
+    'City of Vancouver',
+    'City of Victoria',
+  ]
+
+  it('includes entries for key BC jurisdictions', () => {
+    for (const name of keyJurisdictions) {
+      expect(JURISDICTION_PORTALS).toHaveProperty(name)
+    }
+  })
+
+  it('each portal entry has at least a bylawsUrl', () => {
+    for (const [name, portal] of Object.entries(JURISDICTION_PORTALS)) {
+      expect(
+        portal.bylawsUrl,
+        `${name} is missing bylawsUrl`
+      ).toBeTruthy()
+    }
+  })
+
+  it('getJurisdictionPortalContext returns formatted string for known jurisdiction', () => {
+    const context = getJurisdictionPortalContext('District of Squamish')
+    expect(typeof context).toBe('string')
+    expect(context.length).toBeGreaterThan(0)
+    expect(context).toContain('District of Squamish')
+    expect(context).toContain('squamish.ca')
+    expect(context).toContain('Bylaws')
+  })
+
+  it('getJurisdictionPortalContext returns empty string for unknown jurisdiction', () => {
+    const context = getJurisdictionPortalContext('City of Nowhere BC')
+    expect(context).toBe('')
   })
 })

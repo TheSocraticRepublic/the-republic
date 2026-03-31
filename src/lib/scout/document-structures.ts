@@ -6,6 +6,115 @@ export interface DocumentEntry {
   why_it_matters: string
 }
 
+export interface JurisdictionPortal {
+  name: string
+  bylawsUrl?: string
+  councilMinutesUrl?: string
+  budgetUrl?: string
+  developmentUrl?: string
+  dataPortalUrl?: string
+  foiPageUrl?: string
+}
+
+export const JURISDICTION_PORTALS: Record<string, JurisdictionPortal> = {
+  'District of Squamish': {
+    name: 'District of Squamish',
+    bylawsUrl: 'https://squamish.ca/yourgovernment/bylaws/',
+    councilMinutesUrl: 'https://squamish.ca/yourgovernment/council-and-committees/council-meetings/',
+    budgetUrl: 'https://squamish.ca/yourgovernment/budget-and-finance/',
+    developmentUrl: 'https://squamish.ca/business-and-development/',
+    foiPageUrl: 'https://squamish.ca/yourgovernment/freedom-of-information/',
+  },
+  'City of Vancouver': {
+    name: 'City of Vancouver',
+    bylawsUrl: 'https://vancouver.ca/your-government/city-bylaws.aspx',
+    councilMinutesUrl: 'https://council.vancouver.ca/meetingSearchResults.aspx',
+    budgetUrl: 'https://vancouver.ca/your-government/budgets.aspx',
+    developmentUrl: 'https://vancouver.ca/home-property-development/development-applications.aspx',
+    dataPortalUrl: 'https://opendata.vancouver.ca/',
+    foiPageUrl: 'https://vancouver.ca/your-government/freedom-of-information.aspx',
+  },
+  'City of Victoria': {
+    name: 'City of Victoria',
+    bylawsUrl: 'https://www.victoria.ca/city-government/city-bylaws',
+    councilMinutesUrl: 'https://www.victoria.ca/city-government/council-meetings',
+    foiPageUrl: 'https://www.victoria.ca/city-government/freedom-information',
+  },
+  'City of Surrey': {
+    name: 'City of Surrey',
+    bylawsUrl: 'https://www.surrey.ca/city-government/bylaws',
+    councilMinutesUrl: 'https://www.surrey.ca/city-government/council-meetings-minutes',
+    foiPageUrl: 'https://www.surrey.ca/city-government/freedom-information',
+  },
+  'City of Kelowna': {
+    name: 'City of Kelowna',
+    bylawsUrl: 'https://www.kelowna.ca/city-hall/city-bylaws',
+    councilMinutesUrl: 'https://www.kelowna.ca/city-hall/council/council-meetings',
+  },
+  'District of North Vancouver': {
+    name: 'District of North Vancouver',
+    bylawsUrl: 'https://www.dnv.org/bylaws',
+    councilMinutesUrl: 'https://www.dnv.org/council-agendas-minutes',
+  },
+  'City of Burnaby': {
+    name: 'City of Burnaby',
+    bylawsUrl: 'https://www.burnaby.ca/our-city/bylaws',
+    councilMinutesUrl: 'https://www.burnaby.ca/our-city/council/council-meetings',
+  },
+  'Resort Municipality of Whistler': {
+    name: 'Resort Municipality of Whistler',
+    bylawsUrl: 'https://www.whistler.ca/municipal-government/bylaws/',
+    councilMinutesUrl: 'https://www.whistler.ca/municipal-government/council/council-meetings/',
+  },
+  'City of Kamloops': {
+    name: 'City of Kamloops',
+    bylawsUrl: 'https://www.kamloops.ca/city-services/bylaws',
+    councilMinutesUrl: 'https://www.kamloops.ca/city-hall/council-meetings',
+  },
+  'City of Nanaimo': {
+    name: 'City of Nanaimo',
+    bylawsUrl: 'https://www.nanaimo.ca/your-government/bylaws',
+    councilMinutesUrl: 'https://www.nanaimo.ca/your-government/council-meetings',
+  },
+}
+
+/**
+ * Returns a formatted text block of known portal URLs for the given jurisdiction,
+ * suitable for injection into the Scout system prompt.
+ * Returns empty string for unknown jurisdictions.
+ */
+export function getJurisdictionPortalContext(jurisdictionName: string): string {
+  const portal = JURISDICTION_PORTALS[jurisdictionName]
+  if (!portal) {
+    return ''
+  }
+
+  const lines: string[] = [
+    `Known document portal URLs for ${portal.name}:`,
+  ]
+
+  if (portal.bylawsUrl) {
+    lines.push(`  Bylaws: ${portal.bylawsUrl}`)
+  }
+  if (portal.councilMinutesUrl) {
+    lines.push(`  Council Minutes: ${portal.councilMinutesUrl}`)
+  }
+  if (portal.budgetUrl) {
+    lines.push(`  Budget & Finance: ${portal.budgetUrl}`)
+  }
+  if (portal.developmentUrl) {
+    lines.push(`  Development Applications: ${portal.developmentUrl}`)
+  }
+  if (portal.dataPortalUrl) {
+    lines.push(`  Open Data Portal: ${portal.dataPortalUrl}`)
+  }
+  if (portal.foiPageUrl) {
+    lines.push(`  FOI/FIPPA Requests: ${portal.foiPageUrl}`)
+  }
+
+  return lines.join('\n')
+}
+
 export interface ConcernCategory {
   category: string
   concern_keywords: string[]
