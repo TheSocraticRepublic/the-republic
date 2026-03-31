@@ -2,10 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Eye, MessageCircleQuestion, FileText, GitCompare, LogOut } from 'lucide-react'
+import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut } from 'lucide-react'
 import { clsx } from 'clsx'
 
 const arms = [
+  {
+    name: 'Scout',
+    href: '/scout',
+    icon: Compass,
+    color: '#B088C8',
+    description: 'Document discovery',
+  },
   {
     name: 'Oracle',
     href: '/oracle',

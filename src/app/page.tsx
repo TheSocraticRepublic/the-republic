@@ -1,7 +1,16 @@
 import Link from 'next/link'
-import { Eye, MessageCircleQuestion, FileText, GitCompare } from 'lucide-react'
+import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare } from 'lucide-react'
 
 const arms = [
+  {
+    name: 'Scout',
+    icon: Compass,
+    color: '#B088C8',
+    borderColor: 'rgba(176, 136, 200, 0.3)',
+    description:
+      'Start with a concern, not a document. The Scout identifies which government documents matter to your issue and how to get them.',
+    href: '/scout',
+  },
   {
     name: 'Oracle',
     icon: Eye,
