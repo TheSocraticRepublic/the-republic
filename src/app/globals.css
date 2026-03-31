@@ -21,6 +21,15 @@
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-strong: rgba(255, 255, 255, 0.15);
 
+  /* Content island — light surface for briefing document */
+  --color-island-bg: #fafaf9;
+  --color-island-text: #1c1917;
+  --color-island-secondary: #44403c;
+  --color-island-muted: #78716c;
+  --color-island-border: #e7e5e4;
+  --color-island-card: #f5f4f3;
+  --color-island-card-border: #e0ddd9;
+
   /* Typography */
   --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
@@ -65,4 +74,30 @@ body {
 *:focus-visible {
   outline: 2px solid rgba(137, 180, 200, 0.6);
   outline-offset: 2px;
+}
+
+/* Content island entrance animation */
+@keyframes island-entrance {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content-island {
+  animation: island-entrance 300ms ease-out both;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .content-island,
+  .action-button,
+  .link-card {
+    transition: none;
+    animation: none;
+  }
 }
