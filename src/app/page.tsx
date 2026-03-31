@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare } from 'lucide-react'
+import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, Search } from 'lucide-react'
 
 const arms = [
   {
@@ -93,13 +93,49 @@ export default function LandingPage() {
           you act on what you learn.
         </p>
 
-        {/* CTA */}
+        {/* Primary CTA — The Briefing */}
         <Link
-          href="/login"
-          className="mb-20 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-8 py-3.5 text-sm font-semibold text-neutral-100 transition-all duration-200 hover:bg-white/[0.1] hover:border-white/20"
+          href="/briefing"
+          className="mb-5 w-full max-w-lg rounded-2xl border bg-black/60 p-7 text-left backdrop-blur-md transition-all duration-200 hover:bg-black/80 hover:border-white/20 block"
+          style={{ borderColor: 'rgba(255, 255, 255, 0.12)' }}
         >
-          Get Started
+          <div className="mb-3 flex items-center gap-3">
+            <span
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.06]"
+            >
+              <Search size={18} strokeWidth={1.75} className="text-neutral-200" />
+            </span>
+            <div>
+              <span
+                className="block text-lg font-bold text-neutral-100"
+                style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
+              >
+                What concerns you?
+              </span>
+              <span className="text-xs text-neutral-500">The Briefing — start here</span>
+            </div>
+          </div>
+          <p className="text-sm leading-relaxed text-neutral-400">
+            Describe a civic issue and The Republic investigates it for you — documents, analysis, actions, and comparisons in one complete briefing.
+          </p>
+          <div className="mt-4 flex items-center gap-2">
+            <span
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-neutral-100 transition-all duration-200"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.09)',
+                border: '1px solid rgba(255,255,255,0.15)',
+              }}
+            >
+              <Search size={11} strokeWidth={2} />
+              Get Started
+            </span>
+          </div>
         </Link>
+
+        {/* Expert tools label */}
+        <p className="mb-4 mt-10 text-xs font-semibold uppercase tracking-widest text-neutral-600">
+          Or go direct to our specialized tools:
+        </p>
 
         {/* Arm cards */}
         <div className="w-full max-w-4xl grid grid-cols-1 gap-4 sm:grid-cols-2">

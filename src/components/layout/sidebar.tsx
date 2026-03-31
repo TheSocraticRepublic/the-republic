@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut } from 'lucide-react'
+import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search } from 'lucide-react'
 import { clsx } from 'clsx'
 
 const arms = [
@@ -49,6 +49,7 @@ interface SidebarProps {
 
 export function Sidebar({ userEmail }: SidebarProps) {
   const pathname = usePathname()
+  const briefingActive = pathname.startsWith('/briefing')
 
   return (
     <nav className="flex h-full w-56 flex-col border-r border-white/[0.06] bg-black/40 backdrop-blur-xl">
@@ -67,56 +68,95 @@ export function Sidebar({ userEmail }: SidebarProps) {
         </p>
       </div>
 
-      {/* Arm navigation */}
-      <div className="flex-1 px-3">
-        <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
-          Arms
-        </p>
-        <ul className="space-y-0.5">
-          {arms.map((arm) => {
-            const isActive = pathname.startsWith(arm.href)
-            const Icon = arm.icon
-            return (
-              <li key={arm.name}>
-                <Link
-                  href={arm.href}
-                  className={clsx(
-                    'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
-                    isActive
-                      ? 'bg-white/[0.07] text-neutral-100'
-                      : 'text-neutral-400 hover:bg-white/[0.04] hover:text-neutral-200'
-                  )}
-                >
-                  <span
+      <div className="flex-1 px-3 space-y-5">
+        {/* Briefing — primary entry point */}
+        <div>
+          <Link
+            href="/briefing"
+            className={clsx(
+              'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+              briefingActive
+                ? 'bg-white/[0.09] text-neutral-100'
+                : 'text-neutral-300 hover:bg-white/[0.05] hover:text-neutral-100'
+            )}
+          >
+            <span
+              className={clsx(
+                'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
+                briefingActive
+                  ? 'bg-white/[0.10] border-white/[0.15]'
+                  : 'border-white/[0.08] group-hover:bg-white/[0.06] group-hover:border-white/[0.12]'
+              )}
+            >
+              <Search
+                size={14}
+                strokeWidth={1.75}
+                className={clsx(
+                  briefingActive ? 'text-neutral-100' : 'text-neutral-400 group-hover:text-neutral-200'
+                )}
+              />
+            </span>
+            <span className="flex flex-col">
+              <span className="font-semibold leading-tight">Briefing</span>
+              <span className="text-[10px] text-neutral-600 leading-tight">Civic briefing</span>
+            </span>
+            {briefingActive && (
+              <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
+            )}
+          </Link>
+        </div>
+
+        {/* Expert tools section */}
+        <div>
+          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
+            Expert Tools
+          </p>
+          <ul className="space-y-0.5">
+            {arms.map((arm) => {
+              const isActive = pathname.startsWith(arm.href)
+              const Icon = arm.icon
+              return (
+                <li key={arm.name}>
+                  <Link
+                    href={arm.href}
                     className={clsx(
-                      'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150',
-                      isActive ? 'bg-white/[0.08]' : 'group-hover:bg-white/[0.05]'
+                      'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+                      isActive
+                        ? 'bg-white/[0.07] text-neutral-100'
+                        : 'text-neutral-400 hover:bg-white/[0.04] hover:text-neutral-200'
                     )}
                   >
-                    <Icon
-                      size={15}
-                      style={{ color: isActive ? arm.color : undefined }}
-                      className={clsx(!isActive && 'text-neutral-500 group-hover:text-neutral-300')}
-                      strokeWidth={1.75}
-                    />
-                  </span>
-                  <span className="flex flex-col">
-                    <span className="font-medium leading-tight">{arm.name}</span>
-                    <span className="text-[10px] text-neutral-600 leading-tight">
-                      {arm.description}
-                    </span>
-                  </span>
-                  {isActive && (
                     <span
-                      className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: arm.color }}
-                    />
-                  )}
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
+                      className={clsx(
+                        'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150',
+                        isActive ? 'bg-white/[0.08]' : 'group-hover:bg-white/[0.05]'
+                      )}
+                    >
+                      <Icon
+                        size={15}
+                        style={{ color: isActive ? arm.color : undefined }}
+                        className={clsx(!isActive && 'text-neutral-500 group-hover:text-neutral-300')}
+                        strokeWidth={1.75}
+                      />
+                    </span>
+                    <span className="flex flex-col">
+                      <span className="font-medium leading-tight">{arm.name}</span>
+                      <span className="text-[10px] text-neutral-600 leading-tight">
+                        {arm.description}
+                      </span>
+                    </span>
+                    {isActive && (
+                      <span
+                        className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: arm.color }}
+                      />
+                    )}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       </div>
 
       {/* User / sign out */}
