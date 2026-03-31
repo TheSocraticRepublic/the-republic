@@ -23,8 +23,9 @@ export async function POST(request: NextRequest) {
   const code = createMagicCode(email)
 
   // In production: send via email (Resend, SES, etc.)
-  // For Phase 0.1: log to server console for local development.
   console.log(`[AUTH] Magic code for ${email}: ${code}`)
 
-  return NextResponse.json({ ok: true })
+  // Dev mode: return code in response so it shows on screen
+  const isDev = process.env.NODE_ENV === 'development'
+  return NextResponse.json({ ok: true, ...(isDev && { code }) })
 }

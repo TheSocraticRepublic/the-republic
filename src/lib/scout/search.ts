@@ -9,23 +9,14 @@ export interface SearchResult {
   snippet: string
 }
 
-interface TavilySearchResponse {
-  results: Array<{
-    url: string
-    title: string
-    content: string
-  }>
-}
-
 const CACHE_TTL_DAYS = 30
 
 /**
  * Search for documents relevant to a jurisdiction and document type.
  *
  * Checks the scout_sources cache first. If cache hit and < 30 days old,
- * returns cached results. Otherwise calls Tavily and caches the results.
- *
- * Gracefully returns empty array when TAVILY_API_KEY is not configured.
+ * returns cached results. Otherwise runs a DuckDuckGo search and caches.
+ * No API key required.
  */
 export async function searchForDocument(
   jurisdictionName: string,
@@ -34,7 +25,7 @@ export async function searchForDocument(
 ): Promise<SearchResult[]> {
   const db = getDb()
 
-  // Check cache first — results less than 30 days old
+  // Check cache first
   const cacheThreshold = new Date()
   cacheThreshold.setDate(cacheThreshold.getDate() - CACHE_TTL_DAYS)
 
@@ -43,7 +34,6 @@ export async function searchForDocument(
       url: scoutSources.url,
       title: scoutSources.title,
       snippet: scoutSources.snippet,
-      cachedAt: scoutSources.cachedAt,
     })
     .from(scoutSources)
     .where(
@@ -63,48 +53,23 @@ export async function searchForDocument(
     }))
   }
 
-  // No cache hit — attempt live search
-  const apiKey = process.env.TAVILY_API_KEY
-  if (!apiKey) {
-    console.warn(
-      'Tavily API key not configured — live search disabled, using curated data only'
-    )
-    return []
-  }
-
+  // No cache — run DuckDuckGo search (no API key needed)
   const contextSuffix = additionalContext ? ` ${additionalContext}` : ''
-  const query = `"${jurisdictionName}" "${documentType}"${contextSuffix} site:.ca filetype:pdf OR bylaw`
+  const query = `${jurisdictionName} ${documentType}${contextSuffix} bylaw site:.ca`
 
   let results: SearchResult[] = []
 
   try {
-    const response = await fetch('https://api.tavily.com/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        api_key: apiKey,
-        query,
-        max_results: 3,
-        search_depth: 'basic',
-      }),
-    })
+    const ddg = await import('duck-duck-scrape')
+    const searchResults = await ddg.search(query, { safeSearch: ddg.SafeSearchType.OFF })
 
-    if (!response.ok) {
-      console.warn(
-        `Tavily search failed with status ${response.status} for query: ${query}`
-      )
-      return []
-    }
-
-    const data = (await response.json()) as TavilySearchResponse
-
-    results = (data.results ?? []).map((r) => ({
+    results = (searchResults.results ?? []).slice(0, 3).map((r) => ({
       url: r.url,
       title: r.title,
-      snippet: r.content,
+      snippet: r.description,
     }))
   } catch (err) {
-    console.warn('Tavily search error:', err)
+    console.warn('DuckDuckGo search error:', err)
     return []
   }
 

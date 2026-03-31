@@ -20,6 +20,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next()
   }
 
+  // DEV: bypass auth, inject a test user
+  if (process.env.NODE_ENV === 'development') {
+    const headers = new Headers(request.headers)
+    headers.set('x-user-id', '00000000-0000-0000-0000-000000000001')
+    headers.set('x-user-email', 'dev@republic.local')
+    return NextResponse.next({ request: { headers } })
+  }
+
   // Everything under (app) requires auth
   return withAuth(request)
 }
