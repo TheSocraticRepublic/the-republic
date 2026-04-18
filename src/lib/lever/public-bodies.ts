@@ -1,19 +1,4 @@
-export interface PublicBody {
-  name: string
-  foiEmail?: string
-  foiAddress: string
-  jurisdiction: string
-}
-
-export const BC_PUBLIC_BODIES: PublicBody[] = [
-  { name: 'City of Vancouver', foiEmail: 'foi@vancouver.ca', foiAddress: 'FOI Coordinator, City of Vancouver, 453 W 12th Ave, Vancouver, BC V5Y 1V4', jurisdiction: 'vancouver' },
-  { name: 'City of Victoria', foiAddress: 'FOI Coordinator, City of Victoria, 1 Centennial Square, Victoria, BC V8W 1P6', jurisdiction: 'victoria' },
-  { name: 'City of Surrey', foiAddress: 'FOI Coordinator, City of Surrey, 13450 104th Ave, Surrey, BC V3T 1V8', jurisdiction: 'surrey' },
-  { name: 'District of Squamish', foiAddress: 'FOI Coordinator, District of Squamish, P.O. Box 310, Squamish, BC V8B 0A3', jurisdiction: 'squamish' },
-  { name: 'City of Kelowna', foiAddress: 'FOI Coordinator, City of Kelowna, 1435 Water St, Kelowna, BC V1Y 1J4', jurisdiction: 'kelowna' },
-  { name: 'District of North Vancouver', foiAddress: 'FOI Coordinator, District of North Vancouver, 355 W Queens Rd, North Vancouver, BC V7N 4N5', jurisdiction: 'north-vancouver' },
-  { name: 'Province of British Columbia', foiAddress: 'Information Access Operations, PO Box 9569 Stn Prov Govt, Victoria, BC V8W 9K1', jurisdiction: 'bc-provincial' },
-  { name: 'Metro Vancouver', foiAddress: 'FOI Coordinator, Metro Vancouver, 4730 Kingsway, Burnaby, BC V5H 0C6', jurisdiction: 'metro-vancouver' },
-  { name: 'Resort Municipality of Whistler', foiAddress: 'FOI Coordinator, Resort Municipality of Whistler, 4325 Blackcomb Way, Whistler, BC V8E 0X5', jurisdiction: 'whistler' },
-  { name: 'City of Burnaby', foiAddress: 'FOI Coordinator, City of Burnaby, 4949 Canada Way, Burnaby, BC V5G 1M2', jurisdiction: 'burnaby' },
-]
+// DEPRECATED: Import from @/lib/jurisdictions instead.
+// This file is kept for backward compatibility with existing consumers.
+export { bcPublicBodies as BC_PUBLIC_BODIES } from '@/lib/jurisdictions/bc/public-bodies'
+export type { PublicBody } from '@/lib/jurisdictions/types'

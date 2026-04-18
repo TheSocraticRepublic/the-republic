@@ -2,13 +2,9 @@ import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { jurisdictions } from '@/lib/db/schema'
 import { SCOUT_SYSTEM_PROMPT, SCOUT_PROMPT_VERSION } from '@/lib/ai/prompts/scout-system'
-import {
-  getDocumentStructureContext,
-  getJurisdictionPortalContext,
-  CONCERN_CATEGORIES,
-} from '@/lib/scout/document-structures'
+import { loadJurisdictionModule } from '@/lib/jurisdictions'
+import { getDocumentStructureContext, getJurisdictionPortalContext } from '@/lib/jurisdictions/bc'
 import { searchForDocument, SearchResult } from '@/lib/scout/search'
-import { BC_PUBLIC_BODIES } from '@/lib/lever/public-bodies'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq } from 'drizzle-orm'
@@ -20,12 +16,15 @@ const MODEL = 'claude-sonnet-4-20250514'
  * and return the top document types from each matched category.
  * Caps at 2 document types per matched category.
  */
-function matchDocumentTypesFromConcern(concernText: string): string[] {
+async function matchDocumentTypesFromConcern(concernText: string): Promise<string[]> {
+  const bcModule = await loadJurisdictionModule('bc')
+  if (!bcModule) return []
+
   const lower = concernText.toLowerCase()
   const matched: string[] = []
 
-  for (const category of CONCERN_CATEGORIES) {
-    const isMatch = category.concern_keywords.some((kw) => lower.includes(kw))
+  for (const category of bcModule.concernCategories) {
+    const isMatch = category.keywords.some((kw) => lower.includes(kw))
     if (isMatch) {
       // Take up to 2 document types from this category
       const docTypes = category.documents.slice(0, 2).map((d) => d.type)
@@ -92,6 +91,9 @@ export async function POST(request: NextRequest) {
 
   const db = getDb()
 
+  // Load BC jurisdiction module for document knowledge and public bodies
+  const bcModule = await loadJurisdictionModule('bc')
+
   // Fetch all jurisdictions for context
   const allJurisdictions = await db
     .select({
@@ -115,9 +117,10 @@ export async function POST(request: NextRequest) {
   const jurisdictionContext =
     `Known jurisdictions in the system:\n${jurisdictionLines.join('\n')}`
 
-  // Build FIPPA contact reference from known public bodies
-  const foiContactLines = BC_PUBLIC_BODIES.map((pb) => {
-    const emailStr = pb.foiEmail ? ` (${pb.foiEmail})` : ''
+  // Build FIPPA contact reference from jurisdiction module's public bodies
+  const publicBodies = bcModule?.publicBodies ?? []
+  const foiContactLines = publicBodies.map((pb) => {
+    const emailStr = pb.email ? ` (${pb.email})` : ''
     return `- ${pb.name}: ${pb.foiAddress}${emailStr}`
   })
   const foiContext = `FIPPA contact addresses for BC public bodies:\n${foiContactLines.join('\n')}`
@@ -163,7 +166,7 @@ export async function POST(request: NextRequest) {
 
   // Identify relevant document types from the concern text and run parallel web searches
   const documentTypesToSearch = selectedJurisdictionName
-    ? matchDocumentTypesFromConcern(concern)
+    ? await matchDocumentTypesFromConcern(concern)
     : []
 
   const searchResultsByType = new Map<string, SearchResult[]>()

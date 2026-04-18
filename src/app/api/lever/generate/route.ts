@@ -8,7 +8,7 @@ import {
   gadflyTurns,
 } from '@/lib/db/schema'
 import { LEVER_SYSTEM_PROMPT } from '@/lib/ai/prompts/lever-system'
-import { BC_PUBLIC_BODIES } from '@/lib/lever/public-bodies'
+import { loadJurisdictionModule } from '@/lib/jurisdictions'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, asc, desc, and } from 'drizzle-orm'
@@ -131,13 +131,14 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 3. For FIPPA requests, resolve public body address
+  // 3. For FIPPA requests, resolve public body address from jurisdiction module
   let publicBodyContext = ''
   if (action.actionType === 'fippa_request' && publicBodyName) {
-    const pb = BC_PUBLIC_BODIES.find((b) => b.name === publicBodyName)
+    const bcModule = await loadJurisdictionModule('bc')
+    const pb = bcModule?.publicBodies.find((b) => b.name === publicBodyName)
     if (pb) {
       publicBodyContext = `\nPublic Body: ${pb.name}\nFOI Address: ${pb.foiAddress}`
-      if (pb.foiEmail) publicBodyContext += `\nFOI Email: ${pb.foiEmail}`
+      if (pb.email) publicBodyContext += `\nFOI Email: ${pb.email}`
     } else {
       publicBodyContext = `\nPublic Body: ${publicBodyName}`
     }

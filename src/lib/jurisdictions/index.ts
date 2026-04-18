@@ -6,8 +6,7 @@ const JURISDICTION_REGISTRY: Record<
   string,
   () => Promise<{ default: JurisdictionModule }>
 > = {
-  // BC module will be added in Phase 1B when document-structures.ts is refactored
-  // 'bc': () => import('./bc'),
+  'bc': () => import('./bc'),
   // 'canada-federal': () => import('./canada-federal'),  // Phase 2
 }
 
