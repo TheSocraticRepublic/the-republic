@@ -42,7 +42,14 @@ export async function POST(request: NextRequest) {
   }
 
   let body: {
-    actionType: 'fippa_request' | 'public_comment' | 'policy_brief'
+    actionType:
+      | 'fippa_request'
+      | 'public_comment'
+      | 'policy_brief'
+      | 'legal_template'
+      | 'media_spec'
+      | 'talking_points'
+      | 'coalition_template'
     documentId?: string
     sessionId?: string
     publicBodyName?: string
@@ -101,6 +108,10 @@ export async function POST(request: NextRequest) {
     fippa_request: 'FIPPA Request',
     public_comment: 'Public Comment',
     policy_brief: 'Policy Brief',
+    legal_template: 'Legal Template',
+    media_spec: 'Media Specification',
+    talking_points: 'Talking Points',
+    coalition_template: 'Coalition Template',
   }
 
   const titlePrefix = ACTION_TYPE_LABELS[actionType] ?? actionType

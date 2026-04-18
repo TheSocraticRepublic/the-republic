@@ -3,6 +3,7 @@ import {
   uuid,
   text,
   integer,
+  smallint,
   timestamp,
   pgEnum,
   real,
@@ -10,6 +11,7 @@ import {
   numeric,
   date,
   index,
+  uniqueIndex,
   boolean,
 } from 'drizzle-orm/pg-core'
 import { customType } from 'drizzle-orm/pg-core'
@@ -160,6 +162,12 @@ export const campaignMaterialTypeEnum = pgEnum('campaign_material_type', [
 export const campaignMaterialStatusEnum = pgEnum('campaign_material_status', [
   'draft',
   'final',
+])
+
+export const campaignMaterialFormatEnum = pgEnum('campaign_material_format', [
+  'json',
+  'markdown',
+  'html',
 ])
 
 export const regulatoryFrameworkEnum = pgEnum('regulatory_framework', [
@@ -544,6 +552,11 @@ export const investigationPlayers = pgTable(
   (t) => [
     index('inv_players_investigation_idx').on(t.investigationId),
     index('inv_players_player_idx').on(t.playerId),
+    uniqueIndex('inv_players_unique_role_idx').on(
+      t.investigationId,
+      t.playerId,
+      t.role
+    ),
   ]
 )
 
@@ -561,7 +574,7 @@ export const campaignMaterials = pgTable(
     title: text('title').notNull(),
     content: text('content').notNull(),
     reasoning: text('reasoning'),
-    format: text('format').notNull().default('json'),
+    format: campaignMaterialFormatEnum('format').notNull().default('json'),
     metadata: jsonb('metadata'),
     status: campaignMaterialStatusEnum('status').notNull().default('draft'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -581,6 +594,12 @@ export const regulatoryProcesses = pgTable(
       () => investigations.id,
       { onDelete: 'set null' }
     ),
+    // userId is the fallback owner anchor: if the linked investigation is deleted,
+    // this row remains owned by the user and doesn't become fully orphaned.
+    // Matches the pattern used by campaignMaterials, issueTracking, and investigationOutcomes.
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     jurisdictionId: uuid('jurisdiction_id').references(() => jurisdictions.id, {
       onDelete: 'set null',
     }),
@@ -602,6 +621,7 @@ export const regulatoryProcesses = pgTable(
   },
   (t) => [
     index('reg_processes_investigation_idx').on(t.investigationId),
+    index('reg_processes_user_id_idx').on(t.userId),
     index('reg_processes_framework_idx').on(t.framework),
     index('reg_processes_comment_closes_idx').on(t.commentPeriodCloses),
   ]
@@ -620,7 +640,7 @@ export const issueTracking = pgTable(
     eventType: issueEventTypeEnum('event_type').notNull(),
     title: text('title').notNull(),
     description: text('description'),
-    eventDate: date('event_date'),
+    eventDate: date('event_date').notNull(),
     reminderSent: boolean('reminder_sent').notNull().default(false),
     status: issueStatusEnum('status').notNull().default('upcoming'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -648,7 +668,9 @@ export const investigationOutcomes = pgTable(
     documentId: uuid('document_id').references(() => documents.id, {
       onDelete: 'set null',
     }),
-    satisfaction: integer('satisfaction'),
+    // satisfaction: expected range 1-5 (smallint signals intent).
+    // A CHECK (satisfaction >= 1 AND satisfaction <= 5) constraint should be added in migration SQL.
+    satisfaction: smallint('satisfaction'),
     lessonsLearned: text('lessons_learned'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },

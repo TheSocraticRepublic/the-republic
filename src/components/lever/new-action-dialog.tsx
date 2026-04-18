@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, X, ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 import { BC_PUBLIC_BODIES } from '@/lib/lever/public-bodies'
+import { leverActionTypeEnum } from '@/lib/db/schema'
 
 interface Document {
   id: string
@@ -18,7 +19,10 @@ interface Session {
   title: string
 }
 
-type ActionType = 'fippa_request' | 'public_comment' | 'policy_brief'
+// Derived from the schema enum so TypeScript stays in sync when new types are added.
+// Note: media_spec, talking_points, and coalition_template are Campaign-layer actions
+// and are intentionally excluded from this dialog's UI options.
+type ActionType = (typeof leverActionTypeEnum.enumValues)[number]
 
 const ACTION_TYPES: { value: ActionType; label: string; description: string }[] = [
   { value: 'fippa_request', label: 'FIPPA Request', description: 'Freedom of Information' },
@@ -26,7 +30,7 @@ const ACTION_TYPES: { value: ActionType; label: string; description: string }[] 
   { value: 'policy_brief', label: 'Policy Brief', description: 'Evidence-based proposal' },
 ]
 
-const DESCRIPTION_PLACEHOLDERS: Record<ActionType, string> = {
+const DESCRIPTION_PLACEHOLDERS: Partial<Record<ActionType, string>> = {
   fippa_request: 'What records do you want to request?',
   public_comment: "What is your concern or position on the proposed bylaw, permit, or policy?",
   policy_brief: 'What policy problem are you addressing and what change do you recommend?',

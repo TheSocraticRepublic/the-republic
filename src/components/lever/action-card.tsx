@@ -19,6 +19,10 @@ const TYPE_STYLES: Record<string, { label: string; color: string; bg: string }> 
   public_comment: { label: 'Public Comment', color: '#C87B3A', bg: 'rgba(200, 123, 58, 0.12)' },
   policy_brief: { label: 'Policy Brief', color: '#89B4C8', bg: 'rgba(137, 180, 200, 0.12)' },
   legal_template: { label: 'Legal Template', color: '#a3a3a3', bg: 'rgba(163, 163, 163, 0.12)' },
+  // Campaign-layer action types — muted teal to signal distinct layer
+  media_spec: { label: 'Media Specification', color: '#5BBCB4', bg: 'rgba(91, 188, 180, 0.12)' },
+  talking_points: { label: 'Talking Points', color: '#5BBCB4', bg: 'rgba(91, 188, 180, 0.12)' },
+  coalition_template: { label: 'Coalition Template', color: '#5BBCB4', bg: 'rgba(91, 188, 180, 0.12)' },
 }
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {

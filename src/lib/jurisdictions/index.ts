@@ -47,6 +47,7 @@ export function detectJurisdiction(
   concern: string,
   jurisdictionName?: string
 ): string | undefined {
+  // concern text analysis will be added in Phase 1B with jurisdiction module content
   // If jurisdiction name is provided, try to match directly
   if (jurisdictionName) {
     const normalized = jurisdictionName.toLowerCase()
