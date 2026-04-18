@@ -2,11 +2,14 @@
 
 import Link from 'next/link'
 import { FileText } from 'lucide-react'
+import { leverActionTypeEnum } from '@/lib/db/schema'
+
+type LeverActionType = (typeof leverActionTypeEnum.enumValues)[number]
 
 interface ActionCardProps {
   id: string
   title: string
-  actionType: 'fippa_request' | 'public_comment' | 'policy_brief' | 'legal_template'
+  actionType: LeverActionType
   status: 'draft' | 'final' | 'filed'
   createdAt: Date | string
 }

@@ -43,6 +43,12 @@ export const documentTypeEnum = pgEnum('document_type', [
   'lobbyist_registration',
   'campaign_finance',
   'other',
+  'environmental_impact_statement',
+  'environmental_assessment_report',
+  'scoping_document',
+  'record_of_decision',
+  'biological_opinion',
+  'habitat_assessment',
 ])
 
 export const documentStatusEnum = pgEnum('document_status', [
@@ -82,6 +88,9 @@ export const leverActionTypeEnum = pgEnum('lever_action_type', [
   'public_comment',
   'policy_brief',
   'legal_template',
+  'media_spec',
+  'talking_points',
+  'coalition_template',
 ])
 
 export const leverStatusEnum = pgEnum('lever_status', [
@@ -109,6 +118,80 @@ export const policyAreaEnum = pgEnum('policy_area', [
   'foi_transparency',
   'procurement',
   'other',
+  'conservation',
+  'extraction',
+  'land_use',
+  'water_rights',
+])
+
+export const investigationStatusEnum = pgEnum('investigation_status', [
+  'active',
+  'archived',
+])
+
+export const playerTypeEnum = pgEnum('player_type', [
+  'company',
+  'official',
+  'agency',
+  'organization',
+  'rights_holder',
+])
+
+export const investigationPlayerRoleEnum = pgEnum('investigation_player_role', [
+  'beneficiary',
+  'decision_maker',
+  'affected',
+  'proponent',
+  'regulator',
+  'rights_holder',
+  'title_holder',
+])
+
+export const campaignMaterialTypeEnum = pgEnum('campaign_material_type', [
+  'infographic',
+  'fact_sheet',
+  'social_post',
+  'talking_points',
+  'coalition_template',
+  'timeline',
+  'comparison',
+])
+
+export const campaignMaterialStatusEnum = pgEnum('campaign_material_status', [
+  'draft',
+  'final',
+])
+
+export const regulatoryFrameworkEnum = pgEnum('regulatory_framework', [
+  'bc_eao',
+  'iaa',
+  'nepa',
+  'provincial_ea',
+  'other',
+])
+
+export const issueEventTypeEnum = pgEnum('issue_event_type', [
+  'deadline',
+  'meeting',
+  'decision',
+  'comment_period',
+  'custom',
+])
+
+export const issueStatusEnum = pgEnum('issue_status', [
+  'upcoming',
+  'passed',
+  'completed',
+])
+
+export const outcomeTypeEnum = pgEnum('outcome_type', [
+  'fippa_response_received',
+  'comment_submitted',
+  'council_presentation',
+  'media_coverage',
+  'policy_change',
+  'assessment_decision',
+  'other',
 ])
 
 // --- Tables ---
@@ -119,6 +202,37 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   lastLoginAt: timestamp('last_login_at'),
 })
+
+// investigations is defined before documents so that documents can FK to it
+export const investigations = pgTable(
+  'investigations',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    concern: text('concern').notNull(),
+    jurisdictionId: uuid('jurisdiction_id').references(() => jurisdictions.id, {
+      onDelete: 'set null',
+    }),
+    jurisdictionName: text('jurisdiction_name'),
+    policyArea: policyAreaEnum('policy_area'),
+    briefingText: text('briefing_text'),
+    briefingCompletedAt: timestamp('briefing_completed_at'),
+    lensOpenedAt: timestamp('lens_opened_at'),
+    campaignOpenedAt: timestamp('campaign_opened_at'),
+    concernCategory: text('concern_category'),
+    environmentalReviewType: text('environmental_review_type'),
+    status: investigationStatusEnum('status').notNull().default('active'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('investigations_user_id_idx').on(t.userId),
+    index('investigations_status_idx').on(t.status),
+    index('investigations_created_at_idx').on(t.createdAt),
+  ]
+)
 
 export const documents = pgTable(
   'documents',
@@ -135,12 +249,17 @@ export const documents = pgTable(
     wordCount: integer('word_count'),
     extractionQuality: real('extraction_quality'),
     status: documentStatusEnum('status').notNull().default('processing'),
+    investigationId: uuid('investigation_id').references(
+      () => investigations.id,
+      { onDelete: 'set null' }
+    ),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (t) => [
     index('documents_user_id_idx').on(t.userId),
     index('documents_status_idx').on(t.status),
+    index('documents_investigation_id_idx').on(t.investigationId),
   ]
 )
 
@@ -221,12 +340,17 @@ export const gadflySessions = pgTable(
     insightCount: integer('insight_count').notNull().default(0),
     mode: gadflyCycleEnum('mode').notNull().default('socratic'),
     status: gadflyStatusEnum('status').notNull().default('active'),
+    investigationId: uuid('investigation_id').references(
+      () => investigations.id,
+      { onDelete: 'set null' }
+    ),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (t) => [
     index('gadfly_sessions_user_id_idx').on(t.userId),
     index('gadfly_sessions_status_idx').on(t.status),
+    index('gadfly_sessions_investigation_id_idx').on(t.investigationId),
   ]
 )
 
@@ -288,12 +412,17 @@ export const leverActions = pgTable(
     metadata: jsonb('metadata'),
     pdfUrl: text('pdf_url'),
     status: leverStatusEnum('status').notNull().default('draft'),
+    investigationId: uuid('investigation_id').references(
+      () => investigations.id,
+      { onDelete: 'set null' }
+    ),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (t) => [
     index('lever_actions_user_id_idx').on(t.userId),
     index('lever_actions_status_idx').on(t.status),
+    index('lever_actions_investigation_id_idx').on(t.investigationId),
   ]
 )
 
@@ -375,5 +504,156 @@ export const scoutSources = pgTable(
   (t) => [
     index('scout_sources_jurisdiction_idx').on(t.jurisdictionName),
     index('scout_sources_doc_type_idx').on(t.documentType),
+  ]
+)
+
+export const players = pgTable(
+  'players',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: text('name').notNull(),
+    playerType: playerTypeEnum('player_type').notNull(),
+    jurisdictionId: uuid('jurisdiction_id').references(() => jurisdictions.id, {
+      onDelete: 'set null',
+    }),
+    description: text('description'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('players_name_idx').on(t.name),
+    index('players_type_idx').on(t.playerType),
+  ]
+)
+
+export const investigationPlayers = pgTable(
+  'investigation_players',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    investigationId: uuid('investigation_id')
+      .notNull()
+      .references(() => investigations.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    role: investigationPlayerRoleEnum('role').notNull(),
+    context: text('context'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('inv_players_investigation_idx').on(t.investigationId),
+    index('inv_players_player_idx').on(t.playerId),
+  ]
+)
+
+export const campaignMaterials = pgTable(
+  'campaign_materials',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    investigationId: uuid('investigation_id')
+      .notNull()
+      .references(() => investigations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    materialType: campaignMaterialTypeEnum('material_type').notNull(),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    reasoning: text('reasoning'),
+    format: text('format').notNull().default('json'),
+    metadata: jsonb('metadata'),
+    status: campaignMaterialStatusEnum('status').notNull().default('draft'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('campaign_materials_investigation_idx').on(t.investigationId),
+    index('campaign_materials_type_idx').on(t.materialType),
+  ]
+)
+
+export const regulatoryProcesses = pgTable(
+  'regulatory_processes',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    investigationId: uuid('investigation_id').references(
+      () => investigations.id,
+      { onDelete: 'set null' }
+    ),
+    jurisdictionId: uuid('jurisdiction_id').references(() => jurisdictions.id, {
+      onDelete: 'set null',
+    }),
+    processName: text('process_name').notNull(),
+    framework: regulatoryFrameworkEnum('framework').notNull(),
+    projectName: text('project_name').notNull(),
+    proponentName: text('proponent_name'),
+    proponentPlayerId: uuid('proponent_player_id').references(() => players.id, {
+      onDelete: 'set null',
+    }),
+    status: text('status'),
+    commentPeriodOpens: date('comment_period_opens'),
+    commentPeriodCloses: date('comment_period_closes'),
+    commentSubmissionUrl: text('comment_submission_url'),
+    registryUrl: text('registry_url'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('reg_processes_investigation_idx').on(t.investigationId),
+    index('reg_processes_framework_idx').on(t.framework),
+    index('reg_processes_comment_closes_idx').on(t.commentPeriodCloses),
+  ]
+)
+
+export const issueTracking = pgTable(
+  'issue_tracking',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    investigationId: uuid('investigation_id')
+      .notNull()
+      .references(() => investigations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    eventType: issueEventTypeEnum('event_type').notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    eventDate: date('event_date'),
+    reminderSent: boolean('reminder_sent').notNull().default(false),
+    status: issueStatusEnum('status').notNull().default('upcoming'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('issue_tracking_investigation_idx').on(t.investigationId),
+    index('issue_tracking_event_date_idx').on(t.eventDate),
+    index('issue_tracking_status_idx').on(t.status),
+  ]
+)
+
+export const investigationOutcomes = pgTable(
+  'investigation_outcomes',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    investigationId: uuid('investigation_id')
+      .notNull()
+      .references(() => investigations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    outcomeType: outcomeTypeEnum('outcome_type').notNull(),
+    description: text('description').notNull(),
+    outcomeDate: date('outcome_date'),
+    documentId: uuid('document_id').references(() => documents.id, {
+      onDelete: 'set null',
+    }),
+    satisfaction: integer('satisfaction'),
+    lessonsLearned: text('lessons_learned'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('inv_outcomes_investigation_idx').on(t.investigationId),
+    index('inv_outcomes_type_idx').on(t.outcomeType),
   ]
 )

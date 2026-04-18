@@ -4,12 +4,15 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Download, Pencil, RefreshCw, Check, X, ChevronRight } from 'lucide-react'
 import { clsx } from 'clsx'
+import { leverActionTypeEnum } from '@/lib/db/schema'
+
+type LeverActionType = (typeof leverActionTypeEnum.enumValues)[number]
 
 interface ActionViewerProps {
   actionId: string
   initialContent: string
   initialStatus: 'draft' | 'final' | 'filed'
-  actionType: 'fippa_request' | 'public_comment' | 'policy_brief' | 'legal_template'
+  actionType: LeverActionType
 }
 
 type ViewMode = 'generating' | 'viewing' | 'editing'
