@@ -15,4 +15,6 @@ export const bcPublicBodies: PublicBody[] = [
   { name: 'BC Ministry of Environment and Climate Change Strategy', foiAddress: 'FOI Coordinator, Ministry of Environment, PO Box 9339 Stn Prov Govt, Victoria, BC V8W 9M1', jurisdiction: 'bc-provincial' },
   { name: 'BC Ministry of Energy, Mines and Low Carbon Innovation', foiAddress: 'FOI Coordinator, Ministry of Energy, Mines, PO Box 9060 Stn Prov Govt, Victoria, BC V8W 9E2', jurisdiction: 'bc-provincial' },
   { name: 'BC Ministry of Forests', foiAddress: 'FOI Coordinator, Ministry of Forests, PO Box 9049 Stn Prov Govt, Victoria, BC V8W 9E2', jurisdiction: 'bc-provincial' },
+  { name: 'City of Kamloops', foiAddress: 'FOI Coordinator, City of Kamloops, 7 Victoria Street W, Kamloops, BC V2C 1A2', jurisdiction: 'kamloops' },
+  { name: 'City of Nanaimo', foiAddress: 'FOI Coordinator, City of Nanaimo, 455 Wallace Street, Nanaimo, BC V9R 5J6', jurisdiction: 'nanaimo' },
 ]

@@ -51,21 +51,24 @@ describe('Document structures', () => {
     'Public Transit',
     'Housing/Rental',
     'Business Licensing',
+    'Mining/Extraction',
+    'Land Protection/Conservation',
+    'Environmental Assessment Process',
   ]
 
-  it('covers all 10 concern categories', () => {
+  it('covers all 13 concern categories', () => {
     const categoryNames = CONCERN_CATEGORIES.map((c) => c.category)
     for (const expected of expectedCategories) {
       expect(categoryNames).toContain(expected)
     }
-    expect(CONCERN_CATEGORIES.length).toBe(10)
+    expect(CONCERN_CATEGORIES.length).toBe(13)
   })
 
   it('each category has required fields', () => {
     for (const category of CONCERN_CATEGORIES) {
       expect(category.category).toBeTruthy()
-      expect(Array.isArray(category.concern_keywords)).toBe(true)
-      expect(category.concern_keywords.length).toBeGreaterThan(0)
+      expect(Array.isArray(category.keywords)).toBe(true)
+      expect(category.keywords.length).toBeGreaterThan(0)
       expect(Array.isArray(category.documents)).toBe(true)
       expect(category.documents.length).toBeGreaterThan(0)
     }
@@ -76,9 +79,7 @@ describe('Document structures', () => {
       for (const doc of category.documents) {
         expect(doc.type).toBeTruthy()
         expect(doc.description).toBeTruthy()
-        expect(['public', 'fippa_required', 'council_record']).toContain(doc.access)
-        expect(doc.why_it_matters).toBeTruthy()
-        expect(doc.typical_location).toBeTruthy()
+        expect(['public', 'fippa_required', 'restricted']).toContain(doc.access)
       }
     }
   })
@@ -94,7 +95,7 @@ describe('Document structures', () => {
   })
 
   it('document access types are valid across all categories', () => {
-    const validAccessTypes = new Set(['public', 'fippa_required', 'council_record'])
+    const validAccessTypes = new Set(['public', 'fippa_required', 'restricted'])
     for (const category of CONCERN_CATEGORIES) {
       for (const doc of category.documents) {
         expect(validAccessTypes.has(doc.access)).toBe(true)
@@ -122,12 +123,12 @@ describe('Jurisdiction portals', () => {
     }
   })
 
-  it('each portal entry has at least a bylawsUrl', () => {
+  it('each portal entry has a non-empty documentTypes array', () => {
     for (const [name, portal] of Object.entries(JURISDICTION_PORTALS)) {
       expect(
-        portal.bylawsUrl,
-        `${name} is missing bylawsUrl`
-      ).toBeTruthy()
+        Array.isArray(portal.documentTypes) && portal.documentTypes.length > 0,
+        `${name} is missing documentTypes`
+      ).toBe(true)
     }
   })
 

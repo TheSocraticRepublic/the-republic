@@ -33,7 +33,7 @@ export const bcConcernCategories: ConcernCategory[] = [
   },
   {
     category: 'Rezoning/Development',
-    keywords: ['rezoning', 'development', 'zoning', 'variance', 'permit', 'development permit', 'subdivision', 'land use', 'density', 'building height'],
+    keywords: ['rezoning', 'development', 'zoning', 'variance', 'development permit', 'subdivision', 'land use', 'density', 'building height'],
     documents: [
       {
         type: 'Zoning Bylaw',
@@ -75,7 +75,7 @@ export const bcConcernCategories: ConcernCategory[] = [
   },
   {
     category: 'Property Taxes/Assessments',
-    keywords: ['property tax', 'tax', 'assessment', 'mill rate', 'assessed value', 'BC Assessment', 'appeal', 'notice of assessment'],
+    keywords: ['property tax', 'tax', 'mill rate', 'assessed value', 'BC Assessment', 'appeal', 'notice of assessment'],
     documents: [
       {
         type: 'Tax Rate Bylaw',
@@ -183,7 +183,7 @@ export const bcConcernCategories: ConcernCategory[] = [
   },
   {
     category: 'Environmental/Tree Removal',
-    keywords: ['tree', 'tree removal', 'environmental', 'riparian', 'stream', 'wetland', 'habitat', 'environmental permit', 'DPA', 'development permit area'],
+    keywords: ['tree', 'tree removal', 'environmental', 'riparian', 'stream', 'environmental permit', 'DPA', 'development permit area'],
     documents: [
       {
         type: 'Tree Protection Bylaw',
