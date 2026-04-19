@@ -42,7 +42,15 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
         const res = await fetch(`/api/investigate/${investigationId}/action`)
         if (res.ok) {
           const data = await res.json()
-          setMaterials(data.materials ?? [])
+          const deduped = Object.values(
+            (data.materials ?? []).reduce((acc: Record<string, any>, m: any) => {
+              if (!acc[m.materialType] || m.createdAt > acc[m.materialType].createdAt) {
+                acc[m.materialType] = m
+              }
+              return acc
+            }, {})
+          )
+          setMaterials(deduped as SavedMaterial[])
         }
       } catch {
         // Non-fatal — user can still generate
