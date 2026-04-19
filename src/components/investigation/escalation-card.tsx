@@ -1,16 +1,20 @@
 // Escalation card — shown below the briefing, presents two paths forward.
-// Phase 2B: "Go Deeper" (Gadfly/Lens) enabled. "Take Action" stays disabled.
+// Phase 3B: Both "Go Deeper" and "Take Action" are enabled.
 
 interface EscalationCardProps {
   investigationId: string
   onGoDeeper: () => void     // callback when "Go Deeper" is clicked
+  onTakeAction: () => void   // callback when "Take Action" is clicked
   lensOpen: boolean          // whether the lens panel is currently showing
+  campaignOpen: boolean      // whether the campaign panel is currently showing
 }
 
 export function EscalationCard({
   investigationId: _,
   onGoDeeper,
+  onTakeAction,
   lensOpen,
+  campaignOpen,
 }: EscalationCardProps) {
   return (
     <div
@@ -77,7 +81,7 @@ export function EscalationCard({
           </div>
         </div>
 
-        {/* Right: Take Action (Lever / Campaign) — still disabled */}
+        {/* Right: Take Action (Lever / Campaign) — enabled */}
         <div className="flex flex-col gap-4 bg-neutral-950 px-6 py-6 sm:rounded-br-2xl">
           <div className="flex items-center gap-2.5">
             <span
@@ -94,21 +98,36 @@ export function EscalationCard({
           <p className="text-sm leading-relaxed text-neutral-400">
             Generate FOI requests, public comments, campaign materials, and talking points.
           </p>
-          <div className="mt-auto flex flex-col items-start gap-2">
+          <div className="mt-auto">
             <button
-              disabled
-              className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold cursor-not-allowed opacity-30 transition-opacity"
+              onClick={onTakeAction}
+              className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-150"
               style={{
-                backgroundColor: 'rgba(200, 91, 91, 0.12)',
+                backgroundColor: campaignOpen
+                  ? 'rgba(200, 91, 91, 0.20)'
+                  : 'rgba(200, 91, 91, 0.12)',
                 color: '#C85B5B',
-                border: '1px solid rgba(200, 91, 91, 0.2)',
+                border: campaignOpen
+                  ? '1px solid rgba(200, 91, 91, 0.45)'
+                  : '1px solid rgba(200, 91, 91, 0.2)',
+              }}
+              onMouseEnter={(e) => {
+                if (!campaignOpen) {
+                  const el = e.currentTarget
+                  el.style.backgroundColor = 'rgba(200,91,91,0.18)'
+                  el.style.borderColor = 'rgba(200,91,91,0.35)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!campaignOpen) {
+                  const el = e.currentTarget
+                  el.style.backgroundColor = 'rgba(200,91,91,0.12)'
+                  el.style.borderColor = 'rgba(200,91,91,0.2)'
+                }
               }}
             >
-              Take Action
+              {campaignOpen ? 'Showing campaign materials' : 'Take Action'}
             </button>
-            <span className="rounded-md px-2 py-0.5 text-[10px] font-medium" style={{ backgroundColor: 'rgba(200, 91, 91, 0.10)', color: '#C85B5B' }}>
-              Coming soon
-            </span>
           </div>
         </div>
       </div>

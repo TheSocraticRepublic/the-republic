@@ -1,17 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { BriefingView } from '@/components/briefing/briefing-view'
 import { EscalationCard } from './escalation-card'
 import { LensPanel } from '@/components/lens/lens-panel'
 import { GadflySheet } from '@/components/lens/gadfly-sheet'
+import { CampaignPanel } from '@/components/campaign/campaign-panel'
 
 interface InvestigationPageProps {
   id: string
   concern: string
   jurisdictionName: string | null
   briefingText: string
-  initialLensOpen?: boolean   // true when lensOpenedAt is set (returning user)
+  initialLensOpen?: boolean      // true when lensOpenedAt is set (returning user)
+  initialCampaignOpen?: boolean  // true when campaignOpenedAt is set (returning user)
 }
 
 export function InvestigationPage({
@@ -20,14 +22,15 @@ export function InvestigationPage({
   jurisdictionName,
   briefingText,
   initialLensOpen = false,
+  initialCampaignOpen = false,
 }: InvestigationPageProps) {
   const [lensOpen, setLensOpen] = useState(initialLensOpen)
+  const [campaignOpen, setCampaignOpen] = useState(initialCampaignOpen)
   const [gadflyOpen, setGadflyOpen] = useState(false)
   const [gadflySessionId, setGadflySessionId] = useState<string | null>(null)
 
-  function handleGoDeeper() {
-    setLensOpen(true)
-  }
+  const handleGoDeeper = useCallback(() => setLensOpen(true), [])
+  const handleTakeAction = useCallback(() => setCampaignOpen(true), [])
 
   function handleOpenGadfly() {
     setGadflyOpen(true)
@@ -72,7 +75,9 @@ export function InvestigationPage({
         <EscalationCard
           investigationId={id}
           onGoDeeper={handleGoDeeper}
+          onTakeAction={handleTakeAction}
           lensOpen={lensOpen}
+          campaignOpen={campaignOpen}
         />
       </section>
 
@@ -89,7 +94,18 @@ export function InvestigationPage({
         </section>
       )}
 
-      {/* 5. Gadfly slide-over dialog */}
+      {/* 5. Campaign panel — conditionally rendered */}
+      {campaignOpen && (
+        <section>
+          <CampaignPanel
+            investigationId={id}
+            concern={concern}
+            jurisdictionName={jurisdictionName}
+          />
+        </section>
+      )}
+
+      {/* 6. Gadfly slide-over dialog */}
       <GadflySheet
         open={gadflyOpen}
         onOpenChange={setGadflyOpen}
