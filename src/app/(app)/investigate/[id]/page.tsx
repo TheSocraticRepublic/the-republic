@@ -1,5 +1,5 @@
 import { headers } from 'next/headers'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { investigations } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
@@ -16,7 +16,8 @@ interface PageProps {
 export default async function InvestigationDetailPage({ params }: PageProps) {
   const { id } = await params
   const headersList = await headers()
-  const userId = headersList.get('x-user-id')!
+  const userId = headersList.get('x-user-id')
+  if (!userId) redirect('/login')
 
   const db = getDb()
 

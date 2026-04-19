@@ -50,10 +50,10 @@ interface SidebarProps {
 
 export function Sidebar({ userEmail }: SidebarProps) {
   const pathname = usePathname()
-  const [expertToolsOpen, setExpertToolsOpen] = useState(true)
+  const [expertToolsOpen, setExpertToolsOpen] = useState(false)
 
-  const investigateActive = pathname.startsWith('/investigate')
-  const investigationsActive = pathname === '/investigations'
+  const investigateActive = pathname === '/investigate'
+  const investigationsActive = pathname === '/investigations' || (pathname.startsWith('/investigate/') && pathname !== '/investigate')
 
   return (
     <nav className="flex h-full w-56 flex-col border-r border-white/[0.06] bg-black/40 backdrop-blur-xl">

@@ -82,6 +82,13 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  if (concern.trim().length > 2000) {
+    return new Response(JSON.stringify({ error: 'concern must be 2000 characters or fewer' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   const db = getDb()
 
   // --- Stage 1: Create investigation record ---

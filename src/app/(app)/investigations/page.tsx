@@ -1,4 +1,5 @@
 import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { investigations } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
@@ -24,7 +25,8 @@ function formatDate(date: Date): string {
 
 export default async function InvestigationsPage() {
   const headersList = await headers()
-  const userId = headersList.get('x-user-id')!
+  const userId = headersList.get('x-user-id')
+  if (!userId) redirect('/login')
 
   const db = getDb()
   const records = await db
@@ -50,6 +52,11 @@ export default async function InvestigationsPage() {
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             Investigations
+            {records.length > 0 && (
+              <span className="ml-2.5 text-sm font-normal text-neutral-500">
+                {records.length}
+              </span>
+            )}
           </h1>
           <p className="mt-0.5 text-xs text-neutral-500">
             Your civic inquiries
@@ -71,15 +78,6 @@ export default async function InvestigationsPage() {
 
       {/* List */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
-          Your investigations
-          {records.length > 0 && (
-            <span className="ml-2 font-normal normal-case tracking-normal text-neutral-600">
-              {records.length} {records.length === 1 ? 'investigation' : 'investigations'}
-            </span>
-          )}
-        </h2>
-
         {records.length === 0 ? (
           <div className="rounded-xl border border-white/[0.06] bg-black/40 px-6 py-10 text-center">
             <p className="text-sm text-neutral-500">No investigations yet. Start one.</p>

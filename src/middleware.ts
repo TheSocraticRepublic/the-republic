@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
 
-export async function proxy(request: NextRequest): Promise<NextResponse> {
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
 
   // Public routes — no auth required

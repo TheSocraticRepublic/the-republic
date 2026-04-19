@@ -131,6 +131,9 @@ export function ConcernForm() {
           onKeyDown={handleKeyDown}
           placeholder="e.g., I got towed for parking 5 minutes over a meter in Squamish. $300."
           rows={6}
+          maxLength={2000}
+          aria-label="Describe your concern"
+          aria-describedby="concern-hint"
           className={clsx(
             'w-full resize-none rounded-xl border bg-black/60 px-4 py-4 text-base leading-relaxed text-neutral-200 placeholder-neutral-600 outline-none backdrop-blur-md transition-all duration-200',
             'focus:border-white/20',
@@ -138,7 +141,7 @@ export function ConcernForm() {
           )}
           disabled={loading}
         />
-        <p className="mt-1.5 text-xs text-neutral-600">
+        <p id="concern-hint" className="mt-1.5 text-xs text-neutral-600">
           Press Cmd+Enter to start
         </p>
       </div>

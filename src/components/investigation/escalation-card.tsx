@@ -38,7 +38,7 @@ export function EscalationCard({ investigationId: _ }: EscalationCardProps) {
           <p className="text-sm leading-relaxed text-neutral-400">
             Explore this issue with guided questions, see who the key players are, and understand the deeper context.
           </p>
-          <div className="mt-auto">
+          <div className="mt-auto flex flex-col items-start gap-2">
             <button
               disabled
               className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold cursor-not-allowed opacity-30 transition-opacity"
@@ -47,13 +47,12 @@ export function EscalationCard({ investigationId: _ }: EscalationCardProps) {
                 color: '#C8A84B',
                 border: '1px solid rgba(200, 168, 75, 0.2)',
               }}
-              title="Coming in Phase 2"
             >
               Go Deeper
-              <span className="ml-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium" style={{ backgroundColor: 'rgba(200, 168, 75, 0.15)', color: '#C8A84B' }}>
-                Coming soon
-              </span>
             </button>
+            <span className="rounded-md px-2 py-0.5 text-[10px] font-medium" style={{ backgroundColor: 'rgba(200, 168, 75, 0.10)', color: '#C8A84B' }}>
+              Coming soon
+            </span>
           </div>
         </div>
 
@@ -74,7 +73,7 @@ export function EscalationCard({ investigationId: _ }: EscalationCardProps) {
           <p className="text-sm leading-relaxed text-neutral-400">
             Generate FOI requests, public comments, campaign materials, and talking points.
           </p>
-          <div className="mt-auto">
+          <div className="mt-auto flex flex-col items-start gap-2">
             <button
               disabled
               className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold cursor-not-allowed opacity-30 transition-opacity"
@@ -83,13 +82,12 @@ export function EscalationCard({ investigationId: _ }: EscalationCardProps) {
                 color: '#C85B5B',
                 border: '1px solid rgba(200, 91, 91, 0.2)',
               }}
-              title="Coming in Phase 3"
             >
               Take Action
-              <span className="ml-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium" style={{ backgroundColor: 'rgba(200, 91, 91, 0.15)', color: '#C85B5B' }}>
-                Coming soon
-              </span>
             </button>
+            <span className="rounded-md px-2 py-0.5 text-[10px] font-medium" style={{ backgroundColor: 'rgba(200, 91, 91, 0.10)', color: '#C85B5B' }}>
+              Coming soon
+            </span>
           </div>
         </div>
       </div>
