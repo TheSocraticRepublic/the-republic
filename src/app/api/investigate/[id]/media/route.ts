@@ -196,7 +196,7 @@ export async function POST(
       const retryErrorMessage = retryError instanceof Error ? retryError.message : String(retryError)
       console.error('Campaign material generation failed after retry:', retryErrorMessage)
       return new Response(
-        JSON.stringify({ error: 'Failed to generate valid campaign material spec', detail: retryErrorMessage }),
+        JSON.stringify({ error: 'Failed to generate campaign material spec' }),
         { status: 502, headers: { 'Content-Type': 'application/json' } }
       )
     }
