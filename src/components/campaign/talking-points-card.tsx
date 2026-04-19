@@ -30,6 +30,7 @@ function TalkingPointItem({ point, index }: { point: TalkingPoint; index: number
       {/* Collapsed: claim only */}
       <button
         onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
         className="w-full flex items-start gap-3 px-4 py-3.5 text-left"
       >
         <span
@@ -42,6 +43,7 @@ function TalkingPointItem({ point, index }: { point: TalkingPoint; index: number
           {point.claim}
         </span>
         <span
+          aria-hidden="true"
           className="flex-shrink-0 text-xs mt-0.5 transition-transform duration-150"
           style={{
             color: '#a8a29e',
