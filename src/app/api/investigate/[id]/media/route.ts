@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { ZodError } from 'zod'
 import { getDb } from '@/lib/db'
 import { investigations, campaignMaterials, campaignMaterialTypeEnum, investigationPlayers, players } from '@/lib/db/schema'
 import { buildCampaignPrompt } from '@/lib/ai/prompts/campaign-system'
@@ -43,7 +44,13 @@ export async function POST(
     })
   }
 
-  const { materialType, audience } = body
+  const { materialType } = body
+
+  // W-2: Validate audience against the allowed enum before injecting into the prompt
+  const validAudiences = ['general_public', 'decision_maker', 'media', 'legal'] as const
+  const audience = body.audience && (validAudiences as readonly string[]).includes(body.audience)
+    ? body.audience
+    : 'general_public'
 
   if (!materialType) {
     return new Response(JSON.stringify({ error: 'materialType is required' }), {
@@ -131,7 +138,8 @@ export async function POST(
   const systemPrompt = buildCampaignPrompt(materialType)
 
   let parsed: ReturnType<typeof campaignMaterialSchema.parse>
-  let rawText: string
+  // C-2: Initialize to empty string so the retry block can safely check it
+  let rawText = ''
 
   try {
     const { text } = await generateText({
@@ -146,8 +154,23 @@ export async function POST(
     const json = JSON.parse(cleaned)
     parsed = campaignMaterialSchema.parse(json)
   } catch (firstError: unknown) {
-    // One retry: append the validation error to the conversation
-    const errorMessage = firstError instanceof Error ? firstError.message : String(firstError)
+    // C-2: If generateText threw before rawText was assigned, we have nothing to retry with
+    if (!rawText) {
+      console.error('Campaign material generation failed before producing output:', firstError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate campaign material spec' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // C-1: Build a safe retry message — strip to field paths and error codes only.
+    // Never include raw error message text (prompt injection vector).
+    let safeErrorMessage: string
+    if (firstError instanceof ZodError) {
+      safeErrorMessage = firstError.issues.map((i) => `${i.path.join('.')}: ${i.code}`).join('; ')
+    } else {
+      safeErrorMessage = 'Invalid JSON. Return only a valid JSON object.'
+    }
 
     try {
       const { text: retryText } = await generateText({
@@ -157,11 +180,11 @@ export async function POST(
           { role: 'user', content: userMessage },
           {
             role: 'assistant',
-            content: rawText!,
+            content: rawText,
           },
           {
             role: 'user',
-            content: `Your previous response failed validation: ${errorMessage}. Fix and return valid JSON.`,
+            content: `Your previous response failed validation: ${safeErrorMessage}. Fix and return valid JSON.`,
           },
         ],
       })

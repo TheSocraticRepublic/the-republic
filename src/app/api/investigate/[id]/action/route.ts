@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { investigations, campaignMaterials } from '@/lib/db/schema'
 import { MATERIAL_TYPE_LABELS, MATERIAL_TYPE_DESCRIPTIONS } from '@/lib/campaign/schemas'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 
 // POST: Initialize campaign — update campaignOpenedAt (idempotent), return available material types
 export async function POST(
@@ -32,12 +32,12 @@ export async function POST(
     })
   }
 
-  // Mark campaign as opened (idempotent — same pattern as lensOpenedAt)
-  if (!investigation.campaignOpenedAt) {
-    await db.update(investigations)
-      .set({ campaignOpenedAt: new Date(), updatedAt: new Date() })
-      .where(and(eq(investigations.id, id), eq(investigations.userId, userId)))
-  }
+  // W-3: Mark campaign as opened atomically — COALESCE preserves the first-set timestamp.
+  // Avoids TOCTOU: the read-then-write pattern above could overwrite a timestamp set
+  // by a concurrent request between our SELECT and UPDATE.
+  await db.update(investigations)
+    .set({ campaignOpenedAt: sql`COALESCE(campaign_opened_at, NOW())`, updatedAt: new Date() })
+    .where(and(eq(investigations.id, id), eq(investigations.userId, userId)))
 
   // Return available material types with labels and descriptions
   const materialTypes = Object.keys(MATERIAL_TYPE_LABELS).map((type) => ({

@@ -11,7 +11,7 @@ const campaignMaterialBase = z.object({
     text: z.string(),
     url: z.string().optional(),
     documentId: z.string().uuid().optional(),
-  })),
+  })).min(1),
   audience: z.enum(['general_public', 'decision_maker', 'media', 'legal']),
   jurisdiction: z.object({
     name: z.string(),
@@ -66,7 +66,10 @@ export const socialPostSpecSchema = campaignMaterialBase.extend({
     characterCount: z.number(),
     hashtags: z.array(z.string()),
     source: z.string(),
-  })).min(1),
+  }).refine(
+    (v) => Math.abs(v.characterCount - v.text.length) <= 5,
+    { message: 'characterCount must be within 5 characters of actual text length' }
+  )).min(1),
 })
 
 export const talkingPointsSpecSchema = campaignMaterialBase.extend({
@@ -94,7 +97,10 @@ export const timelineSpecSchema = campaignMaterialBase.extend({
     action: z.string(),
     critical: z.boolean(),
   })),
-})
+}).refine(
+  (data) => data.events.length > 0 || data.deadlines.length > 0,
+  { message: 'At least one event or deadline is required' }
+)
 
 export const comparisonSpecSchema = campaignMaterialBase.extend({
   materialType: z.literal('comparison'),

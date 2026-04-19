@@ -165,6 +165,15 @@ describe('sources array', () => {
     })
     expect(result.success).toBe(false)
   })
+
+  // W-4: sources must have at least one entry
+  it('rejects an empty sources array', () => {
+    const result = infographicSpecSchema.safeParse({
+      ...VALID_INFOGRAPHIC,
+      sources: [],
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('missing required base fields', () => {
@@ -245,6 +254,24 @@ describe('social_post schema', () => {
     })
     expect(result.success).toBe(false)
   })
+
+  // W-6: characterCount must be within 5 of actual text length
+  it('rejects a variation where characterCount is far from actual text length', () => {
+    const result = socialPostSpecSchema.safeParse({
+      ...VALID_SOCIAL,
+      variations: [{ ...VALID_SOCIAL.variations[0], characterCount: 200 }],
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts a variation where characterCount is within 5 of actual text length', () => {
+    const text = VALID_SOCIAL.variations[0].text
+    const result = socialPostSpecSchema.safeParse({
+      ...VALID_SOCIAL,
+      variations: [{ ...VALID_SOCIAL.variations[0], characterCount: text.length + 3 }],
+    })
+    expect(result.success).toBe(true)
+  })
 })
 
 describe('timeline schema', () => {
@@ -260,8 +287,19 @@ describe('timeline schema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('accepts a timeline with empty events and deadlines arrays', () => {
+  // W-5: at least one of events or deadlines must be non-empty
+  it('rejects a timeline with both events and deadlines empty', () => {
     const result = timelineSpecSchema.safeParse({ ...VALID_TIMELINE, events: [], deadlines: [] })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts a timeline with only events populated', () => {
+    const result = timelineSpecSchema.safeParse({ ...VALID_TIMELINE, deadlines: [] })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts a timeline with only deadlines populated', () => {
+    const result = timelineSpecSchema.safeParse({ ...VALID_TIMELINE, events: [] })
     expect(result.success).toBe(true)
   })
 })
