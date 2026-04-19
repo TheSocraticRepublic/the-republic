@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
-import { investigations, players, investigationPlayers } from '@/lib/db/schema'
+import { investigations, players, investigationPlayers, playerTypeEnum, investigationPlayerRoleEnum } from '@/lib/db/schema'
 import { LENS_CONTEXT_SYSTEM_PROMPT } from '@/lib/ai/prompts/lens-context-system'
 import { PLAYER_EXTRACTION_SYSTEM_PROMPT } from '@/lib/ai/prompts/player-extraction-system'
 import { anthropic } from '@ai-sdk/anthropic'
@@ -43,11 +43,11 @@ export async function POST(
     })
   }
 
-  // Update lensOpenedAt
+  // Update lensOpenedAt (scoped to this user to prevent cross-user writes)
   if (!investigation.lensOpenedAt) {
     await db.update(investigations)
       .set({ lensOpenedAt: new Date(), updatedAt: new Date() })
-      .where(eq(investigations.id, id))
+      .where(and(eq(investigations.id, id), eq(investigations.userId, userId)))
   }
 
   // Fire player extraction in background (non-blocking)
@@ -105,18 +105,24 @@ async function extractPlayers(
 
   // Upsert players and create junction records
   for (const ep of extractedPlayers) {
-    // Validate playerType and role against enum values
-    const validPlayerTypes = ['company', 'official', 'agency', 'organization', 'rights_holder']
-    const validRoles = ['beneficiary', 'decision_maker', 'affected', 'proponent', 'regulator', 'rights_holder', 'title_holder']
+    // Validate playerType and role against the actual enum definitions in the schema
+    const validPlayerTypes = playerTypeEnum.enumValues
+    const validRoles = investigationPlayerRoleEnum.enumValues
 
-    if (!validPlayerTypes.includes(ep.playerType)) continue
-    if (!validRoles.includes(ep.role)) continue
+    if (!validPlayerTypes.includes(ep.playerType as any)) continue
+    if (!validRoles.includes(ep.role as any)) continue
+
+    // Sanitize string fields: trim and cap lengths
+    const name = (ep.name || '').trim().slice(0, 500)
+    if (!name) continue
+    const description = ep.description ? ep.description.trim().slice(0, 2000) : null
+    const context = ep.context ? ep.context.trim().slice(0, 2000) : null
 
     // Check if player already exists
     const existing = await db
       .select({ id: players.id })
       .from(players)
-      .where(eq(players.name, ep.name))
+      .where(eq(players.name, name))
       .limit(1)
 
     let playerId: string
@@ -127,24 +133,27 @@ async function extractPlayers(
       const [newPlayer] = await db
         .insert(players)
         .values({
-          name: ep.name,
+          name,
           playerType: ep.playerType as any, // validated above
-          description: ep.description || null,
+          description,
         })
         .returning({ id: players.id })
       playerId = newPlayer.id
     }
 
-    // Create junction record (ignore if duplicate via unique constraint)
+    // Create junction record (ignore duplicate unique constraint violations only)
     try {
       await db.insert(investigationPlayers).values({
         investigationId,
         playerId,
         role: ep.role as any, // validated above
-        context: ep.context || null,
+        context,
       })
-    } catch {
-      // Unique constraint violation — player already linked with this role
+    } catch (err: any) {
+      // Only swallow unique constraint violations (PostgreSQL code 23505)
+      if (err?.code !== '23505') {
+        console.error('Failed to link player to investigation:', err)
+      }
     }
   }
 }
