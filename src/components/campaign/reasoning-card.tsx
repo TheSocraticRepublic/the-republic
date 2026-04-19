@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MATERIAL_TYPE_LABELS } from '@/lib/campaign/schemas'
 import { InfographicPreview } from '@/components/campaign/infographic-preview'
 
@@ -278,6 +278,28 @@ function SpecView({ materialType, spec }: { materialType: string; spec: Record<s
 export function ReasoningCard({ materialType, content, reasoning, title }: ReasoningCardProps) {
   const [copied, setCopied] = useState(false)
   const [showClaudeHint, setShowClaudeHint] = useState(false)
+  const popoverRef = useRef<HTMLDivElement>(null)
+
+  // Close popover on click-outside or Escape
+  useEffect(() => {
+    if (!showClaudeHint) return
+
+    function handleClickOutside(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setShowClaudeHint(false)
+      }
+    }
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShowClaudeHint(false)
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [showClaudeHint])
 
   let spec: Record<string, unknown> = {}
   try {
@@ -295,7 +317,8 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
     a.href = url
     a.download = `${materialType}-${Date.now()}.json`
     a.click()
-    URL.revokeObjectURL(url)
+    // Defer revoke so Safari has time to initiate the download before the URL is freed
+    setTimeout(() => URL.revokeObjectURL(url), 100)
   }
 
   async function handleCopy() {
@@ -356,7 +379,7 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
             Download JSON
           </button>
           {/* Open in Claude — shows the Artifacts template instructions */}
-          <div className="relative">
+          <div className="relative" ref={popoverRef}>
             <button
               onClick={() => setShowClaudeHint((v) => !v)}
               className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"

@@ -20,6 +20,8 @@
 import { useRef, useState } from 'react'
 import { toPng, toSvg } from 'html-to-image'
 
+const EXPORT_ERROR_MSG = 'Export failed — try using Copy JSON instead'
+
 export interface InfographicPreviewProps {
   spec: {
     title: string
@@ -51,6 +53,12 @@ function toBarWidth(value: string | number, max: number): number {
 export function InfographicPreview({ spec }: InfographicPreviewProps) {
   const nodeRef = useRef<HTMLDivElement>(null)
   const [exporting, setExporting] = useState<'png' | 'svg' | null>(null)
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  function showExportError() {
+    setExportError(EXPORT_ERROR_MSG)
+    setTimeout(() => setExportError(null), 3000)
+  }
 
   const max = maxNumericValue(spec.dataPoints)
 
@@ -64,7 +72,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
       a.download = `infographic-${Date.now()}.png`
       a.click()
     } catch {
-      // Browser sandbox may block — no-op
+      showExportError()
     } finally {
       setExporting(null)
     }
@@ -80,7 +88,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
       a.download = `infographic-${Date.now()}.svg`
       a.click()
     } catch {
-      // Browser sandbox may block — no-op
+      showExportError()
     } finally {
       setExporting(null)
     }
@@ -89,7 +97,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
   return (
     <div className="space-y-3">
       {/* Export controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <button
           onClick={handleDownloadPng}
           disabled={exporting !== null}
@@ -114,6 +122,11 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
         >
           {exporting === 'svg' ? 'Exporting...' : 'Download SVG'}
         </button>
+        {exportError && (
+          <span className="text-xs" style={{ color: '#C85B5B' }}>
+            {exportError}
+          </span>
+        )}
       </div>
 
       {/* Infographic card — this is the node captured by html-to-image */}
