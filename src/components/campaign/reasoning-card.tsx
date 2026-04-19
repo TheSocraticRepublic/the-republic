@@ -321,10 +321,10 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
       </div>
 
       {/* Two-column body */}
-      <div className="grid grid-cols-1 sm:grid-cols-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 items-stretch">
         {/* Left: Spec */}
         <div
-          className="px-6 py-6 border-b sm:border-b-0 sm:border-r"
+          className="h-full px-6 py-6 border-b sm:border-b-0 sm:border-r min-h-[180px]"
           style={{
             backgroundColor: '#faf9f7',
             borderColor: 'rgba(0,0,0,0.06)',
@@ -341,8 +341,8 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
 
         {/* Right: Reasoning */}
         <div
-          className="px-6 py-6"
-          style={{ backgroundColor: 'rgba(200, 91, 91, 0.03)' }}
+          className="h-full px-6 py-6 min-h-[180px]"
+          style={{ backgroundColor: 'rgba(200, 91, 91, 0.06)' }}
         >
           <p
             className="mb-4 text-[10px] font-semibold uppercase tracking-widest"
