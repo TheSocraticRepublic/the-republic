@@ -132,7 +132,14 @@ function TimelineView({ spec }: { spec: Record<string, unknown> }) {
   const allItems = [
     ...events.map((e) => ({ ...e, kind: 'event' as const })),
     ...deadlines.map((d) => ({ ...d, event: d.action, significance: '', kind: 'deadline' as const })),
-  ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  ].sort((a, b) => {
+    const aTime = new Date(a.date).getTime()
+    const bTime = new Date(b.date).getTime()
+    if (isNaN(aTime) && isNaN(bTime)) return 0
+    if (isNaN(aTime)) return 1
+    if (isNaN(bTime)) return -1
+    return aTime - bTime
+  })
 
   return (
     <div className="space-y-2">
