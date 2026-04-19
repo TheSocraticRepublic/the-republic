@@ -150,7 +150,7 @@ export async function POST(
     rawText = text
 
     // Strip any accidental markdown code fences
-    const cleaned = rawText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
+    const cleaned = rawText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
     const json = JSON.parse(cleaned)
     parsed = campaignMaterialSchema.parse(json)
   } catch (firstError: unknown) {
@@ -189,7 +189,7 @@ export async function POST(
         ],
       })
 
-      const cleaned = retryText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
+      const cleaned = retryText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
       const json = JSON.parse(cleaned)
       parsed = campaignMaterialSchema.parse(json)
     } catch (retryError: unknown) {
