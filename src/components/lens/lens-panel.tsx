@@ -42,11 +42,14 @@ export function LensPanel({
     if (deepenStarted.current) return
     deepenStarted.current = true
 
+    const controller = new AbortController()
+
     async function streamDeepen() {
       setIsStreaming(true)
       try {
         const res = await fetch(`/api/investigate/${investigationId}/deepen`, {
           method: 'POST',
+          signal: controller.signal,
         })
 
         if (!res.ok || !res.body) {
@@ -67,6 +70,7 @@ export function LensPanel({
           setHistoricalContent(accumulated)
         }
       } catch (err) {
+        if ((err as Error).name === 'AbortError') return
         console.error('[LensPanel] deepen stream error:', err)
         setDeepenError(true)
       } finally {
@@ -75,14 +79,20 @@ export function LensPanel({
     }
 
     streamDeepen()
+
+    return () => {
+      controller.abort()
+    }
   }, [investigationId])
 
   // 2. Poll GET /api/investigate/[id]/players (every 3s, up to 15s)
   useEffect(() => {
     const maxPolls = 5 // 5 * 3s = 15s
     pollCountRef.current = 0
+    const cancelled = { current: false }
 
     async function fetchPlayers() {
+      if (cancelled.current) return
       if (pollCountRef.current >= maxPolls) return
 
       try {
@@ -91,7 +101,7 @@ export function LensPanel({
           const data = await res.json()
           const fetched: Player[] = data.players ?? []
           if (fetched.length > 0) {
-            setPlayers(fetched)
+            if (!cancelled.current) setPlayers(fetched)
             return // stop polling once we have data
           }
         }
@@ -101,14 +111,17 @@ export function LensPanel({
 
       pollCountRef.current += 1
 
-      if (pollCountRef.current < maxPolls) {
+      if (!cancelled.current && pollCountRef.current < maxPolls) {
         setTimeout(fetchPlayers, 3000)
       }
     }
 
     // Start first poll after a small delay (extraction is triggered by deepen)
     const timer = setTimeout(fetchPlayers, 2000)
-    return () => clearTimeout(timer)
+    return () => {
+      cancelled.current = true
+      clearTimeout(timer)
+    }
   }, [investigationId])
 
   return (

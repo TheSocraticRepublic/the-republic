@@ -26,7 +26,7 @@ export function InvestigationPage({
   const [gadflySessionId, setGadflySessionId] = useState<string | null>(null)
 
   function handleGoDeeper() {
-    setLensOpen((prev) => !prev)
+    setLensOpen(true)
   }
 
   function handleOpenGadfly() {

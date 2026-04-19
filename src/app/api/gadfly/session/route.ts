@@ -13,14 +13,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  let body: { documentId?: string; title?: string; mode?: 'socratic' | 'direct' }
+  let body: { documentId?: string; title?: string; mode?: 'socratic' | 'direct'; investigationId?: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { documentId, mode = 'socratic' } = body
+  const { documentId, mode = 'socratic', investigationId } = body
   let { title } = body
 
   const db = getDb()
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
     .values({
       userId,
       documentId: documentId ?? null,
+      investigationId: investigationId ?? null,
       title,
       mode,
     })

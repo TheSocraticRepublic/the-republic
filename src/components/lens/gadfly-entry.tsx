@@ -49,19 +49,22 @@ export function GadflyEntry({
         className="group inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-150"
         style={{
           backgroundColor: 'transparent',
-          color: '#a38339',
+          color: '#C8A84B',
+          opacity: 0.8,
           border: '1px solid rgba(200,168,75,0.25)',
         }}
         onMouseEnter={(e) => {
           const el = e.currentTarget
           el.style.backgroundColor = 'rgba(200,168,75,0.10)'
           el.style.color = '#C8A84B'
+          el.style.opacity = '1'
           el.style.borderColor = 'rgba(200,168,75,0.4)'
         }}
         onMouseLeave={(e) => {
           const el = e.currentTarget
           el.style.backgroundColor = 'transparent'
-          el.style.color = '#a38339'
+          el.style.color = '#C8A84B'
+          el.style.opacity = '0.8'
           el.style.borderColor = 'rgba(200,168,75,0.25)'
         }}
       >

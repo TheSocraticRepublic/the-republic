@@ -24,6 +24,21 @@ interface SessionData {
   complexityLevel: number
 }
 
+interface Turn {
+  id: string
+  role: 'gadfly' | 'citizen'
+  content: string
+  questionType?: string | null
+  turnIndex: number
+  createdAt: Date | string
+}
+
+interface InsightMarker {
+  id: string
+  turnId: string
+  insight: string
+}
+
 export function GadflySheet({
   open,
   onOpenChange,
@@ -34,6 +49,8 @@ export function GadflySheet({
 }: GadflySheetProps) {
   const [resolvedSessionId, setResolvedSessionId] = useState<string | null>(sessionId)
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
+  const [sessionTurns, setSessionTurns] = useState<Turn[]>([])
+  const [sessionInsights, setSessionInsights] = useState<Record<string, InsightMarker[]>>({})
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -96,6 +113,8 @@ export function GadflySheet({
       if (!res.ok) return
       const data = await res.json()
       setSessionData(data.session ?? null)
+      setSessionTurns(data.turns ?? [])
+      setSessionInsights(data.insightsByTurn ?? {})
     } catch {
       // Non-fatal
     }
@@ -106,19 +125,30 @@ export function GadflySheet({
       <Dialog.Portal>
         {/* Dark overlay — lets the investigation page bleed through at left */}
         <Dialog.Overlay
+          forceMount
+          data-state={open ? 'open' : 'closed'}
           className="fixed inset-0 z-40"
-          style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
+          style={{
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            opacity: open ? 1 : 0,
+            visibility: open ? 'visible' : 'hidden',
+            transition: 'opacity 200ms ease-out, visibility 200ms ease-out',
+            pointerEvents: open ? 'auto' : 'none',
+          }}
         />
 
-        {/* Slide-over panel — 80vw from the right */}
+        {/* Slide-over panel — capped at 680px, responsive on mobile */}
         <Dialog.Content
+          forceMount
+          data-state={open ? 'open' : 'closed'}
           className="fixed top-0 right-0 z-50 h-full flex flex-col focus:outline-none"
           style={{
-            width: '80vw',
+            width: 'min(680px, 90vw)',
             backgroundColor: '#0a0a0a',
             borderLeft: '1px solid rgba(255,255,255,0.07)',
             transform: open ? 'translateX(0)' : 'translateX(100%)',
-            transition: 'transform 200ms ease-out',
+            visibility: open ? 'visible' : 'hidden',
+            transition: 'transform 200ms ease-out, visibility 200ms ease-out',
           }}
         >
           {/* Header */}
@@ -198,8 +228,8 @@ export function GadflySheet({
             ) : (
               <GadflySession
                 session={sessionData}
-                initialTurns={[]}
-                initialInsightsByTurn={{}}
+                initialTurns={sessionTurns}
+                initialInsightsByTurn={sessionInsights}
                 questionTypeCounts={{}}
               />
             )}

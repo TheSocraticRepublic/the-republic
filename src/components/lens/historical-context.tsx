@@ -1,13 +1,20 @@
 // HistoricalContext — renders streamed historical context text on a light
 // content island matching the briefing view pattern.
 
+import React from 'react'
+
 interface HistoricalContextProps {
   content: string   // Streaming text (grows as stream progresses)
   isStreaming: boolean
 }
 
-function renderInline(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, '$1')
+function renderInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*.*?\*\*)/g)
+  return parts.map((part, i) => {
+    const boldMatch = part.match(/^\*\*(.*)\*\*$/)
+    if (boldMatch) return <strong key={i} className="font-semibold">{boldMatch[1]}</strong>
+    return part
+  })
 }
 
 function ProseSection({ content }: { content: string }) {
