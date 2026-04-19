@@ -1,13 +1,17 @@
 'use client'
 
+import { useState } from 'react'
 import { BriefingView } from '@/components/briefing/briefing-view'
 import { EscalationCard } from './escalation-card'
+import { LensPanel } from '@/components/lens/lens-panel'
+import { GadflySheet } from '@/components/lens/gadfly-sheet'
 
 interface InvestigationPageProps {
   id: string
   concern: string
   jurisdictionName: string | null
   briefingText: string
+  initialLensOpen?: boolean   // true when lensOpenedAt is set (returning user)
 }
 
 export function InvestigationPage({
@@ -15,10 +19,23 @@ export function InvestigationPage({
   concern,
   jurisdictionName,
   briefingText,
+  initialLensOpen = false,
 }: InvestigationPageProps) {
+  const [lensOpen, setLensOpen] = useState(initialLensOpen)
+  const [gadflyOpen, setGadflyOpen] = useState(false)
+  const [gadflySessionId, setGadflySessionId] = useState<string | null>(null)
+
+  function handleGoDeeper() {
+    setLensOpen((prev) => !prev)
+  }
+
+  function handleOpenGadfly() {
+    setGadflyOpen(true)
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-12 space-y-10">
-      {/* Concern context card */}
+      {/* 1. Concern context card */}
       <div
         className="rounded-xl border px-5 py-4"
         style={{
@@ -37,7 +54,7 @@ export function InvestigationPage({
         <p className="text-sm leading-relaxed text-neutral-300">{concern}</p>
       </div>
 
-      {/* Briefing content */}
+      {/* 2. Briefing content */}
       <section>
         <div
           className="mb-6 h-px w-full"
@@ -46,14 +63,41 @@ export function InvestigationPage({
         <BriefingView text={briefingText} isStreaming={false} />
       </section>
 
-      {/* Escalation paths */}
+      {/* 3. Escalation paths */}
       <section>
         <div
           className="mb-6 h-px w-full"
           style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
         />
-        <EscalationCard investigationId={id} />
+        <EscalationCard
+          investigationId={id}
+          onGoDeeper={handleGoDeeper}
+          lensOpen={lensOpen}
+        />
       </section>
+
+      {/* 4. Lens panel — conditionally rendered */}
+      {lensOpen && (
+        <section>
+          <LensPanel
+            investigationId={id}
+            concern={concern}
+            jurisdictionName={jurisdictionName}
+            briefingText={briefingText}
+            onOpenGadfly={handleOpenGadfly}
+          />
+        </section>
+      )}
+
+      {/* 5. Gadfly slide-over dialog */}
+      <GadflySheet
+        open={gadflyOpen}
+        onOpenChange={setGadflyOpen}
+        investigationId={id}
+        sessionId={gadflySessionId}
+        concern={concern}
+        onSessionCreated={setGadflySessionId}
+      />
     </div>
   )
 }

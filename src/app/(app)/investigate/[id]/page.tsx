@@ -29,6 +29,7 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
       briefingText: investigations.briefingText,
       status: investigations.status,
       createdAt: investigations.createdAt,
+      lensOpenedAt: investigations.lensOpenedAt,
     })
     .from(investigations)
     .where(and(eq(investigations.id, id), eq(investigations.userId, userId)))
@@ -59,6 +60,7 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
       concern={investigation.concern}
       jurisdictionName={investigation.jurisdictionName ?? null}
       briefingText={investigation.briefingText}
+      initialLensOpen={!!investigation.lensOpenedAt}
     />
   )
 }

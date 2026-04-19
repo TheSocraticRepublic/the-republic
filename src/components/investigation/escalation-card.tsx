@@ -1,11 +1,17 @@
 // Escalation card — shown below the briefing, presents two paths forward.
-// Both actions are disabled in Phase 1D; Phases 2 and 3 will enable them.
+// Phase 2B: "Go Deeper" (Gadfly/Lens) enabled. "Take Action" stays disabled.
 
 interface EscalationCardProps {
   investigationId: string
+  onGoDeeper: () => void     // callback when "Go Deeper" is clicked
+  lensOpen: boolean          // whether the lens panel is currently showing
 }
 
-export function EscalationCard({ investigationId: _ }: EscalationCardProps) {
+export function EscalationCard({
+  investigationId: _,
+  onGoDeeper,
+  lensOpen,
+}: EscalationCardProps) {
   return (
     <div
       className="rounded-2xl border"
@@ -21,7 +27,7 @@ export function EscalationCard({ investigationId: _ }: EscalationCardProps) {
       </div>
 
       <div className="grid grid-cols-1 gap-px sm:grid-cols-2" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-        {/* Left: Go Deeper (Gadfly / Lens) */}
+        {/* Left: Go Deeper (Gadfly / Lens) — enabled */}
         <div className="flex flex-col gap-4 bg-neutral-950 px-6 py-6 sm:rounded-bl-2xl">
           <div className="flex items-center gap-2.5">
             <span
@@ -38,25 +44,40 @@ export function EscalationCard({ investigationId: _ }: EscalationCardProps) {
           <p className="text-sm leading-relaxed text-neutral-400">
             Explore this issue with guided questions, see who the key players are, and understand the deeper context.
           </p>
-          <div className="mt-auto flex flex-col items-start gap-2">
+          <div className="mt-auto">
             <button
-              disabled
-              className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold cursor-not-allowed opacity-30 transition-opacity"
+              onClick={onGoDeeper}
+              className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-150"
               style={{
-                backgroundColor: 'rgba(200, 168, 75, 0.12)',
+                backgroundColor: lensOpen
+                  ? 'rgba(200, 168, 75, 0.20)'
+                  : 'rgba(200, 168, 75, 0.12)',
                 color: '#C8A84B',
-                border: '1px solid rgba(200, 168, 75, 0.2)',
+                border: lensOpen
+                  ? '1px solid rgba(200, 168, 75, 0.45)'
+                  : '1px solid rgba(200, 168, 75, 0.2)',
+              }}
+              onMouseEnter={(e) => {
+                if (!lensOpen) {
+                  const el = e.currentTarget
+                  el.style.backgroundColor = 'rgba(200,168,75,0.18)'
+                  el.style.borderColor = 'rgba(200,168,75,0.35)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!lensOpen) {
+                  const el = e.currentTarget
+                  el.style.backgroundColor = 'rgba(200,168,75,0.12)'
+                  el.style.borderColor = 'rgba(200,168,75,0.2)'
+                }
               }}
             >
-              Go Deeper
+              {lensOpen ? 'Showing deeper layer' : 'Go Deeper'}
             </button>
-            <span className="rounded-md px-2 py-0.5 text-[10px] font-medium" style={{ backgroundColor: 'rgba(200, 168, 75, 0.10)', color: '#C8A84B' }}>
-              Coming soon
-            </span>
           </div>
         </div>
 
-        {/* Right: Take Action (Lever / Campaign) */}
+        {/* Right: Take Action (Lever / Campaign) — still disabled */}
         <div className="flex flex-col gap-4 bg-neutral-950 px-6 py-6 sm:rounded-br-2xl">
           <div className="flex items-center gap-2.5">
             <span
