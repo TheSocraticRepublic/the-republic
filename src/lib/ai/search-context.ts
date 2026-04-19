@@ -16,7 +16,7 @@ export function buildSearchResultsContext(
         try {
           return new URL(result.url).hostname
         } catch {
-          return result.url
+          return 'unknown'
         }
       })()
       const title = result.title || docType

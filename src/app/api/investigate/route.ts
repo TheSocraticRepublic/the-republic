@@ -1,10 +1,7 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { investigations, jurisdictions } from '@/lib/db/schema'
-import {
-  buildBriefingPrompt,
-  BRIEFING_PROMPT_VERSION,
-} from '@/lib/ai/prompts/briefing-system'
+import { buildBriefingPrompt } from '@/lib/ai/prompts/briefing-system'
 import { loadJurisdictionModule } from '@/lib/jurisdictions'
 import {
   getDocumentStructureContext,
@@ -90,18 +87,28 @@ export async function POST(request: NextRequest) {
   // --- Stage 1: Create investigation record ---
 
   const concernCategory = detectConcernCategory(concern)
-  const [investigation] = await db
-    .insert(investigations)
-    .values({
-      userId,
-      concern: concern.trim(),
-      jurisdictionId: jurisdictionId || null,
-      concernCategory,
-      environmentalReviewType:
-        concernCategory === 'conservation' ? 'bc_eao' : null,
-      status: 'active',
+  let investigation: { id: string }
+  try {
+    const [inserted] = await db
+      .insert(investigations)
+      .values({
+        userId,
+        concern: concern.trim(),
+        jurisdictionId: jurisdictionId || null,
+        concernCategory,
+        environmentalReviewType:
+          concernCategory === 'conservation' ? 'bc_eao' : null,
+        status: 'active',
+      })
+      .returning({ id: investigations.id })
+    investigation = inserted
+  } catch (err) {
+    console.error('Failed to create investigation record', err)
+    return new Response(JSON.stringify({ error: 'Failed to create investigation' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
     })
-    .returning({ id: investigations.id })
+  }
 
   // Load BC jurisdiction module
   const bcModule = await loadJurisdictionModule('bc')
@@ -217,7 +224,7 @@ export async function POST(request: NextRequest) {
   const systemPrompt = buildBriefingPrompt({
     jurisdictionModule: bcModule,
     documentStructures: documentStructureKnowledge,
-    isConservationConcern: isConservationConcern(concern),
+    isConservationConcern: concernCategory === 'conservation',
   })
 
   // Build user message
@@ -254,11 +261,8 @@ export async function POST(request: NextRequest) {
     },
   })
 
-  // Log prompt version for observability
-  void BRIEFING_PROMPT_VERSION
-
   // Return the stream with the investigation ID in a custom header
-  const response = result.toTextStreamResponse()
-  response.headers.set('X-Investigation-Id', investigation.id)
-  return response
+  return result.toTextStreamResponse({
+    headers: { 'X-Investigation-Id': investigation.id },
+  })
 }
