@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { MATERIAL_TYPE_LABELS } from '@/lib/campaign/schemas'
+import { InfographicPreview } from '@/components/campaign/infographic-preview'
 
 interface ReasoningCardProps {
   materialType: string
@@ -10,33 +11,69 @@ interface ReasoningCardProps {
   title: string
 }
 
-// Parse and render an infographic spec
+// Parse and render an infographic spec — with Data / Preview tab toggle
 function InfographicView({ spec }: { spec: Record<string, unknown> }) {
+  const [tab, setTab] = useState<'data' | 'preview'>('data')
   const dataPoints = (spec.dataPoints as Array<{ label: string; value: string | number; source: string; emphasis: boolean }>) ?? []
+
+  // Shape spec for InfographicPreview
+  const previewSpec = {
+    title: (spec.title as string) ?? 'Infographic',
+    subtitle: spec.subtitle as string | undefined,
+    dataPoints,
+    comparison: spec.comparison as { before: string; after: string; source: string } | undefined,
+    timeline: spec.timeline as Array<{ date: string; event: string }> | undefined,
+    callToAction: (spec.callToAction as string) ?? '',
+  }
+
   return (
-    <div className="space-y-2">
-      {dataPoints.map((dp, i) => (
-        <div
-          key={i}
-          className="flex items-start justify-between gap-4 rounded-lg px-3 py-2.5"
-          style={{
-            backgroundColor: dp.emphasis ? 'rgba(200, 91, 91, 0.07)' : 'rgba(0,0,0,0.04)',
-            border: dp.emphasis ? '1px solid rgba(200,91,91,0.18)' : '1px solid transparent',
-          }}
-        >
-          <span className="text-sm" style={{ color: '#44403c' }}>{dp.label}</span>
-          <span
-            className="text-sm font-semibold flex-shrink-0"
-            style={{ color: dp.emphasis ? '#C85B5B' : '#292524' }}
+    <div className="space-y-3">
+      {/* Tab toggle */}
+      <div className="flex items-center gap-1">
+        {(['data', 'preview'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className="rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors"
+            style={{
+              backgroundColor: tab === t ? 'rgba(200,91,91,0.1)' : 'transparent',
+              color: tab === t ? '#C85B5B' : '#a8a29e',
+              border: tab === t ? '1px solid rgba(200,91,91,0.2)' : '1px solid transparent',
+            }}
           >
-            {String(dp.value)}
-          </span>
+            {t === 'data' ? 'Data' : 'Preview'}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'data' ? (
+        <div className="space-y-2">
+          {dataPoints.map((dp, i) => (
+            <div
+              key={i}
+              className="flex items-start justify-between gap-4 rounded-lg px-3 py-2.5"
+              style={{
+                backgroundColor: dp.emphasis ? 'rgba(200, 91, 91, 0.07)' : 'rgba(0,0,0,0.04)',
+                border: dp.emphasis ? '1px solid rgba(200,91,91,0.18)' : '1px solid transparent',
+              }}
+            >
+              <span className="text-sm" style={{ color: '#44403c' }}>{dp.label}</span>
+              <span
+                className="text-sm font-semibold flex-shrink-0"
+                style={{ color: dp.emphasis ? '#C85B5B' : '#292524' }}
+              >
+                {String(dp.value)}
+              </span>
+            </div>
+          ))}
+          {!!spec.callToAction && (
+            <p className="mt-3 text-xs font-medium" style={{ color: '#78716c' }}>
+              Call to action: {spec.callToAction as string}
+            </p>
+          )}
         </div>
-      ))}
-      {!!spec.callToAction && (
-        <p className="mt-3 text-xs font-medium" style={{ color: '#78716c' }}>
-          Call to action: {spec.callToAction as string}
-        </p>
+      ) : (
+        <InfographicPreview spec={previewSpec} />
       )}
     </div>
   )
@@ -240,6 +277,7 @@ function SpecView({ materialType, spec }: { materialType: string; spec: Record<s
 
 export function ReasoningCard({ materialType, content, reasoning, title }: ReasoningCardProps) {
   const [copied, setCopied] = useState(false)
+  const [showClaudeHint, setShowClaudeHint] = useState(false)
 
   let spec: Record<string, unknown> = {}
   try {
@@ -317,6 +355,47 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
           >
             Download JSON
           </button>
+          {/* Open in Claude — shows the Artifacts template instructions */}
+          <div className="relative">
+            <button
+              onClick={() => setShowClaudeHint((v) => !v)}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{
+                backgroundColor: 'rgba(137,180,200,0.1)',
+                color: '#89b4c8',
+                border: '1px solid rgba(137,180,200,0.25)',
+              }}
+              aria-label="Open in Claude — show instructions"
+            >
+              Open in Claude
+            </button>
+            {showClaudeHint && (
+              <div
+                className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl p-4 shadow-lg"
+                style={{
+                  backgroundColor: '#fafaf9',
+                  border: '1px solid #e7e5e4',
+                }}
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: '#89b4c8' }}>
+                  Render in Claude Artifacts
+                </p>
+                <ol className="space-y-1.5 text-xs leading-relaxed" style={{ color: '#44403c' }}>
+                  <li>1. Click <strong>Copy JSON</strong> above to copy your spec</li>
+                  <li>2. Open <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#89b4c8' }}>claude.ai</a> in a new tab</li>
+                  <li>3. Use the prompt template from <code className="rounded px-1 py-0.5 text-[10px]" style={{ backgroundColor: 'rgba(0,0,0,0.06)', color: '#292524' }}>docs/claude-artifacts-template.md</code></li>
+                  <li>4. Paste the template prompt, then your JSON at the end</li>
+                </ol>
+                <button
+                  onClick={() => setShowClaudeHint(false)}
+                  className="mt-3 text-[10px]"
+                  style={{ color: '#a8a29e' }}
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
