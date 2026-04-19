@@ -158,7 +158,7 @@ function OutcomeButton({
   return (
     <button
       onClick={onClick}
-      className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100"
+      className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
       style={{
         backgroundColor: active
           ? accent

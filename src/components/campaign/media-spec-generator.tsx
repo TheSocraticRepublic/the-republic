@@ -98,7 +98,7 @@ export function MediaSpecGenerator({
             <button
               key={a}
               onClick={() => setAudience(a)}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100"
+              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
               style={{
                 backgroundColor: audience === a
                   ? 'rgba(200, 91, 91, 0.18)'
@@ -121,7 +121,7 @@ export function MediaSpecGenerator({
           <p className="text-xs" style={{ color: '#C85B5B' }}>{error}</p>
           <button
             onClick={handleGenerate}
-            className="text-xs underline"
+            className="text-xs underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
             style={{ color: '#C85B5B' }}
           >
             Try again
@@ -134,7 +134,7 @@ export function MediaSpecGenerator({
         <button
           onClick={handleGenerate}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity"
+          className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
           style={{
             backgroundColor: loading ? 'rgba(200,91,91,0.12)' : 'rgba(200, 91, 91, 0.18)',
             color: '#C85B5B',
@@ -157,7 +157,7 @@ export function MediaSpecGenerator({
         <button
           onClick={onCancel}
           disabled={loading}
-          className="text-sm text-neutral-600 hover:text-neutral-400 transition-colors"
+          className="text-sm text-neutral-600 hover:text-neutral-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
         >
           Cancel
         </button>
