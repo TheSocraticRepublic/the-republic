@@ -3,14 +3,15 @@ import { Sidebar } from './sidebar'
 interface AppShellProps {
   children: React.ReactNode
   userEmail?: string
+  displayName?: string
 }
 
-export function AppShell({ children, userEmail }: AppShellProps) {
+export function AppShell({ children, userEmail, displayName }: AppShellProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-950">
       {/* Sidebar */}
       <div className="hidden md:flex md:flex-shrink-0">
-        <Sidebar userEmail={userEmail} />
+        <Sidebar userEmail={userEmail} displayName={displayName} />
       </div>
 
       {/* Main content */}

@@ -13,6 +13,7 @@ import {
   index,
   uniqueIndex,
   boolean,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core'
 import { customType } from 'drizzle-orm/pg-core'
 
@@ -200,6 +201,41 @@ export const outcomeTypeEnum = pgEnum('outcome_type', [
   'policy_change',
   'assessment_decision',
   'other',
+])
+
+export const threadStatusEnum = pgEnum('thread_status', [
+  'open',
+  'locked',
+  'archived',
+])
+
+export const postStatusEnum = pgEnum('post_status', [
+  'visible',
+  'hidden',
+  'removed_by_author',
+])
+
+export const credentialTypeEnum = pgEnum('credential_type', [
+  'investigation_completed',
+  'foi_filed',
+  'foi_response_shared',
+  'campaign_used',
+  'outcome_tracked',
+  'forum_contribution',
+  'peer_review',
+  'jurisdiction_contributed',
+  'code_contributed',
+  'bug_report',
+  'translation',
+])
+
+export const credentialSourceEnum = pgEnum('credential_source', [
+  'investigation',
+  'peer_review',
+  'forum_post',
+  'campaign_material',
+  'lever_action',
+  'outcome',
 ])
 
 // --- Tables ---
@@ -677,5 +713,134 @@ export const investigationOutcomes = pgTable(
   (t) => [
     index('inv_outcomes_investigation_idx').on(t.investigationId),
     index('inv_outcomes_type_idx').on(t.outcomeType),
+  ]
+)
+
+// --- Forum / Identity Tables ---
+
+export const userProfiles = pgTable(
+  'user_profiles',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    displayName: text('display_name').notNull().unique(),
+    bio: text('bio'),
+    avatarUrl: text('avatar_url'),
+    displayNameChangedAt: timestamp('display_name_changed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('user_profiles_user_id_idx').on(t.userId),
+    index('user_profiles_display_name_idx').on(t.displayName),
+  ]
+)
+
+export const forumThreads = pgTable(
+  'forum_threads',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    investigationId: uuid('investigation_id').references(() => investigations.id, {
+      onDelete: 'set null',
+    }),
+    authorId: uuid('author_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    jurisdictionId: uuid('jurisdiction_id').references(() => jurisdictions.id, {
+      onDelete: 'set null',
+    }),
+    concernCategory: text('concern_category'),
+    status: threadStatusEnum('status').notNull().default('open'),
+    pinned: boolean('pinned').notNull().default(false),
+    postCount: integer('post_count').notNull().default(0),
+    lastPostAt: timestamp('last_post_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('forum_threads_author_id_idx').on(t.authorId),
+    index('forum_threads_investigation_id_idx').on(t.investigationId),
+    index('forum_threads_status_idx').on(t.status),
+    index('forum_threads_jurisdiction_id_idx').on(t.jurisdictionId),
+  ]
+)
+
+export const forumPosts = pgTable(
+  'forum_posts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    threadId: uuid('thread_id')
+      .notNull()
+      .references(() => forumThreads.id, { onDelete: 'cascade' }),
+    authorId: uuid('author_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    // parentId uses set null so nested replies survive parent deletion gracefully
+    parentId: uuid('parent_id').references((): AnyPgColumn => forumPosts.id, {
+      onDelete: 'set null',
+    }),
+    content: text('content').notNull(),
+    editedAt: timestamp('edited_at'),
+    status: postStatusEnum('status').notNull().default('visible'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('forum_posts_thread_id_idx').on(t.threadId),
+    index('forum_posts_author_id_idx').on(t.authorId),
+    index('forum_posts_parent_id_idx').on(t.parentId),
+  ]
+)
+
+export const peerReviews = pgTable(
+  'peer_reviews',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    investigationId: uuid('investigation_id')
+      .notNull()
+      .references(() => investigations.id, { onDelete: 'cascade' }),
+    reviewerId: uuid('reviewer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    factualAccuracy: smallint('factual_accuracy').notNull(),
+    sourceQuality: smallint('source_quality').notNull(),
+    missingContext: smallint('missing_context').notNull(),
+    strategicEffectiveness: smallint('strategic_effectiveness').notNull(),
+    jurisdictionalAccuracy: smallint('jurisdictional_accuracy').notNull(),
+    summary: text('summary'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('peer_reviews_investigation_id_idx').on(t.investigationId),
+    index('peer_reviews_reviewer_id_idx').on(t.reviewerId),
+    uniqueIndex('peer_reviews_unique_idx').on(t.investigationId, t.reviewerId),
+  ]
+)
+
+export const credentialEvents = pgTable(
+  'credential_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    credentialType: credentialTypeEnum('credential_type').notNull(),
+    weight: integer('weight').notNull(),
+    // Polymorphic reference — references investigations/peerReviews/forumPosts/campaignMaterials/leverActions/investigationOutcomes by sourceType.
+    // Referential integrity is application-enforced.
+    sourceId: uuid('source_id'),
+    sourceType: credentialSourceEnum('source_type'),
+    description: text('description'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('credential_events_user_id_idx').on(t.userId),
+    index('credential_events_credential_type_idx').on(t.credentialType),
+    index('credential_events_source_id_idx').on(t.sourceId),
   ]
 )

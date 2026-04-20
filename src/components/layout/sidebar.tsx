@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown } from 'lucide-react'
+import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useState } from 'react'
 
@@ -46,14 +46,16 @@ const arms = [
 
 interface SidebarProps {
   userEmail?: string
+  displayName?: string
 }
 
-export function Sidebar({ userEmail }: SidebarProps) {
+export function Sidebar({ userEmail, displayName }: SidebarProps) {
   const pathname = usePathname()
   const [expertToolsOpen, setExpertToolsOpen] = useState(false)
 
   const investigateActive = pathname === '/investigate'
   const investigationsActive = pathname === '/investigations' || (pathname.startsWith('/investigate/') && pathname !== '/investigate')
+  const profileActive = pathname === '/profile' || pathname.startsWith('/profile/')
 
   return (
     <nav className="flex h-full w-56 flex-col border-r border-white/[0.06] bg-black/40 backdrop-blur-xl">
@@ -143,6 +145,41 @@ export function Sidebar({ userEmail }: SidebarProps) {
           )}
         </Link>
 
+        {/* Profile */}
+        <Link
+          href="/profile"
+          className={clsx(
+            'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+            profileActive
+              ? 'bg-white/[0.09] text-neutral-100'
+              : 'text-neutral-300 hover:bg-white/[0.05] hover:text-neutral-100'
+          )}
+        >
+          <span
+            className={clsx(
+              'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
+              profileActive
+                ? 'bg-white/[0.10] border-white/[0.15]'
+                : 'border-white/[0.08] group-hover:bg-white/[0.06] group-hover:border-white/[0.12]'
+            )}
+          >
+            <User
+              size={14}
+              strokeWidth={1.75}
+              className={clsx(
+                profileActive ? 'text-neutral-100' : 'text-neutral-400 group-hover:text-neutral-200'
+              )}
+            />
+          </span>
+          <span className="flex flex-col">
+            <span className="font-semibold leading-tight">Profile</span>
+            <span className="text-[10px] text-neutral-600 leading-tight">Your identity</span>
+          </span>
+          {profileActive && (
+            <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
+          )}
+        </Link>
+
         {/* Divider */}
         <div className="mx-3 my-3 h-px" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />
 
@@ -215,10 +252,19 @@ export function Sidebar({ userEmail }: SidebarProps) {
 
       {/* User / sign out */}
       <div className="border-t border-white/[0.06] px-3 py-4">
-        {userEmail && (
-          <p className="mb-2 truncate px-3 text-[11px] text-neutral-500">
-            {userEmail}
-          </p>
+        {(displayName || userEmail) && (
+          <div className="mb-2 px-3">
+            {displayName ? (
+              <p className="truncate text-[12px] font-semibold text-neutral-300">
+                {displayName}
+              </p>
+            ) : null}
+            {userEmail && (
+              <p className="truncate text-[11px] text-neutral-500">
+                {userEmail}
+              </p>
+            )}
+          </div>
         )}
         <form action="/api/auth/signout" method="POST">
           <button
