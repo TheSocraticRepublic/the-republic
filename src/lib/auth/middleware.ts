@@ -20,10 +20,11 @@ export async function withAuth(request: NextRequest): Promise<NextResponse> {
     return redirectToLogin(request)
   }
 
-  // Pass user identity to downstream route handlers via request headers
+  // Pass user identity and current path to downstream route handlers via request headers
   const headers = new Headers(request.headers)
   headers.set('x-user-id', payload.sub)
   headers.set('x-user-email', payload.email)
+  headers.set('x-pathname', request.nextUrl.pathname)
 
   return NextResponse.next({ request: { headers } })
 }

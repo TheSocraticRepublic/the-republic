@@ -1,10 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
-export default function ProfileSetupPage() {
+function getSafeRedirect(param: string | null): string {
+  const fallback = '/investigate'
+  if (!param) return fallback
+  // Must start with / and not be protocol-relative (//)
+  if (!param.startsWith('/') || param.startsWith('//')) return fallback
+  // Block anything containing a colon (catches javascript:, data:, etc.)
+  if (param.includes(':')) return fallback
+  return param
+}
+
+function ProfileSetupForm() {
   const searchParams = useSearchParams()
 
   const [displayName, setDisplayName] = useState('')
@@ -83,7 +93,7 @@ export default function ProfileSetupPage() {
         throw new Error(data.error ?? 'Something went wrong')
       }
 
-      const redirect = searchParams.get('redirect') || '/investigate'
+      const redirect = getSafeRedirect(searchParams.get('redirect'))
       window.location.href = redirect
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -193,5 +203,19 @@ export default function ProfileSetupPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function ProfileSetupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-950">
+          <Loader2 size={20} className="animate-spin text-neutral-500" />
+        </div>
+      }
+    >
+      <ProfileSetupForm />
+    </Suspense>
   )
 }

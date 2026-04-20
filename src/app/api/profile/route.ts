@@ -27,7 +27,14 @@ export async function GET(request: NextRequest) {
 
   const db = getDb()
   const rows = await db
-    .select()
+    .select({
+      id: userProfiles.id,
+      displayName: userProfiles.displayName,
+      bio: userProfiles.bio,
+      avatarUrl: userProfiles.avatarUrl,
+      createdAt: userProfiles.createdAt,
+      displayNameChangedAt: userProfiles.displayNameChangedAt,
+    })
     .from(userProfiles)
     .where(eq(userProfiles.userId, userId))
     .limit(1)
@@ -187,7 +194,14 @@ export async function PATCH(request: NextRequest) {
       .update(userProfiles)
       .set(updates)
       .where(eq(userProfiles.userId, userId))
-      .returning()
+      .returning({
+        id: userProfiles.id,
+        displayName: userProfiles.displayName,
+        bio: userProfiles.bio,
+        avatarUrl: userProfiles.avatarUrl,
+        createdAt: userProfiles.createdAt,
+        updatedAt: userProfiles.updatedAt,
+      })
 
     return new Response(JSON.stringify({ profile: rows[0] }), {
       status: 200,

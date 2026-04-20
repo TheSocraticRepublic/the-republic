@@ -9,6 +9,8 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   if (
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/users/') ||
+    pathname.startsWith('/u/') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon')
   ) {
@@ -25,6 +27,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     const headers = new Headers(request.headers)
     headers.set('x-user-id', '00000000-0000-0000-0000-000000000001')
     headers.set('x-user-email', 'dev@republic.local')
+    headers.set('x-pathname', pathname)
     return NextResponse.next({ request: { headers } })
   }
 
