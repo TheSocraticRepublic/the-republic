@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare } from 'lucide-react'
+import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare, Shield } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useState } from 'react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
@@ -48,9 +48,10 @@ const arms = [
 interface SidebarProps {
   userEmail?: string
   displayName?: string
+  effectiveWeight?: number
 }
 
-export function Sidebar({ userEmail, displayName }: SidebarProps) {
+export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: SidebarProps) {
   const pathname = usePathname()
   const [expertToolsOpen, setExpertToolsOpen] = useState(false)
 
@@ -58,6 +59,8 @@ export function Sidebar({ userEmail, displayName }: SidebarProps) {
   const investigationsActive = pathname === '/investigations' || (pathname.startsWith('/investigate/') && pathname !== '/investigate')
   const forumActive = pathname === '/forum' || pathname.startsWith('/forum/')
   const profileActive = pathname === '/profile' || pathname.startsWith('/profile/')
+  const moderationActive = pathname === '/forum/moderation' || pathname.startsWith('/forum/moderation/')
+  const isModerator = effectiveWeight >= 10
 
   return (
     <nav className="flex h-full w-56 flex-col border-r border-white/[0.06] bg-black/40 backdrop-blur-xl">
@@ -181,6 +184,43 @@ export function Sidebar({ userEmail, displayName }: SidebarProps) {
             <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
           )}
         </Link>
+
+        {/* Moderation — conditional on credential weight */}
+        {isModerator && (
+          <Link
+            href="/forum/moderation"
+            className={clsx(
+              'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+              moderationActive
+                ? 'bg-white/[0.09] text-neutral-100'
+                : 'text-neutral-300 hover:bg-white/[0.05] hover:text-neutral-100'
+            )}
+          >
+            <span
+              className={clsx(
+                'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
+                moderationActive
+                  ? 'bg-white/[0.10] border-white/[0.15]'
+                  : 'border-white/[0.08] group-hover:bg-white/[0.06] group-hover:border-white/[0.12]'
+              )}
+            >
+              <Shield
+                size={14}
+                strokeWidth={1.75}
+                className={clsx(
+                  moderationActive ? 'text-neutral-100' : 'text-neutral-400 group-hover:text-neutral-200'
+                )}
+              />
+            </span>
+            <span className="flex flex-col">
+              <span className="font-semibold leading-tight">Moderation</span>
+              <span className="text-[10px] text-neutral-600 leading-tight">Review reports</span>
+            </span>
+            {moderationActive && (
+              <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
+            )}
+          </Link>
+        )}
 
         {/* Profile */}
         <Link

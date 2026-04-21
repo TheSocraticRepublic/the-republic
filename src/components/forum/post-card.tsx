@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { Flag } from 'lucide-react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
+import { ReportForm } from './report-form'
 import { formatRelativeTime } from '@/lib/format-relative-time'
 import { MAX_REPLY_DEPTH } from '@/lib/forum/validation'
 
@@ -20,6 +22,7 @@ interface PostCardProps {
   onReply?: (postId: string) => void
   onEdit?: (postId: string, newContent: string) => Promise<void>
   onDelete?: (postId: string) => Promise<void>
+  onReport?: (postId: string) => void
 }
 
 export function PostCard({
@@ -43,6 +46,12 @@ export function PostCard({
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [reporting, setReporting] = useState(false)
+  const [reported, setReported] = useState(false)
+  const [appealing, setAppealing] = useState(false)
+  const [appealReason, setAppealReason] = useState('')
+  const [appealLoading, setAppealLoading] = useState(false)
+  const [appealError, setAppealError] = useState<string | null>(null)
 
   const isAuthor = authorId === currentUserId
   const isThreadOpen = threadStatus === 'open'
@@ -75,6 +84,32 @@ export function PostCard({
     }
   }
 
+  async function handleAppeal(reportId: string) {
+    if (!appealReason.trim()) {
+      setAppealError('Reason is required')
+      return
+    }
+    setAppealLoading(true)
+    setAppealError(null)
+    try {
+      const res = await fetch(`/api/forum/reports/${reportId}/appeal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: appealReason }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? 'Failed to submit appeal')
+      }
+      setAppealing(false)
+      setAppealReason('')
+    } catch (err) {
+      setAppealError(err instanceof Error ? err.message : 'Failed to submit appeal')
+    } finally {
+      setAppealLoading(false)
+    }
+  }
+
   if (status === 'removed_by_author') {
     return (
       <div
@@ -86,6 +121,67 @@ export function PostCard({
           {' '}
           <span className="text-neutral-700">{formatRelativeTime(createdAt)}</span>
         </p>
+      </div>
+    )
+  }
+
+  if (status === 'hidden') {
+    return (
+      <div
+        className="py-3 px-4 rounded-lg border border-white/[0.04]"
+        style={{ marginLeft: depth * 24 }}
+      >
+        {isAuthor ? (
+          <div className="space-y-2">
+            <p className="text-xs text-neutral-600 italic">
+              [Hidden by moderator —{' '}
+              <button
+                onClick={() => setAppealing((v) => !v)}
+                className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2 transition-colors"
+              >
+                appeal
+              </button>
+              ]
+            </p>
+            {appealing && (
+              <div className="space-y-2">
+                <textarea
+                  value={appealReason}
+                  onChange={(e) => setAppealReason(e.target.value)}
+                  maxLength={1000}
+                  rows={2}
+                  placeholder="Why should this be reviewed again?"
+                  className="w-full rounded-md px-2 py-1.5 text-xs text-neutral-200 bg-white/[0.04] border border-white/[0.08] placeholder-neutral-600 resize-none focus:outline-none focus:border-white/[0.18] transition-colors"
+                />
+                {appealError && <p className="text-xs text-red-400">{appealError}</p>}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleAppeal(id)}
+                    disabled={appealLoading}
+                    className="text-xs px-3 py-1.5 rounded-md transition-colors"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.07)',
+                      color: '#f4f4f5',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                    }}
+                  >
+                    {appealLoading ? 'Submitting...' : 'Submit appeal'}
+                  </button>
+                  <button
+                    onClick={() => { setAppealing(false); setAppealReason('') }}
+                    className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-neutral-600 italic">
+            [Content hidden by moderator]
+          </p>
+        )}
       </div>
     )
   }
@@ -182,7 +278,27 @@ export function PostCard({
                   </button>
                 )
               )}
+              {!isAuthor && !reported && (
+                <button
+                  onClick={() => setReporting((v) => !v)}
+                  className="ml-auto flex items-center gap-1 text-xs text-neutral-700 hover:text-neutral-400 transition-colors"
+                  title="Report this post"
+                >
+                  <Flag size={11} strokeWidth={1.75} />
+                </button>
+              )}
+              {!isAuthor && reported && (
+                <span className="ml-auto text-xs text-neutral-600">Reported</span>
+              )}
             </div>
+          )}
+          {reporting && (
+            <ReportForm
+              targetType="post"
+              targetId={id}
+              onSubmitted={() => { setReporting(false); setReported(true) }}
+              onCancel={() => setReporting(false)}
+            />
           )}
         </>
       )}

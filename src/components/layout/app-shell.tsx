@@ -4,14 +4,15 @@ interface AppShellProps {
   children: React.ReactNode
   userEmail?: string
   displayName?: string
+  effectiveWeight?: number
 }
 
-export function AppShell({ children, userEmail, displayName }: AppShellProps) {
+export function AppShell({ children, userEmail, displayName, effectiveWeight }: AppShellProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-950">
       {/* Sidebar */}
       <div className="hidden md:flex md:flex-shrink-0">
-        <Sidebar userEmail={userEmail} displayName={displayName} />
+        <Sidebar userEmail={userEmail} displayName={displayName} effectiveWeight={effectiveWeight} />
       </div>
 
       {/* Main content */}

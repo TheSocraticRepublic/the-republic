@@ -30,6 +30,8 @@ export const CREDENTIAL_LABELS: Record<CredentialType, string> = {
   translation: 'Translations',
 }
 
+export const MODERATION_THRESHOLD = 10
+
 export const DECAY_GRACE_DAYS = 90
 export const DECAY_FLOOR = 0.5
 export const DECAY_FULL_DAYS = 180

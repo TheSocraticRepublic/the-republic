@@ -2,10 +2,12 @@
 
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
+import { Flag } from 'lucide-react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
 import { PostCard } from './post-card'
 import { PostComposer } from './post-composer'
 import { Pagination } from './pagination'
+import { ReportForm } from './report-form'
 import { formatRelativeTime } from '@/lib/format-relative-time'
 import { MAX_REPLY_DEPTH } from '@/lib/forum/validation'
 
@@ -30,7 +32,7 @@ interface PostNode extends PostData {
 interface ThreadData {
   id: string
   title: string
-  authorId: string
+  authorId: string  // needed for thread report gate
   authorDisplayName: string
   investigationId: string | null
   jurisdictionName: string | null
@@ -146,6 +148,8 @@ export function ThreadView({
 }: ThreadViewProps) {
   const [posts, setPosts] = useState<PostData[]>(initialPosts)
   const [replyingToPostId, setReplyingToPostId] = useState<string | null>(null)
+  const [reportingThread, setReportingThread] = useState(false)
+  const [threadReported, setThreadReported] = useState(false)
 
   const handleReply = useCallback((postId: string) => {
     setReplyingToPostId(postId)
@@ -197,12 +201,36 @@ export function ThreadView({
     <div className="mx-auto max-w-3xl px-6 py-10">
       {/* Thread header */}
       <div className="mb-8">
-        <h1
-          className="text-xl font-bold tracking-tight text-neutral-100 mb-3"
-          style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
-        >
-          {thread.title}
-        </h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1
+            className="text-xl font-bold tracking-tight text-neutral-100 mb-3"
+            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
+          >
+            {thread.title}
+          </h1>
+          {thread.authorId !== currentUserId && !threadReported && (
+            <button
+              onClick={() => setReportingThread((v) => !v)}
+              className="flex-shrink-0 flex items-center gap-1 text-xs text-neutral-700 hover:text-neutral-400 transition-colors mt-1"
+              title="Report this thread"
+            >
+              <Flag size={13} strokeWidth={1.75} />
+            </button>
+          )}
+          {threadReported && (
+            <span className="flex-shrink-0 text-xs text-neutral-600 mt-1">Reported</span>
+          )}
+        </div>
+        {reportingThread && (
+          <div className="mb-4">
+            <ReportForm
+              targetType="thread"
+              targetId={thread.id}
+              onSubmitted={() => { setReportingThread(false); setThreadReported(true) }}
+              onCancel={() => setReportingThread(false)}
+            />
+          </div>
+        )}
         <div className="flex items-center gap-3 text-xs text-neutral-500">
           <ProfileBadge displayName={thread.authorDisplayName} size="sm" />
           <span>{formatRelativeTime(thread.createdAt)}</span>

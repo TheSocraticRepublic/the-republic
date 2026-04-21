@@ -822,6 +822,94 @@ export const peerReviews = pgTable(
   ]
 )
 
+export const reportReasonEnum = pgEnum('report_reason', [
+  'spam',
+  'harassment',
+  'misinformation',
+  'off_topic',
+  'other',
+])
+
+export const reportStatusEnum = pgEnum('report_status', [
+  'pending',
+  'reviewed',
+  'dismissed',
+  'actioned',
+])
+
+export const moderationActionTypeEnum = pgEnum('moderation_action_type', [
+  'hide_post',
+  'unhide_post',
+  'lock_thread',
+  'unlock_thread',
+  'dismiss_report',
+  'appeal',
+])
+
+export const reportTargetTypeEnum = pgEnum('report_target_type', [
+  'thread',
+  'post',
+])
+
+// --- Moderation Tables ---
+
+export const contentReports = pgTable(
+  'content_reports',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    reporterId: uuid('reporter_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    targetType: reportTargetTypeEnum('target_type').notNull(),
+    targetId: uuid('target_id').notNull(),
+    reason: reportReasonEnum('reason').notNull(),
+    description: text('description'),
+    status: reportStatusEnum('status').notNull().default('pending'),
+    reviewedBy: uuid('reviewed_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    reviewedAt: timestamp('reviewed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('content_reports_reporter_id_idx').on(t.reporterId),
+    index('content_reports_status_idx').on(t.status),
+    index('content_reports_target_idx').on(t.targetType, t.targetId),
+    index('content_reports_created_at_idx').on(t.createdAt),
+    uniqueIndex('content_reports_unique_reporter_target_idx').on(
+      t.reporterId,
+      t.targetType,
+      t.targetId
+    ),
+  ]
+)
+
+export const moderationActions = pgTable(
+  'moderation_actions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    moderatorId: uuid('moderator_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    actionType: moderationActionTypeEnum('action_type').notNull(),
+    targetType: reportTargetTypeEnum('target_type').notNull(),
+    targetId: uuid('target_id').notNull(),
+    reason: text('reason').notNull(),
+    relatedReportId: uuid('related_report_id').references(
+      () => contentReports.id,
+      { onDelete: 'set null' }
+    ),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('moderation_actions_moderator_id_idx').on(t.moderatorId),
+    index('moderation_actions_target_idx').on(t.targetType, t.targetId),
+    index('moderation_actions_related_report_idx').on(t.relatedReportId),
+    index('moderation_actions_created_at_idx').on(t.createdAt),
+  ]
+)
+
 export const credentialEvents = pgTable(
   'credential_events',
   {

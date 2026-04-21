@@ -56,8 +56,9 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   const thread = threadRows[0]
 
-  // Fetch posts for this thread. Exclude moderator-hidden posts from regular users.
-  // 'removed_by_author' is included so clients can render tombstones.
+  // Fetch posts for this thread. Hidden posts are included so clients can render
+  // tombstones with an appeal option for the author. 'removed_by_author' is also
+  // included for the same reason.
   const posts = await db
     .select({
       id: forumPosts.id,
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     .where(
       and(
         eq(forumPosts.threadId, threadId),
-        inArray(forumPosts.status, ['visible', 'removed_by_author'])
+        inArray(forumPosts.status, ['visible', 'hidden', 'removed_by_author'])
       )
     )
     .orderBy(asc(forumPosts.createdAt))

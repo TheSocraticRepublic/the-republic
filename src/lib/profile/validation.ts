@@ -14,6 +14,7 @@ const RESERVED_NAMES = new Set([
   'signup', 'settings', 'null', 'undefined', 'root',
   'forum', 'thread', 'post', 'discuss',
   'review', 'reviews',
+  'moderation', 'moderate', 'reports', 'appeal', 'policy',
 ])
 
 export function stripHtmlTags(text: string): string {
