@@ -41,6 +41,7 @@ export function PostCard({
   const [editContent, setEditContent] = useState(content)
   const [editLoading, setEditLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isAuthor = authorId === currentUserId
@@ -64,7 +65,6 @@ export function PostCard({
 
   async function handleDelete() {
     if (!onDelete) return
-    if (!confirm('Remove this post?')) return
     setDeleteLoading(true)
     setError(null)
     try {
@@ -157,13 +157,30 @@ export function PostCard({
                 </button>
               )}
               {isAuthor && onDelete && (
-                <button
-                  onClick={handleDelete}
-                  disabled={deleteLoading}
-                  className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
-                >
-                  {deleteLoading ? 'Removing...' : 'Delete'}
-                </button>
+                confirming ? (
+                  <>
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleteLoading}
+                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      {deleteLoading ? 'Removing...' : 'Confirm remove'}
+                    </button>
+                    <button
+                      onClick={() => setConfirming(false)}
+                      className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
+                    >
+                      Keep
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setConfirming(true)}
+                    className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
+                  >
+                    Delete
+                  </button>
+                )
               )}
             </div>
           )}

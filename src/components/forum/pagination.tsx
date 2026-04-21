@@ -39,7 +39,7 @@ export function Pagination({ currentPage, totalPages, baseUrl, queryParams }: Pa
           Previous
         </Link>
       ) : (
-        <span className="px-3 py-1.5 text-xs text-neutral-700 cursor-not-allowed">Previous</span>
+        <button disabled aria-disabled="true" className="px-3 py-1.5 text-xs text-neutral-700 cursor-not-allowed">Previous</button>
       )}
 
       {pages.map((page, i) =>
@@ -70,7 +70,7 @@ export function Pagination({ currentPage, totalPages, baseUrl, queryParams }: Pa
           Next
         </Link>
       ) : (
-        <span className="px-3 py-1.5 text-xs text-neutral-700 cursor-not-allowed">Next</span>
+        <button disabled aria-disabled="true" className="px-3 py-1.5 text-xs text-neutral-700 cursor-not-allowed">Next</button>
       )}
     </nav>
   )

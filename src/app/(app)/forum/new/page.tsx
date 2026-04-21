@@ -69,7 +69,7 @@ function NewThreadForm() {
     'w-full rounded-lg px-3 py-2.5 text-sm text-neutral-200 bg-white/[0.04] border border-white/[0.10] placeholder-neutral-600 focus:outline-none focus:border-white/[0.20] transition-colors'
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-10">
+    <div className="mx-auto max-w-3xl px-6 py-10">
       <div className="mb-8">
         <h1
           className="text-xl font-bold tracking-tight text-neutral-100"
@@ -152,7 +152,7 @@ export default function NewThreadPage() {
   return (
     <Suspense
       fallback={
-        <div className="mx-auto max-w-2xl px-6 py-10">
+        <div className="mx-auto max-w-3xl px-6 py-10">
           <div className="rounded-xl border border-white/[0.06] bg-black/40 px-6 py-10 text-center">
             <p className="text-sm text-neutral-500">Loading...</p>
           </div>

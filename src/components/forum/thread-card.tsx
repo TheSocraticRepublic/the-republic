@@ -75,9 +75,6 @@ export function ThreadCard({
           </div>
         </div>
         <div className="flex-shrink-0 flex flex-col items-end gap-1 text-right">
-          <span className="text-xs text-neutral-400">
-            {postCount} {postCount === 1 ? 'post' : 'posts'}
-          </span>
           {lastPostAt && (
             <span className="text-[10px] text-neutral-600">
               {formatRelativeTime(lastPostAt)}
