@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { investigations } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { InvestigationPage } from '@/components/investigation/investigation-page'
 
 export const metadata = {
@@ -34,7 +34,7 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
       campaignOpenedAt: investigations.campaignOpenedAt,
     })
     .from(investigations)
-    .where(eq(investigations.id, id))
+    .where(and(eq(investigations.id, id), eq(investigations.status, 'active')))
     .limit(1)
 
   if (!investigation) {

@@ -155,6 +155,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     })
   }
 
+  const { success } = await checkRateLimit(`review-get:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   const db = getDb()
 
   // Only return reviews for active investigations
@@ -189,7 +197,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     .where(eq(peerReviews.investigationId, id))
     .orderBy(desc(peerReviews.createdAt))
 
-  // Determine if the current user has reviewed — server-side, never exposed to client
+  // Determine if the current user has reviewed — Included in response for client UI state
   const currentUserHasReviewed = rows.some((r) => r.reviewerId === userId)
 
   // Strip reviewerId before sending to client

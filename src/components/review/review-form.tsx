@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import clsx from 'clsx'
 import { REVIEW_DIMENSIONS, REVIEW_SUMMARY_MAX } from '@/lib/review/validation'
 
 const DIMENSION_LABELS: Record<(typeof REVIEW_DIMENSIONS)[number], string> = {
@@ -104,19 +105,15 @@ export function ReviewForm({ investigationId, onSubmitted }: ReviewFormProps) {
                     type="button"
                     onClick={() => setScores((prev) => ({ ...prev, [dim]: score }))}
                     title={SCORE_LABELS[score]}
-                    className="flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors"
-                    style={{
-                      backgroundColor: selected
-                        ? 'rgba(255, 255, 255, 0.12)'
-                        : 'transparent',
-                      border: selected
-                        ? '1px solid rgba(255, 255, 255, 0.25)'
-                        : '1px solid rgba(255, 255, 255, 0.08)',
-                      color: selected ? '#f4f4f5' : '#71717a',
-                    }}
+                    className={clsx(
+                      'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors',
+                      selected
+                        ? 'bg-white/[0.12] border border-white/25 text-neutral-100'
+                        : 'bg-transparent border border-white/[0.08] text-neutral-500 hover:bg-white/[0.06]'
+                    )}
                   >
                     {score}
-                    <span className="block text-[9px] font-normal mt-0.5 leading-tight">
+                    <span className="block text-[10px] font-normal mt-0.5 leading-tight">
                       {SCORE_LABELS[score]}
                     </span>
                   </button>

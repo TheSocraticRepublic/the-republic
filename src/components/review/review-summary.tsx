@@ -39,7 +39,7 @@ export function ReviewSummary({ count, averages }: ReviewSummaryProps) {
               <span className="w-40 flex-shrink-0 text-xs text-neutral-500">{label}</span>
               <div className="flex-1 h-2 bg-white/[0.06] rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-neutral-300/40"
+                  className="h-full rounded-full bg-white/20"
                   style={{ width: `${(avg / 5) * 100}%` }}
                 />
               </div>
