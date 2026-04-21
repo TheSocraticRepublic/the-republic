@@ -17,11 +17,14 @@ interface PostData {
   authorId: string
   authorDisplayName: string
   parentId: string | null
-  content: string
+  content: string | null
   editedAt: Date | string | null
   status: 'visible' | 'hidden' | 'removed_by_author'
   createdAt: Date | string
   updatedAt: Date | string
+  // W8/N1: reportId is present on hidden posts so the appeal endpoint receives
+  // the correct ID (appeals are filed against a report, not directly against a post).
+  reportId?: string | null
 }
 
 interface PostNode extends PostData {
@@ -113,6 +116,7 @@ function renderNodes(
           depth={node.depth}
           currentUserId={props.currentUserId}
           threadStatus={props.threadStatus}
+          reportId={node.reportId ?? undefined}
           onReply={node.depth < MAX_REPLY_DEPTH ? props.onReply : undefined}
           onEdit={props.onEdit}
           onDelete={props.onDelete}

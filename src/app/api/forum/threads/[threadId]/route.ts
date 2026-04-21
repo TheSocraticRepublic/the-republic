@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
-import { forumThreads, forumPosts, userProfiles, jurisdictions } from '@/lib/db/schema'
+import { forumThreads, forumPosts, userProfiles, jurisdictions, contentReports } from '@/lib/db/schema'
 import { eq, asc, and, inArray } from 'drizzle-orm'
 
 interface RouteContext {
@@ -84,13 +84,57 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     .limit(limit)
     .offset(offset)
 
+  // W8/N1: For hidden posts, look up the actioned report so clients can pass
+  // the correct reportId to the appeal endpoint (appeals need a reportId, not a postId).
+  const hiddenPostIds = posts
+    .filter((p) => p.status === 'hidden')
+    .map((p) => p.id)
+
+  const reportIdByPostId = new Map<string, string>()
+  if (hiddenPostIds.length > 0) {
+    const reportRows = await db
+      .select({
+        id: contentReports.id,
+        targetId: contentReports.targetId,
+      })
+      .from(contentReports)
+      .where(
+        and(
+          eq(contentReports.targetType, 'post'),
+          eq(contentReports.status, 'actioned'),
+          inArray(contentReports.targetId, hiddenPostIds)
+        )
+      )
+    for (const row of reportRows) {
+      // If multiple actioned reports exist for the same post (edge case), last one wins.
+      reportIdByPostId.set(row.targetId, row.id)
+    }
+  }
+
+  // W1: Null out content for hidden posts whose author is not the requesting user.
+  // The author can still see their own hidden content (needed for context when appealing).
+  const postsWithRedaction = posts.map((post) => {
+    if (post.status === 'hidden' && post.authorId !== userId) {
+      return { ...post, content: null }
+    }
+    return post
+  })
+
+  // Attach reportId to hidden posts so the appeal flow has the correct ID.
+  const postsForResponse = postsWithRedaction.map((post) => {
+    if (post.status === 'hidden') {
+      return { ...post, reportId: reportIdByPostId.get(post.id) ?? null }
+    }
+    return post
+  })
+
   // Count total posts for pagination
   const totalPosts = thread.postCount
 
   return new Response(
     JSON.stringify({
       thread,
-      posts,
+      posts: postsForResponse,
       pagination: {
         page,
         limit,

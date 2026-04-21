@@ -75,6 +75,16 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
   const report = reportRows[0]
 
+  // C1: Only allow appeals for actioned reports. Pending/dismissed reports
+  // cannot be appealed — there's nothing to contest yet (pending) or the
+  // report was already resolved without action (dismissed).
+  if (report.status !== 'actioned') {
+    return new Response(JSON.stringify({ error: 'This report cannot be appealed' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   // Verify caller is the content author via polymorphic lookup
   let contentAuthorId: string | null = null
   if (report.targetType === 'post') {
@@ -113,9 +123,13 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         })
         .where(eq(contentReports.id, reportId))
 
-      // Log the appeal in the moderation audit trail
+      // Log the appeal in the moderation audit trail.
+      // W5: moderatorId stores the appellant (content author), not an actual moderator.
+      // The actionType 'appeal' distinguishes this row from moderator actions.
+      // moderatorId is non-nullable in the schema so we reuse the column for the
+      // appellant's userId — the semantic difference is captured by actionType.
       await tx.insert(moderationActions).values({
-        moderatorId: userId,
+        moderatorId: userId, // appellant, not a moderator — see actionType: 'appeal'
         actionType: 'appeal',
         targetType: report.targetType,
         targetId: report.targetId,

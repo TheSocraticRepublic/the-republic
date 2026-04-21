@@ -832,7 +832,7 @@ export const reportReasonEnum = pgEnum('report_reason', [
 
 export const reportStatusEnum = pgEnum('report_status', [
   'pending',
-  'reviewed',
+  'reviewed', // W7: reserved for future use (e.g. "seen but not yet actioned"); not currently assigned by any code path
   'dismissed',
   'actioned',
 ])

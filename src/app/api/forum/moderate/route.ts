@@ -77,10 +77,25 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  // Determine targetType for the audit log
+  // Determine targetType for the audit log based on the action.
+  // For dismiss_report, targetId is the reportId — we resolve the real targetType below.
   const targetType = action === 'hide_post' || action === 'unhide_post' ? 'post' : 'thread'
 
   const db = getDb()
+
+  // W2: For dismiss_report, look up the report's real targetType before the transaction
+  // so the audit log reflects the actual content type (post or thread), not a hardcoded guess.
+  let dismissReportTargetType: 'post' | 'thread' = 'post'
+  if (action === 'dismiss_report') {
+    const reportRows = await db
+      .select({ targetType: contentReports.targetType })
+      .from(contentReports)
+      .where(eq(contentReports.id, targetId))
+      .limit(1)
+    if (reportRows.length > 0) {
+      dismissReportTargetType = reportRows[0].targetType
+    }
+  }
 
   try {
     await db.transaction(async (tx) => {
@@ -111,8 +126,7 @@ export async function POST(request: NextRequest) {
             .where(and(eq(forumThreads.id, targetId), eq(forumThreads.status, 'locked')))
           break
         case 'dismiss_report':
-          // For dismiss_report, targetId is the reportId, not content id.
-          // targetType is set to 'post' above but we override for audit consistency.
+          // For dismiss_report, targetId is the reportId, not a content id.
           await tx
             .update(contentReports)
             .set({
@@ -138,9 +152,8 @@ export async function POST(request: NextRequest) {
           .where(eq(contentReports.id, reportId))
       }
 
-      // Write audit log — for dismiss_report, targetId refers to the report's content
-      // We still log it with the action type; the targetType indicates content direction
-      const auditTargetType = action === 'dismiss_report' ? 'post' : targetType
+      // Write audit log. For dismiss_report, use the report's real targetType (resolved above).
+      const auditTargetType = action === 'dismiss_report' ? dismissReportTargetType : targetType
       await tx.insert(moderationActions).values({
         moderatorId: userId,
         actionType: action as ActionType,

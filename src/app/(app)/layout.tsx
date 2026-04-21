@@ -21,7 +21,10 @@ export default async function AppLayout({
   if (userId) {
     const db = getDb()
 
-    // Run profile lookup and credential weight query in parallel
+    // W6: Profile lookup and credential weight query run in parallel via Promise.all,
+    // so the overhead is the slower of the two queries, not their sum.
+    // At scale this could be optimized further (e.g. caching effectiveWeight in the
+    // session token), but the parallel pattern is acceptable for current traffic.
     const [profileRows, credentialResult] = await Promise.all([
       db
         .select({ displayName: userProfiles.displayName })

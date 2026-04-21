@@ -11,7 +11,7 @@ interface PostCardProps {
   id: string
   authorId: string
   authorDisplayName: string
-  content: string
+  content: string | null
   editedAt?: Date | string | null
   status: 'visible' | 'hidden' | 'removed_by_author'
   createdAt: Date | string
@@ -19,6 +19,9 @@ interface PostCardProps {
   depth: number
   currentUserId: string
   threadStatus: 'open' | 'locked' | 'archived'
+  // W8/N1: the appeal endpoint requires a reportId, not the post id. The API
+  // returns this for hidden posts so the fetch goes to the correct resource.
+  reportId?: string
   onReply?: (postId: string) => void
   onEdit?: (postId: string, newContent: string) => Promise<void>
   onDelete?: (postId: string) => Promise<void>
@@ -36,12 +39,13 @@ export function PostCard({
   depth,
   currentUserId,
   threadStatus,
+  reportId,
   onReply,
   onEdit,
   onDelete,
 }: PostCardProps) {
   const [editing, setEditing] = useState(false)
-  const [editContent, setEditContent] = useState(content)
+  const [editContent, setEditContent] = useState(content ?? '')
   const [editLoading, setEditLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -156,8 +160,8 @@ export function PostCard({
                 {appealError && <p className="text-xs text-red-400">{appealError}</p>}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleAppeal(id)}
-                    disabled={appealLoading}
+                    onClick={() => reportId && handleAppeal(reportId)}
+                    disabled={appealLoading || !reportId}
                     className="text-xs px-3 py-1.5 rounded-md transition-colors"
                     style={{
                       backgroundColor: 'rgba(255, 255, 255, 0.07)',
@@ -222,7 +226,7 @@ export function PostCard({
               {editLoading ? 'Saving...' : 'Save'}
             </button>
             <button
-              onClick={() => { setEditing(false); setEditContent(content) }}
+              onClick={() => { setEditing(false); setEditContent(content ?? '') }}
               className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
             >
               Cancel
@@ -232,7 +236,7 @@ export function PostCard({
         </div>
       ) : (
         <>
-          <p className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">{content}</p>
+          <p className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">{content ?? ''}</p>
           {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
           {showActions && (
             <div className="flex items-center gap-3 mt-3">
