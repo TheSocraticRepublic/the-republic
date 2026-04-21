@@ -7,7 +7,6 @@ import { ReviewSummary } from './review-summary'
 
 interface ReviewRow {
   id: string
-  reviewerId: string
   reviewerDisplayName: string
   factualAccuracy: number
   sourceQuality: number
@@ -32,39 +31,47 @@ interface Aggregate {
 interface ReviewSectionProps {
   investigationId: string
   isAuthor: boolean
-  currentUserId: string
 }
 
-export function ReviewSection({ investigationId, isAuthor, currentUserId }: ReviewSectionProps) {
+export function ReviewSection({ investigationId, isAuthor }: ReviewSectionProps) {
   const [reviews, setReviews] = useState<ReviewRow[]>([])
   const [aggregate, setAggregate] = useState<Aggregate | null>(null)
   const [loading, setLoading] = useState(true)
+  const [hasReviewed, setHasReviewed] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshError, setRefreshError] = useState(false)
 
   useEffect(() => {
     fetch(`/api/investigate/${investigationId}/reviews`)
-      .then((res) => (res.ok ? res.json() : { reviews: [], aggregate: null }))
+      .then((res) => (res.ok ? res.json() : { reviews: [], aggregate: null, currentUserHasReviewed: false }))
       .then((data) => {
         setReviews(data.reviews ?? [])
         setAggregate(data.aggregate ?? null)
+        setHasReviewed(data.currentUserHasReviewed ?? false)
       })
       .catch(() => {
         setReviews([])
         setAggregate(null)
+        setHasReviewed(false)
       })
       .finally(() => setLoading(false))
   }, [investigationId])
 
-  const hasReviewed = reviews.some((r) => r.reviewerId === currentUserId)
-
   function handleSubmitted(newReview: unknown) {
     // Reload from server to get reviewer display name and proper aggregate
+    setRefreshing(true)
+    setRefreshError(false)
     fetch(`/api/investigate/${investigationId}/reviews`)
-      .then((res) => (res.ok ? res.json() : { reviews: [], aggregate: null }))
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('fetch failed'))))
       .then((data) => {
         setReviews(data.reviews ?? [])
         setAggregate(data.aggregate ?? null)
+        setHasReviewed(data.currentUserHasReviewed ?? false)
       })
-      .catch(() => {})
+      .catch(() => {
+        setRefreshError(true)
+      })
+      .finally(() => setRefreshing(false))
 
     void newReview
   }
@@ -86,6 +93,23 @@ export function ReviewSection({ investigationId, isAuthor, currentUserId }: Revi
   return (
     <div>
       {aggregate && <ReviewSummary count={aggregate.count} averages={aggregate.averages} />}
+
+      {refreshing && (
+        <div className="flex items-center gap-2 py-2 mb-4">
+          <div
+            className="h-3 w-3 animate-spin rounded-full border-2 flex-shrink-0"
+            style={{
+              borderColor: 'rgba(255, 255, 255, 0.12)',
+              borderTopColor: 'rgba(255, 255, 255, 0.4)',
+            }}
+          />
+          <span className="text-xs text-neutral-500">Refreshing reviews...</span>
+        </div>
+      )}
+
+      {refreshError && !refreshing && (
+        <p className="text-xs text-neutral-500 mb-4">Could not refresh reviews. The page may be out of date.</p>
+      )}
 
       {reviews.length > 0 && (
         <div className="space-y-3 mb-6">

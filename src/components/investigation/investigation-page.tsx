@@ -30,7 +30,6 @@ interface InvestigationPageProps {
   initialLensOpen?: boolean      // true when lensOpenedAt is set (returning user)
   initialCampaignOpen?: boolean  // true when campaignOpenedAt is set (returning user)
   isAuthor: boolean
-  currentUserId: string
 }
 
 export function InvestigationPage({
@@ -41,7 +40,6 @@ export function InvestigationPage({
   initialLensOpen = false,
   initialCampaignOpen = false,
   isAuthor,
-  currentUserId,
 }: InvestigationPageProps) {
   const [lensOpen, setLensOpen] = useState(initialLensOpen)
   const [campaignOpen, setCampaignOpen] = useState(initialCampaignOpen)
@@ -195,7 +193,7 @@ export function InvestigationPage({
       {/* 7. Peer Reviews */}
       <section>
         <div className="mb-6 h-px w-full" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
-        <ReviewSection investigationId={id} isAuthor={isAuthor} currentUserId={currentUserId} />
+        <ReviewSection investigationId={id} isAuthor={isAuthor} />
       </section>
 
       {/* 8. Gadfly slide-over dialog */}

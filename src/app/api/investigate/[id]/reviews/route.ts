@@ -1,13 +1,14 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { investigations, peerReviews, credentialEvents, userProfiles } from '@/lib/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, and, desc } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 import {
   validateReviewScores,
   validateReviewSummary,
   REVIEW_DIMENSIONS,
 } from '@/lib/review/validation'
+import { stripHtmlTags } from '@/lib/profile/validation'
 
 // Postgres unique violation code
 const PG_UNIQUE_VIOLATION = '23505'
@@ -76,11 +77,11 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
   const db = getDb()
 
-  // Fetch investigation (no userId filter — public)
+  // Fetch investigation — only active investigations accept reviews
   const [investigation] = await db
     .select({ id: investigations.id, userId: investigations.userId })
     .from(investigations)
-    .where(eq(investigations.id, id))
+    .where(and(eq(investigations.id, id), eq(investigations.status, 'active')))
     .limit(1)
 
   if (!investigation) {
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
           missingContext: scores.missingContext as number,
           strategicEffectiveness: scores.strategicEffectiveness as number,
           jurisdictionalAccuracy: scores.jurisdictionalAccuracy as number,
-          summary: rawSummary || null,
+          summary: rawSummary ? stripHtmlTags(rawSummary) : null,
         })
         .returning({ id: peerReviews.id })
 
@@ -156,6 +157,20 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   const db = getDb()
 
+  // Only return reviews for active investigations
+  const [investigation] = await db
+    .select({ id: investigations.id })
+    .from(investigations)
+    .where(and(eq(investigations.id, id), eq(investigations.status, 'active')))
+    .limit(1)
+
+  if (!investigation) {
+    return new Response(JSON.stringify({ error: 'Investigation not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   const rows = await db
     .select({
       id: peerReviews.id,
@@ -174,11 +189,20 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     .where(eq(peerReviews.investigationId, id))
     .orderBy(desc(peerReviews.createdAt))
 
+  // Determine if the current user has reviewed — server-side, never exposed to client
+  const currentUserHasReviewed = rows.some((r) => r.reviewerId === userId)
+
+  // Strip reviewerId before sending to client
+  const safeRows = rows.map(({ reviewerId: _rid, ...rest }) => rest)
+
   if (rows.length === 0) {
-    return new Response(JSON.stringify({ reviews: [], aggregate: null }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return new Response(
+      JSON.stringify({ reviews: [], aggregate: null, currentUserHasReviewed }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
   }
 
   // Compute aggregates in JS
@@ -211,8 +235,11 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     },
   }
 
-  return new Response(JSON.stringify({ reviews: rows, aggregate }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  })
+  return new Response(
+    JSON.stringify({ reviews: safeRows, aggregate, currentUserHasReviewed }),
+    {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }
+  )
 }

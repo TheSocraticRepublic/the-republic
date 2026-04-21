@@ -67,7 +67,6 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
       initialLensOpen={!!investigation.lensOpenedAt}
       initialCampaignOpen={!!investigation.campaignOpenedAt}
       isAuthor={isAuthor}
-      currentUserId={userId}
     />
   )
 }
