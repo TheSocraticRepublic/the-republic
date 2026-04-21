@@ -8,6 +8,7 @@ import { LensPanel } from '@/components/lens/lens-panel'
 import { GadflySheet } from '@/components/lens/gadfly-sheet'
 import { CampaignPanel } from '@/components/campaign/campaign-panel'
 import { ThreadCard } from '@/components/forum/thread-card'
+import { ReviewSection } from '@/components/review/review-section'
 
 interface ThreadSummary {
   id: string
@@ -28,6 +29,8 @@ interface InvestigationPageProps {
   briefingText: string
   initialLensOpen?: boolean      // true when lensOpenedAt is set (returning user)
   initialCampaignOpen?: boolean  // true when campaignOpenedAt is set (returning user)
+  isAuthor: boolean
+  currentUserId: string
 }
 
 export function InvestigationPage({
@@ -37,6 +40,8 @@ export function InvestigationPage({
   briefingText,
   initialLensOpen = false,
   initialCampaignOpen = false,
+  isAuthor,
+  currentUserId,
 }: InvestigationPageProps) {
   const [lensOpen, setLensOpen] = useState(initialLensOpen)
   const [campaignOpen, setCampaignOpen] = useState(initialCampaignOpen)
@@ -94,25 +99,27 @@ export function InvestigationPage({
         <BriefingView text={briefingText} isStreaming={false} />
       </section>
 
-      {/* 3. Escalation paths */}
-      <section>
-        <div
-          className="mb-6 h-px w-full"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
-        />
-        <EscalationCard
-          investigationId={id}
-          onGoDeeper={handleGoDeeper}
-          onTakeAction={handleTakeAction}
-          onDiscuss={handleDiscuss}
-          lensOpen={lensOpen}
-          campaignOpen={campaignOpen}
-          discussionOpen={discussionOpen}
-        />
-      </section>
+      {/* 3. Escalation paths — author only */}
+      {isAuthor && (
+        <section>
+          <div
+            className="mb-6 h-px w-full"
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
+          />
+          <EscalationCard
+            investigationId={id}
+            onGoDeeper={handleGoDeeper}
+            onTakeAction={handleTakeAction}
+            onDiscuss={handleDiscuss}
+            lensOpen={lensOpen}
+            campaignOpen={campaignOpen}
+            discussionOpen={discussionOpen}
+          />
+        </section>
+      )}
 
-      {/* 4. Lens panel — conditionally rendered */}
-      {lensOpen && (
+      {/* 4. Lens panel — author only, conditionally rendered */}
+      {isAuthor && lensOpen && (
         <section>
           <LensPanel
             investigationId={id}
@@ -124,8 +131,8 @@ export function InvestigationPage({
         </section>
       )}
 
-      {/* 5. Campaign panel — conditionally rendered */}
-      {campaignOpen && (
+      {/* 5. Campaign panel — author only, conditionally rendered */}
+      {isAuthor && campaignOpen && (
         <section>
           <CampaignPanel
             investigationId={id}
@@ -185,7 +192,13 @@ export function InvestigationPage({
         </section>
       )}
 
-      {/* 7. Gadfly slide-over dialog */}
+      {/* 7. Peer Reviews */}
+      <section>
+        <div className="mb-6 h-px w-full" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
+        <ReviewSection investigationId={id} isAuthor={isAuthor} currentUserId={currentUserId} />
+      </section>
+
+      {/* 8. Gadfly slide-over dialog */}
       <GadflySheet
         open={gadflyOpen}
         onOpenChange={setGadflyOpen}

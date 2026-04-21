@@ -13,6 +13,7 @@ const RESERVED_NAMES = new Set([
   'republic', 'the-republic', 'api', 'profile', 'login',
   'signup', 'settings', 'null', 'undefined', 'root',
   'forum', 'thread', 'post', 'discuss',
+  'review', 'reviews',
 ])
 
 export function stripHtmlTags(text: string): string {

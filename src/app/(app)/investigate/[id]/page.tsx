@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { investigations } from '@/lib/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { InvestigationPage } from '@/components/investigation/investigation-page'
 
 export const metadata = {
@@ -24,6 +24,7 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
   const [investigation] = await db
     .select({
       id: investigations.id,
+      userId: investigations.userId,
       concern: investigations.concern,
       jurisdictionName: investigations.jurisdictionName,
       briefingText: investigations.briefingText,
@@ -33,12 +34,14 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
       campaignOpenedAt: investigations.campaignOpenedAt,
     })
     .from(investigations)
-    .where(and(eq(investigations.id, id), eq(investigations.userId, userId)))
+    .where(eq(investigations.id, id))
     .limit(1)
 
   if (!investigation) {
     notFound()
   }
+
+  const isAuthor = investigation.userId === userId
 
   // If the briefing hasn't finished streaming yet (edge case: user navigated
   // before stream completed), show a waiting state rather than an empty view.
@@ -63,6 +66,8 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
       briefingText={investigation.briefingText}
       initialLensOpen={!!investigation.lensOpenedAt}
       initialCampaignOpen={!!investigation.campaignOpenedAt}
+      isAuthor={isAuthor}
+      currentUserId={userId}
     />
   )
 }
