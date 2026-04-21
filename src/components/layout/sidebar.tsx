@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User } from 'lucide-react'
+import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useState } from 'react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
@@ -56,6 +56,7 @@ export function Sidebar({ userEmail, displayName }: SidebarProps) {
 
   const investigateActive = pathname === '/investigate'
   const investigationsActive = pathname === '/investigations' || (pathname.startsWith('/investigate/') && pathname !== '/investigate')
+  const forumActive = pathname === '/forum' || pathname.startsWith('/forum/')
   const profileActive = pathname === '/profile' || pathname.startsWith('/profile/')
 
   return (
@@ -142,6 +143,41 @@ export function Sidebar({ userEmail, displayName }: SidebarProps) {
             <span className="text-[10px] text-neutral-600 leading-tight">Your history</span>
           </span>
           {investigationsActive && (
+            <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
+          )}
+        </Link>
+
+        {/* Forum */}
+        <Link
+          href="/forum"
+          className={clsx(
+            'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+            forumActive
+              ? 'bg-white/[0.09] text-neutral-100'
+              : 'text-neutral-300 hover:bg-white/[0.05] hover:text-neutral-100'
+          )}
+        >
+          <span
+            className={clsx(
+              'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
+              forumActive
+                ? 'bg-white/[0.10] border-white/[0.15]'
+                : 'border-white/[0.08] group-hover:bg-white/[0.06] group-hover:border-white/[0.12]'
+            )}
+          >
+            <MessageSquare
+              size={14}
+              strokeWidth={1.75}
+              className={clsx(
+                forumActive ? 'text-neutral-100' : 'text-neutral-400 group-hover:text-neutral-200'
+              )}
+            />
+          </span>
+          <span className="flex flex-col">
+            <span className="font-semibold leading-tight">Forum</span>
+            <span className="text-[10px] text-neutral-600 leading-tight">Community discussions</span>
+          </span>
+          {forumActive && (
             <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
           )}
         </Link>

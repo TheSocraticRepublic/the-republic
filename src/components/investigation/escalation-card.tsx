@@ -1,20 +1,24 @@
-// Escalation card — shown below the briefing, presents two paths forward.
-// Phase 3B: Both "Go Deeper" and "Take Action" are enabled.
+// Escalation card — shown below the briefing, presents three paths forward.
+// Phase 1B: Forum "Discuss" panel added alongside Go Deeper and Take Action.
 
 interface EscalationCardProps {
   investigationId: string
   onGoDeeper: () => void     // callback when "Go Deeper" is clicked
   onTakeAction: () => void   // callback when "Take Action" is clicked
+  onDiscuss: () => void      // callback when "Discuss" is clicked
   lensOpen: boolean          // whether the lens panel is currently showing
   campaignOpen: boolean      // whether the campaign panel is currently showing
+  discussionOpen: boolean    // whether the discussion panel is currently showing
 }
 
 export function EscalationCard({
   investigationId: _,
   onGoDeeper,
   onTakeAction,
+  onDiscuss,
   lensOpen,
   campaignOpen,
+  discussionOpen,
 }: EscalationCardProps) {
   return (
     <div
@@ -30,9 +34,9 @@ export function EscalationCard({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-px sm:grid-cols-2" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+      <div className="grid grid-cols-1 gap-px sm:grid-cols-3" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
         {/* Left: Go Deeper (Gadfly / Lens) — enabled */}
-        <div className="flex flex-col gap-4 bg-neutral-950 px-6 py-6 sm:rounded-bl-2xl">
+        <div className="flex flex-col gap-4 bg-neutral-950 px-6 py-6 rounded-bl-2xl sm:rounded-bl-2xl sm:rounded-br-none">
           <div className="flex items-center gap-2.5">
             <span
               className="h-2 w-2 rounded-full flex-shrink-0"
@@ -81,8 +85,8 @@ export function EscalationCard({
           </div>
         </div>
 
-        {/* Right: Take Action (Lever / Campaign) — enabled */}
-        <div className="flex flex-col gap-4 bg-neutral-950 px-6 py-6 sm:rounded-br-2xl">
+        {/* Center: Take Action (Lever / Campaign) — enabled */}
+        <div className="flex flex-col gap-4 bg-neutral-950 px-6 py-6">
           <div className="flex items-center gap-2.5">
             <span
               className="h-2 w-2 rounded-full flex-shrink-0"
@@ -127,6 +131,56 @@ export function EscalationCard({
               }}
             >
               {campaignOpen ? 'Showing campaign materials' : 'Take Action'}
+            </button>
+          </div>
+        </div>
+
+        {/* Right: Discuss (Forum) */}
+        <div className="flex flex-col gap-4 bg-neutral-950 px-6 py-6 sm:rounded-br-2xl">
+          <div className="flex items-center gap-2.5">
+            <span
+              className="h-2 w-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: '#89B4C8' }}
+            />
+            <span
+              className="text-sm font-semibold"
+              style={{ color: '#89B4C8' }}
+            >
+              I want to discuss this with others
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed text-neutral-400">
+            Start or join a conversation about this investigation with other citizens.
+          </p>
+          <div className="mt-auto">
+            <button
+              onClick={onDiscuss}
+              className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-150"
+              style={{
+                backgroundColor: discussionOpen
+                  ? 'rgba(137, 180, 200, 0.20)'
+                  : 'rgba(137, 180, 200, 0.12)',
+                color: '#89B4C8',
+                border: discussionOpen
+                  ? '1px solid rgba(137, 180, 200, 0.45)'
+                  : '1px solid rgba(137, 180, 200, 0.2)',
+              }}
+              onMouseEnter={(e) => {
+                if (!discussionOpen) {
+                  const el = e.currentTarget
+                  el.style.backgroundColor = 'rgba(137,180,200,0.18)'
+                  el.style.borderColor = 'rgba(137,180,200,0.35)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!discussionOpen) {
+                  const el = e.currentTarget
+                  el.style.backgroundColor = 'rgba(137,180,200,0.12)'
+                  el.style.borderColor = 'rgba(137,180,200,0.2)'
+                }
+              }}
+            >
+              {discussionOpen ? 'Showing discussions' : 'Discuss'}
             </button>
           </div>
         </div>
