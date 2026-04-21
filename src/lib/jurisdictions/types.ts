@@ -12,6 +12,7 @@ export interface JurisdictionModule {
 export interface FOIFramework {
   name: string // 'FIPPA', 'ATIA', 'FOIA'
   fullCitation: string // 'Freedom of Information and Protection of Privacy Act, RSBC 1996, c. 165'
+  verified: boolean // true if legal citations have been verified by a legal professional
   sections: {
     rightOfAccess: string // 's. 4'
     dutyToAssist: string // 's. 6'

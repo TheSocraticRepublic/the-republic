@@ -7,6 +7,8 @@ const JURISDICTION_REGISTRY: Record<
   () => Promise<{ default: JurisdictionModule }>
 > = {
   'bc': () => import('./bc'),
+  'ab': () => import('./ab'),
+  'on': () => import('./on'),
   // 'canada-federal': () => import('./canada-federal'),  // Phase 2
 }
 
@@ -46,14 +48,53 @@ export function detectJurisdiction(
   concern: string,
   jurisdictionName?: string
 ): string | undefined {
-  // concern text analysis will be added in Phase 1B with jurisdiction module content
-  // If jurisdiction name is provided, try to match directly
+  // If jurisdiction name is provided, try to match directly then by province keyword
   if (jurisdictionName) {
     const normalized = jurisdictionName.toLowerCase()
-    for (const id of Object.keys(JURISDICTION_REGISTRY)) {
-      if (normalized.includes(id) || id.includes(normalized)) {
-        return id
-      }
+
+    // Province keyword matching for common variations (must run before ID match
+    // to avoid short IDs like 'on' matching substrings of city names like 'edmonton')
+    if (
+      normalized.includes('alberta') ||
+      normalized.includes('edmonton') ||
+      normalized.includes('calgary') ||
+      normalized.includes('red deer') ||
+      normalized.includes('lethbridge') ||
+      normalized.includes('fort mcmurray')
+    ) {
+      return 'ab'
+    }
+
+    if (
+      normalized.includes('ontario') ||
+      normalized.includes('toronto') ||
+      normalized.includes('ottawa') ||
+      normalized.includes('mississauga') ||
+      normalized.includes('hamilton') ||
+      normalized.includes('brampton') ||
+      normalized.includes('london, on') ||
+      normalized.includes('london ontario')
+    ) {
+      return 'on'
+    }
+
+    if (
+      normalized.includes('british columbia') ||
+      normalized.includes('vancouver') ||
+      normalized.includes('victoria') ||
+      normalized.includes('surrey') ||
+      normalized.includes('kelowna') ||
+      normalized.includes('squamish') ||
+      normalized.includes('whistler') ||
+      normalized.includes('kamloops') ||
+      normalized.includes('nanaimo')
+    ) {
+      return 'bc'
+    }
+
+    // Fallback: direct ID match (exact equality only to avoid substring false-positives)
+    if (Object.keys(JURISDICTION_REGISTRY).includes(normalized)) {
+      return normalized
     }
   }
 

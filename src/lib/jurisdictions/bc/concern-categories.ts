@@ -75,7 +75,7 @@ export const bcConcernCategories: ConcernCategory[] = [
   },
   {
     category: 'Property Taxes/Assessments',
-    keywords: ['property tax', 'tax', 'mill rate', 'assessed value', 'BC Assessment', 'appeal', 'notice of assessment'],
+    keywords: ['property tax', 'tax', 'mill rate', 'assessed value', 'bc assessment', 'appeal', 'notice of assessment'],
     documents: [
       {
         type: 'Tax Rate Bylaw',
@@ -183,7 +183,7 @@ export const bcConcernCategories: ConcernCategory[] = [
   },
   {
     category: 'Environmental/Tree Removal',
-    keywords: ['tree', 'tree removal', 'environmental', 'riparian', 'stream', 'environmental permit', 'DPA', 'development permit area'],
+    keywords: ['tree', 'tree removal', 'environmental', 'riparian', 'stream', 'environmental permit', 'dpa', 'development permit area'],
     documents: [
       {
         type: 'Tree Protection Bylaw',
@@ -213,7 +213,7 @@ export const bcConcernCategories: ConcernCategory[] = [
   },
   {
     category: 'Public Transit',
-    keywords: ['transit', 'bus', 'route', 'TransLink', 'BC Transit', 'transit service', 'bus stop', 'transit funding'],
+    keywords: ['transit', 'bus', 'route', 'translink', 'bc transit', 'transit service', 'bus stop', 'transit funding'],
     documents: [
       {
         type: 'Transit Service Agreement',
@@ -351,7 +351,7 @@ export const bcConcernCategories: ConcernCategory[] = [
   },
   {
     category: 'Environmental Assessment Process',
-    keywords: ['environmental assessment', 'impact assessment', 'EIS', 'EIA', 'scoping', 'cumulative effects', 'environmental review', 'EAO', 'EPIC'],
+    keywords: ['environmental assessment', 'impact assessment', 'eis', 'eia', 'scoping', 'cumulative effects', 'environmental review', 'eao', 'epic'],
     documents: [
       {
         type: 'Application Information Requirements',
