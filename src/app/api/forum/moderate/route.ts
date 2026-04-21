@@ -83,17 +83,38 @@ export async function POST(request: NextRequest) {
 
   const db = getDb()
 
-  // W2: For dismiss_report, look up the report's real targetType before the transaction
-  // so the audit log reflects the actual content type (post or thread), not a hardcoded guess.
+  // CH1: Self-action guard. When a reportId is provided (or for dismiss_report where
+  // targetId IS the reportId), the moderator must not be the original reporter.
+  // A moderator who filed the report cannot also act on it -- conflict of interest.
+  const reportIdForGuard = action === 'dismiss_report' ? targetId : reportId
+  if (reportIdForGuard) {
+    const guardRows = await db
+      .select({ reporterId: contentReports.reporterId })
+      .from(contentReports)
+      .where(eq(contentReports.id, reportIdForGuard))
+      .limit(1)
+    if (guardRows.length > 0 && guardRows[0].reporterId === userId) {
+      return new Response(JSON.stringify({ error: 'Cannot act on content you reported' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+  }
+
+  // W2/CH5: For dismiss_report, look up the report's real targetType AND targetId before
+  // the transaction. The audit log must record the content UUID as targetId (not the report
+  // UUID), so targetId always refers to actual content — consistent with all other actions.
   let dismissReportTargetType: 'post' | 'thread' = 'post'
+  let dismissReportContentId: string = targetId  // fallback; overwritten below if report found
   if (action === 'dismiss_report') {
     const reportRows = await db
-      .select({ targetType: contentReports.targetType })
+      .select({ targetType: contentReports.targetType, targetId: contentReports.targetId })
       .from(contentReports)
       .where(eq(contentReports.id, targetId))
       .limit(1)
     if (reportRows.length > 0) {
       dismissReportTargetType = reportRows[0].targetType
+      dismissReportContentId = reportRows[0].targetId
     }
   }
 
@@ -152,13 +173,18 @@ export async function POST(request: NextRequest) {
           .where(eq(contentReports.id, reportId))
       }
 
-      // Write audit log. For dismiss_report, use the report's real targetType (resolved above).
+      // Write audit log.
+      // CH5: For dismiss_report, targetId in the audit log must be the content UUID
+      // (not the report UUID). The report UUID goes in relatedReportId. This makes
+      // the audit log semantically consistent: targetId always refers to actual content.
+      // W2: Use the report's real targetType (resolved above, not a hardcoded guess).
       const auditTargetType = action === 'dismiss_report' ? dismissReportTargetType : targetType
+      const auditTargetId = action === 'dismiss_report' ? dismissReportContentId : targetId
       await tx.insert(moderationActions).values({
         moderatorId: userId,
         actionType: action as ActionType,
         targetType: auditTargetType as 'post' | 'thread',
-        targetId,
+        targetId: auditTargetId,
         reason,
         relatedReportId: reportId ?? (action === 'dismiss_report' ? targetId : null),
       })

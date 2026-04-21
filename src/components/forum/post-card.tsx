@@ -132,7 +132,7 @@ export function PostCard({
   if (status === 'hidden') {
     return (
       <div
-        className="py-3 px-4 rounded-lg border border-white/[0.04]"
+        className="py-3 px-4 rounded-lg border border-white/[0.04] bg-white/[0.02] min-h-[36px] flex items-center"
         style={{ marginLeft: depth * 24 }}
       >
         {isAuthor ? (
@@ -162,12 +162,7 @@ export function PostCard({
                   <button
                     onClick={() => reportId && handleAppeal(reportId)}
                     disabled={appealLoading || !reportId}
-                    className="text-xs px-3 py-1.5 rounded-md transition-colors"
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.07)',
-                      color: '#f4f4f5',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
-                    }}
+                    className="text-xs px-3 py-1.5 rounded-md transition-colors bg-white/[0.07] border border-white/[0.12] text-neutral-100 hover:bg-white/[0.12] disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {appealLoading ? 'Submitting...' : 'Submit appeal'}
                   </button>
@@ -288,7 +283,8 @@ export function PostCard({
                   className="ml-auto flex items-center gap-1 text-xs text-neutral-700 hover:text-neutral-400 transition-colors"
                   title="Report this post"
                 >
-                  <Flag size={11} strokeWidth={1.75} />
+                  <Flag size={12} strokeWidth={1.75} />
+                  <span className="sr-only">Report</span>
                 </button>
               )}
               {!isAuthor && reported && (

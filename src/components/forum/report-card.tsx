@@ -169,7 +169,7 @@ export function ReportCard({
               <button
                 onClick={() => applyAction('hide_post')}
                 disabled={loading}
-                className="text-xs px-3 py-1.5 rounded-md transition-colors"
+                className="text-xs px-3 py-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   backgroundColor: 'rgba(200, 91, 91, 0.12)',
                   color: '#C85B5B',
@@ -181,7 +181,7 @@ export function ReportCard({
               <button
                 onClick={() => applyAction('unhide_post')}
                 disabled={loading}
-                className="text-xs px-3 py-1.5 rounded-md transition-colors"
+                className="text-xs px-3 py-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   backgroundColor: 'rgba(91, 200, 138, 0.10)',
                   color: '#5BC88A',
@@ -197,7 +197,7 @@ export function ReportCard({
               <button
                 onClick={() => applyAction('lock_thread')}
                 disabled={loading}
-                className="text-xs px-3 py-1.5 rounded-md transition-colors"
+                className="text-xs px-3 py-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   backgroundColor: 'rgba(200, 91, 91, 0.12)',
                   color: '#C85B5B',
@@ -209,7 +209,7 @@ export function ReportCard({
               <button
                 onClick={() => applyAction('unlock_thread')}
                 disabled={loading}
-                className="text-xs px-3 py-1.5 rounded-md transition-colors"
+                className="text-xs px-3 py-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   backgroundColor: 'rgba(91, 200, 138, 0.10)',
                   color: '#5BC88A',
@@ -223,7 +223,7 @@ export function ReportCard({
           <button
             onClick={() => applyAction('dismiss_report')}
             disabled={loading}
-            className="text-xs px-3 py-1.5 rounded-md transition-colors text-neutral-500 hover:text-neutral-300"
+            className="text-xs px-3 py-1.5 rounded-md transition-colors text-neutral-500 hover:text-neutral-300 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.04)',
               border: '1px solid rgba(255, 255, 255, 0.08)',

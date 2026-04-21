@@ -218,7 +218,8 @@ export function ThreadView({
               className="flex-shrink-0 flex items-center gap-1 text-xs text-neutral-700 hover:text-neutral-400 transition-colors mt-1"
               title="Report this thread"
             >
-              <Flag size={13} strokeWidth={1.75} />
+              <Flag size={12} strokeWidth={1.75} />
+              <span className="sr-only">Report</span>
             </button>
           )}
           {threadReported && (

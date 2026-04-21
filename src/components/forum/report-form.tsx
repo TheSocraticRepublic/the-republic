@@ -84,12 +84,7 @@ export function ReportForm({ targetType, targetId, onSubmitted, onCancel }: Repo
         <button
           type="submit"
           disabled={loading}
-          className="text-xs px-3 py-1.5 rounded-md font-medium transition-colors"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.07)',
-            color: '#f4f4f5',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-          }}
+          className="text-xs px-3 py-1.5 rounded-md font-medium transition-colors bg-white/[0.07] border border-white/[0.12] text-neutral-100 hover:bg-white/[0.12] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {loading ? 'Submitting...' : 'Submit report'}
         </button>
