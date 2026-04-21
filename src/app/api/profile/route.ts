@@ -8,6 +8,7 @@ import {
   stripHtmlTags,
   canChangeDisplayName,
 } from '@/lib/profile/validation'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // Postgres unique violation code
 const PG_UNIQUE_VIOLATION = '23505'
@@ -55,6 +56,15 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  // Rate limit profile creation by userId
+  const { success } = await checkRateLimit(`profile-post:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   let body: { displayName?: unknown; bio?: unknown }
   try {
     body = await request.json()
@@ -65,10 +75,11 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const displayName = typeof body.displayName === 'string' ? body.displayName : ''
+  const rawDisplayName = typeof body.displayName === 'string' ? body.displayName : ''
+  const normalizedName = rawDisplayName.toLowerCase()
   const rawBio = typeof body.bio === 'string' ? body.bio : ''
 
-  const nameValidation = validateDisplayName(displayName)
+  const nameValidation = validateDisplayName(normalizedName)
   if (!nameValidation.valid) {
     return new Response(JSON.stringify({ error: nameValidation.error }), {
       status: 400,
@@ -91,7 +102,7 @@ export async function POST(request: NextRequest) {
       .insert(userProfiles)
       .values({
         userId,
-        displayName,
+        displayName: normalizedName,
         bio: bio || null,
       })
       .returning({
@@ -158,7 +169,8 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (typeof body.displayName === 'string') {
-    const nameValidation = validateDisplayName(body.displayName)
+    const normalizedName = body.displayName.toLowerCase()
+    const nameValidation = validateDisplayName(normalizedName)
     if (!nameValidation.valid) {
       return new Response(JSON.stringify({ error: nameValidation.error }), {
         status: 400,
@@ -173,7 +185,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    updates.displayName = body.displayName
+    updates.displayName = normalizedName
     updates.displayNameChangedAt = new Date()
   }
 

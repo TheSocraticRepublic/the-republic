@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useState } from 'react'
+import { ProfileBadge } from '@/components/profile/profile-badge'
 
 const arms = [
   {
@@ -255,12 +256,10 @@ export function Sidebar({ userEmail, displayName }: SidebarProps) {
         {(displayName || userEmail) && (
           <div className="mb-2 px-3">
             {displayName ? (
-              <p className="truncate text-[12px] font-semibold text-neutral-300">
-                {displayName}
-              </p>
+              <ProfileBadge displayName={displayName} size="sm" />
             ) : null}
             {userEmail && (
-              <p className="truncate text-[11px] text-neutral-500">
+              <p className="truncate text-[11px] text-neutral-500 mt-1">
                 {userEmail}
               </p>
             )}

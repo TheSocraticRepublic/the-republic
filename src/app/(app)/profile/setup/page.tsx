@@ -25,12 +25,12 @@ function ProfileSetupForm() {
   const [isEdit, setIsEdit] = useState(false)
   const [nameError, setNameError] = useState<string | null>(null)
 
-  // Validate display name live
+  // Validate display name live. Names are stored lowercase — input is auto-lowercased.
   function validateName(name: string): string | null {
     if (name.length === 0) return null
     if (name.length < 3) return 'At least 3 characters required'
     if (name.length > 50) return 'Maximum 50 characters'
-    if (!/^[a-zA-Z0-9_-]+$/.test(name)) return 'Letters, numbers, underscores, and hyphens only'
+    if (!/^[a-z0-9_-]+$/.test(name)) return 'Lowercase letters, numbers, underscores, and hyphens only'
     return null
   }
 
@@ -58,8 +58,9 @@ function ProfileSetupForm() {
   }, [])
 
   function handleNameChange(value: string) {
-    setDisplayName(value)
-    setNameError(validateName(value))
+    const lowercased = value.toLowerCase()
+    setDisplayName(lowercased)
+    setNameError(validateName(lowercased))
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -154,7 +155,7 @@ function ProfileSetupForm() {
                 <p className="mt-1 text-xs text-red-400">{nameError}</p>
               )}
               <p className="mt-1 text-[11px] text-neutral-600">
-                Letters, numbers, underscores, and hyphens only
+                Lowercase letters, numbers, underscores, and hyphens only
               </p>
             </div>
 

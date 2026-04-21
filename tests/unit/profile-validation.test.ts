@@ -7,11 +7,18 @@ import {
 } from '@/lib/profile/validation'
 
 describe('validateDisplayName', () => {
-  it('accepts valid names', () => {
+  it('accepts valid lowercase names', () => {
     expect(validateDisplayName('citizen_42').valid).toBe(true)
     expect(validateDisplayName('jane-doe').valid).toBe(true)
-    expect(validateDisplayName('Republic2026').valid).toBe(true)
+    expect(validateDisplayName('republic2026').valid).toBe(true)
     expect(validateDisplayName('abc').valid).toBe(true)
+  })
+
+  it('rejects uppercase letters (names must be pre-lowercased)', () => {
+    // Callers must lowercase before calling validateDisplayName
+    expect(validateDisplayName('Republic2026').valid).toBe(false)
+    expect(validateDisplayName('Jane').valid).toBe(false)
+    expect(validateDisplayName('ADMIN').valid).toBe(false)
   })
 
   it('rejects names with spaces', () => {
@@ -47,6 +54,60 @@ describe('validateDisplayName', () => {
   it('accepts exactly 50 characters', () => {
     const maxName = 'a'.repeat(50)
     expect(validateDisplayName(maxName).valid).toBe(true)
+  })
+
+  describe('reserved names', () => {
+    it('rejects "admin"', () => {
+      const result = validateDisplayName('admin')
+      expect(result.valid).toBe(false)
+      expect(result.error).toBe('This name is reserved')
+    })
+
+    it('rejects "moderator"', () => {
+      expect(validateDisplayName('moderator').valid).toBe(false)
+    })
+
+    it('rejects "system"', () => {
+      expect(validateDisplayName('system').valid).toBe(false)
+    })
+
+    it('rejects "support"', () => {
+      expect(validateDisplayName('support').valid).toBe(false)
+    })
+
+    it('rejects "help"', () => {
+      expect(validateDisplayName('help').valid).toBe(false)
+    })
+
+    it('rejects "republic"', () => {
+      expect(validateDisplayName('republic').valid).toBe(false)
+    })
+
+    it('rejects "api"', () => {
+      expect(validateDisplayName('api').valid).toBe(false)
+    })
+
+    it('rejects "profile"', () => {
+      expect(validateDisplayName('profile').valid).toBe(false)
+    })
+
+    it('rejects "login"', () => {
+      expect(validateDisplayName('login').valid).toBe(false)
+    })
+
+    it('rejects "null"', () => {
+      expect(validateDisplayName('null').valid).toBe(false)
+    })
+
+    it('rejects "root"', () => {
+      expect(validateDisplayName('root').valid).toBe(false)
+    })
+
+    it('accepts a name that contains a reserved word as a substring', () => {
+      // "admirable" is not "admin" — substring matches should not be blocked
+      expect(validateDisplayName('admirable').valid).toBe(true)
+      expect(validateDisplayName('helpful').valid).toBe(true)
+    })
   })
 })
 

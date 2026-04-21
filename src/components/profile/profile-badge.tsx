@@ -24,7 +24,7 @@ export function ProfileBadge({ displayName, size = 'md' }: ProfileBadgeProps) {
   return (
     <span className="inline-flex items-center gap-2">
       <span
-        className="flex-shrink-0 flex items-center justify-center rounded-full font-semibold text-black"
+        className="flex-shrink-0 flex items-center justify-center rounded-full font-semibold text-white"
         style={{
           width: circleSize,
           height: circleSize,

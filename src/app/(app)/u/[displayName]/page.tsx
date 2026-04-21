@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
-import { userProfiles, investigations, peerReviews, credentialEvents } from '@/lib/db/schema'
-import { eq, and, count, sum } from 'drizzle-orm'
+import { userProfiles, credentialEvents } from '@/lib/db/schema'
+import { eq, sum } from 'drizzle-orm'
 import { ProfileBadge } from '@/components/profile/profile-badge'
 
 interface PageProps {
@@ -42,24 +42,15 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const profile = profileRows[0]
   const userId = profile.userId
 
-  // Aggregate stats in parallel
-  const [investigationResult, reviewResult, weightResult] = await Promise.all([
-    db
-      .select({ count: count() })
-      .from(investigations)
-      .where(and(eq(investigations.userId, userId), eq(investigations.status, 'active'))),
-    db
-      .select({ count: count() })
-      .from(peerReviews)
-      .where(eq(peerReviews.reviewerId, userId)),
+  // Query credential weight only — investigation and review counts are engagement
+  // metrics inconsistent with anti-spectacle principles
+  const [weightResult] = await Promise.all([
     db
       .select({ total: sum(credentialEvents.weight) })
       .from(credentialEvents)
       .where(eq(credentialEvents.userId, userId)),
   ])
 
-  const investigationCount = Number(investigationResult[0]?.count ?? 0)
-  const reviewCount = Number(reviewResult[0]?.count ?? 0)
   const credentialWeight = Number(weightResult[0]?.total ?? 0)
 
   return (
@@ -75,40 +66,20 @@ export default async function PublicProfilePage({ params }: PageProps) {
             </p>
           )}
 
-          <p className="text-xs text-neutral-600">
-            Joined {formatDate(profile.createdAt)}
-          </p>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="mt-4 grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-white/[0.06] bg-black/40 px-4 py-4 text-center">
-          <p
-            className="text-2xl font-bold text-neutral-100"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
-          >
-            {investigationCount}
-          </p>
-          <p className="mt-0.5 text-[11px] text-neutral-600">Investigations</p>
-        </div>
-        <div className="rounded-xl border border-white/[0.06] bg-black/40 px-4 py-4 text-center">
-          <p
-            className="text-2xl font-bold text-neutral-100"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
-          >
-            {reviewCount}
-          </p>
-          <p className="mt-0.5 text-[11px] text-neutral-600">Reviews</p>
-        </div>
-        <div className="rounded-xl border border-white/[0.06] bg-black/40 px-4 py-4 text-center">
-          <p
-            className="text-2xl font-bold text-neutral-100"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
-          >
-            {credentialWeight}
-          </p>
-          <p className="mt-0.5 text-[11px] text-neutral-600">Civic weight</p>
+          <div className="flex items-center gap-3">
+            <p className="text-xs text-neutral-600">
+              Joined {formatDate(profile.createdAt)}
+            </p>
+            {credentialWeight > 0 && (
+              <>
+                <span className="text-neutral-800">·</span>
+                <p className="text-xs text-neutral-500">
+                  Civic weight{' '}
+                  <span className="text-neutral-300 font-medium">{credentialWeight}</span>
+                </p>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,12 +1,23 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
-import { userProfiles, investigations, peerReviews, credentialEvents } from '@/lib/db/schema'
-import { eq, and, count, sum } from 'drizzle-orm'
+import { userProfiles, credentialEvents } from '@/lib/db/schema'
+import { eq, sum } from 'drizzle-orm'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ displayName: string }> }
 ) {
+  // Rate limit by IP — unauthenticated public endpoint
+  const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
+  const { success } = await checkRateLimit(`users-profile:${ip}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   const { displayName } = await params
 
   const db = getDb()
@@ -28,24 +39,12 @@ export async function GET(
   const profile = profileRows[0]
   const userId = profile.userId
 
-  // Aggregate stats in parallel
-  const [investigationResult, reviewResult, weightResult] = await Promise.all([
-    db
-      .select({ count: count() })
-      .from(investigations)
-      .where(and(eq(investigations.userId, userId), eq(investigations.status, 'active'))),
-    db
-      .select({ count: count() })
-      .from(peerReviews)
-      .where(eq(peerReviews.reviewerId, userId)),
-    db
-      .select({ total: sum(credentialEvents.weight) })
-      .from(credentialEvents)
-      .where(eq(credentialEvents.userId, userId)),
-  ])
+  // Credential weight only — engagement counts are anti-spectacle violations
+  const weightResult = await db
+    .select({ total: sum(credentialEvents.weight) })
+    .from(credentialEvents)
+    .where(eq(credentialEvents.userId, userId))
 
-  const investigationCount = investigationResult[0]?.count ?? 0
-  const reviewCount = reviewResult[0]?.count ?? 0
   const credentialWeight = Number(weightResult[0]?.total ?? 0)
 
   // NEVER include email or userId in response
@@ -58,8 +57,6 @@ export async function GET(
         createdAt: profile.createdAt,
       },
       stats: {
-        investigationCount,
-        reviewCount,
         credentialWeight,
       },
     }),
