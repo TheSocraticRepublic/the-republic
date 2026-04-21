@@ -63,7 +63,7 @@ export interface ConcernCategory {
 
 export interface ConcernDocument {
   type: string
-  access: 'public' | 'fippa_required' | 'restricted'
+  access: 'public' | 'foi_required' | 'restricted'
   description: string
   typicalLocation?: string
 }

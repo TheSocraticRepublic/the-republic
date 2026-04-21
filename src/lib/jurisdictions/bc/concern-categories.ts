@@ -14,7 +14,7 @@ export const bcConcernCategories: ConcernCategory[] = [
       {
         type: 'Towing Services Contract',
         description: 'The contract between the municipality and the towing company, specifying maximum fees, response requirements, and storage charges. Reveals whether the towing company is charging fees that exceed what the municipality authorized.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not typically published. Request under FIPPA from the municipal FOI Coordinator.',
       },
       {
@@ -68,7 +68,7 @@ export const bcConcernCategories: ConcernCategory[] = [
       {
         type: 'Developer Studies (Traffic, Environmental)',
         description: 'Technical studies the developer commissioned: traffic impact assessments, environmental impact assessments, geotechnical reports. Reviewing the methodology and assumptions can reveal whether the analysis is sound.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Sometimes included in staff reports. If not, request under FIPPA from the municipal Planning department.',
       },
     ],
@@ -116,13 +116,13 @@ export const bcConcernCategories: ConcernCategory[] = [
       {
         type: 'Bylaw Enforcement Records',
         description: 'Records of complaints made to bylaw enforcement, inspections conducted, and notices issued for a specific address or property. Shows whether the municipality has already received complaints about this property and what action was taken.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not public. Request under FIPPA from the municipal FOI Coordinator, specifying the address and time period.',
       },
       {
         type: 'Complaint Log',
         description: 'Internal records of complaints received by the bylaw enforcement department. Reveals patterns of complaints at a location — useful for establishing that a nuisance is ongoing rather than isolated.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not public. Request under FIPPA. The municipality may provide aggregated data more readily than individual complaint records.',
       },
     ],
@@ -146,7 +146,7 @@ export const bcConcernCategories: ConcernCategory[] = [
       {
         type: 'Inspection Records',
         description: 'Records of building inspections, including pass/fail results and deficiency notices. Critical in cases involving safety concerns or unpermitted work — shows whether inspections were actually conducted and passed.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not fully public. Request under FIPPA from the municipal Building Department.',
       },
     ],
@@ -176,7 +176,7 @@ export const bcConcernCategories: ConcernCategory[] = [
       {
         type: 'Engineering Studies and Condition Assessments',
         description: 'Technical assessments of infrastructure condition, capacity, and required upgrades. May show the municipality knew about infrastructure deficiencies before a failure or service disruption.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not always published. Request under FIPPA from the Engineering or Public Works department.',
       },
     ],
@@ -218,7 +218,7 @@ export const bcConcernCategories: ConcernCategory[] = [
       {
         type: 'Transit Service Agreement',
         description: 'Agreements between the municipality and BC Transit or TransLink governing service levels, routes, and cost-sharing. Shows what service levels the municipality has committed to funding and the review or renegotiation schedule.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not typically published. Request under FIPPA from the municipal FOI Coordinator or BC Transit.',
       },
       {
@@ -307,7 +307,7 @@ export const bcConcernCategories: ConcernCategory[] = [
       },
       {
         type: 'Remediation Plan',
-        access: 'fippa_required',
+        access: 'foi_required',
         description: 'Plan for environmental remediation of mine sites.',
         typicalLocation: 'Request under FIPPA from BC Ministry of Environment',
       },
@@ -343,7 +343,7 @@ export const bcConcernCategories: ConcernCategory[] = [
       },
       {
         type: 'Habitat Assessment Report',
-        access: 'fippa_required',
+        access: 'foi_required',
         description: 'Assessment of habitat values for development review.',
         typicalLocation: 'Request under FIPPA from BC Ministry of Environment',
       },
@@ -401,8 +401,8 @@ export function getDocumentStructureContext(): string {
       const accessLabel =
         doc.access === 'public'
           ? 'PUBLIC'
-          : doc.access === 'fippa_required'
-          ? 'FIPPA REQUIRED'
+          : doc.access === 'foi_required'
+          ? 'FIPPA REQUIRED' // BC-specific: FIPPA is the governing statute
           : 'RESTRICTED'
 
       lines.push(`  Document: ${doc.type}`)

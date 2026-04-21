@@ -14,7 +14,7 @@ export const abConcernCategories: ConcernCategory[] = [
       {
         type: 'Towing Services Contract',
         description: 'The contract between the municipality and the towing operator, specifying authorized fee rates, response requirements, and storage charges. Reveals whether fees charged exceed what the municipality authorized.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not typically published. Request under FOIP from the municipal FOIP Coordinator.',
       },
       {
@@ -68,7 +68,7 @@ export const abConcernCategories: ConcernCategory[] = [
       {
         type: 'Developer Studies (Traffic, Environmental)',
         description: 'Technical studies the developer commissioned: traffic impact assessments, environmental site assessments, geotechnical reports. Reviewing methodology can reveal whether the analysis supports the proposed development.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Sometimes included in council reports. If not, request under FOIP from the municipal Planning department.',
       },
     ],
@@ -116,13 +116,13 @@ export const abConcernCategories: ConcernCategory[] = [
       {
         type: 'Bylaw Enforcement Records',
         description: 'Records of complaints made to bylaw enforcement, inspections conducted, and notices issued for a specific address. Shows whether the municipality has received prior complaints and what action was taken.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not public. Request under FOIP from the municipal FOIP Coordinator, specifying the address and time period.',
       },
       {
         type: 'Complaint Log',
         description: 'Internal records of complaints received by the bylaw enforcement department. Reveals patterns of complaints at a location useful for establishing an ongoing nuisance.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not public. Request under FOIP. Aggregated data may be provided more readily than individual complaint records.',
       },
     ],
@@ -140,7 +140,7 @@ export const abConcernCategories: ConcernCategory[] = [
       {
         type: 'Inspection Records',
         description: 'Records of Safety Codes inspections, including pass/fail results and deficiency notices. Critical for safety concerns or unpermitted work.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not fully public. Request under FOIP from the municipal Safety Codes Officer or the accredited agency.',
       },
       {
@@ -194,7 +194,7 @@ export const abConcernCategories: ConcernCategory[] = [
       {
         type: 'Right-of-Way Agreement',
         description: 'Agreement between the pipeline company and landowner granting access across private land. Shows the compensation paid and conditions imposed on the landowner.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Registered on land title at Service Alberta (Land Titles). Personal financial details may be severed.',
       },
       {
@@ -260,13 +260,13 @@ export const abConcernCategories: ConcernCategory[] = [
       {
         type: 'Agricultural Support Payments',
         description: 'Records of government payments to agricultural producers under AgriStability, AgriInvest, and other programs. Aggregate data is often publicly reported.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Agriculture and Agri-Food Canada / Alberta Agriculture and Irrigation. Individual payment records require FOIP.',
       },
       {
         type: 'Pesticide Use Report',
         description: 'Records of pesticide applications on agricultural land, including product, rate, and application date. Applicators in Alberta must keep records under the Pesticide Sales, Handling, Use and Application Regulation.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Alberta Agriculture and Irrigation. Not routinely published; request under FOIP.',
       },
     ],
@@ -347,8 +347,8 @@ export function getDocumentStructureContext(): string {
       const accessLabel =
         doc.access === 'public'
           ? 'PUBLIC'
-          : doc.access === 'fippa_required'
-          ? 'FOIP REQUIRED'
+          : doc.access === 'foi_required'
+          ? 'FOIP REQUIRED' // AB-specific: FOIP is the governing statute
           : 'RESTRICTED'
 
       lines.push(`  Document: ${doc.type}`)

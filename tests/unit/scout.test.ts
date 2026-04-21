@@ -79,7 +79,7 @@ describe('Document structures', () => {
       for (const doc of category.documents) {
         expect(doc.type).toBeTruthy()
         expect(doc.description).toBeTruthy()
-        expect(['public', 'fippa_required', 'restricted']).toContain(doc.access)
+        expect(['public', 'foi_required', 'restricted']).toContain(doc.access)
       }
     }
   })
@@ -95,7 +95,7 @@ describe('Document structures', () => {
   })
 
   it('document access types are valid across all categories', () => {
-    const validAccessTypes = new Set(['public', 'fippa_required', 'restricted'])
+    const validAccessTypes = new Set(['public', 'foi_required', 'restricted'])
     for (const category of CONCERN_CATEGORIES) {
       for (const doc of category.documents) {
         expect(validAccessTypes.has(doc.access)).toBe(true)

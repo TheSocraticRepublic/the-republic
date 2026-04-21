@@ -20,7 +20,7 @@ export const onConcernCategories: ConcernCategory[] = [
       {
         type: 'Towing Contract',
         description: 'The contract between the municipality and a towing operator, specifying approved fee rates, response requirements, and storage charges.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not typically published. Request under FIPPA from the municipal Freedom of Information Coordinator.',
       },
       {
@@ -68,7 +68,7 @@ export const onConcernCategories: ConcernCategory[] = [
       {
         type: 'Developer Studies (Traffic, Environmental, Shadow)',
         description: 'Technical studies submitted with development applications: traffic impact studies, environmental site assessments, shadow studies, wind studies. Required by Ontario\'s Planning Act.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Sometimes on the municipal website as part of application materials. If not, request under FIPPA from the Planning department.',
       },
     ],
@@ -116,7 +116,7 @@ export const onConcernCategories: ConcernCategory[] = [
       {
         type: 'Municipal Law Enforcement Records',
         description: 'Records of complaints made to by-law enforcement, inspections conducted, and orders issued for a specific property or address.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not public. Request under FIPPA from the municipal Freedom of Information Coordinator.',
       },
       {
@@ -140,7 +140,7 @@ export const onConcernCategories: ConcernCategory[] = [
       {
         type: 'Inspection Records',
         description: 'Records of building inspections under the Ontario Building Code, including pass/fail and deficiency notices. Relevant for safety concerns or unpermitted work.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Not fully public. Request under FIPPA from the municipal Chief Building Official.',
       },
       {
@@ -158,7 +158,7 @@ export const onConcernCategories: ConcernCategory[] = [
       {
         type: 'Metrolinx Capital Program Agreement',
         description: 'Agreements between Metrolinx and municipalities governing rapid transit projects, cost-sharing, and timelines. Metrolinx is accountable to the Province, not municipalities.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Request under FIPPA from Metrolinx (provincial FOI coordinator). Some agreements are posted publicly at metrolinx.com.',
       },
       {
@@ -176,7 +176,7 @@ export const onConcernCategories: ConcernCategory[] = [
       {
         type: 'TTC Operating Agreement',
         description: 'The service agreement between the TTC and the City of Toronto governing service levels, routes, and financial contributions.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Request under FIPPA from the City of Toronto or TTC.',
       },
       {
@@ -296,7 +296,7 @@ export const onConcernCategories: ConcernCategory[] = [
       {
         type: 'Natural Heritage Assessment',
         description: 'Assessment of significant natural heritage features (wetlands, ESAs, species at risk habitat) required by municipal Official Plans and the Provincial Policy Statement.',
-        access: 'fippa_required',
+        access: 'foi_required',
         typicalLocation: 'Sometimes part of development application materials. If not, request under FIPPA from the municipal Planning department.',
       },
     ],
@@ -353,8 +353,8 @@ export function getDocumentStructureContext(): string {
       const accessLabel =
         doc.access === 'public'
           ? 'PUBLIC'
-          : doc.access === 'fippa_required'
-          ? 'FIPPA REQUIRED'
+          : doc.access === 'foi_required'
+          ? 'FOI REQUIRED'
           : 'RESTRICTED'
 
       lines.push(`  Document: ${doc.type}`)
