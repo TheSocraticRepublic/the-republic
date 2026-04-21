@@ -9,12 +9,21 @@ import {
   type CredentialType,
   type CredentialSummary,
 } from '@/lib/credentials'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function GET(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`credentials-get:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too Many Requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }

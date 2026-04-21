@@ -37,7 +37,13 @@ export default async function PublicProfilePage({ params }: PageProps) {
 
   // Look up profile by displayName
   const profileRows = await db
-    .select()
+    .select({
+      userId: userProfiles.userId,
+      displayName: userProfiles.displayName,
+      bio: userProfiles.bio,
+      avatarUrl: userProfiles.avatarUrl,
+      createdAt: userProfiles.createdAt,
+    })
     .from(userProfiles)
     .where(eq(userProfiles.displayName, displayName))
     .limit(1)

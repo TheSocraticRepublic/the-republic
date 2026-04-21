@@ -12,7 +12,8 @@ import { searchForDocument } from '@/lib/scout/search'
 import { buildSearchResultsContext } from '@/lib/ai/search-context'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
+import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
 
 const MODEL = 'claude-sonnet-4-20250514'
 
@@ -254,34 +255,33 @@ export async function POST(request: NextRequest) {
     onFinish: async ({ text }) => {
       // --- Stage 2: Async persist after streaming completes ---
       try {
-        // Read current state BEFORE updating to check if this is the first completion
-        const [currentInvestigation] = await db
-          .select({ briefingCompletedAt: investigations.briefingCompletedAt })
-          .from(investigations)
-          .where(eq(investigations.id, investigation.id))
-          .limit(1)
+        await db.transaction(async (tx) => {
+          // Atomic UPDATE: only succeeds when briefing_completed_at IS NULL.
+          // If another process already completed this investigation the update
+          // returns 0 rows and we skip the credential insert — no double-award.
+          const updated = await tx
+            .update(investigations)
+            .set({
+              briefingText: text,
+              briefingCompletedAt: sql`NOW()`,
+              updatedAt: sql`NOW()`,
+            })
+            .where(
+              sql`${investigations.id} = ${investigation.id} AND ${investigations.briefingCompletedAt} IS NULL`
+            )
+            .returning({ id: investigations.id })
 
-        const isFirstCompletion = currentInvestigation?.briefingCompletedAt === null
-
-        await db
-          .update(investigations)
-          .set({
-            briefingText: text,
-            briefingCompletedAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(investigations.id, investigation.id))
-
-        // Award credential only on first completion — idempotent guard
-        if (isFirstCompletion) {
-          await db.insert(credentialEvents).values({
-            userId,
-            credentialType: 'investigation_completed',
-            weight: 3,
-            sourceId: investigation.id,
-            sourceType: 'investigation',
-          })
-        }
+          if (updated.length > 0) {
+            // This is the first (and only) completion — award the credential
+            await tx.insert(credentialEvents).values({
+              userId,
+              credentialType: 'investigation_completed',
+              weight: CREDENTIAL_WEIGHTS.investigation_completed,
+              sourceId: investigation.id,
+              sourceType: 'investigation',
+            })
+          }
+        })
       } catch (err) {
         console.error('Failed to persist briefing text for investigation', investigation.id, err)
       }
