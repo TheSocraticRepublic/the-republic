@@ -110,7 +110,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
             </p>
             {effectiveTotal > 0 && (
               <>
-                <span className="text-neutral-800">·</span>
+                <span className="text-neutral-600">·</span>
                 <p className="text-xs text-neutral-500">
                   Civic weight{' '}
                   <span className="text-neutral-300 font-medium">{effectiveTotal}</span>

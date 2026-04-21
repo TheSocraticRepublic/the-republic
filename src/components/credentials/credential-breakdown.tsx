@@ -30,7 +30,7 @@ export function CredentialBreakdown({ summary }: CredentialBreakdownProps) {
   const activeBreakdown = breakdown.filter((item) => item.count > 0)
 
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-black/50 p-6 backdrop-blur-md">
+    <div className="rounded-xl border border-white/[0.08] bg-black/60 p-6 backdrop-blur-md">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
