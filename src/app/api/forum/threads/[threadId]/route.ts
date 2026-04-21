@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { forumThreads, forumPosts, userProfiles, jurisdictions } from '@/lib/db/schema'
-import { eq, asc } from 'drizzle-orm'
+import { eq, asc, and, inArray } from 'drizzle-orm'
 
 interface RouteContext {
   params: Promise<{ threadId: string }>
@@ -56,7 +56,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   const thread = threadRows[0]
 
-  // Fetch all posts for this thread (including removed ones so client can render tombstones)
+  // Fetch posts for this thread. Exclude moderator-hidden posts from regular users.
+  // 'removed_by_author' is included so clients can render tombstones.
   const posts = await db
     .select({
       id: forumPosts.id,
@@ -72,7 +73,12 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     })
     .from(forumPosts)
     .innerJoin(userProfiles, eq(forumPosts.authorId, userProfiles.userId))
-    .where(eq(forumPosts.threadId, threadId))
+    .where(
+      and(
+        eq(forumPosts.threadId, threadId),
+        inArray(forumPosts.status, ['visible', 'removed_by_author'])
+      )
+    )
     .orderBy(asc(forumPosts.createdAt))
     .limit(limit)
     .offset(offset)

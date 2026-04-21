@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { forumPosts, forumThreads } from '@/lib/db/schema'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, sql, lt, count } from 'drizzle-orm'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { validatePostContent } from '@/lib/forum/validation'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 interface RouteContext {
   params: Promise<{ postId: string }>
@@ -14,6 +15,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const rl = await checkRateLimit(`forum-edit:${userId}`)
+  if (!rl.success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }
@@ -89,12 +98,20 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     })
   }
 
+  const rl = await checkRateLimit(`forum-delete:${userId}`)
+  if (!rl.success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   const { postId } = await params
   const db = getDb()
 
   // Compound WHERE: must be the author
   const existing = await db
-    .select({ id: forumPosts.id, threadId: forumPosts.threadId })
+    .select({ id: forumPosts.id, threadId: forumPosts.threadId, createdAt: forumPosts.createdAt })
     .from(forumPosts)
     .where(and(eq(forumPosts.id, postId), eq(forumPosts.authorId, userId)))
     .limit(1)
@@ -106,7 +123,26 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     })
   }
 
-  const { threadId } = existing[0]
+  const { threadId, createdAt: postCreatedAt } = existing[0]
+
+  // Prevent deleting the first post in a thread (thread body).
+  // A post is the first post if no other post in the thread has an earlier createdAt.
+  const [earlierPostCount] = await db
+    .select({ c: count() })
+    .from(forumPosts)
+    .where(
+      and(
+        eq(forumPosts.threadId, threadId),
+        lt(forumPosts.createdAt, postCreatedAt)
+      )
+    )
+
+  if ((earlierPostCount?.c ?? 0) === 0) {
+    return new Response(JSON.stringify({ error: 'Cannot delete the first post in a thread' }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
   try {
     const result = await db.transaction(async (tx) => {
@@ -119,7 +155,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       await tx
         .update(forumThreads)
         .set({
-          postCount: sql`post_count - 1`,
+          postCount: sql`GREATEST(post_count - 1, 0)`,
           updatedAt: new Date(),
         })
         .where(eq(forumThreads.id, threadId))

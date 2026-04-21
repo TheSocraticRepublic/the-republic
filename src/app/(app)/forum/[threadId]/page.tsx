@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { redirect, notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { forumThreads, forumPosts, userProfiles, jurisdictions } from '@/lib/db/schema'
-import { eq, asc } from 'drizzle-orm'
+import { eq, asc, and, inArray } from 'drizzle-orm'
 import { ThreadView } from '@/components/forum/thread-view'
 
 interface PageProps {
@@ -78,7 +78,12 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
     })
     .from(forumPosts)
     .innerJoin(userProfiles, eq(forumPosts.authorId, userProfiles.userId))
-    .where(eq(forumPosts.threadId, threadId))
+    .where(
+      and(
+        eq(forumPosts.threadId, threadId),
+        inArray(forumPosts.status, ['visible', 'removed_by_author'])
+      )
+    )
     .orderBy(asc(forumPosts.createdAt))
     .limit(limit)
     .offset(offset)

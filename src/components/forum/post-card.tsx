@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
 import { formatRelativeTime } from '@/lib/format-relative-time'
+import { MAX_REPLY_DEPTH } from '@/lib/forum/validation'
 
 interface PostCardProps {
   id: string
@@ -172,5 +173,3 @@ export function PostCard({
   )
 }
 
-// Re-export the constant so thread-view can use it directly
-const MAX_REPLY_DEPTH = 3

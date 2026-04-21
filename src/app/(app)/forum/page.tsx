@@ -17,6 +17,7 @@ interface SearchParams {
   page?: string
   jurisdiction?: string
   category?: string
+  investigation?: string
 }
 
 export default async function ForumPage({
@@ -34,6 +35,7 @@ export default async function ForumPage({
   const offset = (page - 1) * limit
   const jurisdictionParam = sp.jurisdiction ?? null
   const categoryParam = sp.category ?? null
+  const investigationParam = sp.investigation ?? null
 
   const db = getDb()
 
@@ -43,6 +45,9 @@ export default async function ForumPage({
   }
   if (categoryParam) {
     conditions.push(eq(forumThreads.concernCategory, categoryParam))
+  }
+  if (investigationParam) {
+    conditions.push(eq(forumThreads.investigationId, investigationParam))
   }
 
   const whereClause = and(...conditions)

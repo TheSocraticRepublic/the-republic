@@ -37,6 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     .innerJoin(userProfiles, eq(forumThreads.authorId, userProfiles.userId))
     .where(eq(forumThreads.investigationId, investigationId))
     .orderBy(desc(forumThreads.lastPostAt))
+    .limit(20)
 
   return new Response(JSON.stringify({ threads }), {
     status: 200,
