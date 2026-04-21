@@ -6,7 +6,7 @@ import {
   forumThreads,
   moderationActions,
 } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { stripHtmlTags } from '@/lib/profile/validation'
 
@@ -106,6 +106,26 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   if (!contentAuthorId || contentAuthorId !== userId) {
     return new Response(JSON.stringify({ error: 'Only the content author may appeal' }), {
       status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  // CH2: Duplicate appeal prevention. One appeal per report — subsequent submissions
+  // would reset the report status again and spam the moderation queue.
+  const existingAppeal = await db
+    .select({ id: moderationActions.id })
+    .from(moderationActions)
+    .where(
+      and(
+        eq(moderationActions.actionType, 'appeal'),
+        eq(moderationActions.relatedReportId, reportId)
+      )
+    )
+    .limit(1)
+
+  if (existingAppeal.length > 0) {
+    return new Response(JSON.stringify({ error: 'This report has already been appealed' }), {
+      status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
   }
