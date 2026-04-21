@@ -2,9 +2,16 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getDb } from '@/lib/db'
-import { userProfiles } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { userProfiles, credentialEvents } from '@/lib/db/schema'
+import { eq, count, sum, sql } from 'drizzle-orm'
 import { ProfileBadge } from '@/components/profile/profile-badge'
+import { CredentialBreakdown } from '@/components/credentials/credential-breakdown'
+import {
+  CREDENTIAL_LABELS,
+  computeDecayMultiplier,
+  computeEffectiveWeight,
+  type CredentialType,
+} from '@/lib/credentials'
 
 export const metadata = {
   title: 'Profile — The Republic',
@@ -35,6 +42,42 @@ export default async function ProfilePage() {
   }
 
   const profile = rows[0]
+
+  // Fetch credential breakdown directly from DB (server component)
+  const [breakdownRows, lastActivityRows] = await Promise.all([
+    db
+      .select({
+        type: credentialEvents.credentialType,
+        count: count(),
+        rawWeight: sum(credentialEvents.weight),
+      })
+      .from(credentialEvents)
+      .where(eq(credentialEvents.userId, userId))
+      .groupBy(credentialEvents.credentialType),
+    db
+      .select({ lastActivity: sql<string>`MAX(created_at)` })
+      .from(credentialEvents)
+      .where(eq(credentialEvents.userId, userId)),
+  ])
+
+  const lastActivityStr = lastActivityRows[0]?.lastActivity ?? null
+  const lastActivityAt = lastActivityStr ? new Date(lastActivityStr) : null
+  const rawTotal = breakdownRows.reduce((acc, row) => acc + Number(row.rawWeight ?? 0), 0)
+  const decayMultiplier = computeDecayMultiplier(lastActivityAt)
+  const effectiveTotal = computeEffectiveWeight(rawTotal, lastActivityAt)
+
+  const credentialSummary = {
+    rawTotal,
+    effectiveTotal,
+    decayMultiplier,
+    lastActivityAt,
+    breakdown: breakdownRows.map((row) => ({
+      type: row.type as CredentialType,
+      label: CREDENTIAL_LABELS[row.type as CredentialType],
+      count: Number(row.count),
+      rawWeight: Number(row.rawWeight ?? 0),
+    })),
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
@@ -83,6 +126,11 @@ export default async function ProfilePage() {
           /u/{profile.displayName}
         </Link>
       </p>
+
+      {/* Credential breakdown */}
+      <div className="mt-6">
+        <CredentialBreakdown summary={credentialSummary} />
+      </div>
     </div>
   )
 }

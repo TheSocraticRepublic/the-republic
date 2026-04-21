@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { userProfiles, credentialEvents } from '@/lib/db/schema'
-import { eq, sum } from 'drizzle-orm'
+import { eq, sum, sql } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { computeEffectiveWeight, computeDecayMultiplier } from '@/lib/credentials'
 
 export async function GET(
   request: NextRequest,
@@ -39,13 +40,22 @@ export async function GET(
   const profile = profileRows[0]
   const userId = profile.userId
 
-  // Credential weight only — engagement counts are anti-spectacle violations
-  const weightResult = await db
-    .select({ total: sum(credentialEvents.weight) })
-    .from(credentialEvents)
-    .where(eq(credentialEvents.userId, userId))
+  // Credential weight with decay applied
+  const [weightResult, lastActivityResult] = await Promise.all([
+    db
+      .select({ total: sum(credentialEvents.weight) })
+      .from(credentialEvents)
+      .where(eq(credentialEvents.userId, userId)),
+    db
+      .select({ lastActivity: sql<string>`MAX(created_at)` })
+      .from(credentialEvents)
+      .where(eq(credentialEvents.userId, userId)),
+  ])
 
-  const credentialWeight = Number(weightResult[0]?.total ?? 0)
+  const rawTotal = Number(weightResult[0]?.total ?? 0)
+  const lastActivityStr = lastActivityResult[0]?.lastActivity ?? null
+  const lastActivityAt = lastActivityStr ? new Date(lastActivityStr) : null
+  const credentialWeight = computeEffectiveWeight(rawTotal, lastActivityAt)
 
   // NEVER include email or userId in response
   return new Response(

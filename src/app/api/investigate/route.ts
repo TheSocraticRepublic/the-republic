@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
-import { investigations, jurisdictions } from '@/lib/db/schema'
+import { investigations, jurisdictions, credentialEvents } from '@/lib/db/schema'
 import { buildBriefingPrompt } from '@/lib/ai/prompts/briefing-system'
 import { loadJurisdictionModule } from '@/lib/jurisdictions'
 import {
@@ -254,6 +254,15 @@ export async function POST(request: NextRequest) {
     onFinish: async ({ text }) => {
       // --- Stage 2: Async persist after streaming completes ---
       try {
+        // Read current state BEFORE updating to check if this is the first completion
+        const [currentInvestigation] = await db
+          .select({ briefingCompletedAt: investigations.briefingCompletedAt })
+          .from(investigations)
+          .where(eq(investigations.id, investigation.id))
+          .limit(1)
+
+        const isFirstCompletion = currentInvestigation?.briefingCompletedAt === null
+
         await db
           .update(investigations)
           .set({
@@ -262,6 +271,17 @@ export async function POST(request: NextRequest) {
             updatedAt: new Date(),
           })
           .where(eq(investigations.id, investigation.id))
+
+        // Award credential only on first completion — idempotent guard
+        if (isFirstCompletion) {
+          await db.insert(credentialEvents).values({
+            userId,
+            credentialType: 'investigation_completed',
+            weight: 3,
+            sourceId: investigation.id,
+            sourceType: 'investigation',
+          })
+        }
       } catch (err) {
         console.error('Failed to persist briefing text for investigation', investigation.id, err)
       }

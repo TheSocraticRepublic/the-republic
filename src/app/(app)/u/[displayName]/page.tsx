@@ -1,8 +1,15 @@
 import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { userProfiles, credentialEvents } from '@/lib/db/schema'
-import { eq, sum } from 'drizzle-orm'
+import { eq, count, sum, sql } from 'drizzle-orm'
 import { ProfileBadge } from '@/components/profile/profile-badge'
+import { CredentialBreakdown } from '@/components/credentials/credential-breakdown'
+import {
+  CREDENTIAL_LABELS,
+  computeDecayMultiplier,
+  computeEffectiveWeight,
+  type CredentialType,
+} from '@/lib/credentials'
 
 interface PageProps {
   params: Promise<{ displayName: string }>
@@ -42,16 +49,41 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const profile = profileRows[0]
   const userId = profile.userId
 
-  // Query credential weight only — investigation and review counts are engagement
-  // metrics inconsistent with anti-spectacle principles
-  const [weightResult] = await Promise.all([
+  // Full credential computation — decay-adjusted for public display
+  const [breakdownRows, lastActivityRows] = await Promise.all([
     db
-      .select({ total: sum(credentialEvents.weight) })
+      .select({
+        type: credentialEvents.credentialType,
+        count: count(),
+        rawWeight: sum(credentialEvents.weight),
+      })
+      .from(credentialEvents)
+      .where(eq(credentialEvents.userId, userId))
+      .groupBy(credentialEvents.credentialType),
+    db
+      .select({ lastActivity: sql<string>`MAX(created_at)` })
       .from(credentialEvents)
       .where(eq(credentialEvents.userId, userId)),
   ])
 
-  const credentialWeight = Number(weightResult[0]?.total ?? 0)
+  const lastActivityStr = lastActivityRows[0]?.lastActivity ?? null
+  const lastActivityAt = lastActivityStr ? new Date(lastActivityStr) : null
+  const rawTotal = breakdownRows.reduce((acc, row) => acc + Number(row.rawWeight ?? 0), 0)
+  const decayMultiplier = computeDecayMultiplier(lastActivityAt)
+  const effectiveTotal = computeEffectiveWeight(rawTotal, lastActivityAt)
+
+  const credentialSummary = {
+    rawTotal,
+    effectiveTotal,
+    decayMultiplier,
+    lastActivityAt,
+    breakdown: breakdownRows.map((row) => ({
+      type: row.type as CredentialType,
+      label: CREDENTIAL_LABELS[row.type as CredentialType],
+      count: Number(row.count),
+      rawWeight: Number(row.rawWeight ?? 0),
+    })),
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
@@ -70,17 +102,22 @@ export default async function PublicProfilePage({ params }: PageProps) {
             <p className="text-xs text-neutral-600">
               Joined {formatDate(profile.createdAt)}
             </p>
-            {credentialWeight > 0 && (
+            {effectiveTotal > 0 && (
               <>
                 <span className="text-neutral-800">·</span>
                 <p className="text-xs text-neutral-500">
                   Civic weight{' '}
-                  <span className="text-neutral-300 font-medium">{credentialWeight}</span>
+                  <span className="text-neutral-300 font-medium">{effectiveTotal}</span>
                 </p>
               </>
             )}
           </div>
         </div>
+      </div>
+
+      {/* Credential breakdown */}
+      <div className="mt-6">
+        <CredentialBreakdown summary={credentialSummary} />
       </div>
     </div>
   )
