@@ -20,6 +20,7 @@ export interface ApNote {
   '@context': unknown
   id: string
   type: 'Note'
+  mediaType: 'text/plain'
   attributedTo: string
   content: string
   inReplyTo?: string
@@ -32,6 +33,7 @@ export interface ApArticle {
   '@context': unknown
   id: string
   type: 'Article'
+  mediaType: 'text/plain'
   attributedTo: string
   name: string
   content: string
@@ -102,6 +104,7 @@ export function threadToArticle(thread: {
     '@context': AP_CONTEXT,
     id,
     type: 'Article',
+    mediaType: 'text/plain' as const,
     attributedTo: actor,
     name: thread.title,
     content: thread.content,
@@ -129,6 +132,7 @@ export function postToNote(post: {
     '@context': AP_CONTEXT,
     id,
     type: 'Note',
+    mediaType: 'text/plain',
     attributedTo: actor,
     content: post.content,
     published: post.createdAt.toISOString(),

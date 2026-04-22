@@ -49,13 +49,33 @@ export async function getOrCreateActorKeys(userId: string): Promise<ActorKeyPair
     return existing[0]
   }
 
-  // Lazy generation for users who predate AP
+  // Lazy generation for users who predate AP.
+  // Use onConflictDoNothing() to handle concurrent inserts (race condition).
+  // After insert, re-query to return whatever row is authoritative — whether
+  // the insert succeeded or lost to a concurrent insert.
   const pair = await generateActorKeyPair()
-  await db.insert(actorKeys).values({
-    userId,
-    publicKeyPem: pair.publicKeyPem,
-    privateKeyPem: pair.privateKeyPem,
-  })
+  await db
+    .insert(actorKeys)
+    .values({
+      userId,
+      publicKeyPem: pair.publicKeyPem,
+      privateKeyPem: pair.privateKeyPem,
+    })
+    .onConflictDoNothing()
 
-  return pair
+  const authoritative = await db
+    .select({
+      publicKeyPem: actorKeys.publicKeyPem,
+      privateKeyPem: actorKeys.privateKeyPem,
+    })
+    .from(actorKeys)
+    .where(eq(actorKeys.userId, userId))
+    .limit(1)
+
+  if (authoritative.length === 0) {
+    // Should never happen, but fail explicitly rather than silently
+    throw new Error(`[AP keys] Failed to retrieve keys for user ${userId} after insert`)
+  }
+
+  return authoritative[0]
 }

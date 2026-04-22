@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     })
   }
 
-  const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const { success } = await checkRateLimit(`ap-outbox:${ip}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {

@@ -1,6 +1,7 @@
 import 'server-only'
 import { signRequest } from './signatures'
 import { actorUrl } from './context'
+import { isValidFederationUrl } from './url-validation'
 
 const DELIVERY_TIMEOUT_MS = 8000
 
@@ -17,6 +18,11 @@ export async function deliverActivity(
   privateKeyPem: string,
   keyId: string
 ): Promise<boolean> {
+  if (!isValidFederationUrl(targetInbox)) {
+    console.error('[AP delivery] Blocked delivery to invalid/private URL:', targetInbox)
+    return false
+  }
+
   const body = JSON.stringify(activity)
 
   let signedHeaders: {
