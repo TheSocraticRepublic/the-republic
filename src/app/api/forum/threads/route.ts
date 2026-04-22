@@ -5,6 +5,7 @@ import {
   forumPosts,
   credentialEvents,
   userProfiles,
+  remoteFollowers,
   jurisdictions,
   investigations,
 } from '@/lib/db/schema'
@@ -12,6 +13,11 @@ import { eq, desc, and, count, sql } from 'drizzle-orm'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { validateThreadTitle, validatePostContent } from '@/lib/forum/validation'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { isFederationConfigured, threadUrl, actorUrl } from '@/lib/activitypub/context'
+import { getOrCreateActorKeys } from '@/lib/activitypub/keys'
+import { deliverActivity, buildKeyId } from '@/lib/activitypub/delivery'
+import { threadToArticle, wrapInCreate } from '@/lib/activitypub/activity'
+import { AP_CONTEXT } from '@/lib/activitypub/context'
 
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
@@ -125,6 +131,13 @@ export async function POST(request: NextRequest) {
       return { thread, firstPost }
     })
 
+    // Fire-and-forget: push to Fediverse followers if federation is configured
+    if (isFederationConfigured()) {
+      deliverThreadToFollowers(userId, result.thread, contentStripped).catch((err) => {
+        console.error('[AP] Error in thread delivery background task', err)
+      })
+    }
+
     return new Response(JSON.stringify(result), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
@@ -134,6 +147,67 @@ export async function POST(request: NextRequest) {
     return new Response(JSON.stringify({ error: 'Failed to create thread' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
+    })
+  }
+}
+
+async function deliverThreadToFollowers(
+  userId: string,
+  thread: { id: string; title: string; createdAt: Date },
+  content: string
+) {
+  const db = getDb()
+
+  // Need the author's apHandle and keys
+  const [profileRows, followerRows] = await Promise.all([
+    db
+      .select({ apHandle: userProfiles.apHandle })
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, userId))
+      .limit(1),
+    db
+      .select({
+        actorInbox: remoteFollowers.actorInbox,
+        sharedInbox: remoteFollowers.sharedInbox,
+      })
+      .from(remoteFollowers)
+      .where(eq(remoteFollowers.userId, userId)),
+  ])
+
+  const apHandle = profileRows[0]?.apHandle
+  if (!apHandle || followerRows.length === 0) return
+
+  let privateKeyPem: string
+  try {
+    const keys = await getOrCreateActorKeys(userId)
+    privateKeyPem = keys.privateKeyPem
+  } catch (err) {
+    console.error('[AP] Could not get actor keys for thread delivery', err)
+    return
+  }
+
+  const keyId = buildKeyId(apHandle)
+
+  const article = threadToArticle({
+    id: thread.id,
+    title: thread.title,
+    content,
+    authorApHandle: apHandle,
+    createdAt: thread.createdAt,
+  })
+
+  const activityId = `${threadUrl(thread.id)}/activity`
+  const activity = wrapInCreate(article, apHandle, activityId)
+
+  // Deduplicate by sharedInbox where available, fall back to actorInbox
+  const inboxSet = new Set<string>()
+  for (const follower of followerRows) {
+    inboxSet.add(follower.sharedInbox ?? follower.actorInbox)
+  }
+
+  for (const inbox of inboxSet) {
+    deliverActivity(activity, inbox, privateKeyPem, keyId).catch((err) => {
+      console.error(`[AP] Failed to deliver thread to ${inbox}`, err)
     })
   }
 }

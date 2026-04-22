@@ -12,7 +12,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/api/users/') ||
     pathname.startsWith('/u/') ||
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon')
+    pathname.startsWith('/favicon') ||
+    // ActivityPub / WebFinger — public by protocol
+    pathname.startsWith('/.well-known/') ||
+    pathname.startsWith('/ap/')
   ) {
     return NextResponse.next()
   }

@@ -1,10 +1,14 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
-import { forumThreads, forumPosts } from '@/lib/db/schema'
+import { forumThreads, forumPosts, userProfiles, remoteFollowers } from '@/lib/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { validatePostContent, MAX_REPLY_DEPTH } from '@/lib/forum/validation'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { isFederationConfigured, postUrl } from '@/lib/activitypub/context'
+import { getOrCreateActorKeys } from '@/lib/activitypub/keys'
+import { deliverActivity, buildKeyId } from '@/lib/activitypub/delivery'
+import { postToNote, wrapInCreate } from '@/lib/activitypub/activity'
 
 interface RouteContext {
   params: Promise<{ threadId: string }>
@@ -136,6 +140,13 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       return { post }
     })
 
+    // Fire-and-forget: push to Fediverse followers if federation is configured
+    if (isFederationConfigured()) {
+      deliverPostToFollowers(userId, result.post, parentId).catch((err) => {
+        console.error('[AP] Error in post delivery background task', err)
+      })
+    }
+
     return new Response(JSON.stringify(result), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
@@ -145,6 +156,67 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return new Response(JSON.stringify({ error: 'Failed to create post' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
+    })
+  }
+}
+
+async function deliverPostToFollowers(
+  userId: string,
+  post: { id: string; content: string; threadId: string; createdAt: Date },
+  parentId: string | null
+) {
+  const db = getDb()
+
+  const [profileRows, followerRows] = await Promise.all([
+    db
+      .select({ apHandle: userProfiles.apHandle })
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, userId))
+      .limit(1),
+    db
+      .select({
+        actorInbox: remoteFollowers.actorInbox,
+        sharedInbox: remoteFollowers.sharedInbox,
+      })
+      .from(remoteFollowers)
+      .where(eq(remoteFollowers.userId, userId)),
+  ])
+
+  const apHandle = profileRows[0]?.apHandle
+  if (!apHandle || followerRows.length === 0) return
+
+  let privateKeyPem: string
+  try {
+    const keys = await getOrCreateActorKeys(userId)
+    privateKeyPem = keys.privateKeyPem
+  } catch (err) {
+    console.error('[AP] Could not get actor keys for post delivery', err)
+    return
+  }
+
+  const keyId = buildKeyId(apHandle)
+
+  const note = postToNote({
+    id: post.id,
+    content: post.content,
+    authorApHandle: apHandle,
+    createdAt: post.createdAt,
+    parentPostId: parentId,
+    threadId: post.threadId,
+  })
+
+  const activityId = `${postUrl(post.id)}/activity`
+  const activity = wrapInCreate(note, apHandle, activityId)
+
+  // Deduplicate by sharedInbox where available
+  const inboxSet = new Set<string>()
+  for (const follower of followerRows) {
+    inboxSet.add(follower.sharedInbox ?? follower.actorInbox)
+  }
+
+  for (const inbox of inboxSet) {
+    deliverActivity(activity, inbox, privateKeyPem, keyId).catch((err) => {
+      console.error(`[AP] Failed to deliver post to ${inbox}`, err)
     })
   }
 }

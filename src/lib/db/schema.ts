@@ -727,6 +727,10 @@ export const userProfiles = pgTable(
       .unique()
       .references(() => users.id, { onDelete: 'cascade' }),
     displayName: text('display_name').notNull().unique(),
+    // apHandle is the immutable ActivityPub identity. Set to displayName at
+    // profile creation and never changed — even if displayName is later renamed.
+    // All AP actor URIs are keyed on this value.
+    apHandle: text('ap_handle').unique(),
     bio: text('bio'),
     avatarUrl: text('avatar_url'),
     displayNameChangedAt: timestamp('display_name_changed_at'),
@@ -736,6 +740,47 @@ export const userProfiles = pgTable(
   (t) => [
     index('user_profiles_user_id_idx').on(t.userId),
     index('user_profiles_display_name_idx').on(t.displayName),
+    index('user_profiles_ap_handle_idx').on(t.apHandle),
+  ]
+)
+
+// --- ActivityPub Tables ---
+
+// RSA key pairs for HTTP Signature signing. Stored separately from userProfiles
+// so private key material is never co-queried with profile display data.
+export const actorKeys = pgTable(
+  'actor_keys',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    publicKeyPem: text('public_key_pem').notNull(),
+    privateKeyPem: text('private_key_pem').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [index('actor_keys_user_id_idx').on(t.userId)]
+)
+
+// Fediverse actors (Mastodon users, etc.) following Republic users.
+// actorUri is the canonical AP actor URL from the remote instance.
+export const remoteFollowers = pgTable(
+  'remote_followers',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    actorUri: text('actor_uri').notNull(),
+    actorInbox: text('actor_inbox').notNull(),
+    sharedInbox: text('shared_inbox'),
+    displayName: text('display_name'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('remote_followers_user_id_idx').on(t.userId),
+    uniqueIndex('remote_followers_unique_idx').on(t.userId, t.actorUri),
   ]
 )
 

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
-import { userProfiles } from '@/lib/db/schema'
+import { userProfiles, actorKeys } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import {
   validateDisplayName,
@@ -9,6 +9,7 @@ import {
   canChangeDisplayName,
 } from '@/lib/profile/validation'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { generateActorKeyPair } from '@/lib/activitypub/keys'
 
 // Postgres unique violation code
 const PG_UNIQUE_VIOLATION = '23505'
@@ -103,6 +104,9 @@ export async function POST(request: NextRequest) {
       .values({
         userId,
         displayName: normalizedName,
+        // apHandle is set to the lowercased displayName at creation and never changes,
+        // even if the user later renames their displayName.
+        apHandle: normalizedName,
         bio: bio || null,
       })
       .returning({
@@ -111,6 +115,24 @@ export async function POST(request: NextRequest) {
         bio: userProfiles.bio,
         avatarUrl: userProfiles.avatarUrl,
         createdAt: userProfiles.createdAt,
+      })
+
+    // Generate RSA key pair for ActivityPub HTTP Signatures.
+    // Non-blocking: key generation failure must not prevent profile creation.
+    generateActorKeyPair()
+      .then(async (pair) => {
+        try {
+          await db.insert(actorKeys).values({
+            userId,
+            publicKeyPem: pair.publicKeyPem,
+            privateKeyPem: pair.privateKeyPem,
+          })
+        } catch (keyInsertErr) {
+          console.error('[AP] Failed to store actor keys for user', userId, keyInsertErr)
+        }
+      })
+      .catch((keyGenErr) => {
+        console.error('[AP] Failed to generate actor keys for user', userId, keyGenErr)
       })
 
     return new Response(JSON.stringify({ profile: rows[0] }), {
