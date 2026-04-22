@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, after } from 'next/server'
 import { getDb } from '@/lib/db'
 import {
   forumThreads,
@@ -131,10 +131,14 @@ export async function POST(request: NextRequest) {
       return { thread, firstPost }
     })
 
-    // Fire-and-forget: push to Fediverse followers if federation is configured
+    // Deliver to Fediverse followers after the response is sent.
+    // after() runs the callback post-response without blocking the client and
+    // without being killed when the handler returns — safe for async fan-out.
     if (isFederationConfigured()) {
-      deliverThreadToFollowers(userId, result.thread, contentStripped).catch((err) => {
-        console.error('[AP] Error in thread delivery background task', err)
+      after(async () => {
+        await deliverThreadToFollowers(userId, result.thread, contentStripped).catch((err) => {
+          console.error('[AP] Error in thread delivery background task', err)
+        })
       })
     }
 

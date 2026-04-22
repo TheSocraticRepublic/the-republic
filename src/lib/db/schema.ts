@@ -748,6 +748,11 @@ export const userProfiles = pgTable(
 
 // RSA key pairs for HTTP Signature signing. Stored separately from userProfiles
 // so private key material is never co-queried with profile display data.
+//
+// SECURITY: Private key material. If using Supabase PostgREST, this table MUST
+// have RLS enabled. DO NOT expose via client API. RLS policy: SELECT only where
+// user_id = auth.uid(). The private key column should never appear in any API
+// response — query only publicKeyPem in public-facing endpoints.
 export const actorKeys = pgTable(
   'actor_keys',
   {

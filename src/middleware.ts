@@ -13,9 +13,13 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/u/') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
-    // ActivityPub / WebFinger — public by protocol
+    // ActivityPub / WebFinger — public by protocol.
+    // Enumerated explicitly so that any new /ap/* routes require a conscious
+    // decision to exempt from auth, rather than being public by default.
     pathname.startsWith('/.well-known/') ||
-    pathname.startsWith('/ap/')
+    pathname.startsWith('/ap/users/') ||
+    pathname.startsWith('/ap/threads/') ||
+    pathname.startsWith('/ap/posts/')
   ) {
     return NextResponse.next()
   }

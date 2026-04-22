@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, after } from 'next/server'
 import { getDb } from '@/lib/db'
 import { forumThreads, forumPosts, userProfiles, remoteFollowers } from '@/lib/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
@@ -140,10 +140,14 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       return { post }
     })
 
-    // Fire-and-forget: push to Fediverse followers if federation is configured
+    // Deliver to Fediverse followers after the response is sent.
+    // after() runs the callback post-response without blocking the client and
+    // without being killed when the handler returns — safe for async fan-out.
     if (isFederationConfigured()) {
-      deliverPostToFollowers(userId, result.post, parentId).catch((err) => {
-        console.error('[AP] Error in post delivery background task', err)
+      after(async () => {
+        await deliverPostToFollowers(userId, result.post, parentId).catch((err) => {
+          console.error('[AP] Error in post delivery background task', err)
+        })
       })
     }
 

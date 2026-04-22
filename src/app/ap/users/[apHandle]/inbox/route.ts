@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, after } from 'next/server'
 import {
   isFederationConfigured,
   actorUrl,
@@ -178,24 +178,31 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   }
 
   // W-1: Date freshness check — prevent replay attacks
+  // Date header is mandatory. ActivityPub servers MUST send it, and we use it
+  // as a signed component in HTTP Signature verification. Requests without it
+  // are rejected — not treated as fresh.
   const dateHeader = headersObj['date']
-  if (dateHeader) {
-    const requestTime = new Date(dateHeader).getTime()
-    if (!isNaN(requestTime)) {
-      const now = Date.now()
-      const age = now - requestTime
-      if (age > MAX_REQUEST_AGE_MS) {
-        return new Response(JSON.stringify({ error: 'Request too old' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        })
-      }
-      if (requestTime - now > MAX_FUTURE_SKEW_MS) {
-        return new Response(JSON.stringify({ error: 'Request timestamp too far in future' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        })
-      }
+  if (!dateHeader) {
+    return new Response(JSON.stringify({ error: 'Date header required' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+  const requestTime = new Date(dateHeader).getTime()
+  if (!isNaN(requestTime)) {
+    const now = Date.now()
+    const age = now - requestTime
+    if (age > MAX_REQUEST_AGE_MS) {
+      return new Response(JSON.stringify({ error: 'Request too old' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    if (requestTime - now > MAX_FUTURE_SKEW_MS) {
+      return new Response(JSON.stringify({ error: 'Request timestamp too far in future' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
     }
   }
 
@@ -311,9 +318,13 @@ async function handleFollow(
     },
   }
 
-  // Fire-and-forget
-  deliverActivity(accept, actorInbox, privateKeyPem, keyId).catch((err) => {
-    console.error('[AP inbox] Failed to deliver Accept', err)
+  // Deliver Accept after the response is sent.
+  // after() runs post-response without blocking the client and without being
+  // killed when the handler returns — safe for outbound federation fan-out.
+  after(async () => {
+    await deliverActivity(accept, actorInbox, privateKeyPem, keyId).catch((err) => {
+      console.error('[AP inbox] Failed to deliver Accept', err)
+    })
   })
 }
 
