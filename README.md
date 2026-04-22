@@ -42,6 +42,8 @@ npx drizzle-kit push
 npm run dev
 ```
 
+In development, magic codes are printed to the terminal (email delivery is not configured by default).
+
 Open [http://localhost:3000](http://localhost:3000). Enter your email. The magic code auth system requires no password.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full environment setup guide.

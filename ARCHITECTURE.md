@@ -39,6 +39,9 @@ src/
 │   │   ├── forum/              # Forum threads and posts
 │   │   ├── profile/            # User profile + credentials
 │   │   └── u/                  # Public user profile (ActivityPub actor page)
+│   ├── ap/                     # ActivityPub federation endpoints (actors, inbox, outbox, followers, content)
+│   ├── (auth)/                 # Login page (magic code auth)
+│   ├── .well-known/            # WebFinger discovery
 │   └── api/
 │       ├── auth/               # Magic code auth flow
 │       ├── investigate/        # Investigation engine API
@@ -54,7 +57,6 @@ src/
 │       ├── users/              # User lookup (for AP)
 │       └── health/             # Health check
 ├── components/
-│   ├── cave/                   # Cave-layer components (shared)
 │   ├── investigation/          # Investigation workspace UI
 │   ├── scout/                  # Document search UI
 │   ├── oracle/                 # Document analysis UI
@@ -68,6 +70,7 @@ src/
 │   ├── credentials/            # Credential display
 │   ├── review/                 # Peer review UI
 │   ├── profile/                # Profile UI
+│   ├── layout/                 # Shared layout components (nav, chrome)
 │   └── ui/                     # Radix-based primitives
 └── lib/
     ├── db/
@@ -111,6 +114,8 @@ src/
     ├── documents/              # Document parsing and chunking
     └── rate-limit.ts           # Upstash rate limiter
 ```
+
+Cave-layer components are not co-located in a single directory. They are distributed across `components/investigation/`, `components/briefing/`, `components/lens/`, and `components/campaign/` — each directory owns the components for its layer.
 
 ## The Cave
 
