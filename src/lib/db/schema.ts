@@ -227,6 +227,7 @@ export const credentialTypeEnum = pgEnum('credential_type', [
   'code_contributed',
   'bug_report',
   'translation',
+  'investigation_archived',
 ])
 
 export const credentialSourceEnum = pgEnum('credential_source', [
@@ -236,6 +237,34 @@ export const credentialSourceEnum = pgEnum('credential_source', [
   'campaign_material',
   'lever_action',
   'outcome',
+])
+
+// --- Archive Enums (Phase 2) ---
+
+export const archiveStatusEnum = pgEnum('archive_status', [
+  'pending',
+  'ipfs_pinned',
+  'arweave_permanent',
+  'failed',
+])
+
+export const documentChangeTypeEnum = pgEnum('document_change_type', [
+  'content_changed',
+  'metadata_changed',
+  'deleted',
+  'retracted',
+])
+
+export const shadowAlertTypeEnum = pgEnum('shadow_alert_type', [
+  'missing_topic',
+  'missing_entity',
+  'missing_jurisdiction_pattern',
+])
+
+export const archiveAccessTypeEnum = pgEnum('archive_access_type', [
+  'ipfs_gateway',
+  'arweave_direct',
+  'republic_app',
 ])
 
 // --- Tables ---
@@ -268,6 +297,9 @@ export const investigations = pgTable(
     concernCategory: text('concern_category'),
     environmentalReviewType: text('environmental_review_type'),
     status: investigationStatusEnum('status').notNull().default('active'),
+    // preservedAt: timestamp when this investigation was submitted for archiving.
+    // Named preservedAt (not archivedAt) to avoid collision with investigationStatusEnum.archived.
+    preservedAt: timestamp('preserved_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -981,4 +1013,89 @@ export const credentialEvents = pgTable(
     index('credential_events_credential_type_idx').on(t.credentialType),
     index('credential_events_source_id_idx').on(t.sourceId),
   ]
+)
+
+// --- Archive Tables (Phase 2) ---
+
+export const archiveRecords = pgTable(
+  'archive_records',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    investigationId: uuid('investigation_id')
+      .notNull()
+      .references(() => investigations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    archiveStatus: archiveStatusEnum('archive_status').notNull().default('pending'),
+    ipfsCid: text('ipfs_cid'),
+    arweaveTxId: text('arweave_tx_id'),
+    contentHash: text('content_hash'),
+    preservedAt: timestamp('preserved_at'),
+    permanenceAt: timestamp('permanence_at'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('archive_records_investigation_id_unique_idx').on(t.investigationId),
+    index('archive_records_investigation_id_idx').on(t.investigationId),
+    index('archive_records_user_id_idx').on(t.userId),
+    index('archive_records_status_idx').on(t.archiveStatus),
+  ]
+)
+
+export const documentVersions = pgTable(
+  'document_versions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    documentId: uuid('document_id')
+      .notNull()
+      .references(() => documents.id, { onDelete: 'cascade' }),
+    versionNumber: integer('version_number').notNull(),
+    contentHash: text('content_hash'),
+    // Self-referential FK: previousVersionId references this same table.
+    // onDelete: 'set null' so version chains survive individual node deletion gracefully.
+    previousVersionId: uuid('previous_version_id').references(
+      (): AnyPgColumn => documentVersions.id,
+      { onDelete: 'set null' }
+    ),
+    diffSummary: text('diff_summary'),
+    changeType: documentChangeTypeEnum('change_type').notNull(),
+    detectedAt: timestamp('detected_at').defaultNow().notNull(),
+  },
+  (t) => [index('document_versions_document_id_idx').on(t.documentId)]
+)
+
+export const archiveAccessLog = pgTable(
+  'archive_access_log',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    archiveRecordId: uuid('archive_record_id')
+      .notNull()
+      .references(() => archiveRecords.id, { onDelete: 'cascade' }),
+    accessType: archiveAccessTypeEnum('access_type').notNull(),
+    // No userId column — privacy-respecting access log
+    accessedAt: timestamp('accessed_at').defaultNow().notNull(),
+  },
+  (t) => [index('archive_access_log_record_id_idx').on(t.archiveRecordId)]
+)
+
+export const shadowAlerts = pgTable(
+  'shadow_alerts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    investigationId: uuid('investigation_id')
+      .notNull()
+      .references(() => investigations.id, { onDelete: 'cascade' }),
+    alertType: shadowAlertTypeEnum('alert_type').notNull(),
+    missingTopic: text('missing_topic').notNull(),
+    // PostgreSQL text[] — stores UUIDs as text strings for flexibility
+    referenceInvestigationIds: text('reference_investigation_ids').array(),
+    // confidence: float4, matches existing crossReferences pattern
+    confidence: real('confidence').notNull(),
+    dismissedAt: timestamp('dismissed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [index('shadow_alerts_investigation_id_idx').on(t.investigationId)]
 )

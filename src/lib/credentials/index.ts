@@ -14,6 +14,7 @@ export const CREDENTIAL_WEIGHTS: Record<CredentialType, number> = {
   code_contributed: 3,
   bug_report: 1,
   translation: 2,
+  investigation_archived: 2,
 }
 
 export const CREDENTIAL_LABELS: Record<CredentialType, string> = {
@@ -28,6 +29,7 @@ export const CREDENTIAL_LABELS: Record<CredentialType, string> = {
   code_contributed: 'Code contributions',
   bug_report: 'Bug reports',
   translation: 'Translations',
+  investigation_archived: 'Investigations preserved',
 }
 
 export const MODERATION_THRESHOLD = 10

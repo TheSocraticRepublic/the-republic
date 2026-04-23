@@ -42,7 +42,7 @@ describe('Forum schema — enum values', () => {
     expect(postStatusEnum.enumValues).toEqual(['visible', 'hidden', 'removed_by_author'])
   })
 
-  it('credentialTypeEnum has all 11 values', () => {
+  it('credentialTypeEnum has all 12 values', () => {
     const expected = [
       'investigation_completed',
       'foi_filed',
@@ -55,6 +55,7 @@ describe('Forum schema — enum values', () => {
       'code_contributed',
       'bug_report',
       'translation',
+      'investigation_archived',
     ]
     expect(credentialTypeEnum.enumValues).toEqual(expected)
   })
