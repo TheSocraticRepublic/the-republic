@@ -9,6 +9,7 @@ const TYPE_COLORS: Record<CredentialType, string> = {
   // Investigation/oracle cluster
   investigation_completed: '#89B4C8',
   outcome_tracked: '#89B4C8',
+  investigation_archived: '#89B4C8',
   // Forum/scout cluster
   forum_contribution: '#B088C8',
   // Review/gadfly cluster

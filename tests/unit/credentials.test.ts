@@ -120,10 +120,11 @@ describe('CREDENTIAL_WEIGHTS', () => {
     'code_contributed',
     'bug_report',
     'translation',
+    'investigation_archived',
   ]
 
-  it('defines weights for all 11 credential types', () => {
-    expect(Object.keys(CREDENTIAL_WEIGHTS)).toHaveLength(11)
+  it('defines weights for all 12 credential types', () => {
+    expect(Object.keys(CREDENTIAL_WEIGHTS)).toHaveLength(12)
   })
 
   it.each(ALL_TYPES)('%s has a positive integer weight', (type) => {
@@ -149,10 +150,11 @@ describe('CREDENTIAL_LABELS', () => {
     'code_contributed',
     'bug_report',
     'translation',
+    'investigation_archived',
   ]
 
-  it('defines labels for all 11 credential types', () => {
-    expect(Object.keys(CREDENTIAL_LABELS)).toHaveLength(11)
+  it('defines labels for all 12 credential types', () => {
+    expect(Object.keys(CREDENTIAL_LABELS)).toHaveLength(12)
   })
 
   it.each(ALL_TYPES)('%s has a non-empty string label', (type) => {
