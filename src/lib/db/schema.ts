@@ -237,6 +237,7 @@ export const credentialSourceEnum = pgEnum('credential_source', [
   'campaign_material',
   'lever_action',
   'outcome',
+  'archive_record',
 ])
 
 // --- Archive Enums (Phase 2) ---
