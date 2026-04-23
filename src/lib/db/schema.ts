@@ -1039,7 +1039,6 @@ export const archiveRecords = pgTable(
   },
   (t) => [
     uniqueIndex('archive_records_investigation_id_unique_idx').on(t.investigationId),
-    index('archive_records_investigation_id_idx').on(t.investigationId),
     index('archive_records_user_id_idx').on(t.userId),
     index('archive_records_status_idx').on(t.archiveStatus),
   ]
