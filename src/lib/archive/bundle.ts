@@ -8,7 +8,7 @@ import {
   peerReviews,
   jurisdictions,
 } from '@/lib/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -87,7 +87,8 @@ export interface ArchiveBundle {
   provenance: ArchiveBundleProvenance
 }
 
-function getRepublicVersion(): string {
+// Module-level constant — read package.json once at import time, not on every call.
+const REPUBLIC_VERSION: string = (() => {
   try {
     const pkgPath = join(process.cwd(), 'package.json')
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { version?: string }
@@ -95,11 +96,15 @@ function getRepublicVersion(): string {
   } catch {
     return 'unknown'
   }
-}
+})()
 
 export async function buildArchiveBundle(
   investigationId: string,
-  db: ReturnType<typeof getDb>
+  db: ReturnType<typeof getDb>,
+  // preservedAt must be captured BEFORE the IPFS pin so the bundle timestamp
+  // and the DB record timestamp are identical. Callers should pass `new Date()`
+  // captured prior to calling pinInvestigation().
+  preservedAt: Date = new Date()
 ): Promise<ArchiveBundle> {
   // Fetch the investigation
   const [inv] = await db
@@ -165,25 +170,20 @@ export async function buildArchiveBundle(
   let bundleAnalyses: ArchiveBundleAnalysis[] = []
 
   if (docIds.length > 0) {
-    // Drizzle doesn't support WHERE IN with an array elegantly without sql``,
-    // so we fetch all analyses for each doc and flatten
-    const analysisRows = await Promise.all(
-      docIds.map((docId) =>
-        db
-          .select({
-            id: analyses.id,
-            summary: analyses.summary,
-            keyFindings: analyses.keyFindings,
-            powerMap: analyses.powerMap,
-            hiddenAssumptions: analyses.hiddenAssumptions,
-            questionsToAsk: analyses.questionsToAsk,
-          })
-          .from(analyses)
-          .where(eq(analyses.documentId, docId))
-      )
-    )
+    // Single query using inArray — avoids N+1 per-document fetches
+    const analysisRows = await db
+      .select({
+        id: analyses.id,
+        summary: analyses.summary,
+        keyFindings: analyses.keyFindings,
+        powerMap: analyses.powerMap,
+        hiddenAssumptions: analyses.hiddenAssumptions,
+        questionsToAsk: analyses.questionsToAsk,
+      })
+      .from(analyses)
+      .where(inArray(analyses.documentId, docIds))
 
-    bundleAnalyses = analysisRows.flat().map((a) => ({
+    bundleAnalyses = analysisRows.map((a) => ({
       id: a.id,
       summary: a.summary,
       keyFindings: a.keyFindings,
@@ -224,7 +224,9 @@ export async function buildArchiveBundle(
       return {
         id: thread.id,
         title: thread.title,
-        postCount: thread.postCount,
+        // Use actual visible post count rather than the cached counter, which
+        // may include hidden/removed posts not present in the bundle.
+        postCount: posts.length,
         status: thread.status,
         posts: posts.map((p) => ({
           id: p.id,
@@ -262,8 +264,8 @@ export async function buildArchiveBundle(
 
   return {
     version: '1.0',
-    preservedAt: new Date().toISOString(),
-    republicVersion: getRepublicVersion(),
+    preservedAt: preservedAt.toISOString(),
+    republicVersion: REPUBLIC_VERSION,
     investigation: {
       id: inv.id,
       concern: inv.concern,

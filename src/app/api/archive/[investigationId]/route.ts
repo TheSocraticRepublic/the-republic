@@ -4,8 +4,11 @@ import {
   archiveRecords,
   investigations,
   credentialEvents,
+  userProfiles,
 } from '@/lib/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 import { checkRateLimit } from '@/lib/rate-limit'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
@@ -27,6 +30,14 @@ export async function POST(
   }
 
   const { investigationId } = await params
+
+  // Validate investigationId format before querying the DB
+  if (!UUID_REGEX.test(investigationId)) {
+    return new Response(JSON.stringify({ error: 'Invalid investigationId format' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
   // Rate limit
   const { success } = await checkRateLimit(`archive:${userId}`)
@@ -81,10 +92,14 @@ export async function POST(
     }
   }
 
+  // Capture preservedAt BEFORE building the bundle so the bundle's internal
+  // timestamp and the DB record timestamp are identical.
+  const now = new Date()
+
   // Build the bundle
   let bundle
   try {
-    bundle = await buildArchiveBundle(investigationId, db)
+    bundle = await buildArchiveBundle(investigationId, db, now)
   } catch (err) {
     console.error('Failed to build archive bundle', investigationId, err)
     return new Response(JSON.stringify({ error: 'Failed to build archive bundle' }), {
@@ -99,6 +114,10 @@ export async function POST(
   // Compute content hash
   const contentHash = computeContentHash(bundle)
 
+  // KNOWN LIMITATION: If the DB upsert below fails after a successful IPFS pin,
+  // the CID will be orphaned on Pinata. A full compensation mechanism would
+  // require a two-phase commit or a cleanup job. On the free tier the cost of
+  // an orphaned pin is negligible, so this is documented and accepted.
   // Pin to IPFS
   let ipfsCid: string
   try {
@@ -110,8 +129,6 @@ export async function POST(
       headers: { 'Content-Type': 'application/json' },
     })
   }
-
-  const now = new Date()
 
   // Determine if this is a new archive or a re-archive (for status code)
   const [existing] = await db
@@ -190,11 +207,33 @@ export async function GET(
   { params }: { params: Promise<{ investigationId: string }> }
 ) {
   const { investigationId } = await params
+
+  // Validate investigationId format before querying the DB
+  if (!UUID_REGEX.test(investigationId)) {
+    return new Response(JSON.stringify({ error: 'Invalid investigationId format' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   const db = getDb()
 
   const [archiveRecord] = await db
-    .select()
+    .select({
+      id: archiveRecords.id,
+      investigationId: archiveRecords.investigationId,
+      // userId is intentionally omitted — this is a public endpoint
+      archivedBy: userProfiles.displayName,
+      archiveStatus: archiveRecords.archiveStatus,
+      ipfsCid: archiveRecords.ipfsCid,
+      contentHash: archiveRecords.contentHash,
+      preservedAt: archiveRecords.preservedAt,
+      createdAt: archiveRecords.createdAt,
+      updatedAt: archiveRecords.updatedAt,
+      metadata: archiveRecords.metadata,
+    })
     .from(archiveRecords)
+    .leftJoin(userProfiles, eq(archiveRecords.userId, userProfiles.userId))
     .where(eq(archiveRecords.investigationId, investigationId))
     .limit(1)
 

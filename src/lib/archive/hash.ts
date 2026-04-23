@@ -22,6 +22,12 @@ export function canonicalize(obj: unknown): string {
     return `[${items.join(',')}]`
   }
 
+  if (obj instanceof Date) {
+    // Serialize Dates as ISO strings to avoid the silent `{}` produced by
+    // treating a Date as a plain object (Date has no own enumerable keys).
+    return JSON.stringify(obj.toISOString())
+  }
+
   if (typeof obj === 'object') {
     const sorted = Object.keys(obj as Record<string, unknown>)
       .sort()

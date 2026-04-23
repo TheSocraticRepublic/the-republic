@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
-import { archiveRecords, investigations, jurisdictions } from '@/lib/db/schema'
+import { archiveRecords, investigations, jurisdictions, userProfiles } from '@/lib/db/schema'
 import { eq, and, gte, lte, count, desc } from 'drizzle-orm'
 
 const PAGE_SIZE = 50
@@ -47,7 +47,8 @@ export async function GET(request: NextRequest) {
       .select({
         id: archiveRecords.id,
         investigationId: archiveRecords.investigationId,
-        userId: archiveRecords.userId,
+        // userId is intentionally omitted — this is a public endpoint
+        archivedBy: userProfiles.displayName,
         archiveStatus: archiveRecords.archiveStatus,
         ipfsCid: archiveRecords.ipfsCid,
         contentHash: archiveRecords.contentHash,
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
       .from(archiveRecords)
       .innerJoin(investigations, eq(archiveRecords.investigationId, investigations.id))
       .leftJoin(jurisdictions, eq(investigations.jurisdictionId, jurisdictions.id))
+      .leftJoin(userProfiles, eq(archiveRecords.userId, userProfiles.userId))
       .where(whereClause)
       .orderBy(desc(archiveRecords.preservedAt))
       .limit(PAGE_SIZE)
