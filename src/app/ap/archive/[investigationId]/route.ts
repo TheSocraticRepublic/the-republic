@@ -55,6 +55,13 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   }
 
   const record = rows[0]
+
+  if (record.archiveStatus !== 'ipfs_pinned' && record.archiveStatus !== 'arweave_permanent') {
+    return new Response(JSON.stringify({ error: 'Archive record not yet available' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
   const domain = getApDomain()
   const url = archiveUrl(investigationId)
 

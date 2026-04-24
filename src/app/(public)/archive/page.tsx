@@ -20,7 +20,7 @@ export default async function ArchivePage({
   searchParams: Promise<SearchParams>
 }) {
   const sp = await searchParams
-  const page = Math.max(1, parseInt(sp.page ?? '1', 10))
+  const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
   const offset = (page - 1) * PAGE_SIZE
 
   const db = getDb()
@@ -88,7 +88,6 @@ export default async function ArchivePage({
                   jurisdictionName={record.jurisdictionName ?? null}
                   preservedAt={record.preservedAt ?? new Date(0)}
                   archiveStatus={record.archiveStatus}
-                  ipfsCid={record.ipfsCid ?? null}
                   archivedBy={record.archivedBy}
                 />
               ))}

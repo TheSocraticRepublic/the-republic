@@ -6,6 +6,7 @@ import { investigations, archiveRecords } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { InvestigationPage } from '@/components/investigation/investigation-page'
 import { PermanenceBadge } from '@/components/archive/permanence-badge'
+import { PreserveButton } from '@/components/archive/preserve-button'
 
 export const metadata = {
   title: 'Investigation — The Republic',
@@ -106,19 +107,9 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* Preserve to Archive link — only shown to investigation author when not yet archived */}
+            {/* Preserve to Archive — only shown to investigation author when not yet archived */}
             {isAuthor && !archiveRow && (
-              <Link
-                href={`/api/archive/${investigation.id}`}
-                className="inline-flex items-center rounded-xl px-3 py-1.5 text-xs font-medium transition-all duration-150"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                  color: '#d4d4d8',
-                  border: '1px solid rgba(255, 255, 255, 0.10)',
-                }}
-              >
-                Preserve to Archive
-              </Link>
+              <PreserveButton investigationId={investigation.id} />
             )}
           </div>
         </div>

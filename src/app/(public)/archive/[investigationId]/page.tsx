@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { archiveRecords, investigations, userProfiles, documentVersions, documents, shadowAlerts } from '@/lib/db/schema'
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, and, desc, isNull } from 'drizzle-orm'
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 import { PermanenceBadge } from '@/components/archive/permanence-badge'
 import { ProvenanceChain } from '@/components/archive/provenance-chain'
 import { DiffViewer } from '@/components/archive/diff-viewer'
@@ -28,6 +30,11 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ArchiveDetailPage({ params }: PageProps) {
   const { investigationId } = await params
+
+  if (!UUID_RE.test(investigationId)) {
+    notFound()
+  }
+
   const db = getDb()
 
   // Fetch archive record + investigation + archivedBy profile in parallel with alerts
@@ -64,6 +71,7 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
       .from(shadowAlerts)
       .where(and(
         eq(shadowAlerts.investigationId, investigationId),
+        isNull(shadowAlerts.dismissedAt),
       ))
       .orderBy(desc(shadowAlerts.confidence)),
   ])

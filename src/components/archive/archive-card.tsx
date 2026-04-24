@@ -9,7 +9,6 @@ interface ArchiveCardProps {
   jurisdictionName: string | null
   preservedAt: Date
   archiveStatus: ArchiveStatus
-  ipfsCid: string | null
   archivedBy: string
 }
 
@@ -32,7 +31,6 @@ export function ArchiveCard({
   jurisdictionName,
   preservedAt,
   archiveStatus,
-  ipfsCid: _ipfsCid,
   archivedBy,
 }: ArchiveCardProps) {
   return (
