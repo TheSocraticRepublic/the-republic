@@ -1,12 +1,13 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
-import { archiveRecords } from '@/lib/db/schema'
-import { eq, sql } from 'drizzle-orm'
+import { archiveRecords, investigations, userProfiles } from '@/lib/db/schema'
+import { eq, and, sql } from 'drizzle-orm'
 import { checkTightRateLimit } from '@/lib/rate-limit'
 import { buildArchiveBundle } from '@/lib/archive/bundle'
 import { computeContentHash } from '@/lib/archive/hash'
 import { isArweaveEnabled, permanizeInvestigation } from '@/lib/archive/arweave'
 import { checkPermanenceEligibility } from '@/lib/archive/permanence-gate'
+import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -67,6 +68,7 @@ export async function POST(
   const [existingRecord] = await db
     .select({
       id: archiveRecords.id,
+      userId: archiveRecords.userId,
       archiveStatus: archiveRecords.archiveStatus,
       ipfsCid: archiveRecords.ipfsCid,
       contentHash: archiveRecords.contentHash,
@@ -117,6 +119,24 @@ export async function POST(
     )
   }
 
+  // Ownership check: caller must own the investigation OR have moderator access.
+  // This is in addition to the permanence eligibility gate below.
+  const [investigation] = await db
+    .select({ userId: investigations.userId })
+    .from(investigations)
+    .where(eq(investigations.id, investigationId))
+    .limit(1)
+
+  if (investigation?.userId !== userId) {
+    const { isModerator } = await checkModeratorAccess(userId)
+    if (!isModerator) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+  }
+
   // Check permanence eligibility
   const { eligible, reason } = await checkPermanenceEligibility(
     investigationId,
@@ -134,26 +154,30 @@ export async function POST(
     )
   }
 
-  // Re-compute content hash from current DB state to detect content drift.
-  // buildArchiveBundle uses a fresh timestamp here — for hash comparison purposes
-  // the exact timestamp doesn't matter because we compare against the stored hash
-  // which was computed at original archive time (without timestamp in hash input).
+  // Re-compute the bundle from current DB state to detect content drift.
   //
-  // NOTE: The stored contentHash was computed with bundle.provenance.archiverId
-  // set by the caller. We replicate that here by setting it to the original userId.
-  // Since we're using the stored hash for comparison (not rebuilding identity),
-  // we only need to reproduce the bundle content that was hashed.
+  // preservedAt IS part of the ArchiveBundle object (bundle.preservedAt) and is
+  // therefore part of the canonicalized hash input. We must pass the stored
+  // preservedAt so the re-computed hash matches the stored hash when content
+  // hasn't changed. Passing a fresh new Date() here would ALWAYS produce a
+  // hash mismatch, making the drift check permanently broken.
+  //
+  // NOTE: We deliberately re-build the bundle from current DB state rather than
+  // re-fetching the original serialized bundle. This is intentional: the re-computation
+  // verifies that the investigation's content hasn't drifted since archival. If the
+  // hash matches, the current state IS what was archived — and that is what we upload
+  // to Arweave. The hash check is the integrity guarantee.
+  //
+  // archiverId is set to the original archiver (existingRecord.userId) to replicate
+  // the provenance field exactly as it was when the stored contentHash was computed.
   let currentBundle
   try {
-    currentBundle = await buildArchiveBundle(investigationId, db)
-    // archiverId must be set consistently with how the original bundle was hashed.
-    // We use the userId from the archive record (the original archiver).
-    const [archiveRow] = await db
-      .select({ userId: archiveRecords.userId })
-      .from(archiveRecords)
-      .where(eq(archiveRecords.investigationId, investigationId))
-      .limit(1)
-    currentBundle.provenance.archiverId = archiveRow?.userId ?? userId
+    currentBundle = await buildArchiveBundle(
+      investigationId,
+      db,
+      new Date(existingRecord.preservedAt!)
+    )
+    currentBundle.provenance.archiverId = existingRecord.userId
   } catch (err) {
     console.error('Failed to build archive bundle for hash comparison', investigationId, err)
     return new Response(
@@ -180,14 +204,50 @@ export async function POST(
     )
   }
 
-  // Upload to Arweave
+  // Atomic compare-and-swap: transition from 'ipfs_pinned' → 'pending' before
+  // uploading to Arweave. This prevents double-spend: two concurrent requests
+  // can both pass the status check above, but only one can win this CAS. The
+  // loser gets zero rows back (.returning() returns nothing) and returns 409.
+  const [claimed] = await db
+    .update(archiveRecords)
+    .set({ archiveStatus: 'pending', updatedAt: sql`NOW()` })
+    .where(
+      and(
+        eq(archiveRecords.investigationId, investigationId),
+        eq(archiveRecords.archiveStatus, 'ipfs_pinned')
+      )
+    )
+    .returning({ id: archiveRecords.id })
+
+  if (!claimed) {
+    return new Response(
+      JSON.stringify({ error: 'Permanence already in progress or completed' }),
+      {
+        status: 409,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+  }
+
+  // Upload to Arweave. If this fails, reset status back to 'ipfs_pinned' so
+  // the investigation can be retried.
   let arweaveTxId: string
   try {
+    // W4: Wrap Irys operations in a sanitizing catch so the raw error — which
+    // may contain the private key from the Irys constructor — is never logged.
     arweaveTxId = await permanizeInvestigation(currentBundle, currentHash)
-  } catch (err) {
-    console.error('Failed to upload investigation to Arweave', investigationId, err)
+  } catch {
+    // Sanitize: never propagate or log the raw error, which may expose IRYS_PRIVATE_KEY.
+    console.error('Arweave upload failed for investigation', investigationId)
+
+    // Reset status so the caller can retry
+    await db
+      .update(archiveRecords)
+      .set({ archiveStatus: 'ipfs_pinned', updatedAt: sql`NOW()` })
+      .where(eq(archiveRecords.investigationId, investigationId))
+
     return new Response(
-      JSON.stringify({ error: 'Failed to upload to Arweave' }),
+      JSON.stringify({ error: 'Arweave upload failed. Check IRYS_PRIVATE_KEY configuration.' }),
       {
         status: 502,
         headers: { 'Content-Type': 'application/json' },
@@ -197,7 +257,9 @@ export async function POST(
 
   const now = new Date()
 
-  // Update archive record to arweave_permanent
+  // Update archive record to arweave_permanent.
+  // N2: Return explicit safe fields only — userId is intentionally excluded.
+  // Caller gets displayName via join instead, matching the GET endpoint pattern.
   const [archiveRecord] = await db
     .update(archiveRecords)
     .set({
@@ -207,10 +269,37 @@ export async function POST(
       updatedAt: sql`NOW()`,
     })
     .where(eq(archiveRecords.investigationId, investigationId))
-    .returning()
+    .returning({
+      id: archiveRecords.id,
+      investigationId: archiveRecords.investigationId,
+      archiveStatus: archiveRecords.archiveStatus,
+      ipfsCid: archiveRecords.ipfsCid,
+      contentHash: archiveRecords.contentHash,
+      arweaveTxId: archiveRecords.arweaveTxId,
+      preservedAt: archiveRecords.preservedAt,
+      permanenceAt: archiveRecords.permanenceAt,
+      createdAt: archiveRecords.createdAt,
+      updatedAt: archiveRecords.updatedAt,
+      metadata: archiveRecords.metadata,
+    })
 
-  return new Response(JSON.stringify({ archiveRecord }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  })
+  // Resolve displayName for the archiver — userId stays server-side
+  const [profile] = await db
+    .select({ displayName: userProfiles.displayName })
+    .from(userProfiles)
+    .where(eq(userProfiles.userId, existingRecord.userId))
+    .limit(1)
+
+  return new Response(
+    JSON.stringify({
+      archiveRecord: {
+        ...archiveRecord,
+        archivedBy: profile?.displayName ?? null,
+      },
+    }),
+    {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }
+  )
 }
