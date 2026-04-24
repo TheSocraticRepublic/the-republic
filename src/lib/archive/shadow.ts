@@ -12,7 +12,7 @@
 
 import { getDb } from '@/lib/db'
 import { investigations, shadowAlerts as shadowAlertsTable } from '@/lib/db/schema'
-import { eq, and, ne, isNull, sql } from 'drizzle-orm'
+import { eq, and, ne, isNull, sql, desc } from 'drizzle-orm'
 
 export interface ShadowAlert {
   alertType: 'missing_topic' | 'missing_entity' | 'missing_jurisdiction_pattern'
@@ -108,6 +108,8 @@ export async function detectShadows(
         sql`${investigations.briefingText} IS NOT NULL AND ${investigations.briefingText} != ''`
       )
     )
+    .orderBy(desc(investigations.createdAt))
+    .limit(50)
 
   if (peers.length < MIN_SIMILAR_INVESTIGATIONS) return []
 

@@ -66,9 +66,77 @@ export async function reIngestDocument(
     const response = await fetch(doc.sourceUrl, {
       signal: controller.signal,
       headers: { 'User-Agent': USER_AGENT },
+      redirect: 'manual',
     })
 
-    if (response.status === 404) {
+    // Handle redirects manually: validate the Location header before following.
+    // This blocks SSRF attacks that redirect from a valid URL to an internal IP.
+    if (response.status === 301 || response.status === 302 || response.status === 303 ||
+        response.status === 307 || response.status === 308) {
+      const location = response.headers.get('Location')
+      if (!location) {
+        throw new Error(`Redirect from ${doc.sourceUrl} has no Location header`)
+      }
+      if (!isValidDocumentUrl(location)) {
+        throw new Error(`Redirect target failed SSRF validation: ${location}`)
+      }
+      // Follow the validated redirect once (single hop only — no recursive following)
+      const redirectedResponse = await fetch(location, {
+        signal: controller.signal,
+        headers: { 'User-Agent': USER_AGENT },
+        redirect: 'manual',
+      })
+      // Reuse the redirect response as our main response by re-assigning below.
+      // We handle it through the same code path as a direct response.
+      if (redirectedResponse.status === 404) {
+        is404 = true
+        responseText = ''
+      } else if (!redirectedResponse.ok) {
+        throw new Error(
+          `Redirect target returned HTTP ${redirectedResponse.status}: ${location}`
+        )
+      } else {
+        const contentLength = redirectedResponse.headers.get('content-length')
+        if (contentLength && parseInt(contentLength, 10) > MAX_RESPONSE_BYTES) {
+          throw new Error(
+            `Redirect target response too large (${contentLength} bytes, limit ${MAX_RESPONSE_BYTES}): ${location}`
+          )
+        }
+
+        contentType = redirectedResponse.headers.get('content-type') ?? ''
+
+        const chunks: Uint8Array[] = []
+        let totalBytes = 0
+        const reader = redirectedResponse.body?.getReader()
+        if (!reader) {
+          throw new Error(`No response body from redirect target ${location}`)
+        }
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          if (value) {
+            totalBytes += value.byteLength
+            if (totalBytes > MAX_RESPONSE_BYTES) {
+              reader.cancel()
+              throw new Error(
+                `Redirect target response exceeded 50MB size limit: ${location}`
+              )
+            }
+            chunks.push(value)
+          }
+        }
+
+        const combined = new Uint8Array(totalBytes)
+        let offset = 0
+        for (const chunk of chunks) {
+          combined.set(chunk, offset)
+          offset += chunk.byteLength
+        }
+        responseText = new TextDecoder().decode(combined)
+      }
+      // Redirect fully handled above; skip the direct-response block below.
+    } else if (response.status === 404) {
       is404 = true
       responseText = ''
     } else if (!response.ok) {
@@ -219,7 +287,7 @@ export async function reIngestDocument(
     .select({ id: documentVersions.id })
     .from(documentVersions)
     .where(eq(documentVersions.documentId, documentId))
-    .orderBy(documentVersions.versionNumber)
+    .orderBy(desc(documentVersions.versionNumber))
     .limit(1)
 
   const [version] = await db
