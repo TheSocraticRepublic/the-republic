@@ -16,11 +16,11 @@ export function PermanenceBadge({ status }: PermanenceBadgeProps) {
     },
     arweave_permanent: {
       label: 'Permanently Archived',
-      className: 'bg-emerald-950/60 border border-emerald-700/40 text-emerald-400',
+      className: 'bg-[#5bc88a]/10 border border-[#5bc88a]/30 text-[#5bc88a]',
     },
     failed: {
       label: 'Failed',
-      className: 'bg-red-950/60 border border-red-700/40 text-red-400',
+      className: 'bg-[#c85b5b]/10 border border-[#c85b5b]/30 text-[#c85b5b]',
     },
   }
 

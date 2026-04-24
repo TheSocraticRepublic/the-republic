@@ -86,15 +86,15 @@ export function ProvenanceChain({
               <div
                 className={`mt-0.5 h-2.5 w-2.5 flex-shrink-0 rounded-full border transition-colors ${
                   isComplete
-                    ? 'border-sky-500 bg-sky-500'
+                    ? 'border-[#89b4c8] bg-[#89b4c8]'
                     : 'border-neutral-700 bg-neutral-900'
                 }`}
               />
               {/* Connector line */}
               {!isLast && (
                 <div
-                  className={`w-px flex-1 my-1 ${
-                    isComplete ? 'bg-sky-800/60' : 'bg-neutral-800'
+                  className={`w-px flex-1 my-1 min-h-[16px] ${
+                    isComplete ? 'bg-[#89b4c8]/20' : 'bg-neutral-800'
                   }`}
                 />
               )}
@@ -143,6 +143,8 @@ export function ProvenanceChain({
                     </span>
                   )}
                   <button
+                    type="button"
+                    aria-label="Copy identifier"
                     onClick={() => handleCopy(step.copyValue!, step.label)}
                     className="text-[10px] text-neutral-600 hover:text-neutral-400 transition-colors px-1.5 py-0.5 rounded border border-white/[0.06] hover:border-white/[0.12]"
                   >

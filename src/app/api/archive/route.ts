@@ -2,10 +2,15 @@ import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { archiveRecords, investigations, jurisdictions, userProfiles } from '@/lib/db/schema'
 import { eq, and, gte, lte, count, desc } from 'drizzle-orm'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const PAGE_SIZE = 50
 
 export async function GET(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const { success } = await checkRateLimit(`archive-list:${ip}`)
+  if (!success) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429, headers: { 'Content-Type': 'application/json' } })
+
   const { searchParams } = new URL(request.url)
 
   const rawPage = parseInt(searchParams.get('page') ?? '1', 10)

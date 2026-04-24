@@ -73,7 +73,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   if (!wantsAp) {
     return new Response(null, {
-      status: 301,
+      status: 302,
       headers: { Location: `/archive/${investigationId}` },
     })
   }
