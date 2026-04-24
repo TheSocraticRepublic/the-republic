@@ -36,4 +36,16 @@ describe('computeVoteWeight — quadratic voting', () => {
     expect(computeVoteWeight(3)).toBeCloseTo(Math.sqrt(3))
     expect(computeVoteWeight(1.5)).toBeCloseTo(Math.sqrt(1.5))
   })
+
+  it('returns 0 for NaN input', () => {
+    expect(computeVoteWeight(NaN)).toBe(0)
+  })
+
+  it('returns 0 for Infinity input', () => {
+    expect(computeVoteWeight(Infinity)).toBe(0)
+  })
+
+  it('returns 0 for -Infinity input', () => {
+    expect(computeVoteWeight(-Infinity)).toBe(0)
+  })
 })

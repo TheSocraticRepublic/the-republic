@@ -1102,6 +1102,8 @@ export const shadowAlerts = pgTable(
 
 // --- Governance Tables (Phase 2F) ---
 
+export const voteChoiceEnum = pgEnum('vote_choice', ['for', 'against', 'abstain'])
+
 export const proposalTypeEnum = pgEnum('proposal_type', [
   'policy',
   'feature',
@@ -1130,6 +1132,8 @@ export const governanceProposals = pgTable(
     status: proposalStatusEnum('status').notNull().default('draft'),
     votingOpens: timestamp('voting_opens'),
     votingCloses: timestamp('voting_closes'),
+    // quorumThreshold: valid range is [0, 1]. Cannot be enforced via Drizzle CHECK
+    // constraint — application-layer validation is required before persisting.
     quorumThreshold: real('quorum_threshold'),
     metadata: jsonb('metadata'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -1151,7 +1155,7 @@ export const governanceVotes = pgTable(
     voterId: uuid('voter_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    choice: text('choice').notNull(),
+    choice: voteChoiceEnum('choice').notNull(),
     weight: real('weight').notNull(),
     rawCredentialWeight: real('raw_credential_weight').notNull(),
     votedAt: timestamp('voted_at').defaultNow().notNull(),

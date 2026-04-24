@@ -1,12 +1,13 @@
 /**
  * GET /api/governance/scores
  *
- * Public endpoint — no auth required. Returns credential-weighted governance
- * scores for Snapshot API strategy integration (Phase 3).
+ * This endpoint requires authentication for now. When governance activates
+ * (Phase 3), it will be added to middleware public exemptions.
  *
- * This is a placeholder. Governance is not yet active. The endpoint exists so
- * that external integrations can discover and test against the route before
- * the full implementation lands.
+ * Returns credential-weighted governance scores for Snapshot API strategy
+ * integration. This is a placeholder — governance is not yet active. The
+ * endpoint exists so external integrations can discover and test against the
+ * route before the full implementation lands.
  */
 export async function GET() {
   return Response.json(
