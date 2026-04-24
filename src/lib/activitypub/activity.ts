@@ -116,6 +116,23 @@ export function threadToArticle(thread: {
 }
 
 /**
+ * Builds an Announce activity. Used when a Republic archive broadcasts
+ * preservation of an investigation to the fediverse.
+ *
+ * @param actorUrl  - The full URL of the announcing actor
+ * @param objectUrl - The full URL of the object being announced (e.g. archive AP URL)
+ */
+export function buildAnnounceActivity(actorUrl: string, objectUrl: string): ApActivity {
+  return {
+    '@context': AP_CONTEXT,
+    id: `${actorUrl}#announces/${encodeURIComponent(objectUrl)}`,
+    type: 'Announce',
+    actor: actorUrl,
+    object: objectUrl,
+  }
+}
+
+/**
  * Converts a forum post to an AP Note.
  */
 export function postToNote(post: {

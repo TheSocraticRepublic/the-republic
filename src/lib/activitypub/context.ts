@@ -62,3 +62,11 @@ export function webfingerUrl(): string {
 export function profileWebUrl(displayName: string): string {
   return `https://${getApDomain()}/u/${displayName}`
 }
+
+/**
+ * Returns the public archive URL for an investigation.
+ * Used in AP Article objects so fediverse clients can link to the human-readable record.
+ */
+export function archiveUrl(investigationId: string): string {
+  return `https://${getApDomain()}/archive/${investigationId}`
+}
