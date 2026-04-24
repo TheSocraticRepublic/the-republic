@@ -10,6 +10,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/health') ||
     pathname.startsWith('/api/archive') ||
+    pathname.startsWith('/archive') ||
     pathname.startsWith('/api/users/') ||
     pathname.startsWith('/u/') ||
     pathname.startsWith('/_next') ||
@@ -20,7 +21,8 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/.well-known/') ||
     pathname.startsWith('/ap/users/') ||
     pathname.startsWith('/ap/threads/') ||
-    pathname.startsWith('/ap/posts/')
+    pathname.startsWith('/ap/posts/') ||
+    pathname.startsWith('/ap/archive/')
   ) {
     return NextResponse.next()
   }
