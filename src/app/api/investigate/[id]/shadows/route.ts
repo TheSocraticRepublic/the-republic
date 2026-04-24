@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
-import { shadowAlerts } from '@/lib/db/schema'
+import { investigations, shadowAlerts } from '@/lib/db/schema'
 import { and, eq, isNull } from 'drizzle-orm'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -29,6 +29,27 @@ export async function GET(
   }
 
   const db = getDb()
+
+  // Verify the investigation exists and the caller is the owner.
+  // Same ownership check as the dismiss route — shadow alerts are private to
+  // the investigation owner and should not be readable by other users.
+  const [investigation] = await db
+    .select({ userId: investigations.userId })
+    .from(investigations)
+    .where(
+      and(
+        eq(investigations.id, id),
+        eq(investigations.userId, userId)
+      )
+    )
+    .limit(1)
+
+  if (!investigation) {
+    return new Response(JSON.stringify({ error: 'Investigation not found or forbidden' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
   // Query undismissed shadow alerts for this investigation
   const shadows = await db

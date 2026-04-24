@@ -9,7 +9,7 @@
 
 import { getDb } from '@/lib/db'
 import { documents, documentVersions } from '@/lib/db/schema'
-import { eq, max } from 'drizzle-orm'
+import { eq, max, desc } from 'drizzle-orm'
 import { isValidDocumentUrl } from './url-validation'
 import { computeDocumentDiff } from './diff'
 import { computeContentHash } from './hash'
@@ -60,6 +60,7 @@ export async function reIngestDocument(
 
   let responseText: string
   let is404 = false
+  let contentType = ''
 
   try {
     const response = await fetch(doc.sourceUrl, {
@@ -82,6 +83,8 @@ export async function reIngestDocument(
           `Source URL response too large (${contentLength} bytes, limit ${MAX_RESPONSE_BYTES}): ${doc.sourceUrl}`
         )
       }
+
+      contentType = response.headers.get('content-type') ?? ''
 
       // Stream with size guard
       const chunks: Uint8Array[] = []
@@ -127,13 +130,20 @@ export async function reIngestDocument(
 
   // Handle 404: document deleted at source
   if (is404) {
+    const [latestForDelete] = await db
+      .select({ id: documentVersions.id })
+      .from(documentVersions)
+      .where(eq(documentVersions.documentId, documentId))
+      .orderBy(desc(documentVersions.versionNumber))
+      .limit(1)
+
     const [version] = await db
       .insert(documentVersions)
       .values({
         documentId,
         versionNumber: nextVersionNumber,
         contentHash: null,
-        previousVersionId: null,
+        previousVersionId: latestForDelete?.id ?? null,
         diffSummary: 'Document no longer available at source URL (404)',
         changeType: 'deleted',
         detectedAt: new Date(),
@@ -143,15 +153,74 @@ export async function reIngestDocument(
     return { changed: true, version }
   }
 
+  // Content-type-aware comparison.
+  //
+  // doc.rawText is extracted plain text (from the document processing pipeline).
+  // Comparing raw HTTP response bytes against extracted text is a category error:
+  //   - PDF bytes will never match extracted text
+  //   - HTML source will never match extracted text
+  //   - Only text/plain responses can be compared directly
+  //
+  // Full PDF re-extraction (decode → extract → compare) requires the document
+  // processing pipeline, which is out of scope for Phase 2D. PDFs are recorded
+  // as requiring re-extraction and deferred to a future phase.
+
+  const isPdf = contentType.includes('application/pdf')
+  const isHtml = contentType.includes('text/html')
+
+  if (isPdf) {
+    // PDF: raw bytes cannot be compared to extracted text.
+    // Record a version entry noting that re-extraction is required,
+    // but do not mark as changed (we cannot know without extracting).
+    const [latestForPdf] = await db
+      .select({ id: documentVersions.id })
+      .from(documentVersions)
+      .where(eq(documentVersions.documentId, documentId))
+      .orderBy(desc(documentVersions.versionNumber))
+      .limit(1)
+
+    const [version] = await db
+      .insert(documentVersions)
+      .values({
+        documentId,
+        versionNumber: nextVersionNumber,
+        contentHash: computeContentHash(responseText),
+        previousVersionId: latestForPdf?.id ?? null,
+        diffSummary:
+          'PDF re-ingestion: content comparison requires re-extraction (deferred to document processing pipeline)',
+        changeType: 'content_changed',
+        detectedAt: new Date(),
+      })
+      .returning()
+
+    return { changed: false, version }
+  }
+
+  // Normalize fetched content for comparison:
+  // HTML responses: strip tags so we compare visible text, not markup.
+  // text/plain: compare directly.
+  let normalizedResponseText = responseText
+  if (isHtml) {
+    normalizedResponseText = responseText.replace(/<[^>]*>/g, '')
+  }
+
   // Compare against stored rawText
   const storedText = doc.rawText ?? ''
-  if (responseText === storedText) {
+  if (normalizedResponseText === storedText) {
     return { changed: false }
   }
 
   // Content has changed — compute diff and create version record
-  const diff = computeDocumentDiff(storedText, responseText)
-  const newContentHash = computeContentHash(responseText)
+  const diff = computeDocumentDiff(storedText, normalizedResponseText)
+  const newContentHash = computeContentHash(normalizedResponseText)
+
+  // Link to the most recent prior version to maintain the version chain
+  const [latestVersion] = await db
+    .select({ id: documentVersions.id })
+    .from(documentVersions)
+    .where(eq(documentVersions.documentId, documentId))
+    .orderBy(documentVersions.versionNumber)
+    .limit(1)
 
   const [version] = await db
     .insert(documentVersions)
@@ -159,7 +228,7 @@ export async function reIngestDocument(
       documentId,
       versionNumber: nextVersionNumber,
       contentHash: newContentHash,
-      previousVersionId: null,
+      previousVersionId: latestVersion?.id ?? null,
       diffSummary: diff.summary,
       changeType: 'content_changed',
       detectedAt: new Date(),

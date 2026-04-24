@@ -31,6 +31,10 @@ function countWords(text: string): number {
  * This is intentionally naive — it matches the institution-document use case
  * where whole paragraphs are replaced, not individual words within lines.
  */
+// Documents exceeding this line count get a simplified diff to avoid unbounded
+// Map key accumulation. At 100 bytes/line average, 100k lines ≈ 10MB of content.
+const MAX_DIFF_LINES = 100_000
+
 export function computeDocumentDiff(oldContent: string, newContent: string): DiffResult {
   const wordCountDelta = countWords(newContent) - countWords(oldContent)
 
@@ -47,6 +51,19 @@ export function computeDocumentDiff(oldContent: string, newContent: string): Dif
 
   const oldLines = oldContent === '' ? [] : oldContent.split('\n')
   const newLines = newContent === '' ? [] : newContent.split('\n')
+
+  // Guard against unbounded Map growth on very large documents.
+  // buildLineCountMap creates one Map entry per unique line — a 200k-line document
+  // with mostly unique lines builds a 200k-entry Map, which is both slow and memory-heavy.
+  if (oldLines.length > MAX_DIFF_LINES || newLines.length > MAX_DIFF_LINES) {
+    return {
+      sectionsAdded: 0,
+      sectionsRemoved: 0,
+      sectionsModified: 0,
+      wordCountDelta,
+      summary: 'Document too large for detailed diff',
+    }
+  }
 
   if (oldLines.length === 0) {
     // Everything is new — blank lines break sections (paragraph semantics)

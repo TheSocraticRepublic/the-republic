@@ -43,6 +43,29 @@ export function isValidDocumentUrl(url: string): boolean {
     // IPv4-mapped loopback: ::ffff:127.x.x.x
     if (/^::ffff:127\./i.test(host)) return false
 
+    // IPv4-mapped IPv6 addresses (::ffff:x.x.x.x) bypass the IPv4 checks below.
+    // Strip the prefix and re-validate the embedded IPv4 address against all
+    // private/loopback/link-local ranges. Covers ::ffff:192.168.1.1, ::ffff:10.0.0.1,
+    // ::ffff:169.254.169.254, etc.
+    if (/^::ffff:/i.test(hostLower)) {
+      const mappedIpv4 = host.slice(7)  // everything after "::ffff:"
+      if (mappedIpv4 === '0.0.0.0') return false
+      if (mappedIpv4 === '169.254.169.254') return false
+      const mappedParts = mappedIpv4.split('.')
+      if (mappedParts.length === 4 && mappedParts.every((p) => /^\d+$/.test(p))) {
+        const [a, b] = mappedParts.map(Number)
+        if (a === 127) return false                                // 127.0.0.0/8 loopback
+        if (a === 10) return false                                 // 10.0.0.0/8
+        if (a === 172 && b >= 16 && b <= 31) return false         // 172.16.0.0/12
+        if (a === 192 && b === 168) return false                   // 192.168.0.0/16
+        if (a === 169 && b === 254) return false                   // 169.254.0.0/16 link-local
+      }
+      // If we can't parse it as IPv4 dotted notation, block it — unknown format is unsafe
+      if (mappedParts.length !== 4 || !mappedParts.every((p) => /^\d+$/.test(p))) {
+        return false
+      }
+    }
+
     // --- IPv4 checks ---
     if (host === '0.0.0.0') return false
     if (host === '169.254.169.254') return false // AWS/GCP IMDS

@@ -42,10 +42,11 @@ export async function POST(
 
   const db = getDb()
 
-  // Fetch the document — verify it exists and get its investigationId
+  // Fetch the document — verify it exists and get its investigationId and direct owner
   const [doc] = await db
     .select({
       id: documents.id,
+      userId: documents.userId,
       investigationId: documents.investigationId,
     })
     .from(documents)
@@ -59,10 +60,18 @@ export async function POST(
     })
   }
 
-  // Verify ownership or moderator access
+  // Verify ownership or moderator access.
+  // Ownership can be established two ways:
+  //   1. The document's investigationId links to an investigation owned by this user.
+  //   2. The document's own userId matches (handles orphaned documents with no investigationId).
   let isAuthorized = false
 
-  if (doc.investigationId) {
+  // Direct document ownership (covers orphaned documents where investigationId is null)
+  if (doc.userId === userId) {
+    isAuthorized = true
+  }
+
+  if (!isAuthorized && doc.investigationId) {
     // Check if the caller owns the investigation this document belongs to
     const [inv] = await db
       .select({ userId: investigations.userId })

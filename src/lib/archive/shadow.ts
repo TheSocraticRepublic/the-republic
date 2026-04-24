@@ -92,6 +92,11 @@ export async function detectShadows(
     .select({
       id: investigations.id,
       briefingText: investigations.briefingText,
+      // preservedAt is used to determine whether this peer's ID may be shared.
+      // Only archived (preserved) investigations are public goods — their IDs
+      // may appear in referenceInvestigationIds on a shadow alert.
+      // Non-archived investigation IDs must not leak to other users.
+      preservedAt: investigations.preservedAt,
     })
     .from(investigations)
     .where(
@@ -109,30 +114,43 @@ export async function detectShadows(
   // Extract topics from target
   const targetTopics = extractTopics(target.briefingText ?? '')
 
-  // Count how many peers mention each topic
-  const topicCounts = new Map<string, string[]>()  // topic -> [investigationIds]
+  // Count how many peers mention each topic.
+  // topicCounts maps topic -> [archivedPeerIds only].
+  // We use all peers for confidence calculation (topic prevalence across the full
+  // peer group) but only expose IDs of archived investigations in the alert.
+  // This prevents leaking the existence of non-public investigations.
+  const topicCounts = new Map<string, { allCount: number; archivedIds: string[] }>()
 
   for (const peer of peers) {
     const peerTopics = extractTopics(peer.briefingText ?? '')
+    const isArchived = peer.preservedAt !== null
     for (const topic of peerTopics) {
       if (!topicCounts.has(topic)) {
-        topicCounts.set(topic, [])
+        topicCounts.set(topic, { allCount: 0, archivedIds: [] })
       }
-      topicCounts.get(topic)!.push(peer.id)
+      const entry = topicCounts.get(topic)!
+      entry.allCount++
+      if (isArchived) {
+        entry.archivedIds.push(peer.id)
+      }
     }
   }
 
-  // Find topics that appear in >= PRESENCE_THRESHOLD of peers but not in target
+  // Find topics that appear in >= PRESENCE_THRESHOLD of peers but not in target.
+  // Confidence is calculated against the full peer count (including non-archived),
+  // so the threshold reflects true prevalence in the peer group.
+  // referenceInvestigationIds only includes archived peer IDs to avoid leaking
+  // private investigation identifiers.
   const total = peers.length
   const alerts: ShadowAlert[] = []
 
   // Sort by confidence (highest first) for consistent output
-  const candidates: Array<{ topic: string; peerIds: string[]; confidence: number }> = []
+  const candidates: Array<{ topic: string; archivedIds: string[]; confidence: number }> = []
 
-  for (const [topic, peerIds] of topicCounts.entries()) {
-    const confidence = peerIds.length / total
+  for (const [topic, { allCount, archivedIds }] of topicCounts.entries()) {
+    const confidence = allCount / total
     if (confidence >= PRESENCE_THRESHOLD && !targetTopics.has(topic)) {
-      candidates.push({ topic, peerIds, confidence })
+      candidates.push({ topic, archivedIds, confidence })
     }
   }
 
@@ -147,7 +165,7 @@ export async function detectShadows(
     alerts.push({
       alertType: 'missing_topic',
       missingTopic: candidate.topic,
-      referenceInvestigationIds: candidate.peerIds,
+      referenceInvestigationIds: candidate.archivedIds,
       confidence: candidate.confidence,
     })
   }
