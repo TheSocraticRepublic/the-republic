@@ -1099,3 +1099,75 @@ export const shadowAlerts = pgTable(
   },
   (t) => [index('shadow_alerts_investigation_id_idx').on(t.investigationId)]
 )
+
+// --- Governance Tables (Phase 2F) ---
+
+export const proposalTypeEnum = pgEnum('proposal_type', [
+  'policy',
+  'feature',
+  'constitutional',
+  'funding',
+])
+
+export const proposalStatusEnum = pgEnum('proposal_status', [
+  'draft',
+  'active',
+  'passed',
+  'rejected',
+  'executed',
+])
+
+export const governanceProposals = pgTable(
+  'governance_proposals',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    authorId: uuid('author_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    proposalType: proposalTypeEnum('proposal_type').notNull(),
+    status: proposalStatusEnum('status').notNull().default('draft'),
+    votingOpens: timestamp('voting_opens'),
+    votingCloses: timestamp('voting_closes'),
+    quorumThreshold: real('quorum_threshold'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('proposals_author_id_idx').on(t.authorId),
+    index('proposals_status_idx').on(t.status),
+  ]
+)
+
+export const governanceVotes = pgTable(
+  'governance_votes',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    proposalId: uuid('proposal_id')
+      .notNull()
+      .references(() => governanceProposals.id, { onDelete: 'cascade' }),
+    voterId: uuid('voter_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    choice: text('choice').notNull(),
+    weight: real('weight').notNull(),
+    rawCredentialWeight: real('raw_credential_weight').notNull(),
+    votedAt: timestamp('voted_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('votes_proposal_voter_unique_idx').on(t.proposalId, t.voterId),
+    index('votes_proposal_id_idx').on(t.proposalId),
+  ]
+)
+
+export const governanceConfig = pgTable('governance_config', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  key: text('key').notNull().unique(),
+  value: jsonb('value').notNull(),
+  updatedBy: uuid('updated_by').references(() => users.id, {
+    onDelete: 'set null',
+  }),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
