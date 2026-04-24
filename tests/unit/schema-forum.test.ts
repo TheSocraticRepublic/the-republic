@@ -60,7 +60,7 @@ describe('Forum schema — enum values', () => {
     expect(credentialTypeEnum.enumValues).toEqual(expected)
   })
 
-  it('credentialSourceEnum has all 6 values', () => {
+  it('credentialSourceEnum has all 7 values', () => {
     const expected = [
       'investigation',
       'peer_review',
@@ -68,6 +68,7 @@ describe('Forum schema — enum values', () => {
       'campaign_material',
       'lever_action',
       'outcome',
+      'archive_record',
     ]
     expect(credentialSourceEnum.enumValues).toEqual(expected)
   })
