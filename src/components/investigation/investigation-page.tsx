@@ -28,6 +28,8 @@ interface InvestigationPageProps {
   jurisdictionName: string | null
   briefingText: string
   initialLensOpen?: boolean      // true when lensOpenedAt is set (returning user)
+  lensContextText?: string | null
+  gadflySeededQuestion?: string | null
   initialCampaignOpen?: boolean  // true when campaignOpenedAt is set (returning user)
   isAuthor: boolean
 }
@@ -38,6 +40,8 @@ export function InvestigationPage({
   jurisdictionName,
   briefingText,
   initialLensOpen = false,
+  lensContextText,
+  gadflySeededQuestion,
   initialCampaignOpen = false,
   isAuthor,
 }: InvestigationPageProps) {
@@ -124,6 +128,8 @@ export function InvestigationPage({
             concern={concern}
             jurisdictionName={jurisdictionName}
             briefingText={briefingText}
+            lensContextText={lensContextText}
+            gadflySeededQuestion={gadflySeededQuestion}
             onOpenGadfly={handleOpenGadfly}
           />
         </section>

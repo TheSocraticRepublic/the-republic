@@ -8,11 +8,34 @@ interface HistoricalContextProps {
   isStreaming: boolean
 }
 
+const CONFIDENCE_STYLES: Record<string, { color: string; bg: string; label: string }> = {
+  '[DOCUMENTED]': { color: '#4ade80', bg: 'rgba(74,222,128,0.08)', label: 'DOCUMENTED' },
+  '[REPORTED]': { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', label: 'REPORTED' },
+  '[INFERRED]': { color: '#a3a3a3', bg: 'rgba(163,163,163,0.08)', label: 'INFERRED' },
+}
+
+const CONFIDENCE_REGEX = /(\[DOCUMENTED\]|\[REPORTED\]|\[INFERRED\])/g
+
 function renderInline(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*.*?\*\*)/g)
+  // Split on both confidence markers and bold markers
+  const parts = text.split(/(\[DOCUMENTED\]|\[REPORTED\]|\[INFERRED\]|\*\*.*?\*\*)/g)
   return parts.map((part, i) => {
     const boldMatch = part.match(/^\*\*(.*)\*\*$/)
     if (boldMatch) return <strong key={i} className="font-semibold">{boldMatch[1]}</strong>
+
+    const conf = CONFIDENCE_STYLES[part]
+    if (conf) {
+      return (
+        <span
+          key={i}
+          className="inline-block rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider mr-1.5 align-middle"
+          style={{ color: conf.color, backgroundColor: conf.bg }}
+        >
+          {conf.label}
+        </span>
+      )
+    }
+
     return part
   })
 }
@@ -162,6 +185,32 @@ export function HistoricalContext({ content, isStreaming }: HistoricalContextPro
           className="inline-block h-4 w-0.5 animate-pulse ml-0.5"
           style={{ backgroundColor: '#a8a29e', verticalAlign: 'text-bottom' }}
         />
+      )}
+
+      {/* Confidence legend — shown when content contains any markers */}
+      {!isStreaming && CONFIDENCE_REGEX.test(content) && (
+        <div
+          className="mt-8 flex flex-wrap gap-4 border-t pt-4"
+          style={{ borderColor: 'rgba(0,0,0,0.06)' }}
+        >
+          {Object.values(CONFIDENCE_STYLES).map((conf) => (
+            <span
+              key={conf.label}
+              className="flex items-center gap-1.5 text-[10px]"
+              style={{ color: '#78716c' }}
+            >
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: conf.color }}
+              />
+              {conf.label === 'DOCUMENTED'
+                ? 'Verifiable from public records'
+                : conf.label === 'REPORTED'
+                  ? 'Cited in coverage, not independently verified'
+                  : 'Inferred from patterns in evidence'}
+            </span>
+          ))}
+        </div>
       )}
     </div>
   )

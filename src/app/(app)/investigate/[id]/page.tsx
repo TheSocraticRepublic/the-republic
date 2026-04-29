@@ -34,6 +34,8 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
       status: investigations.status,
       createdAt: investigations.createdAt,
       lensOpenedAt: investigations.lensOpenedAt,
+      lensContextText: investigations.lensContextText,
+      gadflySeededQuestion: investigations.gadflySeededQuestion,
       campaignOpenedAt: investigations.campaignOpenedAt,
     })
     .from(investigations)
@@ -78,6 +80,8 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
         jurisdictionName={investigation.jurisdictionName ?? null}
         briefingText={investigation.briefingText}
         initialLensOpen={!!investigation.lensOpenedAt}
+        lensContextText={investigation.lensContextText ?? null}
+        gadflySeededQuestion={investigation.gadflySeededQuestion ?? null}
         initialCampaignOpen={!!investigation.campaignOpenedAt}
         isAuthor={isAuthor}
       />

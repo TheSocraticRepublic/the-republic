@@ -1,15 +1,20 @@
 // GadflyEntry — seeded first question that invites the citizen to continue
 // their inquiry via the Gadfly slide-over.
 
+const DEFAULT_QUESTION =
+  'What assumptions about inevitability does this situation rest on, and who benefits from those assumptions going unchallenged?'
+
 interface GadflyEntryProps {
   investigationId: string
   concern: string
+  seededQuestion?: string | null
   onOpenGadfly: () => void
 }
 
 export function GadflyEntry({
   investigationId: _investigationId,
   concern: _concern,
+  seededQuestion,
   onOpenGadfly,
 }: GadflyEntryProps) {
   return (
@@ -38,8 +43,7 @@ export function GadflyEntry({
       >
         You've read the briefing. Here's a question worth sitting with:{' '}
         <strong style={{ color: '#f5f5f5', fontWeight: 600 }}>
-          What assumptions about inevitability does this situation rest on, and who benefits
-          from those assumptions going unchallenged?
+          {seededQuestion || DEFAULT_QUESTION}
         </strong>
       </p>
 

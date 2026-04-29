@@ -16,6 +16,7 @@ function makeBundle(): ArchiveBundle {
       jurisdictionId: null,
       policyArea: null,
       briefingText: null,
+      lensContextText: null,
       status: 'active',
       createdAt: new Date().toISOString(),
     },
@@ -57,6 +58,7 @@ describe('ArchiveBundle interface', () => {
     expect(investigation).toHaveProperty('jurisdictionId')
     expect(investigation).toHaveProperty('policyArea')
     expect(investigation).toHaveProperty('briefingText')
+    expect(investigation).toHaveProperty('lensContextText')
     expect(investigation).toHaveProperty('status')
     expect(investigation).toHaveProperty('createdAt')
   })

@@ -65,6 +65,7 @@ export interface ArchiveBundleInvestigation {
   jurisdictionId: string | null
   policyArea: string | null
   briefingText: string | null
+  lensContextText: string | null
   status: string
   createdAt: string
 }
@@ -115,6 +116,7 @@ export async function buildArchiveBundle(
       jurisdictionName: investigations.jurisdictionName,
       policyArea: investigations.policyArea,
       briefingText: investigations.briefingText,
+      lensContextText: investigations.lensContextText,
       concernCategory: investigations.concernCategory,
       status: investigations.status,
       createdAt: investigations.createdAt,
@@ -272,6 +274,7 @@ export async function buildArchiveBundle(
       jurisdictionId: inv.jurisdictionId ?? null,
       policyArea: inv.policyArea ?? null,
       briefingText: inv.briefingText ?? null,
+      lensContextText: inv.lensContextText ?? null,
       status: inv.status,
       createdAt: inv.createdAt.toISOString(),
     },
