@@ -9,6 +9,7 @@ import { GadflySheet } from '@/components/lens/gadfly-sheet'
 import { CampaignPanel } from '@/components/campaign/campaign-panel'
 import { ThreadCard } from '@/components/forum/thread-card'
 import { ReviewSection } from '@/components/review/review-section'
+import { InvestigationVotePanel } from '@/components/votes/investigation-vote-panel'
 
 interface ThreadSummary {
   id: string
@@ -193,6 +194,13 @@ export function InvestigationPage({
               </p>
             </div>
           )}
+        </section>
+      )}
+
+      {/* 6.5. Vote Tracker — MP voting record relevant to this concern */}
+      {isAuthor && (
+        <section>
+          <InvestigationVotePanel investigationId={id} />
         </section>
       )}
 

@@ -94,6 +94,7 @@ export const leverActionTypeEnum = pgEnum('lever_action_type', [
   'media_spec',
   'talking_points',
   'coalition_template',
+  'mp_letter',
 ])
 
 export const leverStatusEnum = pgEnum('lever_status', [
@@ -297,6 +298,10 @@ export const investigations = pgTable(
     lensContextText: text('lens_context_text'),
     lensCompletedAt: timestamp('lens_completed_at'),
     gadflySeededQuestion: text('gadfly_seeded_question'),
+    postalCode: text('postal_code'),
+    federalMpId: uuid('federal_mp_id').references(() => federalMps.id, {
+      onDelete: 'set null',
+    }),
     campaignOpenedAt: timestamp('campaign_opened_at'),
     concernCategory: text('concern_category'),
     environmentalReviewType: text('environmental_review_type'),
@@ -1327,4 +1332,46 @@ export const postalCodeCache = pgTable(
     cachedAt: timestamp('cached_at').defaultNow().notNull(),
   },
   (t) => [index('postal_code_cache_postal_code_idx').on(t.postalCode)]
+)
+
+export const parliamentSyncLog = pgTable(
+  'parliament_sync_log',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    syncType: text('sync_type').notNull(),
+    session: text('session'),
+    recordsFetched: integer('records_fetched'),
+    recordsUpserted: integer('records_upserted'),
+    errors: jsonb('errors'),
+    durationMs: integer('duration_ms'),
+    startedAt: timestamp('started_at').defaultNow().notNull(),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('parliament_sync_log_type_idx').on(t.syncType),
+    index('parliament_sync_log_started_at_idx').on(t.startedAt),
+  ]
+)
+
+export const investigationVotes = pgTable(
+  'investigation_votes',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    investigationId: uuid('investigation_id')
+      .notNull()
+      .references(() => investigations.id, { onDelete: 'cascade' }),
+    voteId: uuid('vote_id')
+      .notNull()
+      .references(() => federalVotes.id, { onDelete: 'cascade' }),
+    relevanceExplanation: text('relevance_explanation'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('investigation_votes_inv_vote_idx').on(
+      t.investigationId,
+      t.voteId
+    ),
+    index('investigation_votes_investigation_idx').on(t.investigationId),
+  ]
 )

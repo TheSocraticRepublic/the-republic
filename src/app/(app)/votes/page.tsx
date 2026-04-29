@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { PostalCodeForm } from '@/components/votes/postal-code-form'
+import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
 export const metadata = {
   title: 'Vote Tracker — The Republic',
@@ -57,6 +58,11 @@ export default function VoteTrackerPage() {
         >
           Recent votes
         </Link>
+      </div>
+
+      {/* Data freshness indicator */}
+      <div className="mt-8">
+        <DataFreshnessBadge />
       </div>
     </div>
   )

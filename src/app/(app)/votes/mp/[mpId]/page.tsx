@@ -6,6 +6,7 @@ import { MpProfileCard } from '@/components/votes/mp-profile-card'
 import { VotingPatterns } from '@/components/votes/voting-patterns'
 import { ContradictionList } from '@/components/votes/contradiction-list'
 import { MpVoteList } from '@/components/votes/mp-vote-list'
+import { MpLetterGenerator } from '@/components/votes/mp-letter-generator'
 
 export const metadata = {
   title: 'MP Profile — The Republic',
@@ -40,6 +41,11 @@ export default async function MpProfilePage({ params }: PageProps) {
         email={mp.email}
         photoUrl={mp.photoUrl}
       />
+
+      {/* Write to your MP */}
+      <section>
+        <MpLetterGenerator mpId={mpId} mpName={mp.name} />
+      </section>
 
       {/* Voting Patterns */}
       <section>

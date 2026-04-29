@@ -20,6 +20,7 @@ export function ConcernForm() {
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([])
   const [fetchingJurisdictions, setFetchingJurisdictions] = useState(false)
   const [selectedJurisdictionId, setSelectedJurisdictionId] = useState('')
+  const [postalCode, setPostalCode] = useState('')
   const [concern, setConcern] = useState('')
   const [loading, setLoading] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
@@ -62,6 +63,7 @@ export function ConcernForm() {
         body: JSON.stringify({
           concern: concern.trim(),
           jurisdictionId: selectedJurisdictionId || undefined,
+          postalCode: postalCode.replace(/\s+/g, '').toUpperCase() || undefined,
         }),
         signal: abortRef.current.signal,
       })
@@ -176,6 +178,26 @@ export function ConcernForm() {
             />
           </div>
         )}
+      </div>
+
+      {/* Postal code (optional — for vote tracker integration) */}
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-neutral-500">
+          Postal code <span className="text-neutral-700">(optional — shows how your MP voted on related issues)</span>
+        </label>
+        <input
+          type="text"
+          value={postalCode}
+          onChange={(e) => {
+            const clean = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6)
+            setPostalCode(clean.length > 3 ? `${clean.slice(0, 3)} ${clean.slice(3)}` : clean)
+          }}
+          placeholder="V8B 0A1"
+          className="w-full rounded-lg border border-white/[0.08] bg-black/60 px-3 py-2 text-sm text-neutral-300 font-mono tracking-wider placeholder-neutral-700 outline-none focus:border-white/20"
+          disabled={loading}
+          maxLength={7}
+          autoComplete="postal-code"
+        />
       </div>
 
       {/* Actions */}
