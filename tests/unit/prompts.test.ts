@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { ORACLE_SYSTEM_PROMPT, ORACLE_PROMPT_VERSION } from '@/lib/ai/prompts/oracle-system'
+import { LENS_CONTEXT_SYSTEM_PROMPT, LENS_CONTEXT_PROMPT_VERSION } from '@/lib/ai/prompts/lens-context-system'
 import { GADFLY_SYSTEM_PROMPT, GADFLY_PROMPT_VERSION } from '@/lib/ai/prompts/gadfly-system'
 import { LEVER_SYSTEM_PROMPT, LEVER_PROMPT_VERSION } from '@/lib/ai/prompts/lever-system'
 import { MIRROR_SYSTEM_PROMPT, MIRROR_PROMPT_VERSION } from '@/lib/ai/prompts/mirror-system'
@@ -209,5 +210,33 @@ describe('Briefing prompt', () => {
   it('core prompt does not contain the old runtime placeholder', () => {
     const prompt = buildBriefingPrompt({})
     expect(prompt).not.toContain('[DOCUMENT STRUCTURE KNOWLEDGE will be injected here at runtime]')
+  })
+})
+
+describe('Lens context prompt', () => {
+  it('has version 0.2.0', () => {
+    expect(LENS_CONTEXT_PROMPT_VERSION).toBe('0.2.0')
+  })
+
+  it('has a semver version string', () => {
+    expect(LENS_CONTEXT_PROMPT_VERSION).toMatch(/^\d+\.\d+\.\d+$/)
+  })
+
+  it('contains all three confidence markers', () => {
+    expect(LENS_CONTEXT_SYSTEM_PROMPT).toContain('[DOCUMENTED]')
+    expect(LENS_CONTEXT_SYSTEM_PROMPT).toContain('[REPORTED]')
+    expect(LENS_CONTEXT_SYSTEM_PROMPT).toContain('[INFERRED]')
+  })
+
+  it('includes all four required output sections', () => {
+    const sections = [
+      '## How We Got Here',
+      '## Connected Issues',
+      '## What the Players Have Done Before',
+      '## The Deeper Question',
+    ]
+    for (const section of sections) {
+      expect(LENS_CONTEXT_SYSTEM_PROMPT).toContain(section)
+    }
   })
 })

@@ -1,10 +1,12 @@
 ---
 status: current
-current: Phase 2F — privacy hardening + agora scaffolding
-next: Phase 3 — Lens layer (per-legislator scorecards, constituency-aligned views)
+current: Lens Deepening L-A through L-F — persistence, Gadfly seeding, campaign bridge, evidence chains, timeline, player intelligence
+next: Phase 3 — Shield + Confederation (deferred until community justifies it)
 testing: null
 pinned: true
 shipped:
+  - date: 2026-04-29
+    item: "Lens Deepening L-A–L-F — persistence + return-user continuity, dynamic Gadfly seeding, Lens→Campaign bridge, evidence confidence markers, issue timeline activation, player intelligence deepening"
   - date: 2026-04-23
     item: Phase 2F — privacy hardening + agora scaffolding
   - date: 2026-04-23

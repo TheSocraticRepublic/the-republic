@@ -5,7 +5,7 @@ import { LENS_CONTEXT_SYSTEM_PROMPT } from '@/lib/ai/prompts/lens-context-system
 import { PLAYER_EXTRACTION_SYSTEM_PROMPT } from '@/lib/ai/prompts/player-extraction-system'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText, generateText } from 'ai'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 
 const MODEL = 'claude-sonnet-4-20250514'
 
@@ -43,6 +43,16 @@ export async function POST(
     })
   }
 
+  // Short-circuit for returning users: serve persisted context without re-streaming
+  if (investigation.lensContextText) {
+    return new Response(investigation.lensContextText, {
+      headers: {
+        'Content-Type': 'text/plain',
+        'X-Gadfly-Seed': investigation.gadflySeededQuestion || '',
+      },
+    })
+  }
+
   // Update lensOpenedAt (scoped to this user to prevent cross-user writes)
   if (!investigation.lensOpenedAt) {
     await db.update(investigations)
@@ -63,6 +73,27 @@ export async function POST(
       role: 'user',
       content: `Investigation concern: ${investigation.concern}\n\nJurisdiction: ${investigation.jurisdictionName || 'Not specified'}\n\nBriefing analysis:\n${investigation.briefingText}`,
     }],
+    onFinish: async ({ text }) => {
+      try {
+        const match = text.match(/## The Deeper Question\s*\n+([\s\S]*?)(?=\n## |$)/)
+        const extracted = match?.[1]?.trim() || null
+        const gadflySeededQuestion = extracted?.startsWith('#') ? null : extracted
+
+        await db
+          .update(investigations)
+          .set({
+            lensContextText: text.trim(),
+            lensCompletedAt: new Date(),
+            gadflySeededQuestion,
+            updatedAt: new Date(),
+          })
+          .where(
+            sql`${investigations.id} = ${id} AND ${investigations.lensCompletedAt} IS NULL`
+          )
+      } catch (err) {
+        console.error('Failed to persist lens context for investigation', id, err)
+      }
+    },
   })
 
   return result.toTextStreamResponse()

@@ -2,6 +2,16 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
 
+function applySecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation()'
+  )
+  return response
+}
+
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
 
@@ -24,12 +34,12 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/ap/posts/') ||
     pathname.startsWith('/ap/archive/')
   ) {
-    return NextResponse.next()
+    return applySecurityHeaders(NextResponse.next())
   }
 
   // Root landing page is public
   if (pathname === '/') {
-    return NextResponse.next()
+    return applySecurityHeaders(NextResponse.next())
   }
 
   // DEV: bypass auth, inject a test user
@@ -38,11 +48,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     headers.set('x-user-id', '00000000-0000-0000-0000-000000000001')
     headers.set('x-user-email', 'dev@republic.local')
     headers.set('x-pathname', pathname)
-    return NextResponse.next({ request: { headers } })
+    return applySecurityHeaders(NextResponse.next({ request: { headers } }))
   }
 
   // Everything under (app) requires auth
-  return withAuth(request)
+  return applySecurityHeaders(await withAuth(request))
 }
 
 export const config = {

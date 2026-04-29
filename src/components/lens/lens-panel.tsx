@@ -1,9 +1,19 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { PlayerCard } from './player-card'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { PlayerCard, type PlayerAppearance, type RelatedPlayer } from './player-card'
 import { HistoricalContext } from './historical-context'
+import { IssueTimeline } from './issue-timeline'
 import { GadflyEntry } from './gadfly-entry'
+
+interface TimelineEvent {
+  id: string
+  eventType: string
+  title: string
+  description: string | null
+  eventDate: string
+  status: string
+}
 
 interface Player {
   playerId: string
@@ -20,6 +30,8 @@ interface LensPanelProps {
   concern: string
   jurisdictionName?: string | null
   briefingText: string
+  lensContextText?: string | null
+  gadflySeededQuestion?: string | null
   onOpenGadfly: () => void
 }
 
@@ -28,12 +40,19 @@ export function LensPanel({
   concern,
   jurisdictionName: _jurisdictionName,
   briefingText: _briefingText,
+  lensContextText,
+  gadflySeededQuestion,
   onOpenGadfly,
 }: LensPanelProps) {
   const [players, setPlayers] = useState<Player[]>([])
   const [historicalContent, setHistoricalContent] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [deepenError, setDeepenError] = useState(false)
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([])
+  const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null)
+  const [playerAppearances, setPlayerAppearances] = useState<Record<string, PlayerAppearance[]>>({})
+  const [playerRelationships, setPlayerRelationships] = useState<Record<string, string[]>>({})
+  const [enrichmentLoaded, setEnrichmentLoaded] = useState(false)
   const deepenStarted = useRef(false)
   const pollCountRef = useRef(0)
 
@@ -41,6 +60,12 @@ export function LensPanel({
   useEffect(() => {
     if (deepenStarted.current) return
     deepenStarted.current = true
+
+    // If persisted context exists, render it instantly without re-streaming
+    if (lensContextText) {
+      setHistoricalContent(lensContextText)
+      return
+    }
 
     const controller = new AbortController()
 
@@ -85,6 +110,17 @@ export function LensPanel({
     }
   }, [investigationId])
 
+  // Derive seeded question: DB-persisted prop takes priority, parsed from stream as fallback
+  const parsedSeededQuestion = useMemo(() => {
+    if (!historicalContent) return null
+    const match = historicalContent.match(/## The Deeper Question\s*\n+([\s\S]*?)(?=\n## |$)/)
+    const extracted = match?.[1]?.trim() || null
+    if (extracted?.startsWith('#')) return null
+    return extracted
+  }, [historicalContent])
+
+  const resolvedSeededQuestion = gadflySeededQuestion || parsedSeededQuestion
+
   // 2. Poll GET /api/investigate/[id]/players (every 3s, up to 15s)
   useEffect(() => {
     const maxPolls = 5 // 5 * 3s = 15s
@@ -123,6 +159,47 @@ export function LensPanel({
       clearTimeout(timer)
     }
   }, [investigationId])
+
+  // 3. Fetch timeline events
+  useEffect(() => {
+    fetch(`/api/investigate/${investigationId}/timeline`)
+      .then((res) => (res.ok ? res.json() : { events: [] }))
+      .then((data) => setTimelineEvents(data.events ?? []))
+      .catch(() => {})
+  }, [investigationId])
+
+  const handleTogglePlayer = useCallback(
+    async (playerId: string) => {
+      if (expandedPlayerId === playerId) {
+        setExpandedPlayerId(null)
+        return
+      }
+      setExpandedPlayerId(playerId)
+
+      if (!enrichmentLoaded) {
+        try {
+          const res = await fetch(
+            `/api/investigate/${investigationId}/players?expand=true`
+          )
+          if (res.ok) {
+            const data = await res.json()
+            setPlayerAppearances(data.appearances ?? {})
+            setPlayerRelationships(data.relationships ?? {})
+            setEnrichmentLoaded(true)
+          }
+        } catch {
+          // Non-fatal
+        }
+      }
+    },
+    [expandedPlayerId, enrichmentLoaded, investigationId]
+  )
+
+  const handleEventAdded = useCallback((event: TimelineEvent) => {
+    setTimelineEvents((prev) =>
+      [...prev, event].sort((a, b) => a.eventDate.localeCompare(b.eventDate))
+    )
+  }, [])
 
   return (
     <div className="space-y-8 pt-2">
@@ -167,16 +244,37 @@ export function LensPanel({
           </div>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible">
-            {players.map((player) => (
-              <PlayerCard
-                key={player.playerId}
-                name={player.name}
-                playerType={player.playerType}
-                role={player.role}
-                context={player.context}
-                description={player.description}
-              />
-            ))}
+            {players.map((player) => {
+              const isExpanded = expandedPlayerId === player.playerId
+              const relatedPlayerIds = playerRelationships[player.playerId] ?? []
+              const relatedPlayerData: RelatedPlayer[] = relatedPlayerIds
+                .map((rpId) => {
+                  const rp = players.find((p) => p.playerId === rpId)
+                  if (!rp) return null
+                  return {
+                    playerId: rp.playerId,
+                    name: rp.name,
+                    playerType: rp.playerType,
+                    role: rp.role,
+                  }
+                })
+                .filter((rp): rp is RelatedPlayer => rp !== null)
+
+              return (
+                <PlayerCard
+                  key={player.playerId}
+                  name={player.name}
+                  playerType={player.playerType}
+                  role={player.role}
+                  context={player.context}
+                  description={player.description}
+                  expanded={isExpanded}
+                  onToggle={() => handleTogglePlayer(player.playerId)}
+                  appearances={playerAppearances[player.playerId]}
+                  relatedPlayers={relatedPlayerData}
+                />
+              )
+            })}
           </div>
         )}
       </section>
@@ -197,11 +295,21 @@ export function LensPanel({
         )}
       </section>
 
+      {/* Issue timeline */}
+      <section>
+        <IssueTimeline
+          investigationId={investigationId}
+          events={timelineEvents}
+          onEventAdded={handleEventAdded}
+        />
+      </section>
+
       {/* Gadfly entry */}
       <section>
         <GadflyEntry
           investigationId={investigationId}
           concern={concern}
+          seededQuestion={resolvedSeededQuestion}
           onOpenGadfly={onOpenGadfly}
         />
       </section>

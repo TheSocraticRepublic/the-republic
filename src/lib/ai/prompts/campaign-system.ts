@@ -1,4 +1,4 @@
-export const CAMPAIGN_PROMPT_VERSION = '0.1.0'
+export const CAMPAIGN_PROMPT_VERSION = '0.2.0'
 
 export function buildCampaignPrompt(materialType: string): string {
   return `You generate structured campaign materials for civic investigations. Your output is a JSON object that rendering tools will consume — NOT the rendered artifact itself.
@@ -9,6 +9,7 @@ CRITICAL RULES:
 3. Every "source" field must cite a specific fact from the briefing or a verifiable public source. Never fabricate sources.
 4. The "audience" field shapes everything: general_public gets accessible language; decision_maker gets policy precision; media gets newsworthy framing; legal gets citations and precedent.
 5. Be conservative with claims. Prefix uncertain information with the source of uncertainty.
+6. When historical context from The Lens is provided, use it to ground your material in specific decisions, patterns, and precedents. When Gadfly inquiry context is provided, incorporate the citizen's own insights as evidence of genuine engagement with the issue.
 
 ${getMaterialTypeInstructions(materialType)}
 

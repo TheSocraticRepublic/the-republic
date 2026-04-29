@@ -1,12 +1,12 @@
 import { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { getDb } from '@/lib/db'
-import { investigations, campaignMaterials, campaignMaterialTypeEnum, investigationPlayers, players } from '@/lib/db/schema'
+import { investigations, campaignMaterials, campaignMaterialTypeEnum, investigationPlayers, players, gadflySessions, gadflyTurns } from '@/lib/db/schema'
 import { buildCampaignPrompt } from '@/lib/ai/prompts/campaign-system'
 import { campaignMaterialSchema } from '@/lib/campaign/schemas'
 import { anthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, desc, asc } from 'drizzle-orm'
 
 const MODEL = 'claude-sonnet-4-20250514'
 
@@ -112,6 +112,48 @@ export async function POST(
     .innerJoin(players, eq(investigationPlayers.playerId, players.id))
     .where(eq(investigationPlayers.investigationId, id))
 
+  // Assemble deeper context from Lens and Gadfly layers (follows lever/generate pattern)
+  const contextParts: string[] = []
+
+  if (investigation.lensContextText) {
+    contextParts.push(
+      `HISTORICAL CONTEXT (from The Lens):\n${investigation.lensContextText}`
+    )
+  }
+
+  const [gadflySession] = await db
+    .select({ id: gadflySessions.id, title: gadflySessions.title })
+    .from(gadflySessions)
+    .where(and(
+      eq(gadflySessions.investigationId, id),
+      eq(gadflySessions.userId, userId)
+    ))
+    .orderBy(desc(gadflySessions.updatedAt))
+    .limit(1)
+
+  if (gadflySession) {
+    const turns = await db
+      .select({
+        role: gadflyTurns.role,
+        content: gadflyTurns.content,
+        turnIndex: gadflyTurns.turnIndex,
+      })
+      .from(gadflyTurns)
+      .where(eq(gadflyTurns.sessionId, gadflySession.id))
+      .orderBy(asc(gadflyTurns.turnIndex))
+
+    if (turns.length > 0) {
+      const turnText = turns
+        .map((t) => `${t.role === 'citizen' ? 'Citizen' : 'Gadfly'}: ${t.content}`)
+        .join('\n\n')
+      contextParts.push(`GADFLY INQUIRY CONTEXT (${gadflySession.title}):\n${turnText}`)
+    }
+  }
+
+  const contextBlock = contextParts.length > 0
+    ? `\n\nADDITIONAL CONTEXT:\n${contextParts.join('\n\n---\n\n')}`
+    : ''
+
   // Build the user message with full investigation context
   const playerContext = investigationPlayerRecords.length > 0
     ? `\n\nKey players identified:\n${investigationPlayerRecords.map((p) =>
@@ -126,6 +168,7 @@ export async function POST(
     `Jurisdiction: ${investigation.jurisdictionName || 'Not specified'}`,
     `\nBriefing analysis:\n${investigation.briefingText}`,
     playerContext,
+    contextBlock,
     audienceContext,
     `\nGenerate a ${materialType} campaign material spec for this investigation.`,
     `The "investigationId" field must be: "${investigation.id}"`,
