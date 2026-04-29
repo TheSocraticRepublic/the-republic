@@ -1178,3 +1178,153 @@ export const governanceConfig = pgTable('governance_config', {
   }),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
+
+// --- Parliament / Vote Tracker Tables ---
+
+export const voteResultEnum = pgEnum('vote_result', [
+  'passed',
+  'defeated',
+  'tie',
+])
+
+export const mpBallotEnum = pgEnum('mp_ballot', [
+  'yes',
+  'no',
+  'paired',
+  'didnt_vote',
+])
+
+export const federalMps = pgTable(
+  'federal_mps',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    oparlSlug: text('oparl_slug').notNull().unique(),
+    name: text('name').notNull(),
+    party: text('party').notNull(),
+    ridingName: text('riding_name').notNull(),
+    ridingProvince: text('riding_province').notNull(),
+    email: text('email'),
+    photoUrl: text('photo_url'),
+    active: boolean('active').notNull().default(true),
+    metadata: jsonb('metadata'),
+    lastSyncedAt: timestamp('last_synced_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('federal_mps_riding_province_idx').on(t.ridingProvince),
+    index('federal_mps_party_idx').on(t.party),
+    index('federal_mps_active_idx').on(t.active),
+  ]
+)
+
+export const federalBills = pgTable(
+  'federal_bills',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    number: text('number').notNull(),
+    titleEn: text('title_en').notNull(),
+    titleFr: text('title_fr'),
+    shortTitleEn: text('short_title_en'),
+    sponsorMpId: uuid('sponsor_mp_id').references(() => federalMps.id, {
+      onDelete: 'set null',
+    }),
+    session: text('session').notNull(),
+    statusCode: text('status_code'),
+    introduced: date('introduced'),
+    isLaw: boolean('is_law'),
+    legisInfoUrl: text('legis_info_url'),
+    aiSummary: text('ai_summary'),
+    aiSummaryPromptVersion: text('ai_summary_prompt_version'),
+    metadata: jsonb('metadata'),
+    lastSyncedAt: timestamp('last_synced_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('federal_bills_session_number_idx').on(t.session, t.number),
+    index('federal_bills_session_idx').on(t.session),
+  ]
+)
+
+export const federalVotes = pgTable(
+  'federal_votes',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    session: text('session').notNull(),
+    number: integer('number').notNull(),
+    date: date('date').notNull(),
+    descriptionEn: text('description_en').notNull(),
+    descriptionFr: text('description_fr'),
+    result: voteResultEnum('result').notNull(),
+    yeaTotal: integer('yea_total').notNull(),
+    nayTotal: integer('nay_total').notNull(),
+    pairedTotal: integer('paired_total'),
+    partyVotes: jsonb('party_votes'),
+    billId: uuid('bill_id').references(() => federalBills.id, {
+      onDelete: 'set null',
+    }),
+    aiExplanation: text('ai_explanation'),
+    aiExplanationPromptVersion: text('ai_explanation_prompt_version'),
+    lastSyncedAt: timestamp('last_synced_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('federal_votes_session_number_idx').on(t.session, t.number),
+    index('federal_votes_date_idx').on(t.date),
+    index('federal_votes_bill_id_idx').on(t.billId),
+  ]
+)
+
+export const federalMpBallots = pgTable(
+  'federal_mp_ballots',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    voteId: uuid('vote_id')
+      .notNull()
+      .references(() => federalVotes.id, { onDelete: 'cascade' }),
+    mpId: uuid('mp_id')
+      .notNull()
+      .references(() => federalMps.id, { onDelete: 'cascade' }),
+    ballot: mpBallotEnum('ballot').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('federal_mp_ballots_vote_mp_idx').on(t.voteId, t.mpId),
+    index('federal_mp_ballots_mp_id_idx').on(t.mpId),
+  ]
+)
+
+export const mpVotingPatterns = pgTable(
+  'mp_voting_patterns',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    mpId: uuid('mp_id')
+      .notNull()
+      .references(() => federalMps.id, { onDelete: 'cascade' }),
+    session: text('session').notNull(),
+    patternAnalysis: text('pattern_analysis').notNull(),
+    contradictions: jsonb('contradictions'),
+    promptVersion: text('prompt_version').notNull(),
+    generatedAt: timestamp('generated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('mp_voting_patterns_mp_session_idx').on(t.mpId, t.session),
+  ]
+)
+
+export const postalCodeCache = pgTable(
+  'postal_code_cache',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    postalCode: text('postal_code').notNull().unique(),
+    mpId: uuid('mp_id').references(() => federalMps.id, {
+      onDelete: 'set null',
+    }),
+    ridingName: text('riding_name'),
+    metadata: jsonb('metadata'),
+    cachedAt: timestamp('cached_at').defaultNow().notNull(),
+  },
+  (t) => [index('postal_code_cache_postal_code_idx').on(t.postalCode)]
+)

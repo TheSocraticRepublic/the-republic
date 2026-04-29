@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare, Shield } from 'lucide-react'
+import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare, Shield, Vote } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useState } from 'react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
@@ -58,6 +58,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
   const investigateActive = pathname === '/investigate'
   const investigationsActive = pathname === '/investigations' || (pathname.startsWith('/investigate/') && pathname !== '/investigate')
   const forumActive = pathname === '/forum' || pathname.startsWith('/forum/')
+  const votesActive = pathname === '/votes' || pathname.startsWith('/votes/')
   const profileActive = pathname === '/profile' || pathname.startsWith('/profile/')
   const moderationActive = pathname === '/forum/moderation' || pathname.startsWith('/forum/moderation/')
   const isModerator = effectiveWeight >= 10
@@ -182,6 +183,45 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
           </span>
           {forumActive && (
             <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
+          )}
+        </Link>
+
+        {/* Vote Tracker */}
+        <Link
+          href="/votes"
+          className={clsx(
+            'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+            votesActive
+              ? 'bg-white/[0.09] text-neutral-100'
+              : 'text-neutral-300 hover:bg-white/[0.05] hover:text-neutral-100'
+          )}
+        >
+          <span
+            className={clsx(
+              'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
+              votesActive
+                ? 'bg-white/[0.10] border-white/[0.15]'
+                : 'border-white/[0.08] group-hover:bg-white/[0.06] group-hover:border-white/[0.12]'
+            )}
+          >
+            <Vote
+              size={14}
+              strokeWidth={1.75}
+              style={votesActive ? { color: '#D4764E' } : undefined}
+              className={clsx(
+                !votesActive && 'text-neutral-400 group-hover:text-neutral-200'
+              )}
+            />
+          </span>
+          <span className="flex flex-col">
+            <span className="font-semibold leading-tight">Vote Tracker</span>
+            <span className="text-[10px] text-neutral-600 leading-tight">MP voting records</span>
+          </span>
+          {votesActive && (
+            <span
+              className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: '#D4764E' }}
+            />
           )}
         </Link>
 
