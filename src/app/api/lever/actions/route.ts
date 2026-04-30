@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { leverActions, documents, gadflySessions } from '@/lib/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { leverActions, documents, gadflySessions, investigations } from '@/lib/db/schema'
+import { eq, and, desc } from 'drizzle-orm'
 
 /**
  * GET /api/lever/actions
@@ -103,6 +103,19 @@ export async function POST(request: NextRequest) {
     }
     if (session.userId !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+  }
+
+  // Verify investigationId ownership if provided
+  if (investigationId) {
+    const [investigation] = await db
+      .select({ userId: investigations.userId })
+      .from(investigations)
+      .where(and(eq(investigations.id, investigationId), eq(investigations.userId, userId)))
+      .limit(1)
+
+    if (!investigation) {
+      return NextResponse.json({ error: 'Investigation not found' }, { status: 403 })
     }
   }
 

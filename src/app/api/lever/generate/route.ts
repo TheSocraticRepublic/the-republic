@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
         concern: investigations.concern,
       })
       .from(investigations)
-      .where(eq(investigations.id, action.investigationId))
+      .where(and(eq(investigations.id, action.investigationId), eq(investigations.userId, userId)))
       .limit(1)
 
     if (investigation) {

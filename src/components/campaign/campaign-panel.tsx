@@ -6,7 +6,7 @@ import { MATERIAL_TYPE_LABELS, MATERIAL_TYPE_DESCRIPTIONS } from '@/lib/campaign
 import { MediaSpecGenerator } from './media-spec-generator'
 import { ReasoningCard } from './reasoning-card'
 import { OutcomeTracker } from './outcome-tracker'
-import { CrossArmActions, type CrossArmAction } from '@/components/ui/cross-arm-actions'
+import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 
 interface CampaignPanelProps {
   investigationId: string

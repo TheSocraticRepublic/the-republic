@@ -104,22 +104,24 @@ export function NewActionDialog({
       setDocuments(ready)
       setSessions(sessionsData.sessions ?? [])
 
-      // Resolve jurisdiction from investigation
+      // Resolve jurisdiction from investigation's jurisdictionName
       if (investigationData?.investigation) {
         const inv = investigationData.investigation
         const jName = (inv.jurisdictionName ?? '').toLowerCase()
 
-        // Simple province detection matching detectJurisdiction logic
+        // Map province strings from jurisdictionName to module keys
         let resolvedBodies: PublicBody[] = BC_PUBLIC_BODIES
         let label = 'BC'
 
-        if (jName.includes('alberta') || jName.includes('edmonton') || jName.includes('calgary')) {
+        if (jName.includes('british columbia')) {
+          // Already defaults to BC
+        } else if (jName.includes('alberta')) {
           try {
             const abMod = await import('@/lib/jurisdictions/ab/public-bodies')
             resolvedBodies = abMod.abPublicBodies
             label = 'AB'
           } catch { /* fall through to BC */ }
-        } else if (jName.includes('ontario') || jName.includes('toronto') || jName.includes('ottawa')) {
+        } else if (jName.includes('ontario')) {
           try {
             const onMod = await import('@/lib/jurisdictions/on/public-bodies')
             resolvedBodies = onMod.onPublicBodies

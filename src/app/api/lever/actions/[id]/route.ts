@@ -83,6 +83,20 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: 'Action not found' }, { status: 404 })
   }
 
+  // Validate status transitions: draft→final, final→filed only
+  if (status && status !== existing.status) {
+    const VALID_TRANSITIONS: Record<string, string> = {
+      draft: 'final',
+      final: 'filed',
+    }
+    if (VALID_TRANSITIONS[existing.status] !== status) {
+      return NextResponse.json(
+        { error: `Invalid status transition: ${existing.status} → ${status}` },
+        { status: 409 }
+      )
+    }
+  }
+
   // Detect transition to 'filed'
   const isFilingTransition = status === 'filed' && existing.status !== 'filed'
 
@@ -158,13 +172,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
             .limit(1)
 
           if (!existingCredential) {
+            // Application-level dedup via SELECT above; onConflictDoNothing is
+            // defense-in-depth against concurrent PATCH requests (TOCTOU).
             await tx.insert(credentialEvents).values({
               userId,
               credentialType: 'foi_filed',
               weight: CREDENTIAL_WEIGHTS.foi_filed,
               sourceId: id,
               sourceType: 'lever_action',
-            })
+            }).onConflictDoNothing()
           }
         }
       })
