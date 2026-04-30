@@ -1,10 +1,12 @@
 ---
 status: current
-current: Vote Tracker VT-A through VT-H — parliamentary data, MP profiles, AI analysis, investigation integration, letter generation
-next: Phase 3 — Shield + Confederation (deferred until community justifies it)
+current: Ontario + Alberta jurisdiction verification
+next: Campaign Export + Action Surface Hardening
 testing: null
 pinned: true
 shipped:
+  - date: 2026-04-29
+    item: "ON/AB jurisdiction modules verified — FOI citations corrected (ON s.10(1), AB 30 calendar days), public body addresses verified, defunct URLs replaced, verified: true"
   - date: 2026-04-29
     item: "Vote Tracker VT-A–VT-H — federal parliament schema (7 tables), openparliament.ca + Represent API clients, postal code → MP lookup, vote/bill detail pages, AI bill summaries + vote explanations, voting pattern analysis, said-X-but-voted-Y contradiction detection, investigation integration (postal code on concern form, relevant votes panel), MP letter generator (Lever integration), sync infrastructure with freshness badge"
   - date: 2026-04-29
