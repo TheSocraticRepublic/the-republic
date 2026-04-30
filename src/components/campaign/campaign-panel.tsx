@@ -270,6 +270,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
           {materials.map((material) => (
             <ReasoningCard
               key={material.id}
+              materialId={material.id}
               materialType={material.materialType}
               content={material.content}
               reasoning={material.reasoning}

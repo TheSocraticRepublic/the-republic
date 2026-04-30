@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Download, Pencil, RefreshCw, Check, X, ChevronRight } from 'lucide-react'
+import { Download, Pencil, RefreshCw, Check, X, ChevronRight, Printer } from 'lucide-react'
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
 
@@ -247,6 +247,21 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
             >
               <Download size={12} strokeWidth={2} />
               Export
+            </button>
+
+            {/* Print */}
+            <button
+              onClick={() => window.open(`/api/lever/actions/${actionId}/print`, '_blank')}
+              disabled={!content}
+              className={clsx(
+                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
+                !content
+                  ? 'cursor-not-allowed opacity-50 text-neutral-600 border border-white/[0.06]'
+                  : 'text-[#C85B5B] border border-[rgba(200,91,91,0.25)] hover:bg-[rgba(200,91,91,0.08)]'
+              )}
+            >
+              <Printer size={12} strokeWidth={2} />
+              Print
             </button>
           </>
         )}

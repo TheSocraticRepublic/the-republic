@@ -2,9 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { MATERIAL_TYPE_LABELS } from '@/lib/campaign/schemas'
+import { campaignSpecToMarkdown } from '@/lib/campaign/export'
 import { InfographicPreview } from '@/components/campaign/infographic-preview'
+import type { CampaignMaterial } from '@/lib/campaign/schemas'
 
 interface ReasoningCardProps {
+  materialId?: string
   materialType: string
   content: string   // The JSON spec as a string
   reasoning: string
@@ -275,8 +278,9 @@ function SpecView({ materialType, spec }: { materialType: string; spec: Record<s
   }
 }
 
-export function ReasoningCard({ materialType, content, reasoning, title }: ReasoningCardProps) {
+export function ReasoningCard({ materialId, materialType, content, reasoning, title }: ReasoningCardProps) {
   const [copied, setCopied] = useState(false)
+  const [socialCopied, setSocialCopied] = useState<string | null>(null)
   const [showClaudeHint, setShowClaudeHint] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
 
@@ -321,6 +325,38 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
     setTimeout(() => URL.revokeObjectURL(url), 100)
   }
 
+  function handleDownloadMarkdown() {
+    try {
+      const parsed = JSON.parse(content) as CampaignMaterial
+      const md = campaignSpecToMarkdown(
+        materialType as CampaignMaterial['materialType'],
+        parsed
+      )
+      const blob = new Blob([md], { type: 'text/markdown; charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const date = new Date().toISOString().slice(0, 10)
+      a.download = `${materialType}-${date}.md`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 100)
+    } catch {
+      // Fallback: download raw content as markdown
+      const blob = new Blob([content], { type: 'text/markdown; charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${materialType}-${Date.now()}.md`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 100)
+    }
+  }
+
+  function handlePrint() {
+    if (!materialId) return
+    window.open(`/api/campaign/${materialId}/print`, '_blank')
+  }
+
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(content)
@@ -328,6 +364,44 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
       setTimeout(() => setCopied(false), 2000)
     } catch {
       // Clipboard API not available
+    }
+  }
+
+  // Social copy helpers for social_post material type
+  async function handleCopySocial(platform: 'twitter' | 'instagram') {
+    try {
+      const parsed = JSON.parse(content)
+      const variations = (parsed.variations ?? []) as Array<{
+        tone: string
+        text: string
+        characterCount: number
+        hashtags: string[]
+      }>
+
+      if (variations.length === 0) return
+
+      let variation: typeof variations[0]
+      if (platform === 'twitter') {
+        // Prefer 'factual' tone, fall back to first
+        variation = variations.find((v) => v.tone === 'factual') ?? variations[0]
+      } else {
+        // Prefer 'comparison' tone, fall back to last
+        variation = variations.find((v) => v.tone === 'comparison') ?? variations[variations.length - 1]
+      }
+
+      const hashtags = variation.hashtags.length > 0
+        ? '\n\n' + variation.hashtags.map((h) => `#${h}`).join(' ')
+        : ''
+      const charNote = platform === 'twitter'
+        ? `\n\n[${variation.characterCount} chars]`
+        : ''
+      const text = variation.text + hashtags + charNote
+
+      await navigator.clipboard.writeText(text)
+      setSocialCopied(platform)
+      setTimeout(() => setSocialCopied(null), 2000)
+    } catch {
+      // Clipboard API not available or parse error
     }
   }
 
@@ -355,7 +429,7 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
         </div>
 
         {/* Export actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <button
             onClick={handleCopy}
             className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
@@ -378,6 +452,57 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
           >
             Download JSON
           </button>
+          <button
+            onClick={handleDownloadMarkdown}
+            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            style={{
+              backgroundColor: 'rgba(200, 91, 91, 0.08)',
+              color: '#C85B5B',
+              border: '1px solid rgba(200,91,91,0.2)',
+            }}
+          >
+            Download Markdown
+          </button>
+          {materialId && (
+            <button
+              onClick={handlePrint}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{
+                backgroundColor: 'rgba(200, 91, 91, 0.08)',
+                color: '#C85B5B',
+                border: '1px solid rgba(200,91,91,0.2)',
+              }}
+            >
+              Print
+            </button>
+          )}
+          {/* Social copy buttons for social_post type */}
+          {materialType === 'social_post' && (
+            <>
+              <button
+                onClick={() => handleCopySocial('twitter')}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor: 'rgba(0,0,0,0.05)',
+                  color: '#78716c',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                }}
+              >
+                {socialCopied === 'twitter' ? 'Copied' : 'Copy for X'}
+              </button>
+              <button
+                onClick={() => handleCopySocial('instagram')}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor: 'rgba(0,0,0,0.05)',
+                  color: '#78716c',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                }}
+              >
+                {socialCopied === 'instagram' ? 'Copied' : 'Copy for Instagram'}
+              </button>
+            </>
+          )}
           {/* Open in Claude — shows the Artifacts template instructions */}
           <div className="relative" ref={popoverRef}>
             <button
