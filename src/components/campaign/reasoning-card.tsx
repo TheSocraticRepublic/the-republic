@@ -279,7 +279,7 @@ function SpecView({ materialType, spec }: { materialType: string; spec: Record<s
 }
 
 export function ReasoningCard({ materialId, materialType, content, reasoning, title }: ReasoningCardProps) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<string | false>(false)
   const [socialCopied, setSocialCopied] = useState<string | null>(null)
   const [showClaudeHint, setShowClaudeHint] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -360,10 +360,11 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(content)
-      setCopied(true)
+      setCopied('Copied')
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Clipboard API not available
+      setCopied('Failed')
+      setTimeout(() => setCopied(false), 2000)
     }
   }
 
@@ -401,7 +402,8 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
       setSocialCopied(platform)
       setTimeout(() => setSocialCopied(null), 2000)
     } catch {
-      // Clipboard API not available or parse error
+      setSocialCopied('failed')
+      setTimeout(() => setSocialCopied(null), 2000)
     }
   }
 
@@ -439,7 +441,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
               border: '1px solid rgba(0,0,0,0.08)',
             }}
           >
-            {copied ? 'Copied' : 'Copy JSON'}
+            {copied || 'Copy JSON'}
           </button>
           <button
             onClick={handleDownload}
@@ -488,7 +490,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
                   border: '1px solid rgba(0,0,0,0.08)',
                 }}
               >
-                {socialCopied === 'twitter' ? 'Copied' : 'Copy for X'}
+                {socialCopied === 'twitter' ? 'Copied' : socialCopied === 'failed' ? 'Failed' : 'Copy for X'}
               </button>
               <button
                 onClick={() => handleCopySocial('instagram')}
@@ -499,7 +501,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
                   border: '1px solid rgba(0,0,0,0.08)',
                 }}
               >
-                {socialCopied === 'instagram' ? 'Copied' : 'Copy for Instagram'}
+                {socialCopied === 'instagram' ? 'Copied' : socialCopied === 'failed' ? 'Failed' : 'Copy for Instagram'}
               </button>
             </>
           )}

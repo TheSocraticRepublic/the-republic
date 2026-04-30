@@ -100,16 +100,16 @@ export async function POST(request: NextRequest) {
     const publicBody = (metadata.publicBody as string) ?? ''
     const typeDisplay = ACTION_TYPE_DISPLAY[action.actionType] ?? action.actionType
 
-    // Build YAML frontmatter
+    // Build YAML frontmatter — JSON.stringify produces valid YAML double-quoted strings
     const frontmatter = [
       '---',
-      `title: "${escapeYaml(action.title)}"`,
-      `type: ${typeDisplay}`,
-      `date: ${date}`,
-      `status: ${action.status}`,
+      `title: ${JSON.stringify(action.title)}`,
+      `type: ${JSON.stringify(typeDisplay)}`,
+      `date: ${JSON.stringify(date)}`,
+      `status: ${JSON.stringify(action.status)}`,
     ]
     if (publicBody) {
-      frontmatter.push(`public_body: "${escapeYaml(publicBody)}"`)
+      frontmatter.push(`public_body: ${JSON.stringify(publicBody)}`)
     }
     frontmatter.push('---')
 
@@ -137,10 +137,6 @@ export async function POST(request: NextRequest) {
       'Content-Disposition': `attachment; filename="${filename}"`,
     },
   })
-}
-
-function escapeYaml(str: string): string {
-  return str.replace(/"/g, '\\"').replace(/\n/g, ' ')
 }
 
 /**

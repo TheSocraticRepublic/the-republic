@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { esc, errorPage, PRINT_CSP } from '@/lib/campaign/print-utils'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -23,11 +24,16 @@ const ACTION_TYPE_DISPLAY: Record<string, string> = {
  * Returns a print-ready HTML page for a lever action.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
+  const printHeaders = {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Content-Security-Policy': PRINT_CSP,
+  }
+
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(errorPage('Unauthorized'), {
       status: 401,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      headers: printHeaders,
     })
   }
 
@@ -43,14 +49,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   if (!action) {
     return new Response(errorPage('Action not found'), {
       status: 404,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      headers: printHeaders,
     })
   }
 
   if (!action.content) {
     return new Response(errorPage('Action has no content'), {
       status: 422,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      headers: printHeaders,
     })
   }
 
@@ -75,7 +81,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   return new Response(html, {
     status: 200,
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    headers: printHeaders,
   })
 }
 
@@ -215,26 +221,8 @@ function renderGenericAction(content: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Utilities
+// HTML shell
 // ---------------------------------------------------------------------------
-
-function esc(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
-function errorPage(message: string): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>Error</title></head>
-<body style="font-family: Inter, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #fafaf9; color: #1c1917;">
-<p>${esc(message)}</p>
-</body>
-</html>`
-}
 
 function printPage(opts: {
   title: string
