@@ -98,6 +98,15 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   const handleAdvanceStatus = useCallback(async () => {
     const next = STATUS_FLOW[status]
     if (!next) return
+
+    // Confirmation gate when filing
+    if (next === 'filed') {
+      const confirmed = window.confirm(
+        'This will record this action as officially filed. Continue?'
+      )
+      if (!confirmed) return
+    }
+
     setStatusUpdating(true)
     try {
       const res = await fetch(`/api/lever/actions/${actionId}`, {
