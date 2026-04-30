@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { VoteBadge } from './vote-badge'
 import { PartyBadge } from './party-badge'
+import { MpLetterGenerator } from './mp-letter-generator'
 
 interface RelevantVote {
   voteId: string
@@ -29,14 +30,17 @@ interface InvestigationVotePanelProps {
 export function InvestigationVotePanel({ investigationId }: InvestigationVotePanelProps) {
   const [mp, setMp] = useState<MpInfo | null>(null)
   const [votes, setVotes] = useState<RelevantVote[]>([])
+  const [concern, setConcern] = useState('')
   const [loading, setLoading] = useState(true)
+  const [showLetterWriter, setShowLetterWriter] = useState(false)
 
   useEffect(() => {
     fetch(`/api/investigate/${investigationId}/votes`)
-      .then((res) => (res.ok ? res.json() : { mp: null, votes: [] }))
+      .then((res) => (res.ok ? res.json() : { mp: null, votes: [], concern: '' }))
       .then((data) => {
         setMp(data.mp ?? null)
         setVotes(data.votes ?? [])
+        setConcern(data.concern ?? '')
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -137,6 +141,33 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
         <p className="text-xs text-neutral-600 text-center py-2">
           No directly relevant votes found for this concern.
         </p>
+      )}
+
+      {/* Write to your MP button */}
+      {mp && (
+        <div className="pt-1">
+          {showLetterWriter ? (
+            <MpLetterGenerator
+              mpId={mp.id}
+              mpName={mp.name}
+              defaultConcern={concern}
+              voteIds={votes.map((v) => v.voteId)}
+              investigationId={investigationId}
+            />
+          ) : (
+            <button
+              onClick={() => setShowLetterWriter(true)}
+              className="rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-150"
+              style={{
+                color: '#D4764E',
+                backgroundColor: 'rgba(212,118,78,0.10)',
+                border: '1px solid rgba(212,118,78,0.20)',
+              }}
+            >
+              Write to your MP
+            </button>
+          )}
+        </div>
       )}
     </div>
   )
