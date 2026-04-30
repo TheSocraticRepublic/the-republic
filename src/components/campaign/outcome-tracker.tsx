@@ -55,6 +55,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
   const [outcomeDate, setOutcomeDate] = useState('')
   const [satisfaction, setSatisfaction] = useState<number>(0)
   const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [outcomes, setOutcomes] = useState<Outcome[]>([])
   const [loadingOutcomes, setLoadingOutcomes] = useState(true)
   const [submitSuccess, setSubmitSuccess] = useState(false)
@@ -86,6 +87,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
       setOutcomeDate('')
       setSatisfaction(0)
       setSubmitSuccess(false)
+      setSubmitError(null)
     } else {
       if (activeForm === field) {
         setActiveForm(null)
@@ -97,6 +99,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
     if (!activeForm || !description.trim() || submitting) return
 
     setSubmitting(true)
+    setSubmitError(null)
     try {
       const res = await fetch(
         `/api/investigate/${investigationId}/outcomes`,
@@ -118,13 +121,17 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
         setDescription('')
         setOutcomeDate('')
         setSatisfaction(0)
+        setSubmitError(null)
         // Refresh the outcomes list
         await fetchOutcomes()
         // Clear the success indicator after a moment
         setTimeout(() => setSubmitSuccess(false), 3000)
+      } else {
+        const data = await res.json().catch(() => null)
+        setSubmitError(data?.error ?? 'Failed to save outcome. Please try again.')
       }
     } catch {
-      // Error handling — outcome form is non-critical
+      setSubmitError('Network error. Please check your connection and try again.')
     } finally {
       setSubmitting(false)
     }
@@ -183,6 +190,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
               onSubmit={handleSubmit}
               onCancel={() => setActiveForm(null)}
               submitting={submitting}
+              error={submitError}
             />
           )}
         </div>
@@ -215,6 +223,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
               onSubmit={handleSubmit}
               onCancel={() => setActiveForm(null)}
               submitting={submitting}
+              error={submitError}
             />
           )}
         </div>
@@ -247,6 +256,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
               onSubmit={handleSubmit}
               onCancel={() => setActiveForm(null)}
               submitting={submitting}
+              error={submitError}
             />
           )}
         </div>
@@ -343,6 +353,7 @@ function OutcomeForm({
   onSubmit,
   onCancel,
   submitting,
+  error,
 }: {
   description: string
   onDescriptionChange: (v: string) => void
@@ -353,6 +364,7 @@ function OutcomeForm({
   onSubmit: () => void
   onCancel: () => void
   submitting: boolean
+  error: string | null
 }) {
   return (
     <div
@@ -416,6 +428,20 @@ function OutcomeForm({
           ))}
         </div>
       </div>
+
+      {/* Error message */}
+      {error && (
+        <div
+          className="rounded-lg px-3 py-2 text-xs"
+          style={{
+            backgroundColor: 'rgba(200, 91, 91, 0.08)',
+            border: '1px solid rgba(200, 91, 91, 0.18)',
+            color: '#C85B5B',
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-2 justify-end pt-1">

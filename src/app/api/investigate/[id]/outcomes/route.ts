@@ -88,6 +88,29 @@ export async function POST(
     )
   }
 
+  if (description.trim().length > 2000) {
+    return new Response(
+      JSON.stringify({ error: 'description must be 2000 characters or fewer' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  if (outcomeDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(outcomeDate)) {
+      return new Response(
+        JSON.stringify({ error: 'outcomeDate must be YYYY-MM-DD format' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+    const parsed = new Date(outcomeDate)
+    if (isNaN(parsed.getTime())) {
+      return new Response(
+        JSON.stringify({ error: 'outcomeDate is not a valid date' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+  }
+
   if (satisfaction !== undefined && satisfaction !== null) {
     if (
       !Number.isInteger(satisfaction) ||
@@ -117,13 +140,29 @@ export async function POST(
         })
         .returning()
 
-      await tx.insert(credentialEvents).values({
-        userId,
-        credentialType: 'outcome_tracked',
-        weight: CREDENTIAL_WEIGHTS.outcome_tracked,
-        sourceId: outcome.id,
-        sourceType: 'outcome',
-      })
+      // Only award credential on the FIRST outcome for this investigation
+      const [existingCredential] = await tx
+        .select({ id: credentialEvents.id })
+        .from(credentialEvents)
+        .where(
+          and(
+            eq(credentialEvents.userId, userId),
+            eq(credentialEvents.credentialType, 'outcome_tracked'),
+            eq(credentialEvents.sourceId, id),
+            eq(credentialEvents.sourceType, 'outcome'),
+          )
+        )
+        .limit(1)
+
+      if (!existingCredential) {
+        await tx.insert(credentialEvents).values({
+          userId,
+          credentialType: 'outcome_tracked',
+          weight: CREDENTIAL_WEIGHTS.outcome_tracked,
+          sourceId: id,
+          sourceType: 'outcome',
+        })
+      }
 
       return outcome
     })

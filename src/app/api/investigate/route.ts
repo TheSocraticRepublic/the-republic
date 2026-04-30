@@ -325,13 +325,14 @@ export async function POST(request: NextRequest) {
       }
 
       // --- Stage 3: Fire-and-forget vote relevance analysis ---
-      if (investigation.federalMpId) {
+      const mpId = investigation.federalMpId
+      if (mpId) {
         after(async () => {
           try {
             await analyzeVoteRelevance(
               db,
               investigation.id,
-              investigation.federalMpId!,
+              mpId,
               concern.trim()
             )
           } catch (err) {
@@ -414,16 +415,19 @@ async function resolvePostalCodeToMp(
       })
       .where(eq(postalCodeCache.id, cached.id))
   } else {
-    await db.insert(postalCodeCache).values({
-      postalCode,
-      mpId,
-      ridingName,
-      metadata: {
-        party: federalMp.party_name,
-        representSource: federalMp.source_url,
-      },
-      cachedAt: new Date(),
-    })
+    await db
+      .insert(postalCodeCache)
+      .values({
+        postalCode,
+        mpId,
+        ridingName,
+        metadata: {
+          party: federalMp.party_name,
+          representSource: federalMp.source_url,
+        },
+        cachedAt: new Date(),
+      })
+      .onConflictDoNothing()
   }
 
   return mpId
@@ -476,9 +480,19 @@ async function analyzeVoteRelevance(
     relevanceExplanation: string
   }>
   try {
-    // Extract JSON from potential markdown code blocks
-    const jsonMatch = text.match(/\[[\s\S]*\]/)
-    relevantVotes = jsonMatch ? JSON.parse(jsonMatch[0]) : []
+    // Extract JSON array containing objects from potential markdown code blocks
+    const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/)
+    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : []
+    // Validate each element has the required properties
+    relevantVotes = Array.isArray(parsed)
+      ? parsed.filter(
+          (item: unknown): item is { voteUrl: string; relevanceExplanation: string } =>
+            typeof item === 'object' &&
+            item !== null &&
+            typeof (item as Record<string, unknown>).voteUrl === 'string' &&
+            typeof (item as Record<string, unknown>).relevanceExplanation === 'string'
+        )
+      : []
   } catch {
     console.error('[investigate] Failed to parse vote relevance JSON:', text)
     return
