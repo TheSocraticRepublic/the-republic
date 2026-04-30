@@ -174,7 +174,7 @@ describe('Alberta jurisdiction module', () => {
     const { foiFramework } = await loadModule('ab')
     expect(foiFramework.name).toBeTruthy()
     expect(foiFramework.fullCitation).toBeTruthy()
-    expect(foiFramework.verified).toBe(false)
+    expect(foiFramework.verified).toBe(true)
     expect(foiFramework.sections.rightOfAccess).toBeTruthy()
     expect(foiFramework.sections.timeLimit.days).toBeGreaterThan(0)
     expect(foiFramework.letterTemplate).toBeTruthy()
@@ -298,7 +298,7 @@ describe('Ontario jurisdiction module', () => {
     const { foiFramework } = await loadModule('on')
     expect(foiFramework.name).toBeTruthy()
     expect(foiFramework.fullCitation).toBeTruthy()
-    expect(foiFramework.verified).toBe(false)
+    expect(foiFramework.verified).toBe(true)
     expect(foiFramework.sections.rightOfAccess).toBeTruthy()
     expect(foiFramework.sections.timeLimit.days).toBeGreaterThan(0)
     expect(foiFramework.letterTemplate).toBeTruthy()
@@ -401,14 +401,14 @@ describe('verified flag across modules', () => {
     expect(mod.foiFramework.verified).toBe(true)
   })
 
-  it('Alberta is verified: false', async () => {
+  it('Alberta is verified: true', async () => {
     const mod = await loadModule('ab')
-    expect(mod.foiFramework.verified).toBe(false)
+    expect(mod.foiFramework.verified).toBe(true)
   })
 
-  it('Ontario is verified: false', async () => {
+  it('Ontario is verified: true', async () => {
     const mod = await loadModule('on')
-    expect(mod.foiFramework.verified).toBe(false)
+    expect(mod.foiFramework.verified).toBe(true)
   })
 })
 

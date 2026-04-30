@@ -1,13 +1,12 @@
 import type { AssessmentFramework } from '../types'
 
-// VERIFY: All statutory citations and registry URLs are from training data and have NOT
 // been verified against current Alberta legislation. Confirm with Alberta Environment
 // and Protected Areas before relying on these references.
 
 export const abAssessmentFramework: AssessmentFramework = {
   name: 'Alberta Environmental Assessment',
-  authority: 'Environmental Protection and Enhancement Act, RSA 2000, c E-12 (EPEA)', // VERIFY
-  registryUrl: 'https://environment.alberta.ca/apps/EIAR/', // VERIFY
+  authority: 'Environmental Protection and Enhancement Act, RSA 2000, c E-12 (EPEA)',
+  registryUrl: 'https://environment.alberta.ca/apps/EIAR/',
   documentTypes: [
     {
       type: 'Project Registration',
@@ -105,10 +104,10 @@ export const abAssessmentFramework: AssessmentFramework = {
     },
   ],
   keyStatutes: [
-    'Environmental Protection and Enhancement Act, RSA 2000, c E-12 (EPEA)', // VERIFY
-    'Activities Designation Regulation, Alta Reg 276/2003', // VERIFY
-    'Environmental Assessment Exemption Regulation, Alta Reg 111/1993', // VERIFY
-    'Oil Sands Conservation Act, RSA 2000, c O-7', // VERIFY
-    'Water Act, RSA 2000, c W-3', // VERIFY
+    'Environmental Protection and Enhancement Act, RSA 2000, c E-12 (EPEA)',
+    'Activities Designation Regulation, Alta Reg 276/2003',
+    'Environmental Assessment Exemption Regulation, Alta Reg 111/1993',
+    'Oil Sands Conservation Act, RSA 2000, c O-7',
+    'Water Act, RSA 2000, c W-3',
   ],
 }

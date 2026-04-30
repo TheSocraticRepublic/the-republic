@@ -165,7 +165,7 @@ export const abConcernCategories: ConcernCategory[] = [
         type: 'Environmental Impact Assessment',
         description: 'The EIA prepared under the Alberta Environmental Protection and Enhancement Act for major oil sands projects. Covers air, water, land, and cumulative effects.',
         access: 'public',
-        typicalLocation: 'Alberta Environmental Assessment Registry at environment.alberta.ca/apps/EIAR/',
+        typicalLocation: 'Alberta Environmental Assessment Registry at alberta.ca/environmental-impact-assessments',
       },
       {
         type: 'Tailings Management Plan',
@@ -303,7 +303,7 @@ export const abConcernCategories: ConcernCategory[] = [
         type: 'Environmental Impact Assessment Report',
         description: 'The proponent-prepared EIA submitted to Alberta Environment and Protected Areas under the Environmental Protection and Enhancement Act. Covers all significant effects of a proposed project.',
         access: 'public',
-        typicalLocation: 'Alberta Environmental Assessment Registry (AEAR) at environment.alberta.ca/apps/EIAR/',
+        typicalLocation: 'Alberta Environmental Assessment Registry (AEAR) at alberta.ca/environmental-impact-assessments',
       },
       {
         type: 'Environmental Assessment Decision',

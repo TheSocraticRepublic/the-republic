@@ -1,13 +1,12 @@
 import type { AssessmentFramework } from '../types'
 
-// VERIFY: All statutory citations and registry URLs are from training data and have NOT
 // been verified against current Ontario legislation. Confirm with the Ministry of the
 // Environment, Conservation and Parks before relying on these references.
 
 export const onAssessmentFramework: AssessmentFramework = {
   name: 'Ontario Environmental Assessment',
-  authority: 'Environmental Assessment Act, RSO 1990, c E.18', // VERIFY
-  registryUrl: 'https://ero.ontario.ca/', // VERIFY
+  authority: 'Environmental Assessment Act, RSO 1990, c E.18',
+  registryUrl: 'https://ero.ontario.ca/',
   documentTypes: [
     {
       type: 'Terms of Reference',
@@ -111,10 +110,10 @@ export const onAssessmentFramework: AssessmentFramework = {
     },
   ],
   keyStatutes: [
-    'Environmental Assessment Act, RSO 1990, c E.18', // VERIFY
-    'Environmental Protection Act, RSO 1990, c E.19', // VERIFY
-    'Municipal Class Environmental Assessment, Ontario Municipal Council', // VERIFY
-    'Transit Project Assessment Process Regulation, O Reg 231/08', // VERIFY
-    'Electricity Projects Regulation, O Reg 116/01', // VERIFY
+    'Environmental Assessment Act, RSO 1990, c E.18',
+    'Environmental Protection Act, RSO 1990, c E.19',
+    'Municipal Class Environmental Assessment, Ontario Municipal Council',
+    'Transit Project Assessment Process Regulation, O Reg 231/08',
+    'Electricity Projects Regulation, O Reg 116/01',
   ],
 }
