@@ -6,9 +6,10 @@ import {
   analyses,
   gadflySessions,
   gadflyTurns,
+  investigations,
 } from '@/lib/db/schema'
 import { LEVER_SYSTEM_PROMPT } from '@/lib/ai/prompts/lever-system'
-import { loadJurisdictionModule } from '@/lib/jurisdictions'
+import { loadJurisdictionModule, detectJurisdiction } from '@/lib/jurisdictions'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, asc, desc, and } from 'drizzle-orm'
@@ -131,11 +132,52 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 3. For FIPPA requests, resolve public body address from jurisdiction module
+  // 3. Resolve jurisdiction dynamically from investigation context
+  let jurisdictionKey: string | undefined
+  let investigationContext = ''
+
+  if (action.investigationId) {
+    const [investigation] = await db
+      .select({
+        jurisdictionName: investigations.jurisdictionName,
+        briefingText: investigations.briefingText,
+        lensContextText: investigations.lensContextText,
+        concern: investigations.concern,
+      })
+      .from(investigations)
+      .where(eq(investigations.id, action.investigationId))
+      .limit(1)
+
+    if (investigation) {
+      jurisdictionKey = detectJurisdiction(
+        investigation.concern,
+        investigation.jurisdictionName ?? undefined,
+      )
+
+      // Build investigation context for richer FIPPA/comment generation
+      const invParts: string[] = ['INVESTIGATION CONTEXT:']
+      invParts.push(`Citizen concern: ${investigation.concern}`)
+      if (investigation.jurisdictionName) {
+        invParts.push(`Jurisdiction: ${investigation.jurisdictionName}`)
+      }
+      if (investigation.briefingText) {
+        invParts.push(`Briefing analysis:\n${investigation.briefingText.slice(0, 10_000)}`)
+      }
+      if (investigation.lensContextText) {
+        invParts.push(`Lens analysis:\n${investigation.lensContextText.slice(0, 5_000)}`)
+      }
+      investigationContext = invParts.join('\n')
+    }
+  }
+
+  // Fall back to 'bc' if no jurisdiction detected
+  if (!jurisdictionKey) jurisdictionKey = 'bc'
+
+  // 4. For FIPPA requests, resolve public body address from jurisdiction module
   let publicBodyContext = ''
   if (action.actionType === 'fippa_request' && publicBodyName) {
-    const bcModule = await loadJurisdictionModule('bc')
-    const pb = bcModule?.publicBodies.find((b) => b.name === publicBodyName)
+    const jurisdictionModule = await loadJurisdictionModule(jurisdictionKey)
+    const pb = jurisdictionModule?.publicBodies.find((b) => b.name === publicBodyName)
     if (pb) {
       publicBodyContext = `\nPublic Body: ${pb.name}\nFOI Address: ${pb.foiAddress}`
       if (pb.email) publicBodyContext += `\nFOI Email: ${pb.email}`
@@ -144,19 +186,23 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 4. Build user message
+  // 5. Build user message
   const contextBlock = contextParts.length > 0
     ? `\n\nCONTEXT:\n${contextParts.join('\n\n---\n\n')}`
+    : ''
+
+  const investigationBlock = investigationContext
+    ? `\n\n---\n\n${investigationContext}`
     : ''
 
   const actionLabel = ACTION_TYPE_LABELS[action.actionType] ?? action.actionType
   const userMessage = `Generate a ${actionLabel}.${publicBodyContext}
 
-Citizen's request: ${description}${contextBlock}
+Citizen's request: ${description}${contextBlock}${investigationBlock}
 
 Produce a complete, fileable document. Do not include explanatory preamble — go straight into the document.`
 
-  // 5. Stream and update action on finish
+  // 6. Stream and update action on finish
   const result = streamText({
     model: anthropic(MODEL),
     system: LEVER_SYSTEM_PROMPT,

@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
       title: leverActions.title,
       actionType: leverActions.actionType,
       status: leverActions.status,
+      investigationId: leverActions.investigationId,
       createdAt: leverActions.createdAt,
     })
     .from(leverActions)
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
     documentId?: string
     sessionId?: string
     publicBodyName?: string
+    investigationId?: string
     description: string
   }
   try {
@@ -61,7 +63,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { actionType, documentId, sessionId, publicBodyName, description } = body
+  const { actionType, documentId, sessionId, publicBodyName, investigationId, description } = body
 
   if (!actionType || !description?.trim()) {
     return NextResponse.json(
@@ -124,6 +126,7 @@ export async function POST(request: NextRequest) {
       userId,
       sessionId: sessionId ?? null,
       documentId: documentId ?? null,
+      investigationId: investigationId ?? null,
       actionType,
       title,
       content: '',

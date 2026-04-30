@@ -11,11 +11,21 @@ export const metadata = {
 }
 
 interface LeverPageProps {
-  searchParams: Promise<{ documentId?: string; sessionId?: string }>
+  searchParams: Promise<{
+    documentId?: string
+    sessionId?: string
+    investigationId?: string
+    actionType?: string
+  }>
 }
 
 export default async function LeverPage({ searchParams }: LeverPageProps) {
-  const { documentId: initialDocumentId, sessionId: initialSessionId } = await searchParams
+  const {
+    documentId: initialDocumentId,
+    sessionId: initialSessionId,
+    investigationId: initialInvestigationId,
+    actionType: initialActionType,
+  } = await searchParams
   const headersList = await headers()
   const userId = headersList.get('x-user-id')!
 
@@ -60,6 +70,8 @@ export default async function LeverPage({ searchParams }: LeverPageProps) {
         <NewActionDialog
           initialDocumentId={initialDocumentId}
           initialSessionId={initialSessionId}
+          initialInvestigationId={initialInvestigationId}
+          initialActionType={initialActionType}
         />
       </div>
 
