@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { MATERIAL_TYPE_LABELS } from '@/lib/campaign/schemas'
 import { campaignSpecToMarkdown } from '@/lib/campaign/export'
+import { hasCampaignPdfTemplate } from '@/lib/pdf/types'
 import { InfographicPreview } from '@/components/campaign/infographic-preview'
 import type { CampaignMaterial } from '@/lib/campaign/schemas'
 
@@ -282,6 +283,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
   const [copied, setCopied] = useState<string | false>(false)
   const [socialCopied, setSocialCopied] = useState<string | null>(null)
   const [showClaudeHint, setShowClaudeHint] = useState(false)
+  const [pdfExporting, setPdfExporting] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
 
   // Close popover on click-outside or Escape
@@ -351,6 +353,32 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
       setTimeout(() => URL.revokeObjectURL(url), 100)
     }
   }
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!materialId) return
+    setPdfExporting(true)
+    try {
+      const res = await fetch('/api/campaign/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ materialId, format: 'pdf' }),
+      })
+      if (!res.ok) throw new Error('PDF export failed')
+
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const date = new Date().toISOString().slice(0, 10)
+      a.download = `${materialType}-${date}.pdf`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 100)
+    } catch (err) {
+      console.error('[reasoning-card] PDF export failed:', err)
+    } finally {
+      setPdfExporting(false)
+    }
+  }, [materialId, materialType])
 
   function handlePrint() {
     if (!materialId) return
@@ -476,6 +504,22 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
               }}
             >
               Print
+            </button>
+          )}
+          {/* PDF download button for types with PDF templates */}
+          {materialId && hasCampaignPdfTemplate(materialType) && (
+            <button
+              onClick={handleDownloadPdf}
+              disabled={pdfExporting}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{
+                backgroundColor: pdfExporting ? 'rgba(200, 91, 91, 0.04)' : 'rgba(200, 91, 91, 0.08)',
+                color: '#C85B5B',
+                border: '1px solid rgba(200,91,91,0.2)',
+                opacity: pdfExporting ? 0.6 : 1,
+              }}
+            >
+              {pdfExporting ? 'Generating PDF...' : 'Download PDF'}
             </button>
           )}
           {/* Social copy buttons for social_post type */}

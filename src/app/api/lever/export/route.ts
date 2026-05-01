@@ -1,7 +1,9 @@
 import { NextRequest } from 'next/server'
+import { Readable } from 'stream'
 import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { renderLeverPdf, hasLeverPdfTemplate } from '@/lib/pdf/render'
 
 const ACTION_TYPE_LABELS: Record<string, string> = {
   fippa_request: 'fippa-request',
@@ -24,9 +26,10 @@ const ACTION_TYPE_DISPLAY: Record<string, string> = {
  * POST /api/lever/export
  * Returns the action content as a downloadable file.
  *
- * Body: { actionId: string, format?: 'txt' | 'md' }
+ * Body: { actionId: string, format?: 'txt' | 'md' | 'pdf' }
  * - txt (default): plain text
  * - md: Markdown with YAML frontmatter and section headers
+ * - pdf: Rendered PDF using @react-pdf/renderer templates
  */
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
@@ -37,7 +40,7 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  let body: { actionId: string; format?: 'txt' | 'md' }
+  let body: { actionId: string; format?: 'txt' | 'md' | 'pdf' }
   try {
     body = await request.json()
   } catch {
@@ -55,8 +58,8 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  if (format !== 'txt' && format !== 'md') {
-    return new Response(JSON.stringify({ error: 'format must be "txt" or "md"' }), {
+  if (format !== 'txt' && format !== 'md' && format !== 'pdf') {
+    return new Response(JSON.stringify({ error: 'format must be "txt", "md", or "pdf"' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -94,6 +97,48 @@ export async function POST(request: NextRequest) {
 
   const date = new Date(action.createdAt).toISOString().slice(0, 10)
   const typeSlug = ACTION_TYPE_LABELS[action.actionType] ?? 'action'
+
+  // PDF format
+  if (format === 'pdf') {
+    if (!hasLeverPdfTemplate(action.actionType)) {
+      return new Response(
+        JSON.stringify({
+          error: `PDF export is not available for action type: ${action.actionType}`,
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    try {
+      const nodeStream = await renderLeverPdf({
+        title: action.title,
+        content: action.content,
+        actionType: action.actionType,
+        metadata: (action.metadata ?? {}) as Record<string, unknown>,
+      })
+
+      const webStream = nodeReadableToWebReadable(nodeStream)
+      const filename = `${typeSlug}-${date}.pdf`
+
+      return new Response(webStream, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Cache-Control': 'no-store',
+        },
+      })
+    } catch (err) {
+      console.error('[lever/export] PDF render failed:', err)
+      return new Response(
+        JSON.stringify({
+          error: 'PDF rendering failed',
+          details: err instanceof Error ? err.message : 'Unknown error',
+        }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+  }
 
   if (format === 'md') {
     const metadata = (action.metadata ?? {}) as Record<string, unknown>
@@ -174,4 +219,32 @@ function formatContentAsMarkdown(
   }
 
   return lines.join('\n')
+}
+
+/**
+ * Convert a Node.js ReadableStream to a Web ReadableStream for Next.js Response.
+ */
+function nodeReadableToWebReadable(
+  nodeStream: NodeJS.ReadableStream
+): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    start(controller) {
+      nodeStream.on('data', (chunk: Buffer | string) => {
+        controller.enqueue(
+          chunk instanceof Buffer ? new Uint8Array(chunk) : new TextEncoder().encode(chunk as string)
+        )
+      })
+      nodeStream.on('end', () => {
+        controller.close()
+      })
+      nodeStream.on('error', (err) => {
+        controller.error(err)
+      })
+    },
+    cancel() {
+      if ('destroy' in nodeStream && typeof nodeStream.destroy === 'function') {
+        ;(nodeStream as Readable).destroy()
+      }
+    },
+  })
 }

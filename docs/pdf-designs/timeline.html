@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timeline — The Republic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page {
+    size: letter;
+    margin: 1in;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    color: #1c1917;
+    background: #fafaf9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 1in 1in 1in;
+  }
+
+  /* Wordmark */
+  .wordmark {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 9pt;
+    letter-spacing: 0.2em;
+    color: #d6d3d1;
+    margin-bottom: 8px;
+  }
+
+  /* Title block */
+  .title-block {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e7e5e4;
+  }
+
+  .title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 20pt;
+    line-height: 1.25;
+    color: #1c1917;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 11pt;
+    color: #78716c;
+    font-weight: 400;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding: 12px 16px;
+    background: #f5f5f4;
+    border-radius: 4px;
+    font-size: 9pt;
+    color: #57534e;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .legend-node {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-node.solid { background: #C85B5B; }
+  .legend-node.hollow { border: 2px solid #78716c; background: transparent; }
+
+  .legend-chip {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 8pt;
+    font-weight: 500;
+  }
+
+  .legend-chip.council { background: rgba(137, 180, 200, 0.2); color: #5a8ea6; }
+  .legend-chip.developer { background: rgba(200, 91, 91, 0.15); color: #b04a4a; }
+  .legend-chip.residents { background: rgba(200, 168, 75, 0.2); color: #9a8236; }
+
+  /* Timeline container */
+  .timeline {
+    position: relative;
+    padding-left: 140px;
+  }
+
+  /* Spine */
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 128px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e7e5e4;
+  }
+
+  /* Phase divider */
+  .phase-divider {
+    position: relative;
+    padding: 20px 0 14px 0;
+    margin-left: -140px;
+  }
+
+  .phase-divider:first-child {
+    padding-top: 0;
+  }
+
+  .phase-label {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 9pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #78716c;
+  }
+
+  /* Event */
+  .event {
+    position: relative;
+    padding: 0 0 28px 28px;
+    min-height: 48px;
+  }
+
+  .event:last-child {
+    padding-bottom: 0;
+  }
+
+  /* Date label (left of spine) */
+  .event-date {
+    position: absolute;
+    left: -140px;
+    top: 0;
+    width: 118px;
+    text-align: right;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 10pt;
+    color: #78716c;
+    line-height: 1.3;
+    padding-right: 18px;
+  }
+
+  .event-date.approximate {
+    font-style: italic;
+    font-weight: 500;
+    color: #a8a29e;
+  }
+
+  /* Node (on spine) */
+  .event-node {
+    position: absolute;
+    left: -6px;
+    top: 3px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    z-index: 2;
+  }
+
+  .event-node.historical {
+    border: 2px solid #78716c;
+    background: #fafaf9;
+  }
+
+  .event-node.deadline {
+    background: #C85B5B;
+    border: none;
+  }
+
+  /* Connector line */
+  .event-connector {
+    position: absolute;
+    left: 4px;
+    top: 8px;
+    width: 18px;
+    height: 1px;
+    background: #d6d3d1;
+  }
+
+  .event-connector.dashed {
+    background: none;
+    border-top: 1px dashed #d6d3d1;
+  }
+
+  /* Event content */
+  .event-content {
+    padding-left: 6px;
+  }
+
+  .event-title {
+    font-weight: 600;
+    font-size: 10.5pt;
+    color: #1c1917;
+    margin-bottom: 3px;
+    line-height: 1.4;
+  }
+
+  .event-description {
+    font-size: 10pt;
+    color: #57534e;
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+
+  /* Actor chips */
+  .actor-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .actor-chip {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 8pt;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  .actor-chip.council {
+    background: rgba(137, 180, 200, 0.18);
+    color: #5a8ea6;
+  }
+
+  .actor-chip.developer {
+    background: rgba(200, 91, 91, 0.12);
+    color: #b04a4a;
+  }
+
+  .actor-chip.residents {
+    background: rgba(200, 168, 75, 0.18);
+    color: #9a8236;
+  }
+
+  .actor-chip.ministry {
+    background: rgba(91, 200, 138, 0.15);
+    color: #3d8a5a;
+  }
+
+  .actor-chip.deadline-chip {
+    background: rgba(200, 91, 91, 0.15);
+    color: #C85B5B;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* Sources */
+  .sources {
+    margin-top: 32px;
+    border-top: 1px solid #e7e5e4;
+    padding-top: 12px;
+  }
+
+  .sources-header {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 8pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #78716c;
+    margin-bottom: 6px;
+  }
+
+  .sources ol {
+    list-style: decimal;
+    padding-left: 16px;
+    font-size: 8pt;
+    color: #78716c;
+    line-height: 1.6;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 0.5px solid #e7e5e4;
+    display: flex;
+    justify-content: space-between;
+    font-size: 7.5pt;
+    color: #a8a29e;
+  }
+
+  /* Print button */
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: #1c1917;
+    color: #fafaf9;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 100;
+  }
+
+  .print-btn:hover { background: #44403c; }
+
+  @media print {
+    .print-btn { display: none; }
+    body { background: white; }
+    .page { padding: 0 0 0 0; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+
+<div class="page">
+
+  <div class="wordmark">THE REPUBLIC</div>
+
+  <div class="title-block">
+    <h1 class="title">Block 14 Rezoning: A Timeline</h1>
+    <div class="subtitle">Key events in the Maplewood Block 14 rezoning process, 2023-2026</div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-node solid"></div>
+      <span>Critical deadline</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-node hollow"></div>
+      <span>Historical event</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-chip council">City Council</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-chip developer">Developer</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-chip residents">Residents</span>
+    </div>
+  </div>
+
+  <div class="timeline">
+
+    <!-- Phase 1 -->
+    <div class="phase-divider">
+      <div class="phase-label">2023 — Initial Approvals</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Mar 14, 2023</div>
+      <div class="event-node historical"></div>
+      <div class="event-connector"></div>
+      <div class="event-content">
+        <div class="event-title">Greenway Developments acquires Block 14 parcels</div>
+        <div class="event-description">Three adjacent single-family lots purchased for a combined $4.1M. Land title transfers filed with BC Land Title and Survey Authority.</div>
+        <div class="actor-chips">
+          <span class="actor-chip developer">Greenway Developments</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="event">
+      <div class="event-date approximate">~Q3 2023</div>
+      <div class="event-node historical"></div>
+      <div class="event-connector dashed"></div>
+      <div class="event-content">
+        <div class="event-title">Pre-application meetings with Planning staff</div>
+        <div class="event-description">Multiple meetings between Greenway Developments and the Director of Planning. No public record of meetings; existence confirmed via FOI response (partial disclosure, some records withheld under s. 13).</div>
+        <div class="actor-chips">
+          <span class="actor-chip developer">Greenway Developments</span>
+          <span class="actor-chip council">Planning Staff</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase-divider">
+      <div class="phase-label">2024 — Application and Community Response</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Feb 8, 2024</div>
+      <div class="event-node historical"></div>
+      <div class="event-connector"></div>
+      <div class="event-content">
+        <div class="event-title">Rezoning application RZ-2024-0087 submitted</div>
+        <div class="event-description">Application proposes RS-1 to RM-4 rezoning for 4.2 hectares. Proposed density: 142 units. Staff report notes application is "generally consistent" with the OCP.</div>
+        <div class="actor-chips">
+          <span class="actor-chip developer">Greenway Developments</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Jun 22, 2024</div>
+      <div class="event-node historical"></div>
+      <div class="event-connector"></div>
+      <div class="event-content">
+        <div class="event-title">Block 14 Residents Association formed</div>
+        <div class="event-description">247 households sign petition requesting a full traffic impact assessment and independent environmental review. Petition submitted to Council.</div>
+        <div class="actor-chips">
+          <span class="actor-chip residents">Block 14 Residents</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Nov 18, 2024</div>
+      <div class="event-node historical"></div>
+      <div class="event-connector"></div>
+      <div class="event-content">
+        <div class="event-title">Council passes Motion 2024-RC-112</div>
+        <div class="event-description">Motion requires a completed traffic impact assessment as a condition precedent to rezoning. Passed 5-2 after three hours of public delegations.</div>
+        <div class="actor-chips">
+          <span class="actor-chip council">City Council</span>
+          <span class="actor-chip residents">Block 14 Residents</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase-divider">
+      <div class="phase-label">2025 — Consent Agenda Period</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Aug 2025</div>
+      <div class="event-node historical"></div>
+      <div class="event-connector"></div>
+      <div class="event-content">
+        <div class="event-title">Preliminary traffic memo submitted (not a full study)</div>
+        <div class="event-description">Greenway's consultant submits a 12-page traffic review. Not peer-reviewed. Does not model cumulative impacts or peak-hour conditions at the Highway 7 interchange.</div>
+        <div class="actor-chips">
+          <span class="actor-chip developer">Greenway Developments</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="phase-divider">
+      <div class="phase-label">2026 — Critical Deadlines</div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">Apr 14, 2026</div>
+      <div class="event-node deadline"></div>
+      <div class="event-connector"></div>
+      <div class="event-content">
+        <div class="event-title">Bylaw 2026-047 placed on Council agenda for Third Reading</div>
+        <div class="event-description">Staff recommend approval despite the traffic impact study remaining incomplete. Bylaw also reduces public notification radius from 100m to 50m without prior consultation.</div>
+        <div class="actor-chips">
+          <span class="actor-chip council">Planning Staff</span>
+          <span class="actor-chip deadline-chip">Decision Point</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="event">
+      <div class="event-date">May 12, 2026</div>
+      <div class="event-node deadline"></div>
+      <div class="event-connector"></div>
+      <div class="event-content">
+        <div class="event-title">Public hearing and final vote</div>
+        <div class="event-description">Last opportunity for public comment before Council votes on Third Reading. Public comment deadline: May 5, 2026. Delegation requests due May 9, 2026.</div>
+        <div class="actor-chips">
+          <span class="actor-chip council">City Council</span>
+          <span class="actor-chip residents">Block 14 Residents</span>
+          <span class="actor-chip deadline-chip">Deadline</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sources">
+    <div class="sources-header">Sources</div>
+    <ol>
+      <li>BC Land Title and Survey Authority, Title Transfer Records, Block 14 parcels, March 2023.</li>
+      <li>City of Maplewood, FOI Response #2025-F-0447, released January 2026 (partial disclosure).</li>
+      <li>City of Maplewood, Rezoning Application RZ-2024-0087, filed February 8, 2024.</li>
+      <li>Block 14 Residents Association, Petition to Council, filed June 22, 2024 (247 signatories).</li>
+      <li>City of Maplewood, Council Minutes, November 18, 2024, Motion 2024-RC-112.</li>
+      <li>City of Maplewood, Council Agenda, April 14, 2026, Bylaw 2026-047.</li>
+    </ol>
+  </div>
+
+  <div class="footer">
+    <span>Generated from The Republic — therepublic.ca</span>
+    <span>April 29, 2026</span>
+  </div>
+
+</div>
+
+</body>
+</html>

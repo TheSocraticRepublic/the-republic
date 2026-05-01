@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fact Sheet — The Republic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page {
+    size: letter;
+    margin: 1in;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    font-size: 11pt;
+    line-height: 1.55;
+    color: #1c1917;
+    background: #fafaf9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1in 1in 1in;
+    position: relative;
+  }
+
+  /* Accent band */
+  .accent-band {
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    width: 100vw;
+    height: 4px;
+    background: #C85B5B;
+    margin-bottom: 28px;
+  }
+
+  /* Wordmark */
+  .wordmark {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 9pt;
+    letter-spacing: 0.2em;
+    color: #78716c;
+    margin-bottom: 24px;
+  }
+
+  /* Headline */
+  .headline {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 23pt;
+    line-height: 1.2;
+    color: #1c1917;
+    margin-bottom: 20px;
+    max-width: 90%;
+  }
+
+  /* Lead stat */
+  .lead-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e7e5e4;
+  }
+
+  .lead-stat-number {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 42pt;
+    color: #C85B5B;
+    line-height: 1;
+  }
+
+  .lead-stat-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 14pt;
+    font-weight: 400;
+    color: #1c1917;
+    line-height: 1.3;
+    max-width: 400px;
+  }
+
+  /* Callout box */
+  .callout-box {
+    border-left: 3px solid #C85B5B;
+    background: rgba(200, 91, 91, 0.06);
+    padding: 14px 18px;
+    margin-bottom: 22px;
+    font-size: 11pt;
+    line-height: 1.55;
+  }
+
+  .callout-box p {
+    margin: 0;
+  }
+
+  /* Section headers */
+  .section-header {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 11pt;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #78716c;
+    margin-bottom: 10px;
+    margin-top: 22px;
+  }
+
+  /* Numbered findings */
+  .findings-list {
+    list-style: none;
+    counter-reset: finding;
+    margin-bottom: 22px;
+  }
+
+  .findings-list li {
+    counter-increment: finding;
+    padding-left: 32px;
+    position: relative;
+    margin-bottom: 10px;
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+
+  .findings-list li::before {
+    content: counter(finding);
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 11pt;
+    color: #C85B5B;
+    width: 22px;
+    text-align: right;
+  }
+
+  .findings-list li strong {
+    font-weight: 600;
+  }
+
+  .findings-list .source {
+    color: #78716c;
+    font-size: 8.5pt;
+  }
+
+  /* Action items */
+  .action-items {
+    list-style: none;
+    margin-bottom: 24px;
+  }
+
+  .action-items li {
+    padding-left: 28px;
+    position: relative;
+    margin-bottom: 7px;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  .action-items li::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid #C85B5B;
+    border-radius: 3px;
+  }
+
+  /* Sources */
+  .sources {
+    border-top: 1px solid #e7e5e4;
+    padding-top: 12px;
+    margin-top: 18px;
+  }
+
+  .sources-header {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 8pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #78716c;
+    margin-bottom: 6px;
+  }
+
+  .sources ol {
+    list-style: decimal;
+    padding-left: 16px;
+    font-size: 8pt;
+    color: #78716c;
+    line-height: 1.6;
+  }
+
+  .sources ol li {
+    margin-bottom: 2px;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 0.5px solid #e7e5e4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 7.5pt;
+    color: #a8a29e;
+  }
+
+  .footer-wordmark {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 7pt;
+    letter-spacing: 0.15em;
+    color: #d6d3d1;
+  }
+
+  /* Print button */
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: #1c1917;
+    color: #fafaf9;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 100;
+  }
+
+  .print-btn:hover {
+    background: #44403c;
+  }
+
+  @media print {
+    .print-btn { display: none; }
+    body { background: white; }
+    .page { padding: 0; max-width: none; }
+    .accent-band {
+      position: static;
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+
+<div class="page">
+  <div class="accent-band"></div>
+
+  <div class="wordmark">THE REPUBLIC</div>
+
+  <h1 class="headline">City Approved 14 Variances Without Public Notice in 2025</h1>
+
+  <div class="lead-stat">
+    <span class="lead-stat-number">14</span>
+    <span class="lead-stat-label">variances approved without public notice since January 2025</span>
+  </div>
+
+  <div class="callout-box">
+    <p>Between January and October 2025, the City of Maplewood approved 14 zoning variances through its consent agenda process, bypassing the public notification requirements set out in Bylaw 4102-2019. None of the affected property owners within the 100-metre notification radius received mailed notice.</p>
+  </div>
+
+  <div class="section-header">Key Findings</div>
+
+  <ol class="findings-list">
+    <li><strong>All 14 variances were processed through the consent agenda</strong> rather than appearing as individual items on the Development Permits Committee agenda. Consent agenda items receive no individual debate and are approved in a single motion. <span class="source">[1]</span></li>
+    <li><strong>Bylaw 4102-2019, s. 12(3) requires mailed notice to all property owners within 100 metres</strong> of a proposed variance at least 14 days before the hearing date. FOI records confirm no notices were sent for any of the 14 applications. <span class="source">[2]</span></li>
+    <li><strong>Eleven of the 14 variances involved properties owned by three development firms</strong> — Greenway Developments Inc., Pinnacle Urban Corp., and Bridgewood Holdings Ltd. — all of which made donations to at least one sitting councillor's 2022 campaign. <span class="source">[3]</span></li>
+    <li><strong>The estimated assessed value increase across the 14 properties totals $8.2 million,</strong> based on BC Assessment data for comparable variance-adjusted parcels in adjacent municipalities. <span class="source">[4]</span></li>
+    <li><strong>Two of the variances reduced setback requirements below the fire separation minimums</strong> referenced in the BC Building Code (Article 9.10.14.1), raising questions about whether building permits should have been issued. <span class="source">[5]</span></li>
+  </ol>
+
+  <div class="section-header">What You Can Do</div>
+
+  <ul class="action-items">
+    <li>File a complaint with the Ombudsperson citing Bylaw 4102-2019, s. 12(3)</li>
+    <li>Submit a public comment to the Development Permits Committee (next meeting: May 12, 2026)</li>
+    <li>Request a review of the consent agenda process via a delegation request to Council</li>
+    <li>File an FOI request for all variance applications processed via consent agenda since 2020</li>
+  </ul>
+
+  <div class="sources">
+    <div class="sources-header">Sources</div>
+    <ol>
+      <li>City of Maplewood, Development Permits Committee Minutes, January-October 2025. Accessed via FOI Request #2025-F-0447.</li>
+      <li>City of Maplewood, Bylaw 4102-2019 (Zoning Variance Notification Procedures), s. 12(3).</li>
+      <li>BC Elections, Local Elections Campaign Financing Disclosure, 2022. Cross-referenced with BC Corporate Registry, active directors search.</li>
+      <li>BC Assessment, 2025 Assessed Values, comparable parcels in District of Lakeview and City of Ridgemont.</li>
+      <li>BC Building Code 2024, Article 9.10.14.1 (Spatial Separation and Exposing Building Face).</li>
+    </ol>
+  </div>
+
+  <div class="footer">
+    <span>Generated from The Republic — therepublic.ca</span>
+    <span>April 29, 2026</span>
+  </div>
+</div>
+
+</body>
+</html>

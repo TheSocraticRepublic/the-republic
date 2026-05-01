@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Download, Pencil, RefreshCw, Check, X, ChevronRight, Printer } from 'lucide-react'
+import { Download, Pencil, RefreshCw, Check, X, Printer, FileText } from 'lucide-react'
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
+import { hasLeverPdfTemplate } from '@/lib/pdf/types'
 
 type LeverActionType = (typeof leverActionTypeEnum.enumValues)[number]
 
@@ -42,6 +43,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   const [statusUpdating, setStatusUpdating] = useState(false)
   const [saving, setSaving] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [pdfExporting, setPdfExporting] = useState(false)
   const router = useRouter()
   const abortRef = useRef<AbortController | null>(null)
 
@@ -176,6 +178,36 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
     }
   }, [actionId])
 
+  const handleExportPdf = useCallback(async () => {
+    setPdfExporting(true)
+    try {
+      const res = await fetch('/api/lever/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actionId, format: 'pdf' }),
+      })
+      if (!res.ok) throw new Error('PDF export failed')
+
+      const blob = await res.blob()
+      const contentDisposition = res.headers.get('Content-Disposition') ?? ''
+      const match = contentDisposition.match(/filename="([^"]+)"/)
+      const filename = match ? match[1] : 'action.pdf'
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('[action-viewer] PDF export failed:', err)
+    } finally {
+      setPdfExporting(false)
+    }
+  }, [actionId])
+
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.draft
   const displayContent = mode === 'generating' ? streamedContent : content
   const nextStatus = STATUS_FLOW[status]
@@ -263,6 +295,23 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
               <Printer size={12} strokeWidth={2} />
               Print
             </button>
+
+            {/* Download PDF */}
+            {hasLeverPdfTemplate(actionType) && (
+              <button
+                onClick={handleExportPdf}
+                disabled={pdfExporting || !content}
+                className={clsx(
+                  'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
+                  pdfExporting || !content
+                    ? 'cursor-not-allowed opacity-50 text-neutral-600 border border-white/[0.06]'
+                    : 'text-[#C85B5B] border border-[rgba(200,91,91,0.25)] hover:bg-[rgba(200,91,91,0.08)]'
+                )}
+              >
+                <FileText size={12} strokeWidth={2} />
+                {pdfExporting ? 'Generating...' : 'Download PDF'}
+              </button>
+            )}
           </>
         )}
 
