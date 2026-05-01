@@ -27,7 +27,7 @@ interface RepublicPageProps {
   /** Show standard footer */
   footer?: boolean
   /** Custom page style overrides */
-  style?: Record<string, unknown>
+  style?: object
   /** Use serif font family (for legal documents) */
   serif?: boolean
 }
@@ -49,7 +49,7 @@ export function RepublicPage({
     : shared.page
 
   return (
-    <Page size={size} orientation={orientation} style={[baseStyle, style]}>
+    <Page size={size} orientation={orientation} style={[baseStyle, style as any].filter(Boolean)}>
       {accentBand && <AccentBand />}
       {wordmark && <Wordmark />}
       <View style={{ flex: 1 }}>{children}</View>
@@ -93,7 +93,7 @@ export function AccentBand({ color }: AccentBandProps) {
     <View
       style={[
         shared.accentBand,
-        color ? { backgroundColor: color } : undefined,
+        color ? { backgroundColor: color } : ({} as any),
       ]}
     />
   )
@@ -368,14 +368,14 @@ export function ComparisonTable({
                     borderLeftWidth: 2,
                     borderLeftColor: colors.mirror,
                   }
-                : undefined,
+                : ({} as any),
               i === 0
                 ? {
                     color: colors.muted,
                     fontSize: typeScale.small,
                     fontWeight: 600,
                   }
-                : undefined,
+                : ({} as any),
             ]}
           >
             {h}
@@ -407,7 +407,7 @@ export function ComparisonTable({
                 key={ci}
                 style={[
                   ci === subjectIndex ? tableStyles.subjectCell : tableStyles.cell,
-                  ci === 0 ? { fontWeight: 600 } : undefined,
+                  ci === 0 ? { fontWeight: 600 } : ({} as any),
                   {
                     width: columnWidths?.[ci] ?? defaultWidth,
                   },
@@ -477,8 +477,8 @@ export function AccentBox({ children, borderColor, bgColor }: AccentBoxProps) {
     <View
       style={[
         accentBoxStyles.container,
-        borderColor ? { borderLeftColor: borderColor } : undefined,
-        bgColor ? { backgroundColor: bgColor } : undefined,
+        borderColor ? { borderLeftColor: borderColor } : ({} as any),
+        bgColor ? { backgroundColor: bgColor } : ({} as any),
       ]}
     >
       {typeof children === 'string' ? (

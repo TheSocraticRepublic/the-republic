@@ -279,7 +279,7 @@ export function PolicyBriefTemplate({ data }: { data: PolicyBriefData }) {
             {sections.recommendations.map((rec, i) => (
               <View
                 key={i}
-                style={[styles.recItem, i > 0 ? styles.recItemBorder : undefined]}
+                style={i > 0 ? [styles.recItem, styles.recItemBorder] : [styles.recItem]}
                 wrap={false}
               >
                 <Text style={styles.recNumber}>{i + 1}</Text>

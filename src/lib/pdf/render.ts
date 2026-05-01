@@ -34,7 +34,7 @@ export async function renderCampaignPdf(
   material: CampaignMaterial
 ): Promise<NodeJS.ReadableStream> {
   const element = buildCampaignElement(material)
-  return renderToStream(element)
+  return renderToStream(element as any)
 }
 
 function buildCampaignElement(material: CampaignMaterial): React.ReactElement {
@@ -84,7 +84,7 @@ export async function renderLeverPdf(
   action: LeverActionData
 ): Promise<NodeJS.ReadableStream> {
   const element = buildLeverElement(action)
-  return renderToStream(element)
+  return renderToStream(element as any)
 }
 
 function buildLeverElement(action: LeverActionData): React.ReactElement {
