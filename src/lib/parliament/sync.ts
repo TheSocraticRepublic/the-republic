@@ -5,7 +5,7 @@ import {
   federalMpBallots,
   federalBills,
 } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import {
   fetchCurrentMPs,
   fetchVotes,
@@ -133,7 +133,7 @@ export async function syncParliamentData(
       const existing = await db
         .select({ id: federalBills.id })
         .from(federalBills)
-        .where(eq(federalBills.number, billNumber))
+        .where(and(eq(federalBills.session, session), eq(federalBills.number, billNumber)))
         .limit(1)
 
       if (existing.length > 0) {
@@ -195,17 +195,10 @@ export async function syncParliamentData(
         billId = billUrlToId.get(vote.bill_url) ?? null
       }
 
-      const existing = await db
-        .select({ id: federalVotes.id })
-        .from(federalVotes)
-        .where(eq(federalVotes.session, vote.session))
-        .limit(1)
-
-      // Use session+number for lookup
       const [existingVote] = await db
         .select({ id: federalVotes.id })
         .from(federalVotes)
-        .where(eq(federalVotes.number, vote.number))
+        .where(and(eq(federalVotes.session, vote.session), eq(federalVotes.number, vote.number)))
         .limit(1)
 
       let voteId: string

@@ -1,15 +1,18 @@
+import { NextRequest } from 'next/server'
+
 /**
  * GET /api/governance/scores
  *
- * This endpoint requires authentication for now. When governance activates
- * (Phase 3), it will be added to middleware public exemptions.
- *
- * Returns credential-weighted governance scores for Snapshot API strategy
- * integration. This is a placeholder — governance is not yet active. The
- * endpoint exists so external integrations can discover and test against the
- * route before the full implementation lands.
+ * Requires authentication. When governance activates (Phase 3), it will
+ * return credential-weighted scores for Snapshot API strategy integration.
+ * Currently returns 503 — governance is not yet active.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const userId = request.headers.get('x-user-id')
+  if (!userId) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   return Response.json(
     {
       error: 'Governance not yet active',
