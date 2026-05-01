@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
   }
 
   const { actionId, format = 'txt' } = body
-  if (!actionId) {
-    return new Response(JSON.stringify({ error: 'actionId is required' }), {
+  if (!actionId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actionId)) {
+    return new Response(JSON.stringify({ error: 'Valid actionId is required' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
       return new Response(
         JSON.stringify({
           error: 'PDF rendering failed',
-          details: err instanceof Error ? err.message : 'Unknown error',
+          details: process.env.NODE_ENV === 'development' ? (err instanceof Error ? err.message : 'Unknown error') : undefined,
         }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       )

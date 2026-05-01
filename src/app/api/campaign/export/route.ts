@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
 
   const { materialId, format } = body
 
-  if (!materialId) {
-    return new Response(JSON.stringify({ error: 'materialId is required' }), {
+  if (!materialId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(materialId)) {
+    return new Response(JSON.stringify({ error: 'Valid materialId is required' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     return new Response(
       JSON.stringify({
         error: 'Failed to parse campaign material content',
-        details: err instanceof Error ? err.message : 'Unknown error',
+        details: process.env.NODE_ENV === 'development' ? (err instanceof Error ? err.message : 'Unknown error') : undefined,
       }),
       { status: 422, headers: { 'Content-Type': 'application/json' } }
     )
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     return new Response(
       JSON.stringify({
         error: 'PDF rendering failed',
-        details: err instanceof Error ? err.message : 'Unknown error',
+        details: process.env.NODE_ENV === 'development' ? (err instanceof Error ? err.message : 'Unknown error') : undefined,
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
