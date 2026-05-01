@@ -151,40 +151,25 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
           )}
         </Link>
 
-        {/* Forum */}
-        <Link
-          href="/forum"
-          className={clsx(
-            'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
-            forumActive
-              ? 'bg-white/[0.09] text-neutral-100'
-              : 'text-neutral-300 hover:bg-white/[0.05] hover:text-neutral-100'
-          )}
+        {/* Forum — coming soon */}
+        <span
+          className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm opacity-40 cursor-not-allowed"
+          title="Forum — coming soon"
         >
           <span
-            className={clsx(
-              'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
-              forumActive
-                ? 'bg-white/[0.10] border-white/[0.15]'
-                : 'border-white/[0.08] group-hover:bg-white/[0.06] group-hover:border-white/[0.12]'
-            )}
+            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-white/[0.06]"
           >
             <MessageSquare
               size={14}
               strokeWidth={1.75}
-              className={clsx(
-                forumActive ? 'text-neutral-100' : 'text-neutral-400 group-hover:text-neutral-200'
-              )}
+              className="text-neutral-500"
             />
           </span>
           <span className="flex flex-col">
-            <span className="font-semibold leading-tight">Forum</span>
-            <span className="text-[10px] text-neutral-600 leading-tight">Community discussions</span>
+            <span className="font-semibold leading-tight text-neutral-500">Forum</span>
+            <span className="text-[10px] text-neutral-700 leading-tight">Coming soon</span>
           </span>
-          {forumActive && (
-            <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
-          )}
-        </Link>
+        </span>
 
         {/* Vote Tracker */}
         <Link
