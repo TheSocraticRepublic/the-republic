@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { leverActions, documents, gadflySessions } from '@/lib/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { leverActions, documents, gadflySessions, investigations } from '@/lib/db/schema'
+import { eq, and, desc } from 'drizzle-orm'
 
 /**
  * GET /api/lever/actions
@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
       title: leverActions.title,
       actionType: leverActions.actionType,
       status: leverActions.status,
+      investigationId: leverActions.investigationId,
       createdAt: leverActions.createdAt,
     })
     .from(leverActions)
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
     documentId?: string
     sessionId?: string
     publicBodyName?: string
+    investigationId?: string
     description: string
   }
   try {
@@ -61,7 +63,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { actionType, documentId, sessionId, publicBodyName, description } = body
+  const { actionType, documentId, sessionId, publicBodyName, investigationId, description } = body
 
   if (!actionType || !description?.trim()) {
     return NextResponse.json(
@@ -104,6 +106,19 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Verify investigationId ownership if provided
+  if (investigationId) {
+    const [investigation] = await db
+      .select({ userId: investigations.userId })
+      .from(investigations)
+      .where(and(eq(investigations.id, investigationId), eq(investigations.userId, userId)))
+      .limit(1)
+
+    if (!investigation) {
+      return NextResponse.json({ error: 'Investigation not found' }, { status: 403 })
+    }
+  }
+
   const ACTION_TYPE_LABELS: Record<string, string> = {
     fippa_request: 'FIPPA Request',
     public_comment: 'Public Comment',
@@ -124,6 +139,7 @@ export async function POST(request: NextRequest) {
       userId,
       sessionId: sessionId ?? null,
       documentId: documentId ?? null,
+      investigationId: investigationId ?? null,
       actionType,
       title,
       content: '',

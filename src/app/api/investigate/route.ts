@@ -1,6 +1,15 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, after } from 'next/server'
 import { getDb } from '@/lib/db'
-import { investigations, jurisdictions, credentialEvents } from '@/lib/db/schema'
+import {
+  investigations,
+  jurisdictions,
+  credentialEvents,
+  postalCodeCache,
+  federalMps,
+  federalVotes,
+  federalMpBallots,
+  investigationVotes,
+} from '@/lib/db/schema'
 import { buildBriefingPrompt } from '@/lib/ai/prompts/briefing-system'
 import { loadJurisdictionModule } from '@/lib/jurisdictions'
 import {
@@ -10,9 +19,16 @@ import {
 import { matchDocumentTypesFromConcern } from '@/lib/jurisdictions/match'
 import { searchForDocument } from '@/lib/scout/search'
 import { buildSearchResultsContext } from '@/lib/ai/search-context'
+import {
+  normalizePostalCode,
+  isValidCanadianPostalCode,
+  lookupPostalCode,
+  extractFederalMP,
+} from '@/lib/parliament/represent'
+import { VOTE_RELEVANCE_SYSTEM_PROMPT } from '@/lib/ai/prompts/vote-relevance-system'
 import { anthropic } from '@ai-sdk/anthropic'
-import { streamText } from 'ai'
-import { eq, sql } from 'drizzle-orm'
+import { streamText, generateText } from 'ai'
+import { eq, sql, desc } from 'drizzle-orm'
 import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
 
 const MODEL = 'claude-sonnet-4-20250514'
@@ -65,7 +81,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Parse body
-  let body: { concern: string; jurisdictionId?: string }
+  let body: { concern: string; jurisdictionId?: string; postalCode?: string }
   try {
     body = await request.json()
   } catch {
@@ -75,7 +91,7 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const { concern, jurisdictionId } = body
+  const { concern, jurisdictionId, postalCode: rawPostalCode } = body
   if (!concern?.trim()) {
     return new Response(JSON.stringify({ error: 'concern is required' }), {
       status: 400,
@@ -94,8 +110,12 @@ export async function POST(request: NextRequest) {
 
   // --- Stage 1: Create investigation record ---
 
+  // Normalize postal code if provided
+  const postalCode = rawPostalCode ? normalizePostalCode(rawPostalCode) : null
+  const validPostalCode = postalCode && isValidCanadianPostalCode(postalCode) ? postalCode : null
+
   const concernCategory = detectConcernCategory(concern)
-  let investigation: { id: string }
+  let investigation: { id: string; federalMpId: string | null }
   try {
     const [inserted] = await db
       .insert(investigations)
@@ -103,12 +123,13 @@ export async function POST(request: NextRequest) {
         userId,
         concern: concern.trim(),
         jurisdictionId: jurisdictionId || null,
+        postalCode: validPostalCode,
         concernCategory,
         environmentalReviewType:
           concernCategory === 'conservation' ? 'bc_eao' : null,
         status: 'active',
       })
-      .returning({ id: investigations.id })
+      .returning({ id: investigations.id, federalMpId: investigations.federalMpId })
     investigation = inserted
   } catch (err) {
     console.error('Failed to create investigation record', err)
@@ -116,6 +137,23 @@ export async function POST(request: NextRequest) {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
+  }
+
+  // --- Resolve postalCode to federal MP ---
+  if (validPostalCode) {
+    try {
+      const resolvedMpId = await resolvePostalCodeToMp(db, validPostalCode)
+      if (resolvedMpId) {
+        await db
+          .update(investigations)
+          .set({ federalMpId: resolvedMpId })
+          .where(eq(investigations.id, investigation.id))
+        investigation = { ...investigation, federalMpId: resolvedMpId }
+      }
+    } catch (err) {
+      // Non-fatal — MP resolution failing should not block the investigation
+      console.error('[investigate] postalCode → MP resolution failed:', err)
+    }
   }
 
   // Load BC jurisdiction module
@@ -285,6 +323,27 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         console.error('Failed to persist briefing text for investigation', investigation.id, err)
       }
+
+      // --- Stage 3: Fire-and-forget vote relevance analysis ---
+      const mpId = investigation.federalMpId
+      if (mpId) {
+        after(async () => {
+          try {
+            await analyzeVoteRelevance(
+              db,
+              investigation.id,
+              mpId,
+              concern.trim()
+            )
+          } catch (err) {
+            console.error(
+              '[investigate] vote relevance analysis failed for',
+              investigation.id,
+              err
+            )
+          }
+        })
+      }
     },
   })
 
@@ -292,4 +351,185 @@ export async function POST(request: NextRequest) {
   return result.toTextStreamResponse({
     headers: { 'X-Investigation-Id': investigation.id },
   })
+}
+
+// --- Postal code → MP resolution ---
+
+const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
+
+async function resolvePostalCodeToMp(
+  db: ReturnType<typeof getDb>,
+  postalCode: string
+): Promise<string | null> {
+  // 1. Check cache
+  const [cached] = await db
+    .select()
+    .from(postalCodeCache)
+    .where(eq(postalCodeCache.postalCode, postalCode))
+    .limit(1)
+
+  if (cached && cached.mpId) {
+    const age = Date.now() - cached.cachedAt.getTime()
+    if (age < CACHE_TTL_MS) {
+      return cached.mpId
+    }
+  }
+
+  // 2. Call Represent API
+  const response = await lookupPostalCode(postalCode)
+  const federalMp = extractFederalMP(response)
+  if (!federalMp) return null
+
+  // 3. Match to local MP by name
+  const nameParts = federalMp.name.trim().split(/\s+/)
+  const lastName = nameParts[nameParts.length - 1]
+
+  const candidates = await db
+    .select({ id: federalMps.id, name: federalMps.name })
+    .from(federalMps)
+    .where(eq(federalMps.active, true))
+
+  const match = candidates.find((c) => {
+    const cLast = c.name.trim().split(/\s+/).pop()?.toLowerCase()
+    return (
+      cLast === lastName.toLowerCase() &&
+      c.name.toLowerCase().includes(nameParts[0].toLowerCase())
+    )
+  })
+
+  const mpId = match?.id ?? null
+  const ridingName = federalMp.district_name
+
+  // 4. Upsert cache
+  if (cached) {
+    await db
+      .update(postalCodeCache)
+      .set({
+        mpId,
+        ridingName,
+        metadata: {
+          party: federalMp.party_name,
+          representSource: federalMp.source_url,
+        },
+        cachedAt: new Date(),
+      })
+      .where(eq(postalCodeCache.id, cached.id))
+  } else {
+    await db
+      .insert(postalCodeCache)
+      .values({
+        postalCode,
+        mpId,
+        ridingName,
+        metadata: {
+          party: federalMp.party_name,
+          representSource: federalMp.source_url,
+        },
+        cachedAt: new Date(),
+      })
+      .onConflictDoNothing()
+  }
+
+  return mpId
+}
+
+// --- Vote relevance analysis (fire-and-forget after briefing) ---
+
+async function analyzeVoteRelevance(
+  db: ReturnType<typeof getDb>,
+  investigationId: string,
+  mpId: string,
+  concern: string
+): Promise<void> {
+  // Fetch the MP's recent votes (last 100, ordered by date desc)
+  const mpBallots = await db
+    .select({
+      voteId: federalVotes.id,
+      session: federalVotes.session,
+      number: federalVotes.number,
+      date: federalVotes.date,
+      descriptionEn: federalVotes.descriptionEn,
+      result: federalVotes.result,
+      ballot: federalMpBallots.ballot,
+    })
+    .from(federalMpBallots)
+    .innerJoin(federalVotes, eq(federalMpBallots.voteId, federalVotes.id))
+    .where(eq(federalMpBallots.mpId, mpId))
+    .orderBy(desc(federalVotes.date))
+    .limit(100)
+
+  if (mpBallots.length === 0) return
+
+  // Build the vote list for the prompt
+  const voteDescriptions = mpBallots.map(
+    (v) =>
+      `- ${v.session}/${v.number} (${v.date}): ${v.descriptionEn} [${v.result}] — MP voted: ${v.ballot}`
+  )
+
+  const userMessage = `Citizen concern:\n${concern}\n\nRecent votes by their federal MP:\n${voteDescriptions.join('\n')}`
+
+  const { text } = await generateText({
+    model: anthropic(MODEL),
+    system: VOTE_RELEVANCE_SYSTEM_PROMPT,
+    messages: [{ role: 'user', content: userMessage }],
+  })
+
+  // Parse the JSON response
+  let relevantVotes: Array<{
+    voteUrl: string
+    relevanceExplanation: string
+  }>
+  try {
+    // Extract JSON array containing objects from potential markdown code blocks
+    const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/)
+    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : []
+    // Validate each element has the required properties
+    relevantVotes = Array.isArray(parsed)
+      ? parsed.filter(
+          (item: unknown): item is { voteUrl: string; relevanceExplanation: string } =>
+            typeof item === 'object' &&
+            item !== null &&
+            typeof (item as Record<string, unknown>).voteUrl === 'string' &&
+            typeof (item as Record<string, unknown>).relevanceExplanation === 'string'
+        )
+      : []
+  } catch {
+    console.error('[investigate] Failed to parse vote relevance JSON:', text)
+    return
+  }
+
+  if (relevantVotes.length === 0) return
+
+  // Match voteUrl patterns (e.g. "/votes/44-1/123/") to our records
+  for (const rv of relevantVotes) {
+    // Extract session and number from the URL pattern
+    const urlMatch = rv.voteUrl.match(/\/votes\/([^/]+)\/(\d+)/)
+    if (!urlMatch) continue
+
+    const [, session, numberStr] = urlMatch
+    const number = parseInt(numberStr, 10)
+
+    // Find the matching vote in our ballot results (already fetched)
+    const matchingVote = mpBallots.find(
+      (v) => v.session === session && v.number === number
+    )
+    if (!matchingVote) continue
+
+    // Insert into investigationVotes (ignore conflicts on duplicate)
+    try {
+      await db
+        .insert(investigationVotes)
+        .values({
+          investigationId,
+          voteId: matchingVote.voteId,
+          relevanceExplanation: rv.relevanceExplanation,
+        })
+        .onConflictDoNothing()
+    } catch (err) {
+      console.error(
+        '[investigate] Failed to insert investigation vote link:',
+        err
+      )
+    }
+  }
 }

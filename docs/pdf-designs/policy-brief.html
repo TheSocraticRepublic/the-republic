@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Policy Brief — The Republic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page {
+    size: letter;
+    margin: 1in;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.65;
+    color: #1c1917;
+    background: #fafaf9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1in;
+    position: relative;
+  }
+
+  /* Print controls */
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt;
+    font-weight: 500;
+    color: #78716c;
+    background: #fff;
+    border: 1px solid #e7e5e4;
+    border-radius: 6px;
+    padding: 6px 14px;
+    cursor: pointer;
+    z-index: 100;
+  }
+  .print-btn:hover { color: #1c1917; border-color: #C85B5B; }
+
+  @media print {
+    .print-btn { display: none; }
+    body { background: white; }
+    .page { padding: 0; max-width: none; }
+    .page-break { page-break-before: always; }
+  }
+
+  /* ---- HEADER / COVER ---- */
+
+  .accent-band {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    margin-left: -50vw;
+    height: 4px;
+    background: #C85B5B;
+    margin-bottom: 32px;
+  }
+
+  .wordmark {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 9pt;
+    letter-spacing: 0.2em;
+    color: #d6d3d1;
+    margin-bottom: 6px;
+  }
+
+  .brief-meta {
+    font-size: 9pt;
+    color: #78716c;
+    margin-bottom: 4px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .brief-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 24pt;
+    line-height: 1.2;
+    color: #1c1917;
+    margin-bottom: 10px;
+    max-width: 600px;
+  }
+
+  .brief-author {
+    font-size: 10pt;
+    color: #78716c;
+    margin-bottom: 4px;
+  }
+
+  .brief-date {
+    font-size: 9.5pt;
+    color: #a8a29e;
+    margin-bottom: 32px;
+  }
+
+  /* ---- EXECUTIVE SUMMARY ---- */
+
+  .exec-summary {
+    background: rgba(200, 91, 91, 0.05);
+    border: 1px solid rgba(200, 91, 91, 0.18);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 36px;
+  }
+
+  .exec-summary-label {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 8.5pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #C85B5B;
+    margin-bottom: 10px;
+  }
+
+  .exec-summary p {
+    font-size: 10.5pt;
+    line-height: 1.7;
+    color: #292524;
+  }
+
+  .exec-summary p + p {
+    margin-top: 8px;
+  }
+
+  /* ---- SECTION HEADINGS ---- */
+
+  .section-heading {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 14pt;
+    color: #1c1917;
+    margin-top: 32px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e7e5e4;
+  }
+
+  .section-subheading {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 11pt;
+    color: #44403c;
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+
+  /* ---- BODY TEXT ---- */
+
+  .body-text {
+    margin-bottom: 12px;
+  }
+
+  .body-text + .body-text {
+    margin-top: 0;
+  }
+
+  /* ---- CONTENT WITH SIDEBAR ---- */
+
+  .content-with-sidebar {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .content-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sidebar-callout {
+    width: 200px;
+    flex-shrink: 0;
+    background: rgba(200, 91, 91, 0.05);
+    border-left: 3px solid #C85B5B;
+    border-radius: 0 6px 6px 0;
+    padding: 16px 18px;
+  }
+
+  .sidebar-callout .stat-number {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 36pt;
+    line-height: 1;
+    color: #C85B5B;
+    margin-bottom: 6px;
+  }
+
+  .sidebar-callout .stat-label {
+    font-size: 9.5pt;
+    line-height: 1.45;
+    color: #57534e;
+  }
+
+  .sidebar-callout .stat-source {
+    font-size: 8pt;
+    color: #a8a29e;
+    margin-top: 8px;
+  }
+
+  /* ---- PULL QUOTE ---- */
+
+  .pull-quote {
+    border-left: 3px solid #C85B5B;
+    padding: 12px 0 12px 20px;
+    margin: 24px 0;
+  }
+
+  .pull-quote p {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 14pt;
+    line-height: 1.45;
+    color: #C85B5B;
+  }
+
+  .pull-quote .attribution {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 9pt;
+    color: #78716c;
+    margin-top: 6px;
+  }
+
+  /* ---- KEY FINDINGS LIST ---- */
+
+  .findings-list {
+    list-style: none;
+    margin: 12px 0 16px 0;
+    padding: 0;
+  }
+
+  .findings-list li {
+    padding: 8px 0;
+    padding-left: 28px;
+    position: relative;
+    border-bottom: 1px solid #f5f5f4;
+  }
+
+  .findings-list li:last-child {
+    border-bottom: none;
+  }
+
+  .findings-list .finding-num {
+    position: absolute;
+    left: 0;
+    top: 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 11pt;
+    color: #C85B5B;
+  }
+
+  .findings-list .finding-text {
+    font-weight: 500;
+    color: #1c1917;
+  }
+
+  .findings-list .finding-evidence {
+    font-size: 9.5pt;
+    color: #57534e;
+    margin-top: 3px;
+  }
+
+  .findings-list .finding-source {
+    font-size: 8.5pt;
+    color: #a8a29e;
+    margin-top: 2px;
+  }
+
+  /* ---- RECOMMENDATIONS BOX ---- */
+
+  .recommendations {
+    background: rgba(200, 91, 91, 0.06);
+    border: 2px solid rgba(200, 91, 91, 0.25);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin: 28px 0;
+  }
+
+  .recommendations-label {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 9pt;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #C85B5B;
+    margin-bottom: 14px;
+  }
+
+  .recommendations ol {
+    list-style: none;
+    counter-reset: rec-counter;
+    padding: 0;
+    margin: 0;
+  }
+
+  .recommendations li {
+    counter-increment: rec-counter;
+    padding: 8px 0 8px 32px;
+    position: relative;
+    font-size: 10.5pt;
+    line-height: 1.6;
+    color: #292524;
+  }
+
+  .recommendations li + li {
+    border-top: 1px solid rgba(200, 91, 91, 0.12);
+  }
+
+  .recommendations li::before {
+    content: counter(rec-counter);
+    position: absolute;
+    left: 0;
+    top: 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 12pt;
+    color: #C85B5B;
+  }
+
+  /* ---- DATA HIGHLIGHT (inline) ---- */
+
+  .data-highlight-inline {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 4px 0;
+  }
+
+  .data-highlight-inline .dh-number {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 18pt;
+    color: #C85B5B;
+  }
+
+  .data-highlight-inline .dh-text {
+    font-size: 10pt;
+    color: #57534e;
+  }
+
+  /* ---- IMPLEMENTATION TABLE ---- */
+
+  .impl-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px 0;
+    font-size: 10pt;
+  }
+
+  .impl-table th {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 9pt;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #78716c;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid #e7e5e4;
+  }
+
+  .impl-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f5f5f4;
+    vertical-align: top;
+    color: #292524;
+  }
+
+  .impl-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .impl-table .priority-high {
+    display: inline-block;
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(200, 91, 91, 0.1);
+    color: #C85B5B;
+  }
+
+  .impl-table .priority-medium {
+    display: inline-block;
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(200, 168, 75, 0.12);
+    color: #a68a30;
+  }
+
+  /* ---- REFERENCES ---- */
+
+  .references {
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid #e7e5e4;
+  }
+
+  .references-label {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 8.5pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #78716c;
+    margin-bottom: 10px;
+  }
+
+  .references ol {
+    padding-left: 20px;
+    margin: 0;
+  }
+
+  .references li {
+    font-size: 8.5pt;
+    line-height: 1.5;
+    color: #78716c;
+    margin-bottom: 4px;
+  }
+
+  /* ---- FOOTER ---- */
+
+  .doc-footer {
+    margin-top: 40px;
+    padding-top: 12px;
+    border-top: 1px solid #e7e5e4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .doc-footer .footer-brand {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 8pt;
+    letter-spacing: 0.15em;
+    color: #d6d3d1;
+  }
+
+  .doc-footer .footer-url {
+    font-size: 8pt;
+    color: #a8a29e;
+  }
+
+  /* ---- PAGE BREAK ---- */
+
+  .page-break {
+    height: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  @media print {
+    .page-break { page-break-before: always; }
+  }
+
+  @media screen {
+    .page-break {
+      height: 1px;
+      background: #e7e5e4;
+      margin: 48px 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+
+<div class="page">
+
+  <!-- ==================== PAGE 1 ==================== -->
+
+  <div class="accent-band"></div>
+
+  <div class="wordmark">THE REPUBLIC</div>
+  <div class="brief-meta">Policy Brief No. 12</div>
+  <h1 class="brief-title">Inclusionary Zoning in Metro Vancouver: Why Voluntary Targets Have Failed and What Mandatory Requirements Could Deliver</h1>
+  <div class="brief-author">Prepared from investigation findings — The Republic Civic AI Framework</div>
+  <div class="brief-date">April 2026</div>
+
+  <!-- Executive Summary -->
+  <div class="exec-summary">
+    <div class="exec-summary-label">Executive Summary</div>
+    <p>Metro Vancouver's voluntary inclusionary zoning framework has produced fewer than 340 affordable units across 14 municipalities since 2018, against a regional target of 4,000 per year. Analysis of council records, development applications, and housing outcome data across four comparable jurisdictions reveals that mandatory inclusionary zoning with density bonuses consistently outperforms voluntary frameworks by a factor of 3–7x in affordable unit production, without the construction slowdowns predicted by opponents.</p>
+    <p>This brief recommends that the Metro Vancouver Regional District adopt a model bylaw establishing mandatory inclusionary requirements at 10–15% of new residential developments exceeding 20 units, paired with a density bonus of 1.2x base FSR, drawing on proven implementation in Portland, Vienna, and Singapore.</p>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== PAGE 2 ==================== -->
+
+  <h2 class="section-heading">Background</h2>
+
+  <p class="body-text">In 2018, the Metro Vancouver Regional District adopted a voluntary target asking municipalities to negotiate affordable housing contributions from developers on a project-by-project basis. The framework provided no minimum percentage, no standardized definition of "affordable," and no enforcement mechanism beyond municipal goodwill.</p>
+
+  <p class="body-text">Seven years later, the results are quantifiable. Freedom of Information requests filed to 14 Metro Vancouver municipalities reveal that only 12 of 387 approved residential developments of 20+ units between 2018 and 2025 included any below-market units. Of those 12 projects, the average affordable component was 4.2% — less than half the 10% floor recommended by the Canada Mortgage and Housing Corporation.</p>
+
+  <h2 class="section-heading">Key Findings</h2>
+
+  <div class="content-with-sidebar">
+    <div class="content-main">
+      <ol class="findings-list">
+        <li>
+          <span class="finding-num">1</span>
+          <div class="finding-text">Voluntary targets produced 338 affordable units (2018–2025), against a regional target of 28,000 over the same period.</div>
+          <div class="finding-evidence">Based on FOI responses from 14 Metro Vancouver municipalities. "Affordable" defined as units priced at or below 80% of median market rent per CMHC methodology.</div>
+          <div class="finding-source">Source: FOI-2025-0847, FOI-2025-0891 through FOI-2025-0903</div>
+        </li>
+        <li>
+          <span class="finding-num">2</span>
+          <div class="finding-text">Developers negotiated affordable requirements downward in 73% of projects where contributions were initially proposed by planning staff.</div>
+          <div class="finding-evidence">Council minutes show that planning department recommendations for 8–12% affordable components were reduced to 2–5% during public hearing negotiations in 27 of 37 cases examined.</div>
+          <div class="finding-source">Source: Council minutes analysis, 14 municipalities, 2018–2025</div>
+        </li>
+        <li>
+          <span class="finding-num">3</span>
+          <div class="finding-text">The three municipalities that adopted firm percentage floors (New Westminster: 10%, Port Moody: 8%, North Vancouver City: 12%) produced 62% of the region's total affordable units.</div>
+          <div class="finding-evidence">210 of 338 units came from municipalities representing less than 9% of the regional population.</div>
+          <div class="finding-source">Source: BC Housing Annual Reports 2019–2025; municipal housing strategies</div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="sidebar-callout">
+      <div class="stat-number">1.2%</div>
+      <div class="stat-label">of new residential units built in Metro Vancouver between 2018–2025 were priced below market</div>
+      <div class="stat-source">CMHC Rental Market Survey, 2025</div>
+    </div>
+  </div>
+
+  <div class="content-with-sidebar">
+    <div class="content-main">
+      <ol class="findings-list" start="4">
+        <li>
+          <span class="finding-num">4</span>
+          <div class="finding-text">Portland's mandatory 20% requirement (adopted 2017) produced 4,100 affordable units in its first 5 years — 12x Metro Vancouver's output with a comparable population base.</div>
+          <div class="finding-evidence">Portland's program includes a 1.2x density bonus, a 10-year property tax exemption for qualifying projects, and an in-lieu fee option for projects under 20 units.</div>
+          <div class="finding-source">Source: Portland Housing Bureau, Annual Inclusionary Housing Report 2022</div>
+        </li>
+        <li>
+          <span class="finding-num">5</span>
+          <div class="finding-text">Construction permit volumes in Portland did not decline after mandatory requirements were introduced. Permit applications dipped 8% in Year 1 and recovered to baseline by Year 3.</div>
+          <div class="finding-evidence">The "construction chill" argument — that mandatory requirements would halt development — is contradicted by the Portland, Vienna, and Singapore data.</div>
+          <div class="finding-source">Source: Portland Bureau of Development Services permit data; Metro Observatory analysis</div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="sidebar-callout">
+      <div class="stat-number">12x</div>
+      <div class="stat-label">more affordable units produced by Portland's mandatory program vs. Vancouver's voluntary framework</div>
+      <div class="stat-source">Portland Housing Bureau, 2022</div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== PAGE 3 ==================== -->
+
+  <h2 class="section-heading">Analysis</h2>
+
+  <p class="body-text">The voluntary framework fails because it creates an asymmetric negotiation. Developers have financial incentive to minimize affordable contributions and the legal expertise to negotiate effectively. Municipal planning staff, bound by council-approved voluntary guidelines, lack the regulatory authority to enforce targets. The result is a predictable race to the bottom in which the "negotiated" affordable percentage converges toward zero.</p>
+
+  <p class="body-text">Mandatory requirements eliminate this dynamic by establishing a non-negotiable floor. The density bonus compensates for the reduced revenue per unit, ensuring that the total project economics remain viable. This is not theoretical — it is the mechanism used in every jurisdiction with successful inclusionary zoning programs.</p>
+
+  <div class="pull-quote">
+    <p>Voluntary inclusionary zoning asks developers to choose between their fiduciary duty to shareholders and the public interest. The outcome of that choice is not a mystery.</p>
+    <div class="attribution">— Dr. Sarah Chen, UBC School of Community and Regional Planning, in testimony to Metro Vancouver Regional Planning Committee, March 2025</div>
+  </div>
+
+  <h3 class="section-subheading">The Density Bonus Mechanism</h3>
+
+  <p class="body-text">A density bonus of 1.2x base FSR compensates developers for the affordable units by allowing additional market-rate units. In a typical 100-unit project at base FSR, a 15% inclusionary requirement produces 15 affordable units. With a 1.2x bonus, the project becomes 120 units total — 15 affordable (12.5% of total) and 105 market-rate. The developer builds 5 additional market-rate units compared to the no-requirement baseline, offsetting the revenue reduction from the 15 below-market units.</p>
+
+  <p class="body-text">Portland's 2021 economic analysis found that the density bonus reduced the developer's net revenue impact to 2.1–3.8% per project, within the normal range of construction cost variability. Vienna's model uses a higher density bonus (1.35x) but requires a higher affordable percentage (25%), achieving similar developer economics at a larger affordable output.</p>
+
+  <h3 class="section-subheading">Why the "Construction Chill" Doesn't Materialize</h3>
+
+  <p class="body-text">Opponents of mandatory inclusionary zoning consistently predict that requirements will halt development. This prediction has been tested in Portland (2017), Montgomery County, Maryland (1974), and Singapore (multiple iterations since 1964). In none of these jurisdictions did construction volumes decline for more than 18 months after implementation. The mechanism is straightforward: demand for housing in high-growth metropolitan areas is inelastic. Developers adjust project economics to accommodate the requirement because the alternative — not building in a growing market — is worse.</p>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== PAGE 4 ==================== -->
+
+  <!-- Recommendations -->
+  <div class="recommendations">
+    <div class="recommendations-label">Recommendations</div>
+    <ol>
+      <li><strong>Adopt a Metro Vancouver model bylaw</strong> establishing mandatory inclusionary zoning at 10–15% of all new residential developments exceeding 20 units, with "affordable" defined as at or below 80% of area median income per CMHC methodology.</li>
+      <li><strong>Pair the requirement with a density bonus of 1.2x base FSR</strong> for all qualifying projects, eliminating the need for project-by-project negotiation and providing developers with predictable project economics.</li>
+      <li><strong>Establish an in-lieu fee option</strong> for projects under 20 units, set at the per-unit cost of producing affordable housing in the municipality. In-lieu fees fund a dedicated affordable housing reserve.</li>
+      <li><strong>Create a 5-year implementation review</strong> with publicly reported metrics: affordable units produced, construction permit volumes, average developer cost impact, and geographic distribution of affordable units across the region.</li>
+    </ol>
+  </div>
+
+  <h2 class="section-heading">Implementation</h2>
+
+  <table class="impl-table">
+    <thead>
+      <tr>
+        <th style="width: 30%">Action</th>
+        <th style="width: 35%">Responsible Body</th>
+        <th style="width: 15%">Timeline</th>
+        <th style="width: 20%">Priority</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Draft model bylaw with legal review</td>
+        <td>MVRD Regional Planning Committee</td>
+        <td>Q3 2026</td>
+        <td><span class="priority-high">High</span></td>
+      </tr>
+      <tr>
+        <td>Municipal adoption (first 5 municipalities)</td>
+        <td>Individual municipal councils</td>
+        <td>Q1 2027</td>
+        <td><span class="priority-high">High</span></td>
+      </tr>
+      <tr>
+        <td>Establish in-lieu fee schedule</td>
+        <td>Municipal finance departments</td>
+        <td>Q2 2027</td>
+        <td><span class="priority-medium">Medium</span></td>
+      </tr>
+      <tr>
+        <td>Region-wide adoption target</td>
+        <td>MVRD Board</td>
+        <td>Q4 2027</td>
+        <td><span class="priority-medium">Medium</span></td>
+      </tr>
+      <tr>
+        <td>5-year implementation review</td>
+        <td>MVRD + CMHC</td>
+        <td>Q4 2032</td>
+        <td><span class="priority-medium">Medium</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- References -->
+  <div class="references">
+    <div class="references-label">References</div>
+    <ol>
+      <li>FOI-2025-0847 through FOI-2025-0903: Affordable housing contributions data, 14 Metro Vancouver municipalities, 2018–2025.</li>
+      <li>Canada Mortgage and Housing Corporation. <em>Rental Market Survey: Vancouver CMA</em>. Ottawa: CMHC, 2025.</li>
+      <li>Portland Housing Bureau. <em>Inclusionary Housing Annual Report</em>. Portland, OR: City of Portland, 2022.</li>
+      <li>BC Housing. <em>Annual Reports 2019–2025</em>. Burnaby, BC: BC Housing, 2019–2025.</li>
+      <li>Portland Bureau of Development Services. <em>Permit Activity Data 2015–2023</em>. Portland, OR: City of Portland.</li>
+      <li>Chen, S. Testimony to Metro Vancouver Regional Planning Committee. March 14, 2025.</li>
+      <li>Calavita, N., Mallach, A. <em>Inclusionary Housing in International Perspective</em>. Cambridge, MA: Lincoln Institute of Land Policy, 2010.</li>
+      <li>Metro Vancouver Regional District. <em>Metro 2050: Regional Growth Strategy</em>. Burnaby, BC: MVRD, 2022.</li>
+    </ol>
+  </div>
+
+  <!-- Footer -->
+  <div class="doc-footer">
+    <div class="footer-brand">THE REPUBLIC</div>
+    <div class="footer-url">Generated from The Republic — therepublic.ca &middot; April 2026</div>
+  </div>
+
+</div>
+
+</body>
+</html>

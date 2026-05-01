@@ -27,6 +27,7 @@ export async function GET(
   const [investigation] = await db
     .select({
       id: investigations.id,
+      concern: investigations.concern,
       federalMpId: investigations.federalMpId,
       postalCode: investigations.postalCode,
     })
@@ -93,7 +94,7 @@ export async function GET(
   )
 
   return new Response(
-    JSON.stringify({ mp, votes: votesWithBallots }),
+    JSON.stringify({ mp, votes: votesWithBallots, concern: investigation.concern }),
     { headers: { 'Content-Type': 'application/json' } }
   )
 }

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { FileText, ArrowLeft } from 'lucide-react'
+import { FileText, ArrowLeft, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { ActionViewer } from '@/components/lever/action-viewer'
 
@@ -44,7 +44,7 @@ export default async function LeverActionPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
       {/* Back nav */}
-      <div className="mb-6">
+      <div className="mb-6 flex items-center gap-4">
         <Link
           href="/lever"
           className="inline-flex items-center gap-1.5 text-xs text-neutral-500 transition-colors hover:text-neutral-300"
@@ -52,6 +52,15 @@ export default async function LeverActionPage({ params }: PageProps) {
           <ArrowLeft size={13} strokeWidth={2} />
           All actions
         </Link>
+        {action.investigationId && (
+          <Link
+            href={`/investigate/${action.investigationId}`}
+            className="inline-flex items-center gap-1.5 text-xs text-neutral-500 transition-colors hover:text-neutral-300"
+          >
+            <ExternalLink size={11} strokeWidth={2} />
+            View investigation
+          </Link>
+        )}
       </div>
 
       {/* Header */}

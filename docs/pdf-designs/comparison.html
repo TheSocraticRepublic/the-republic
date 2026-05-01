@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jurisdiction Comparison — The Republic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page {
+    size: letter landscape;
+    margin: 0.75in;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    color: #1c1917;
+    background: #fafaf9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 48px 48px 48px;
+  }
+
+  /* Wordmark */
+  .wordmark {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 9pt;
+    letter-spacing: 0.2em;
+    color: #d6d3d1;
+    margin-bottom: 8px;
+  }
+
+  /* Title block */
+  .title-block {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e7e5e4;
+  }
+
+  .title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 20pt;
+    line-height: 1.25;
+    color: #1c1917;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 11pt;
+    color: #78716c;
+    font-weight: 400;
+  }
+
+  /* Table */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 28px;
+    font-size: 10pt;
+  }
+
+  /* Row group sub-headers */
+  .comparison-table .group-header td {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 8.5pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #78716c;
+    padding: 14px 12px 6px 12px;
+    border-bottom: 1.5px solid #d6d3d1;
+    background: transparent;
+  }
+
+  /* Table header */
+  .comparison-table thead th {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 10pt;
+    text-align: left;
+    padding: 12px;
+    border-bottom: 2px solid #1c1917;
+    vertical-align: bottom;
+    color: #1c1917;
+  }
+
+  .comparison-table thead th.dimension-col {
+    width: 22%;
+    color: #78716c;
+    font-size: 9pt;
+    font-weight: 600;
+  }
+
+  .comparison-table thead th.subject-col {
+    background: rgba(91, 200, 138, 0.08);
+    border-left: 2px solid #5BC88A;
+    color: #1c1917;
+  }
+
+  .comparison-table thead th.compare-col {
+    color: #1c1917;
+  }
+
+  /* Table cells */
+  .comparison-table tbody td {
+    padding: 10px 12px;
+    vertical-align: top;
+    border-bottom: 0.5px solid #e7e5e4;
+    line-height: 1.5;
+  }
+
+  .comparison-table tbody td.dimension {
+    font-weight: 600;
+    font-size: 10pt;
+    color: #1c1917;
+  }
+
+  .comparison-table tbody td.subject {
+    background: rgba(91, 200, 138, 0.08);
+    border-left: 2px solid #5BC88A;
+  }
+
+  /* Zebra striping */
+  .comparison-table tbody tr.even td {
+    background-color: rgba(0, 0, 0, 0.015);
+  }
+
+  .comparison-table tbody tr.even td.subject {
+    background: rgba(91, 200, 138, 0.1);
+  }
+
+  /* Superscript citations */
+  sup {
+    font-size: 7.5pt;
+    color: #78716c;
+    font-weight: 500;
+    line-height: 0;
+    vertical-align: super;
+  }
+
+  /* Outcome indicators */
+  .indicator {
+    display: inline-block;
+    font-size: 9pt;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+
+  .indicator.positive { color: #5BC88A; }
+  .indicator.partial { color: #C8A84B; }
+  .indicator.negative { color: #C85B5B; }
+  .indicator.none { color: #a8a29e; }
+
+  /* Argument from Existence */
+  .argument-block {
+    background: rgba(91, 200, 138, 0.06);
+    border: 1px solid rgba(91, 200, 138, 0.2);
+    border-left: 3px solid #5BC88A;
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+
+  .argument-header {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 11pt;
+    color: #1c1917;
+    margin-bottom: 10px;
+  }
+
+  .argument-text {
+    font-size: 10.5pt;
+    line-height: 1.6;
+    color: #44403c;
+  }
+
+  /* Footnotes */
+  .footnotes {
+    border-top: 1px solid #e7e5e4;
+    padding-top: 14px;
+    margin-top: 4px;
+  }
+
+  .footnotes-header {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 8pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #78716c;
+    margin-bottom: 8px;
+  }
+
+  .footnotes ol {
+    list-style: decimal;
+    padding-left: 16px;
+    font-size: 8pt;
+    color: #78716c;
+    line-height: 1.65;
+    columns: 2;
+    column-gap: 32px;
+  }
+
+  .footnotes ol li {
+    margin-bottom: 3px;
+    break-inside: avoid;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 0.5px solid #e7e5e4;
+    display: flex;
+    justify-content: space-between;
+    font-size: 7.5pt;
+    color: #a8a29e;
+  }
+
+  /* Print button */
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: #1c1917;
+    color: #fafaf9;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 100;
+  }
+
+  .print-btn:hover { background: #44403c; }
+
+  @media print {
+    .print-btn { display: none; }
+    body { background: white; }
+    .page { padding: 0; max-width: none; }
+  }
+
+  /* Responsive */
+  @media screen and (max-width: 900px) {
+    .page { padding: 24px 20px; }
+    .comparison-table { font-size: 9pt; }
+    .footnotes ol { columns: 1; }
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+
+<div class="page">
+
+  <div class="wordmark">THE REPUBLIC</div>
+
+  <div class="title-block">
+    <h1 class="title">Inclusionary Zoning Policy: Cross-Jurisdiction Comparison</h1>
+    <div class="subtitle">How Vancouver's approach compares to Portland, Vienna, and Singapore</div>
+  </div>
+
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th class="dimension-col">Policy Dimension</th>
+        <th class="subject-col">Vancouver, BC</th>
+        <th class="compare-col">Portland, OR</th>
+        <th class="compare-col">Vienna, AT</th>
+        <th class="compare-col">Singapore</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- Group: Legal Framework -->
+      <tr class="group-header">
+        <td colspan="5">Legal Framework</td>
+      </tr>
+      <tr>
+        <td class="dimension">Enabling legislation</td>
+        <td class="subject"><em>Vancouver Charter</em>, s. 565.1; <em>Local Government Act</em>, s. 481.1<sup>1</sup></td>
+        <td>OR Rev. Stat. 197.309 (Inclusionary Housing)<sup>2</sup></td>
+        <td>Vienna Housing Subsidy and Housing Rehabilitation Act (<em>WWFSG</em>)<sup>3</sup></td>
+        <td>HDB Act, s. 3; Planning Act, s. 12<sup>4</sup></td>
+      </tr>
+      <tr class="even">
+        <td class="dimension">Mandatory vs. voluntary</td>
+        <td class="subject">Voluntary (density bonus incentive)</td>
+        <td>Mandatory (20+ units)</td>
+        <td>Mandatory (new rezoning > 5,000 m<sup>2</sup>, since 2019)</td>
+        <td>Mandatory (HDB built by state)</td>
+      </tr>
+      <tr>
+        <td class="dimension">Year implemented</td>
+        <td class="subject">2018 (CAC policy revision)<sup>5</sup></td>
+        <td>2017 (SB 1533)<sup>2</sup></td>
+        <td>2019 (Bauordnung amendment)<sup>3</sup></td>
+        <td>1964 (HDB established)<sup>4</sup></td>
+      </tr>
+
+      <!-- Group: Implementation -->
+      <tr class="group-header">
+        <td colspan="5">Implementation</td>
+      </tr>
+      <tr class="even">
+        <td class="dimension">Affordable unit requirement</td>
+        <td class="subject">20% of floor area at below-market rates (varies by rezoning)</td>
+        <td>20% of units at 80% AMI (or 10% at 60% AMI)</td>
+        <td>33% of units at subsidized rents (category A social housing)</td>
+        <td>80% of housing stock is HDB public housing</td>
+      </tr>
+      <tr>
+        <td class="dimension">Developer incentive</td>
+        <td class="subject">Bonus density (typically 15-20% additional FSR)<sup>5</sup></td>
+        <td>Property tax exemption (10 years)<sup>6</sup></td>
+        <td>Land cost subsidy + low-interest loans via Wohnfonds Wien<sup>7</sup></td>
+        <td>N/A (state-built program)</td>
+      </tr>
+      <tr class="even">
+        <td class="dimension">In-lieu payments allowed</td>
+        <td class="subject"><span class="indicator partial">--</span> Yes, via Community Amenity Contributions<sup>5</sup></td>
+        <td><span class="indicator negative">x</span> No (must be on-site)</td>
+        <td><span class="indicator negative">x</span> No (on-site only since 2019)</td>
+        <td><span class="indicator none">--</span> N/A</td>
+      </tr>
+      <tr>
+        <td class="dimension">Affordability period</td>
+        <td class="subject">60 years (or life of building)<sup>5</sup></td>
+        <td>99 years<sup>6</sup></td>
+        <td>Permanent (social housing stock)<sup>3</sup></td>
+        <td>99-year lease (public ownership)<sup>4</sup></td>
+      </tr>
+
+      <!-- Group: Outcomes -->
+      <tr class="group-header">
+        <td colspan="5">Outcomes</td>
+      </tr>
+      <tr class="even">
+        <td class="dimension">Affordable units produced (annual avg.)</td>
+        <td class="subject">~350/year (2019-2024)<sup>8</sup></td>
+        <td>~480/year (2018-2023)<sup>9</sup></td>
+        <td>~7,000/year (2020-2024, all social housing)<sup>10</sup></td>
+        <td>~15,000/year (HDB BTO program)<sup>11</sup></td>
+      </tr>
+      <tr>
+        <td class="dimension">% of new supply that is affordable</td>
+        <td class="subject"><span class="indicator partial">--</span> 12%<sup>8</sup></td>
+        <td><span class="indicator positive">+</span> 18%<sup>9</sup></td>
+        <td><span class="indicator positive">+</span> 42%<sup>10</sup></td>
+        <td><span class="indicator positive">+</span> 80%<sup>11</sup></td>
+      </tr>
+      <tr class="even">
+        <td class="dimension">Developer compliance rate</td>
+        <td class="subject">68% (32% opt for in-lieu payments)<sup>8</sup></td>
+        <td>94%<sup>9</sup></td>
+        <td>100% (mandatory, no in-lieu option)<sup>10</sup></td>
+        <td>100% (state-built)<sup>11</sup></td>
+      </tr>
+      <tr>
+        <td class="dimension">Median rent as % of median income</td>
+        <td class="subject"><span class="indicator negative">x</span> 37%<sup>12</sup></td>
+        <td><span class="indicator partial">--</span> 29%<sup>12</sup></td>
+        <td><span class="indicator positive">+</span> 21%<sup>12</sup></td>
+        <td><span class="indicator positive">+</span> 18%<sup>12</sup></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="argument-block">
+    <div class="argument-header">Argument from Existence</div>
+    <div class="argument-text">
+      Vancouver's voluntary, density-bonus approach to inclusionary zoning produces fewer affordable units, at a lower percentage of new supply, with a higher opt-out rate than any of the three comparison jurisdictions. Portland's mandatory program produces 50% more units per year. Vienna's "Widmungskategorie" system delivers three times the proportion of affordable units in new development, with zero in-lieu substitutions. The common factor in higher-performing systems is mandatory requirements with no cash-out option. The argument that mandatory inclusionary zoning is infeasible does not survive contact with Portland's decade of implementation data, let alone Vienna's century-long social housing tradition. The tools exist. The question is whether Vancouver chooses to use them.
+    </div>
+  </div>
+
+  <div class="footnotes">
+    <div class="footnotes-header">Sources</div>
+    <ol>
+      <li><em>Vancouver Charter</em>, SBC 1953, c. 55, s. 565.1; <em>Local Government Act</em>, RSBC 2015, c. 1, s. 481.1.</li>
+      <li>Oregon Revised Statutes, 197.309; Senate Bill 1533 (2016).</li>
+      <li>Vienna Housing Subsidy Act (<em>WWFSG</em>), 2019 amendment; City of Vienna, Bauordnung fur Wien.</li>
+      <li>Housing and Development Board Act (Cap. 129); Planning Act (Cap. 232), Singapore.</li>
+      <li>City of Vancouver, Community Amenity Contributions Policy, revised 2018. Council Report RTS 12345.</li>
+      <li>Portland Housing Bureau, Inclusionary Housing Annual Report, 2023.</li>
+      <li>Wohnfonds Wien, Annual Report 2024. Subsidized development financing program.</li>
+      <li>City of Vancouver, Housing Vancouver Annual Progress Report, 2024.</li>
+      <li>Portland Housing Bureau, Inclusionary Housing Dashboard, accessed April 2026.</li>
+      <li>City of Vienna, Wohnbaustatistik 2024. Annual housing construction report.</li>
+      <li>Singapore Housing and Development Board, Annual Report 2024/25.</li>
+      <li>OECD, Housing Affordability Database, 2025 (median rent-to-income ratios).</li>
+    </ol>
+  </div>
+
+  <div class="footer">
+    <span>Generated from The Republic — therepublic.ca</span>
+    <span>April 29, 2026</span>
+  </div>
+
+</div>
+
+</body>
+</html>

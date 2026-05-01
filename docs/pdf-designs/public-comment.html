@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Public Comment — The Republic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page {
+    size: letter;
+    margin: 1in;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1c1917;
+    background: #fafaf9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 1in 1in 1in;
+  }
+
+  /* Running header */
+  .running-header {
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    font-weight: 500;
+    color: #78716c;
+    letter-spacing: 0.02em;
+    padding-bottom: 12px;
+    border-bottom: 0.5px solid #e7e5e4;
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* Docket reference */
+  .docket-ref {
+    margin-bottom: 6px;
+  }
+
+  .docket-label {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 9pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #78716c;
+    margin-bottom: 4px;
+  }
+
+  .docket-id {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 16pt;
+    color: #1c1917;
+    line-height: 1.3;
+    margin-bottom: 20px;
+  }
+
+  /* Date and addressee */
+  .date-line {
+    font-size: 11pt;
+    margin-bottom: 18pt;
+    color: #1c1917;
+  }
+
+  .addressee {
+    margin-bottom: 18pt;
+    line-height: 1.5;
+    font-size: 11pt;
+  }
+
+  /* Body */
+  .body-text {
+    margin-bottom: 24px;
+  }
+
+  .body-paragraph {
+    margin-bottom: 14pt;
+    padding-left: 36px;
+    position: relative;
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+
+  .body-paragraph .para-num {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 11pt;
+    color: #78716c;
+    width: 28px;
+    text-align: right;
+  }
+
+  /* Section headers */
+  .section-ref {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 11pt;
+    color: #1c1917;
+    margin-top: 22pt;
+    margin-bottom: 14pt;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e7e5e4;
+  }
+
+  /* Recommendations box */
+  .recommendations {
+    border: 2px solid #C85B5B;
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin: 24pt 0;
+    background: rgba(200, 91, 91, 0.04);
+  }
+
+  .recommendations-header {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 11pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #C85B5B;
+    margin-bottom: 14px;
+  }
+
+  .recommendations ol {
+    list-style: none;
+    counter-reset: rec;
+    margin: 0;
+    padding: 0;
+  }
+
+  .recommendations ol li {
+    counter-increment: rec;
+    padding-left: 28px;
+    position: relative;
+    margin-bottom: 10px;
+    font-size: 11pt;
+    line-height: 1.55;
+    font-weight: 500;
+  }
+
+  .recommendations ol li::before {
+    content: counter(rec) ".";
+    position: absolute;
+    left: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    color: #C85B5B;
+  }
+
+  .recommendations ol li:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Closing / Signature */
+  .closing {
+    margin-top: 24pt;
+    line-height: 1.5;
+  }
+
+  .signature-line {
+    margin-top: 36pt;
+    width: 200px;
+    border-top: 1px solid #1c1917;
+    padding-top: 6pt;
+  }
+
+  .signature-line .placeholder {
+    color: #78716c;
+    font-style: italic;
+    font-size: 10pt;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 40px;
+    padding-top: 10px;
+    border-top: 0.5px solid #e7e5e4;
+    display: flex;
+    justify-content: space-between;
+    font-size: 7.5pt;
+    color: #a8a29e;
+  }
+
+  .footer-wordmark {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 7pt;
+    letter-spacing: 0.15em;
+    color: #d6d3d1;
+  }
+
+  /* Print button */
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: #1c1917;
+    color: #fafaf9;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 100;
+  }
+
+  .print-btn:hover { background: #44403c; }
+
+  @media print {
+    .print-btn { display: none; }
+    body { background: white; }
+    .page { padding: 0; max-width: none; }
+    .running-header {
+      position: running(header);
+    }
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+
+<div class="page">
+
+  <div class="running-header">
+    <span>Submission by [Name] — Bylaw 2026-047</span>
+    <span>Page 1</span>
+  </div>
+
+  <div class="docket-ref">
+    <div class="docket-label">Public Comment</div>
+  </div>
+  <div class="docket-id">Re: Bylaw 2026-047 — Block 14 Rezoning Amendment</div>
+
+  <div class="date-line">April 29, 2026</div>
+
+  <div class="addressee">
+    Municipal Clerk<br>
+    City of Maplewood<br>
+    Council and Committee Services<br>
+    21000 Civic Avenue<br>
+    Maplewood, BC V3A 1Z8
+  </div>
+
+  <div class="body-text">
+    <div class="body-paragraph">
+      <span class="para-num">1.</span>
+      I am a resident of the Block 14 neighbourhood and have owned property at [address] since 2018. I am writing to submit comments on proposed Bylaw 2026-047, which would rezone approximately 4.2 hectares of land from RS-1 (Single Residential) to RM-4 (Medium Density Multiple Residential) in the Block 14 area. I have standing as a directly affected property owner whose residence is within 100 metres of the subject parcels.
+    </div>
+
+    <div class="body-paragraph">
+      <span class="para-num">2.</span>
+      I do not oppose residential densification in principle. My concerns relate to procedural deficiencies in the current application and specific provisions of the proposed bylaw that depart from established planning practice without adequate justification.
+    </div>
+  </div>
+
+  <div class="section-ref">Section 4.2 — Traffic Impact Requirements</div>
+
+  <div class="body-text">
+    <div class="body-paragraph">
+      <span class="para-num">3.</span>
+      Section 4.2 of the proposed bylaw waives the requirement for a completed traffic impact assessment prior to Third Reading. This contradicts Council Motion 2024-RC-112, which established the traffic impact study as a condition precedent to rezoning. The applicant has submitted only a preliminary traffic review prepared by their own consultant, which has not been peer-reviewed and does not model cumulative impacts from three adjacent developments approved in 2024.
+    </div>
+
+    <div class="body-paragraph">
+      <span class="para-num">4.</span>
+      The BC Ministry of Transportation and Infrastructure's 2024 corridor assessment rated the Highway 7 segment adjacent to Block 14 at 94% capacity during evening peak hours. An additional 1,400 daily vehicle trips, as estimated in the applicant's own memo, would push this corridor to Level of Service F conditions without mitigation infrastructure that has neither been designed nor funded.
+    </div>
+  </div>
+
+  <div class="section-ref">Section 7.1 — Public Notification Provisions</div>
+
+  <div class="body-text">
+    <div class="body-paragraph">
+      <span class="para-num">5.</span>
+      Section 7.1 of the proposed bylaw reduces the public notification radius from 100 metres (as established in Bylaw 4102-2019) to 50 metres. This reduction was not identified in the staff report's summary of changes and was not discussed at any committee meeting prior to the bylaw being placed on the agenda. The reduced radius would exclude approximately 340 households that would have received notification under existing rules.
+    </div>
+
+    <div class="body-paragraph">
+      <span class="para-num">6.</span>
+      The District of Lakeview and the City of Ridgemont both maintain 100-metre notification radii for rezoning applications. Reducing this standard without public consultation undermines the procedural protections that neighbouring jurisdictions consider baseline.
+    </div>
+  </div>
+
+  <div class="section-ref">Section 9.3 — Setback and Separation Requirements</div>
+
+  <div class="body-text">
+    <div class="body-paragraph">
+      <span class="para-num">7.</span>
+      Section 9.3 permits a 1.2-metre side-yard setback for the RM-4 zone, which falls below the fire separation minimums referenced in BC Building Code Article 9.10.14.1. While the Building Code and zoning are distinct regulatory instruments, establishing a zoning envelope that creates conflicts with building code requirements at the permit stage is poor planning practice and will result in variance applications that further erode setback standards.
+    </div>
+  </div>
+
+  <div class="recommendations">
+    <div class="recommendations-header">Recommendations</div>
+    <ol>
+      <li>Defer Third Reading of Bylaw 2026-047 until the traffic impact assessment required by Motion 2024-RC-112 is completed, peer-reviewed, and made available for public review for a minimum of 30 days.</li>
+      <li>Restore the 100-metre public notification radius established in Bylaw 4102-2019, s. 12(3) and require written justification for any future proposals to reduce notification standards.</li>
+      <li>Amend Section 9.3 to establish minimum side-yard setbacks that are consistent with BC Building Code fire separation requirements, specifically Article 9.10.14.1, to avoid creating systematic conflicts at the building permit stage.</li>
+    </ol>
+  </div>
+
+  <div class="closing">
+    <p>Thank you for the opportunity to provide comments on this proposed bylaw. I am available to address any questions Council may have at the public hearing.</p>
+    <p style="margin-top: 18pt;">Respectfully submitted,</p>
+  </div>
+
+  <div class="signature-line">
+    <span class="placeholder">[YOUR NAME]</span><br>
+    <span class="placeholder">[YOUR ADDRESS]</span>
+  </div>
+
+  <div class="footer">
+    <span>Generated from The Republic — therepublic.ca</span>
+    <span>April 29, 2026</span>
+  </div>
+</div>
+
+</body>
+</html>

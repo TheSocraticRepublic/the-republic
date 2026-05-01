@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Download, Pencil, RefreshCw, Check, X, ChevronRight } from 'lucide-react'
+import { Download, Pencil, RefreshCw, Check, X, Printer, FileText } from 'lucide-react'
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
+import { hasLeverPdfTemplate } from '@/lib/pdf/types'
 
 type LeverActionType = (typeof leverActionTypeEnum.enumValues)[number]
 
@@ -42,6 +43,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   const [statusUpdating, setStatusUpdating] = useState(false)
   const [saving, setSaving] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [pdfExporting, setPdfExporting] = useState(false)
   const router = useRouter()
   const abortRef = useRef<AbortController | null>(null)
 
@@ -98,6 +100,15 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   const handleAdvanceStatus = useCallback(async () => {
     const next = STATUS_FLOW[status]
     if (!next) return
+
+    // Confirmation gate when filing
+    if (next === 'filed') {
+      const confirmed = window.confirm(
+        'This will record this action as officially filed. Continue?'
+      )
+      if (!confirmed) return
+    }
+
     setStatusUpdating(true)
     try {
       const res = await fetch(`/api/lever/actions/${actionId}`, {
@@ -164,6 +175,36 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       console.error('[action-viewer] Export failed:', err)
     } finally {
       setExporting(false)
+    }
+  }, [actionId])
+
+  const handleExportPdf = useCallback(async () => {
+    setPdfExporting(true)
+    try {
+      const res = await fetch('/api/lever/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actionId, format: 'pdf' }),
+      })
+      if (!res.ok) throw new Error('PDF export failed')
+
+      const blob = await res.blob()
+      const contentDisposition = res.headers.get('Content-Disposition') ?? ''
+      const match = contentDisposition.match(/filename="([^"]+)"/)
+      const filename = match ? match[1] : 'action.pdf'
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('[action-viewer] PDF export failed:', err)
+    } finally {
+      setPdfExporting(false)
     }
   }, [actionId])
 
@@ -239,6 +280,38 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
               <Download size={12} strokeWidth={2} />
               Export
             </button>
+
+            {/* Print */}
+            <button
+              onClick={() => window.open(`/api/lever/actions/${actionId}/print`, '_blank')}
+              disabled={!content}
+              className={clsx(
+                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
+                !content
+                  ? 'cursor-not-allowed opacity-50 text-neutral-600 border border-white/[0.06]'
+                  : 'text-[#C85B5B] border border-[rgba(200,91,91,0.25)] hover:bg-[rgba(200,91,91,0.08)]'
+              )}
+            >
+              <Printer size={12} strokeWidth={2} />
+              Print
+            </button>
+
+            {/* Download PDF */}
+            {hasLeverPdfTemplate(actionType) && (
+              <button
+                onClick={handleExportPdf}
+                disabled={pdfExporting || !content}
+                className={clsx(
+                  'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
+                  pdfExporting || !content
+                    ? 'cursor-not-allowed opacity-50 text-neutral-600 border border-white/[0.06]'
+                    : 'text-[#C85B5B] border border-[rgba(200,91,91,0.25)] hover:bg-[rgba(200,91,91,0.08)]'
+                )}
+              >
+                <FileText size={12} strokeWidth={2} />
+                {pdfExporting ? 'Generating...' : 'Download PDF'}
+              </button>
+            )}
           </>
         )}
 

@@ -1,10 +1,14 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { MATERIAL_TYPE_LABELS } from '@/lib/campaign/schemas'
+import { campaignSpecToMarkdown } from '@/lib/campaign/export'
+import { hasCampaignPdfTemplate } from '@/lib/pdf/types'
 import { InfographicPreview } from '@/components/campaign/infographic-preview'
+import type { CampaignMaterial } from '@/lib/campaign/schemas'
 
 interface ReasoningCardProps {
+  materialId?: string
   materialType: string
   content: string   // The JSON spec as a string
   reasoning: string
@@ -275,9 +279,11 @@ function SpecView({ materialType, spec }: { materialType: string; spec: Record<s
   }
 }
 
-export function ReasoningCard({ materialType, content, reasoning, title }: ReasoningCardProps) {
-  const [copied, setCopied] = useState(false)
+export function ReasoningCard({ materialId, materialType, content, reasoning, title }: ReasoningCardProps) {
+  const [copied, setCopied] = useState<string | false>(false)
+  const [socialCopied, setSocialCopied] = useState<string | null>(null)
   const [showClaudeHint, setShowClaudeHint] = useState(false)
+  const [pdfExporting, setPdfExporting] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
 
   // Close popover on click-outside or Escape
@@ -321,13 +327,111 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
     setTimeout(() => URL.revokeObjectURL(url), 100)
   }
 
+  function handleDownloadMarkdown() {
+    try {
+      const parsed = JSON.parse(content) as CampaignMaterial
+      const md = campaignSpecToMarkdown(
+        materialType as CampaignMaterial['materialType'],
+        parsed
+      )
+      const blob = new Blob([md], { type: 'text/markdown; charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const date = new Date().toISOString().slice(0, 10)
+      a.download = `${materialType}-${date}.md`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 100)
+    } catch {
+      // Fallback: download raw content as markdown
+      const blob = new Blob([content], { type: 'text/markdown; charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${materialType}-${Date.now()}.md`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 100)
+    }
+  }
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!materialId) return
+    setPdfExporting(true)
+    try {
+      const res = await fetch('/api/campaign/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ materialId, format: 'pdf' }),
+      })
+      if (!res.ok) throw new Error('PDF export failed')
+
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const date = new Date().toISOString().slice(0, 10)
+      a.download = `${materialType}-${date}.pdf`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 100)
+    } catch (err) {
+      console.error('[reasoning-card] PDF export failed:', err)
+    } finally {
+      setPdfExporting(false)
+    }
+  }, [materialId, materialType])
+
+  function handlePrint() {
+    if (!materialId) return
+    window.open(`/api/campaign/${materialId}/print`, '_blank')
+  }
+
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(content)
-      setCopied(true)
+      setCopied('Copied')
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Clipboard API not available
+      setCopied('Failed')
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  // Social copy helpers for social_post material type
+  async function handleCopySocial(platform: 'twitter' | 'instagram') {
+    try {
+      const parsed = JSON.parse(content)
+      const variations = (parsed.variations ?? []) as Array<{
+        tone: string
+        text: string
+        characterCount: number
+        hashtags: string[]
+      }>
+
+      if (variations.length === 0) return
+
+      let variation: typeof variations[0]
+      if (platform === 'twitter') {
+        // Prefer 'factual' tone, fall back to first
+        variation = variations.find((v) => v.tone === 'factual') ?? variations[0]
+      } else {
+        // Prefer 'comparison' tone, fall back to last
+        variation = variations.find((v) => v.tone === 'comparison') ?? variations[variations.length - 1]
+      }
+
+      const hashtags = variation.hashtags.length > 0
+        ? '\n\n' + variation.hashtags.map((h) => `#${h}`).join(' ')
+        : ''
+      const charNote = platform === 'twitter'
+        ? `\n\n[${variation.characterCount} chars]`
+        : ''
+      const text = variation.text + hashtags + charNote
+
+      await navigator.clipboard.writeText(text)
+      setSocialCopied(platform)
+      setTimeout(() => setSocialCopied(null), 2000)
+    } catch {
+      setSocialCopied('failed')
+      setTimeout(() => setSocialCopied(null), 2000)
     }
   }
 
@@ -355,7 +459,7 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
         </div>
 
         {/* Export actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <button
             onClick={handleCopy}
             className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
@@ -365,7 +469,7 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
               border: '1px solid rgba(0,0,0,0.08)',
             }}
           >
-            {copied ? 'Copied' : 'Copy JSON'}
+            {copied || 'Copy JSON'}
           </button>
           <button
             onClick={handleDownload}
@@ -378,6 +482,73 @@ export function ReasoningCard({ materialType, content, reasoning, title }: Reaso
           >
             Download JSON
           </button>
+          <button
+            onClick={handleDownloadMarkdown}
+            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            style={{
+              backgroundColor: 'rgba(200, 91, 91, 0.08)',
+              color: '#C85B5B',
+              border: '1px solid rgba(200,91,91,0.2)',
+            }}
+          >
+            Download Markdown
+          </button>
+          {materialId && (
+            <button
+              onClick={handlePrint}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{
+                backgroundColor: 'rgba(200, 91, 91, 0.08)',
+                color: '#C85B5B',
+                border: '1px solid rgba(200,91,91,0.2)',
+              }}
+            >
+              Print
+            </button>
+          )}
+          {/* PDF download button for types with PDF templates */}
+          {materialId && hasCampaignPdfTemplate(materialType) && (
+            <button
+              onClick={handleDownloadPdf}
+              disabled={pdfExporting}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{
+                backgroundColor: pdfExporting ? 'rgba(200, 91, 91, 0.04)' : 'rgba(200, 91, 91, 0.08)',
+                color: '#C85B5B',
+                border: '1px solid rgba(200,91,91,0.2)',
+                opacity: pdfExporting ? 0.6 : 1,
+              }}
+            >
+              {pdfExporting ? 'Generating PDF...' : 'Download PDF'}
+            </button>
+          )}
+          {/* Social copy buttons for social_post type */}
+          {materialType === 'social_post' && (
+            <>
+              <button
+                onClick={() => handleCopySocial('twitter')}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor: 'rgba(0,0,0,0.05)',
+                  color: '#78716c',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                }}
+              >
+                {socialCopied === 'twitter' ? 'Copied' : socialCopied === 'failed' ? 'Failed' : 'Copy for X'}
+              </button>
+              <button
+                onClick={() => handleCopySocial('instagram')}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor: 'rgba(0,0,0,0.05)',
+                  color: '#78716c',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                }}
+              >
+                {socialCopied === 'instagram' ? 'Copied' : socialCopied === 'failed' ? 'Failed' : 'Copy for Instagram'}
+              </button>
+            </>
+          )}
           {/* Open in Claude — shows the Artifacts template instructions */}
           <div className="relative" ref={popoverRef}>
             <button

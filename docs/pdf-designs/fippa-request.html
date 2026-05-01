@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOI Request — The Republic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600&family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page {
+    size: letter;
+    margin: 1in;
+  }
+
+  body {
+    font-family: 'Source Serif 4', 'Georgia', serif;
+    font-size: 12pt;
+    line-height: 1.65;
+    color: #1c1917;
+    background: #fafaf9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 1in;
+  }
+
+  /* Address blocks */
+  .sender-block {
+    margin-bottom: 24pt;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  .sender-block .name {
+    font-weight: 600;
+  }
+
+  .date-block {
+    margin-bottom: 24pt;
+    font-size: 12pt;
+  }
+
+  .addressee-block {
+    margin-bottom: 24pt;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  /* Reference line */
+  .reference-line {
+    font-weight: 600;
+    font-size: 12pt;
+    margin-bottom: 24pt;
+    line-height: 1.45;
+  }
+
+  /* Salutation */
+  .salutation {
+    margin-bottom: 18pt;
+  }
+
+  /* Body paragraphs */
+  .body-text p {
+    margin-bottom: 12pt;
+    text-align: left;
+  }
+
+  .body-text p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Records list */
+  .records-list {
+    margin: 12pt 0 12pt 24pt;
+    list-style: none;
+    counter-reset: record;
+  }
+
+  .records-list li {
+    counter-increment: record;
+    margin-bottom: 8pt;
+    padding-left: 24pt;
+    position: relative;
+    line-height: 1.55;
+  }
+
+  .records-list li::before {
+    content: counter(record) ".";
+    position: absolute;
+    left: 0;
+    font-weight: 600;
+  }
+
+  /* Section dividers */
+  .section-space {
+    margin-top: 18pt;
+  }
+
+  /* Closing */
+  .closing {
+    margin-top: 24pt;
+  }
+
+  .signature-line {
+    margin-top: 48pt;
+    width: 200px;
+    border-top: 1px solid #1c1917;
+    padding-top: 6pt;
+    line-height: 1.5;
+  }
+
+  .signature-line .placeholder {
+    color: #78716c;
+    font-style: italic;
+    font-size: 11pt;
+  }
+
+  /* Subtle wordmark */
+  .footer-wordmark {
+    margin-top: 80px;
+    text-align: center;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 7pt;
+    letter-spacing: 0.2em;
+    color: #e7e5e4;
+  }
+
+  /* Print button */
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-family: 'Inter', 'Source Serif 4', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: #1c1917;
+    color: #fafaf9;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 100;
+  }
+
+  .print-btn:hover { background: #44403c; }
+
+  @media print {
+    .print-btn { display: none; }
+    body { background: white; }
+    .page { padding: 0; max-width: none; }
+    .footer-wordmark { color: #f5f5f4; }
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+
+<div class="page">
+
+  <div class="sender-block">
+    <span class="name">[YOUR NAME]</span><br>
+    [YOUR ADDRESS]<br>
+    [CITY, PROVINCE, POSTAL CODE]<br>
+    [EMAIL ADDRESS]<br>
+    [PHONE NUMBER]
+  </div>
+
+  <div class="date-block">
+    April 29, 2026
+  </div>
+
+  <div class="addressee-block">
+    Freedom of Information Coordinator<br>
+    City of Vancouver<br>
+    Corporate Services Department<br>
+    453 West 12th Avenue<br>
+    Vancouver, BC V5Y 1V4
+  </div>
+
+  <div class="reference-line">
+    Re: Freedom of Information Request pursuant to the <em>Freedom of Information and Protection of Privacy Act</em>, RSBC 1996, c. 165, s. 4
+  </div>
+
+  <div class="salutation">Dear FOI Coordinator,</div>
+
+  <div class="body-text">
+    <p>I am writing to request access to records held by the City of Vancouver pursuant to section 4 of the <em>Freedom of Information and Protection of Privacy Act</em> (FIPPA), RSBC 1996, c. 165. This right of access extends to all records in the custody or under the control of the City, subject only to the limited and specific exceptions set out in the Act.</p>
+
+    <p>I request copies of the following records:</p>
+
+    <ol class="records-list">
+      <li>All internal correspondence, memoranda, briefing notes, and emails between the Director of Planning and any member of City Council regarding the Block 14 rezoning application (File No. RZ-2024-0087), including attachments, for the period of January 1, 2024 to the date of this request.</li>
+      <li>All records of meetings, including agendas, minutes, attendance lists, and handwritten or electronic notes, between any City staff member and representatives of Greenway Developments Inc., Pinnacle Urban Corp., or Bridgewood Holdings Ltd. regarding properties within the Block 14 area, for the period of January 1, 2023 to the date of this request.</li>
+      <li>All traffic studies, traffic impact assessments, preliminary traffic reviews, and related consultant reports commissioned by or submitted to the City in connection with the Block 14 rezoning application, including any draft versions, reviewer comments, or peer review correspondence.</li>
+    </ol>
+
+    <p class="section-space">I request that responsive records be provided in electronic format (PDF) where available. Where records exist only in paper form, photocopies are acceptable.</p>
+
+    <p>I request a fee waiver pursuant to section 75(5)(a) of the Act on the grounds that this request relates to a matter of public interest, specifically the adequacy of public notification and environmental review processes for a significant rezoning affecting an established residential neighbourhood. The records sought will inform public participation in an active planning process and contribute to accountability in municipal decision-making.</p>
+
+    <p>I note that section 7 of the Act requires a response within 30 days of receiving this request. If the City requires an extension of time under section 10, I request written notice specifying the reason for the extension and the date by which a response will be provided.</p>
+
+    <p>If any records or portions of records are withheld, I request that the City identify the specific exception relied upon for each record withheld, as required by section 8. I am aware of my right under section 52 to request a review by the Office of the Information and Privacy Commissioner if access is refused in whole or in part.</p>
+
+    <p>Thank you for your attention to this request. I look forward to your response within the statutory timeline.</p>
+  </div>
+
+  <div class="closing">
+    Yours sincerely,
+  </div>
+
+  <div class="signature-line">
+    <span class="placeholder">[YOUR NAME]</span><br>
+    <span class="placeholder">[YOUR ADDRESS]</span>
+  </div>
+
+  <div class="footer-wordmark">THE REPUBLIC</div>
+
+</div>
+
+</body>
+</html>

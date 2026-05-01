@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { FileText } from 'lucide-react'
 import { MATERIAL_TYPE_LABELS, MATERIAL_TYPE_DESCRIPTIONS } from '@/lib/campaign/schemas'
 import { MediaSpecGenerator } from './media-spec-generator'
 import { ReasoningCard } from './reasoning-card'
 import { OutcomeTracker } from './outcome-tracker'
+import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 
 interface CampaignPanelProps {
   investigationId: string
@@ -23,10 +25,18 @@ interface SavedMaterial {
 
 const MATERIAL_TYPES = Object.keys(MATERIAL_TYPE_LABELS) as Array<keyof typeof MATERIAL_TYPE_LABELS>
 
+interface FiledAction {
+  id: string
+  actionType: string
+  status: string
+  title: string
+}
+
 export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _j }: CampaignPanelProps) {
   const [materials, setMaterials] = useState<SavedMaterial[]>([])
   const [activeMaterialType, setActiveMaterialType] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [filedActions, setFiledActions] = useState<FiledAction[]>([])
   const initStarted = useRef(false)
 
   // Initialize campaign (POST) and fetch existing materials (GET)
@@ -39,9 +49,13 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
         // Fire-and-forget: mark campaignOpenedAt — ignore result
         fetch(`/api/investigate/${investigationId}/action`, { method: 'POST' }).catch(() => {})
 
-        const res = await fetch(`/api/investigate/${investigationId}/action`)
-        if (res.ok) {
-          const data = await res.json()
+        const [materialsRes, actionsRes] = await Promise.all([
+          fetch(`/api/investigate/${investigationId}/action`),
+          fetch('/api/lever/actions').catch(() => null),
+        ])
+
+        if (materialsRes.ok) {
+          const data = await materialsRes.json()
           const deduped = Object.values(
             (data.materials ?? []).reduce((acc: Record<string, any>, m: any) => {
               if (!acc[m.materialType] || m.createdAt > acc[m.materialType].createdAt) {
@@ -51,6 +65,15 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
             }, {})
           )
           setMaterials(deduped as SavedMaterial[])
+        }
+
+        // Fetch lever actions to show filed-status indicators
+        if (actionsRes?.ok) {
+          const actionsData = await actionsRes.json()
+          const related = (actionsData.actions ?? []).filter(
+            (a: any) => a.investigationId === investigationId
+          )
+          setFiledActions(related)
         }
       } catch {
         // Non-fatal — user can still generate
@@ -174,6 +197,62 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
         })}
       </div>
 
+      {/* Cross-arm: File as FIPPA request when fact_sheet or talking_points exist */}
+      {materials.some((m) => m.materialType === 'fact_sheet' || m.materialType === 'talking_points') && (
+        <div className="space-y-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
+            Civic Actions
+          </p>
+          <CrossArmActions
+            actions={[
+              {
+                label: 'File as FIPPA request',
+                href: `/lever?investigationId=${investigationId}&actionType=fippa_request`,
+                color: '#C85B5B',
+                icon: FileText,
+              },
+            ]}
+          />
+
+          {/* Filed-status indicators */}
+          {filedActions.length > 0 && (
+            <div className="space-y-1.5 mt-2">
+              {filedActions.map((action) => (
+                <div
+                  key={action.id}
+                  className="flex items-center gap-2 rounded-lg px-3 py-1.5"
+                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.025)' }}
+                >
+                  <span
+                    className="inline-block h-1.5 w-1.5 rounded-full"
+                    style={{
+                      backgroundColor:
+                        action.status === 'filed' ? '#89B4C8'
+                          : action.status === 'final' ? '#5BC88A'
+                          : '#C8A84B',
+                    }}
+                  />
+                  <span className="text-xs text-neutral-400 truncate flex-1">
+                    {action.title}
+                  </span>
+                  <span
+                    className="text-[9px] font-semibold uppercase tracking-wider"
+                    style={{
+                      color:
+                        action.status === 'filed' ? '#89B4C8'
+                          : action.status === 'final' ? '#5BC88A'
+                          : '#C8A84B',
+                    }}
+                  >
+                    {action.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Loading skeleton */}
       {loading && (
         <div className="space-y-2">
@@ -191,6 +270,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
           {materials.map((material) => (
             <ReasoningCard
               key={material.id}
+              materialId={material.id}
               materialType={material.materialType}
               content={material.content}
               reasoning={material.reasoning}

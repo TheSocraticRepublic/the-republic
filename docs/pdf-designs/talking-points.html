@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talking Points — The Republic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page {
+    size: letter;
+    margin: 1in;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    font-size: 11pt;
+    line-height: 1.55;
+    color: #1c1917;
+    background: #fafaf9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 1in 1in 1in;
+  }
+
+  /* Header strip */
+  .header-strip {
+    background: rgba(200, 91, 91, 0.06);
+    border-left: 4px solid #C85B5B;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .header-strip .context {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 13pt;
+    color: #1c1917;
+  }
+
+  .header-strip .meta {
+    font-size: 9.5pt;
+    color: #78716c;
+    font-weight: 500;
+    text-align: right;
+  }
+
+  .header-strip .meta span {
+    display: block;
+  }
+
+  /* Wordmark */
+  .wordmark {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 9pt;
+    letter-spacing: 0.2em;
+    color: #d6d3d1;
+    margin-bottom: 20px;
+  }
+
+  /* The Ask */
+  .the-ask {
+    margin-bottom: 28px;
+    padding: 18px 22px;
+    border: 2px solid #C85B5B;
+    border-radius: 4px;
+  }
+
+  .the-ask-label {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 10pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #C85B5B;
+    margin-bottom: 6px;
+  }
+
+  .the-ask-text {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 14pt;
+    line-height: 1.35;
+    color: #1c1917;
+  }
+
+  /* Section headers */
+  .section-header {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 10pt;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #78716c;
+    margin-bottom: 14px;
+    margin-top: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e7e5e4;
+  }
+
+  /* Talking points */
+  .talking-points {
+    list-style: none;
+    counter-reset: point;
+    margin-bottom: 32px;
+  }
+
+  .talking-points li {
+    counter-increment: point;
+    margin-bottom: 20px;
+    padding-left: 36px;
+    position: relative;
+  }
+
+  .talking-points li::before {
+    content: counter(point);
+    position: absolute;
+    left: 0;
+    top: -1px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 18pt;
+    color: #C85B5B;
+    line-height: 1;
+  }
+
+  .talking-points .claim {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 12pt;
+    line-height: 1.35;
+    color: #1c1917;
+    margin-bottom: 5px;
+  }
+
+  .talking-points .evidence {
+    font-size: 10.5pt;
+    color: #44403c;
+    line-height: 1.55;
+    padding-left: 12px;
+    border-left: 2px solid #e7e5e4;
+  }
+
+  .talking-points .source {
+    color: #78716c;
+    font-size: 8.5pt;
+    font-style: italic;
+  }
+
+  /* Pushback section */
+  .pushback-section {
+    margin-bottom: 28px;
+  }
+
+  .pushback-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid #e7e5e4;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .pushback-col-header {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 9pt;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    border-bottom: 1px solid #e7e5e4;
+  }
+
+  .pushback-col-header.theyll-say {
+    background: #f5f5f4;
+    color: #78716c;
+    font-style: italic;
+    border-right: 1px solid #e7e5e4;
+  }
+
+  .pushback-col-header.your-response {
+    background: rgba(200, 91, 91, 0.04);
+    color: #C85B5B;
+  }
+
+  .pushback-row {
+    display: contents;
+  }
+
+  .pushback-cell {
+    padding: 14px 16px;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    border-bottom: 1px solid #e7e5e4;
+  }
+
+  .pushback-cell:last-child,
+  .pushback-row:last-child .pushback-cell {
+    border-bottom: none;
+  }
+
+  .pushback-cell.theyll-say {
+    background: #f5f5f4;
+    font-style: italic;
+    color: #57534e;
+    border-right: 1px solid #e7e5e4;
+  }
+
+  .pushback-cell.your-response {
+    background: rgba(200, 91, 91, 0.02);
+    color: #1c1917;
+    font-weight: 500;
+  }
+
+  .pushback-row:not(:last-child) .pushback-cell {
+    border-bottom: 1px solid #e7e5e4;
+  }
+
+  /* Sources */
+  .sources {
+    border-top: 1px solid #e7e5e4;
+    padding-top: 12px;
+    margin-top: 20px;
+  }
+
+  .sources-header {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 8pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #78716c;
+    margin-bottom: 6px;
+  }
+
+  .sources ol {
+    list-style: decimal;
+    padding-left: 16px;
+    font-size: 8pt;
+    color: #78716c;
+    line-height: 1.6;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 0.5px solid #e7e5e4;
+    display: flex;
+    justify-content: space-between;
+    font-size: 7.5pt;
+    color: #a8a29e;
+  }
+
+  /* Notes space indicator */
+  .notes-space {
+    margin-top: 24px;
+    padding-top: 14px;
+    border-top: 1px dashed #d6d3d1;
+  }
+
+  .notes-label {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 8pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #d6d3d1;
+  }
+
+  /* Print button */
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: #1c1917;
+    color: #fafaf9;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 100;
+  }
+
+  .print-btn:hover { background: #44403c; }
+
+  @media print {
+    .print-btn { display: none; }
+    body { background: white; }
+    .page { padding: 0; max-width: none; }
+    .notes-space { min-height: 120px; }
+  }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+
+<div class="page">
+  <div class="wordmark">THE REPUBLIC</div>
+
+  <div class="header-strip">
+    <div class="context">City Council — Rezoning Hearing — Block 14</div>
+    <div class="meta">
+      <span>May 12, 2026</span>
+      <span>Council Chambers, 7:00 PM</span>
+    </div>
+  </div>
+
+  <div class="the-ask">
+    <div class="the-ask-label">The Ask</div>
+    <div class="the-ask-text">Defer the Block 14 rezoning vote until the traffic impact study is completed and made available for public review.</div>
+  </div>
+
+  <div class="section-header">Talking Points</div>
+
+  <ol class="talking-points">
+    <li>
+      <div class="claim">The traffic impact study was required by Council's own motion and has not been delivered.</div>
+      <div class="evidence">On November 18, 2024, Council passed Motion 2024-RC-112 requiring a traffic impact assessment before any rezoning of Block 14 could proceed. As of April 2026, the study has not been completed or made public. Proceeding without it contradicts Council's own condition of approval. <span class="source">Source: Council Minutes, Nov. 18, 2024, Motion 2024-RC-112 [1]</span></div>
+    </li>
+    <li>
+      <div class="claim">The proposed density increase will generate 1,400 additional daily vehicle trips on roads already at 94% capacity.</div>
+      <div class="evidence">The applicant's own preliminary traffic memo estimates 1,400 new daily trips. The Ministry of Transportation's 2024 corridor assessment rated the adjacent section of Highway 7 at 94% capacity during evening peak. Adding this volume without mitigation infrastructure risks Level of Service F conditions. <span class="source">Source: Greenway Developments Traffic Memo, Aug. 2025 [2]; MoTI Corridor Assessment 2024 [3]</span></div>
+    </li>
+    <li>
+      <div class="claim">Comparable rezonings in adjacent municipalities required completed impact studies before public hearing.</div>
+      <div class="evidence">Both the District of Lakeview (Bylaw 5501, Block 7, 2023) and the City of Ridgemont (Bylaw 2023-041, Sector 12, 2024) required completed traffic and environmental impact studies as conditions precedent to scheduling a public hearing. Maplewood's process for Block 14 falls below the procedural standard set by neighbouring jurisdictions. <span class="source">Source: District of Lakeview Council Minutes, Mar. 2023 [4]; City of Ridgemont staff report, Jan. 2024 [5]</span></div>
+    </li>
+  </ol>
+
+  <div class="section-header">Anticipated Pushback</div>
+
+  <div class="pushback-section">
+    <div class="pushback-grid">
+      <div class="pushback-col-header theyll-say">What they'll say</div>
+      <div class="pushback-col-header your-response">Your response</div>
+
+      <div class="pushback-row">
+        <div class="pushback-cell theyll-say">"The traffic study is underway. We can approve in principle and finalize the study before building permits are issued."</div>
+        <div class="pushback-cell your-response">Motion 2024-RC-112 requires the study before rezoning, not before building permits. Approval in principle creates an expectation of approval that makes future refusal politically and legally difficult. The study needs to precede the decision, not follow it.</div>
+      </div>
+
+      <div class="pushback-row">
+        <div class="pushback-cell theyll-say">"We've been working on this for two years. Further delays cost the applicant money and slow down housing supply."</div>
+        <div class="pushback-cell your-response">The delay is caused by the applicant's failure to deliver the study that Council required. The community should not bear the risk of an uninformed approval because the applicant missed a deliverable. Due process is not a cost to be minimized.</div>
+      </div>
+
+      <div class="pushback-row">
+        <div class="pushback-cell theyll-say">"The preliminary traffic memo shows impacts are manageable."</div>
+        <div class="pushback-cell your-response">A preliminary memo from the applicant's own consultant is not a traffic impact study. It was not peer-reviewed, does not model peak-hour conditions at the Highway 7 interchange, and omits cumulative impacts from the three other developments approved in 2024. Council required a study, not a memo.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sources">
+    <div class="sources-header">Sources</div>
+    <ol>
+      <li>City of Maplewood, Council Minutes, November 18, 2024. Motion 2024-RC-112.</li>
+      <li>Greenway Developments Inc., "Block 14 Preliminary Traffic Review," August 2025 (submitted as part of Rezoning Application RZ-2024-0087).</li>
+      <li>BC Ministry of Transportation and Infrastructure, Highway 7 Corridor Assessment, 2024.</li>
+      <li>District of Lakeview, Council Minutes, March 14, 2023. Bylaw 5501, Block 7 Rezoning.</li>
+      <li>City of Ridgemont, Planning Department Staff Report, January 22, 2024. Bylaw 2023-041.</li>
+    </ol>
+  </div>
+
+  <div class="notes-space">
+    <div class="notes-label">Notes</div>
+  </div>
+
+  <div class="footer">
+    <span>Generated from The Republic — therepublic.ca</span>
+    <span>April 29, 2026</span>
+  </div>
+</div>
+
+</body>
+</html>

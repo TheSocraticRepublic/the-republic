@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useRouter } from 'next/navigation'
-import { Plus, X, ChevronDown } from 'lucide-react'
+import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react'
 import { clsx } from 'clsx'
 import { BC_PUBLIC_BODIES } from '@/lib/lever/public-bodies'
 import { leverActionTypeEnum } from '@/lib/db/schema'
+import type { PublicBody } from '@/lib/jurisdictions/types'
 
 interface Document {
   id: string
@@ -17,6 +18,12 @@ interface Document {
 interface Session {
   id: string
   title: string
+}
+
+interface ExistingAction {
+  id: string
+  actionType: string
+  investigationId?: string | null
 }
 
 // Derived from the schema enum so TypeScript stays in sync when new types are added.
@@ -39,35 +46,106 @@ const DESCRIPTION_PLACEHOLDERS: Partial<Record<ActionType, string>> = {
 interface NewActionDialogProps {
   initialDocumentId?: string
   initialSessionId?: string
+  initialInvestigationId?: string
+  initialActionType?: string
 }
 
-export function NewActionDialog({ initialDocumentId, initialSessionId }: NewActionDialogProps = {}) {
-  const [open, setOpen] = useState(!!(initialDocumentId || initialSessionId))
-  const [actionType, setActionType] = useState<ActionType>('fippa_request')
+export function NewActionDialog({
+  initialDocumentId,
+  initialSessionId,
+  initialInvestigationId,
+  initialActionType,
+}: NewActionDialogProps = {}) {
+  const [open, setOpen] = useState(!!(initialDocumentId || initialSessionId || initialInvestigationId))
+  const [actionType, setActionType] = useState<ActionType>(
+    (initialActionType as ActionType) || 'fippa_request'
+  )
   const [publicBodyName, setPublicBodyName] = useState('')
   const [selectedDocId, setSelectedDocId] = useState(initialDocumentId ?? '')
   const [selectedSessionId, setSelectedSessionId] = useState(initialSessionId ?? '')
+  const [investigationId] = useState(initialInvestigationId ?? '')
   const [description, setDescription] = useState('')
   const [documents, setDocuments] = useState<Document[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
+  const [publicBodies, setPublicBodies] = useState<PublicBody[]>(BC_PUBLIC_BODIES)
+  const [jurisdictionLabel, setJurisdictionLabel] = useState('BC')
   const [loading, setLoading] = useState(false)
   const [fetchingContext, setFetchingContext] = useState(false)
+  const [dupWarning, setDupWarning] = useState(false)
   const router = useRouter()
 
-  // Fetch documents and sessions when dialog opens
+  // Fetch documents, sessions, and jurisdiction-aware public bodies when dialog opens
   useEffect(() => {
     if (!open) return
     setFetchingContext(true)
 
-    Promise.all([
+    const promises: Promise<any>[] = [
       fetch('/api/oracle/documents').then((r) => r.json()).catch(() => ({ documents: [] })),
       fetch('/api/gadfly/session').then((r) => r.json()).catch(() => ({ sessions: [] })),
-    ]).then(([docsData, sessionsData]) => {
+    ]
+
+    // If opened from investigation context, fetch investigation to detect jurisdiction
+    if (investigationId) {
+      promises.push(
+        fetch(`/api/investigate/${investigationId}`)
+          .then((r) => r.ok ? r.json() : null)
+          .catch(() => null)
+      )
+      // Check for existing FIPPA requests on this investigation
+      promises.push(
+        fetch('/api/lever/actions')
+          .then((r) => r.ok ? r.json() : { actions: [] })
+          .catch(() => ({ actions: [] }))
+      )
+    }
+
+    Promise.all(promises).then(async ([docsData, sessionsData, investigationData, actionsData]) => {
       const ready = (docsData.documents ?? []).filter((d: Document) => d.status === 'ready')
       setDocuments(ready)
       setSessions(sessionsData.sessions ?? [])
+
+      // Resolve jurisdiction from investigation's jurisdictionName
+      if (investigationData?.investigation) {
+        const inv = investigationData.investigation
+        const jName = (inv.jurisdictionName ?? '').toLowerCase()
+
+        // Map province strings from jurisdictionName to module keys
+        let resolvedBodies: PublicBody[] = BC_PUBLIC_BODIES
+        let label = 'BC'
+
+        if (jName.includes('british columbia')) {
+          // Already defaults to BC
+        } else if (jName.includes('alberta')) {
+          try {
+            const abMod = await import('@/lib/jurisdictions/ab/public-bodies')
+            resolvedBodies = abMod.abPublicBodies
+            label = 'AB'
+          } catch { /* fall through to BC */ }
+        } else if (jName.includes('ontario')) {
+          try {
+            const onMod = await import('@/lib/jurisdictions/on/public-bodies')
+            resolvedBodies = onMod.onPublicBodies
+            label = 'ON'
+          } catch { /* fall through to BC */ }
+        }
+
+        setPublicBodies(resolvedBodies)
+        setJurisdictionLabel(label)
+      }
+
+      // Check for duplicate FIPPA on this investigation
+      if (actionsData?.actions && investigationId) {
+        const existing = (actionsData.actions as ExistingAction[]).filter(
+          (a) => a.actionType === 'fippa_request' && a.investigationId === investigationId
+        )
+        // We can only check actions that have investigationId set - for now,
+        // show warning if any fippa_request exists and we came from an investigation
+        if (existing.length > 0) {
+          setDupWarning(true)
+        }
+      }
     }).finally(() => setFetchingContext(false))
-  }, [open])
+  }, [open, investigationId])
 
   const handleCreate = useCallback(async () => {
     if (!description.trim()) return
@@ -81,6 +159,7 @@ export function NewActionDialog({ initialDocumentId, initialSessionId }: NewActi
           publicBodyName: actionType === 'fippa_request' && publicBodyName ? publicBodyName : undefined,
           documentId: selectedDocId || undefined,
           sessionId: selectedSessionId || undefined,
+          investigationId: investigationId || undefined,
           description: description.trim(),
         }),
       })
@@ -93,18 +172,19 @@ export function NewActionDialog({ initialDocumentId, initialSessionId }: NewActi
     } finally {
       setLoading(false)
     }
-  }, [actionType, publicBodyName, selectedDocId, selectedSessionId, description, router])
+  }, [actionType, publicBodyName, selectedDocId, selectedSessionId, investigationId, description, router])
 
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v)
     if (!v) {
-      setActionType('fippa_request')
+      setActionType((initialActionType as ActionType) || 'fippa_request')
       setPublicBodyName('')
       setSelectedDocId('')
       setSelectedSessionId('')
       setDescription('')
+      setDupWarning(false)
     }
-  }, [])
+  }, [initialActionType])
 
   // When pre-filled from cross-arm nav, trigger document/session fetch on mount
   // The existing useEffect already handles this when open=true
@@ -173,7 +253,7 @@ export function NewActionDialog({ initialDocumentId, initialSessionId }: NewActi
             {actionType === 'fippa_request' && (
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-neutral-400">
-                  Public body <span className="text-neutral-600">(BC)</span>
+                  Public body <span className="text-neutral-600">({jurisdictionLabel})</span>
                 </label>
                 <div className="relative">
                   <select
@@ -182,8 +262,8 @@ export function NewActionDialog({ initialDocumentId, initialSessionId }: NewActi
                     className="w-full appearance-none rounded-lg border border-white/[0.1] bg-black/60 px-3 py-2 pr-8 text-sm text-neutral-200 outline-none focus:border-[#C85B5B]/40 focus:ring-0"
                   >
                     <option value="">Select a public body...</option>
-                    {BC_PUBLIC_BODIES.map((pb) => (
-                      <option key={pb.jurisdiction} value={pb.name}>
+                    {publicBodies.map((pb) => (
+                      <option key={`${pb.jurisdiction}-${pb.name}`} value={pb.name}>
                         {pb.name}
                       </option>
                     ))}
@@ -194,6 +274,22 @@ export function NewActionDialog({ initialDocumentId, initialSessionId }: NewActi
                     className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
                   />
                 </div>
+              </div>
+            )}
+
+            {/* Duplicate FIPPA warning */}
+            {dupWarning && actionType === 'fippa_request' && (
+              <div
+                className="flex items-start gap-2.5 rounded-lg border px-3 py-2.5"
+                style={{
+                  backgroundColor: 'rgba(200, 168, 75, 0.06)',
+                  borderColor: 'rgba(200, 168, 75, 0.2)',
+                }}
+              >
+                <AlertTriangle size={13} strokeWidth={2} className="mt-0.5 flex-shrink-0" style={{ color: '#C8A84B' }} />
+                <p className="text-xs leading-relaxed" style={{ color: '#C8A84B' }}>
+                  You already have a FIPPA request for this investigation. Continue anyway?
+                </p>
               </div>
             )}
 
