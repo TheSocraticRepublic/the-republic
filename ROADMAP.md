@@ -1,7 +1,7 @@
 ---
 status: current
-current: Campaign Export + Action Surface Hardening
-next: Razor audit fixes (parliament sync session scoping, admin guard)
+current: Production deployment + first real civic outcomes
+next: null
 testing: null
 pinned: true
 shipped:
