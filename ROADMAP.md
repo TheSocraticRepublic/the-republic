@@ -1,10 +1,12 @@
 ---
 status: current
-current: Ontario + Alberta jurisdiction verification
-next: Campaign Export + Action Surface Hardening
+current: Campaign Export + Action Surface Hardening
+next: Razor audit fixes (parliament sync session scoping, admin guard)
 testing: null
 pinned: true
 shipped:
+  - date: 2026-05-01
+    item: "Campaign Export CE-A–CE-F — outcome tracking (Illich loop), vote tracker→investigation bridge (postal code→MP→relevant votes→letter), multi-jurisdiction lever (BC/ON/AB), cross-arm Campaign↔Lever integration, action status workflow (draft→final→filed + credentials), Markdown/HTML exports (6 campaign types + 3 lever types + social copy), PDF export pipeline (@react-pdf/renderer, 7 templates: fact sheet, talking points, timeline, comparison, FIPPA request, public comment, policy brief), 42 files, ~9,470 lines"
   - date: 2026-04-29
     item: "ON/AB jurisdiction modules verified — FOI citations corrected (ON s.10(1), AB 30 calendar days), public body addresses verified, defunct URLs replaced, verified: true"
   - date: 2026-04-29

@@ -10,6 +10,7 @@ An open-source civic AI tool that makes institutional power legible to ordinary 
 - Drizzle ORM + PostgreSQL (Supabase) with pgvector for embeddings
 - Claude SDK + Vercel AI SDK for streaming
 - Tailwind CSS 4, Radix UI
+- @react-pdf/renderer for server-side PDF generation
 - Upstash Redis for rate limiting
 - Netlify deployment
 
@@ -23,23 +24,35 @@ src/
       gadfly/        # Socratic inquiry sessions
       lever/         # Action generation (FOI, comments, briefs)
       mirror/        # Cross-jurisdiction comparison
+      votes/         # Vote tracker (MP lookup, voting records, letters)
+      investigate/   # Investigation hub (briefing, lens, campaign)
     (auth)/login/    # Magic code auth
     api/             # API routes per arm
+      campaign/      # Campaign material export (PDF, print)
+      investigate/   # Investigation CRUD, outcomes, media, votes
+      lever/         # Action CRUD, generation, export (txt/md/pdf)
+      parliament/    # MP data, votes, sync, letters
   components/
     layout/          # App shell, sidebar, nav
     oracle/          # Document cards, analysis panels
     gadfly/          # Socratic thread, insight tracker
-    lever/           # FIPPA builder, comment editor
+    lever/           # FIPPA builder, comment editor, action viewer
     mirror/          # Comparison cards, outcome timelines
-    ui/              # Shared primitives
+    campaign/        # Campaign panel, outcome tracker, reasoning card
+    votes/           # MP profiles, vote lists, letter generator
+    investigation/   # Concern form, investigation page
+    ui/              # Shared primitives (cross-arm actions)
   lib/
     ai/prompts/      # System prompts per arm (THE critical files)
     ai/              # RAG, embeddings, cache, briefing
     auth/            # JWT, magic codes
+    campaign/        # Export utilities (Markdown, print HTML, schemas)
     db/              # Drizzle schema + singleton
     documents/       # Parser, chunker, classifier, cross-ref
-    lever/           # FIPPA, public comment, policy brief, PDF
+    lever/           # FIPPA, public comment, policy brief
     mirror/          # Jurisdiction matching, outcome evaluation
+    parliament/      # OpenParliament API client, Represent API, sync
+    pdf/             # @react-pdf/renderer templates, primitives, fonts
   types/
 ```
 
@@ -59,8 +72,9 @@ src/
 - Dark mode always
 - Arm accents: Oracle #89B4C8, Gadfly #C8A84B, Lever #C85B5B, Mirror #5BC88A
 - Apple-esque: generous whitespace, subtle shadows, rounded corners
-- Typography: Plus Jakarta Sans (display), Inter (body), SF Mono (data)
+- Typography: Plus Jakarta Sans (display), Inter (body), Source Serif 4 (legal/FOI docs)
 - Component language: bg-black/60 backdrop-blur-md border border-white/10 rounded-xl
+- PDF exports: light mode (#fafaf9 bg), print-optimized, Plus Jakarta Sans + Inter + Source Serif 4
 
 ## Critical Rules
 
