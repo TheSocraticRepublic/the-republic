@@ -141,8 +141,8 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
     <div
       className="rounded-2xl border px-6 py-6 space-y-6"
       style={{
-        backgroundColor: 'rgba(245, 243, 240, 0.035)',
-        borderColor: 'rgba(255, 255, 255, 0.07)',
+        backgroundColor: 'var(--surface-1)',
+        borderColor: 'var(--border)',
       }}
     >
       {/* Header */}
@@ -153,7 +153,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
         >
           How is it going?
         </p>
-        <p className="text-xs leading-relaxed text-neutral-500">
+        <p className="text-xs leading-relaxed text-text-muted">
           {materials.length > 0
             ? `You have generated ${materials.length} material${materials.length > 1 ? 's' : ''}. Let us know how they are being used.`
             : 'Track what happens after you act.'}
@@ -164,7 +164,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
       <div className="space-y-5">
         {/* FOI */}
         <div className="space-y-2">
-          <p className="text-sm" style={{ color: '#e2e0de' }}>
+          <p className="text-sm text-text-primary">
             Did you file the FOI request?
           </p>
           <div className="flex flex-wrap gap-2">
@@ -197,7 +197,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
 
         {/* Response */}
         <div className="space-y-2">
-          <p className="text-sm" style={{ color: '#e2e0de' }}>
+          <p className="text-sm text-text-primary">
             Has the public body responded?
           </p>
           <div className="flex flex-wrap gap-2">
@@ -230,7 +230,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
 
         {/* Council */}
         <div className="space-y-2">
-          <p className="text-sm" style={{ color: '#e2e0de' }}>
+          <p className="text-sm text-text-primary">
             Did you present at a council meeting?
           </p>
           <div className="flex flex-wrap gap-2">
@@ -279,13 +279,13 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
 
       {/* Previously recorded outcomes */}
       {loadingOutcomes ? (
-        <div className="flex items-center gap-2 text-xs text-neutral-600 py-2">
+        <div className="flex items-center gap-2 text-xs text-text-faint py-2">
           <Loader2 size={12} className="animate-spin" />
           Loading outcomes...
         </div>
       ) : outcomes.length > 0 ? (
         <div className="space-y-3 pt-2">
-          <div className="h-px w-full" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+          <div className="h-px w-full" style={{ backgroundColor: 'var(--border)' }} />
           <p
             className="text-[10px] font-semibold uppercase tracking-widest"
             style={{ color: 'rgba(200,91,91,0.6)' }}
@@ -298,20 +298,20 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
                 key={o.id}
                 className="rounded-xl border px-4 py-3"
                 style={{
-                  borderColor: 'rgba(255,255,255,0.06)',
-                  backgroundColor: 'rgba(255,255,255,0.015)',
+                  borderColor: 'var(--border)',
+                  backgroundColor: 'var(--surface-1)',
                 }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600 mb-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-1">
                       {OUTCOME_TYPE_LABELS[o.outcomeType] ?? o.outcomeType}
                     </p>
-                    <p className="text-xs text-neutral-300 leading-relaxed">
+                    <p className="text-xs text-text-secondary leading-relaxed">
                       {o.description}
                     </p>
                     {o.outcomeDate && (
-                      <p className="mt-1 text-[10px] text-neutral-600">
+                      <p className="mt-1 text-[10px] text-text-faint">
                         {o.outcomeDate}
                       </p>
                     )}
@@ -325,7 +325,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
                           className={
                             n <= o.satisfaction!
                               ? 'fill-[#C85B5B] text-[#C85B5B]'
-                              : 'text-neutral-700'
+                              : 'text-text-faint'
                           }
                         />
                       ))}
@@ -376,7 +376,7 @@ function OutcomeForm({
     >
       {/* Description */}
       <div className="space-y-1">
-        <label className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+        <label className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
           What happened?
         </label>
         <textarea
@@ -384,28 +384,28 @@ function OutcomeForm({
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder="Describe the outcome..."
           rows={3}
-          className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-[#C85B5B]/40 resize-none"
-          style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+          className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm text-text-primary placeholder-neutral-600 focus:outline-none focus:border-[#C85B5B]/40 resize-none"
+          style={{ borderColor: 'var(--border-strong)' }}
         />
       </div>
 
       {/* Date picker */}
       <div className="space-y-1">
-        <label className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+        <label className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
           Date (optional)
         </label>
         <input
           type="date"
           value={outcomeDate}
           onChange={(e) => onOutcomeDateChange(e.target.value)}
-          className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-[#C85B5B]/40 [color-scheme:dark]"
-          style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+          className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-[#C85B5B]/40 [color-scheme:light]"
+          style={{ borderColor: 'var(--border-strong)' }}
         />
       </div>
 
       {/* Satisfaction 1-5 stars */}
       <div className="space-y-1">
-        <label className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+        <label className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
           Satisfaction (optional)
         </label>
         <div className="flex gap-1">
@@ -421,7 +421,7 @@ function OutcomeForm({
                 className={
                   n <= satisfaction
                     ? 'fill-[#C85B5B] text-[#C85B5B]'
-                    : 'text-neutral-700 hover:text-neutral-500'
+                    : 'text-text-faint hover:text-text-muted'
                 }
               />
             </button>
@@ -447,7 +447,7 @@ function OutcomeForm({
       <div className="flex items-center gap-2 justify-end pt-1">
         <button
           onClick={onCancel}
-          className="text-[10px] text-neutral-600 hover:text-neutral-400 transition-colors px-3 py-1.5"
+          className="text-[10px] text-text-faint hover:text-text-secondary transition-colors px-3 py-1.5"
           type="button"
         >
           Cancel
@@ -491,15 +491,15 @@ function OutcomeButton({
   return (
     <button
       onClick={onClick}
-      className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
+      className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
       style={{
         backgroundColor: active
-          ? 'rgba(255,255,255,0.10)'
-          : 'rgba(255,255,255,0.04)',
-        color: active ? '#e2e0de' : '#71717a',
+          ? 'var(--surface-3)'
+          : 'var(--surface-1)',
+        color: active ? 'var(--text-primary)' : 'var(--text-muted)',
         border: active
-          ? '1px solid rgba(255,255,255,0.14)'
-          : '1px solid rgba(255,255,255,0.07)',
+          ? '1px solid var(--border-strong)'
+          : '1px solid var(--border)',
       }}
     >
       {label}

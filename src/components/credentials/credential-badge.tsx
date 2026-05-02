@@ -10,7 +10,7 @@ export function CredentialBadge({ effectiveWeight, size = 'md' }: CredentialBadg
 
   return (
     <span
-      className={`${textSize} font-medium px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.06] text-neutral-300`}
+      className={`${textSize} font-medium px-1.5 py-0.5 rounded bg-surface-3 border border-border text-text-secondary`}
       aria-label={`Civic weight: ${effectiveWeight}`}
     >
       {effectiveWeight}

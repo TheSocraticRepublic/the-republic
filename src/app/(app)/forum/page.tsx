@@ -92,23 +92,23 @@ export default async function ForumPage({
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1
-            className="text-xl font-bold tracking-tight text-neutral-100"
+            className="text-xl font-bold tracking-tight text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             Forum
             {total > 0 && (
-              <span className="ml-2.5 text-sm font-normal text-neutral-500">{total}</span>
+              <span className="ml-2.5 text-sm font-normal text-text-muted">{total}</span>
             )}
           </h1>
-          <p className="mt-0.5 text-xs text-neutral-500">Community discussions</p>
+          <p className="mt-0.5 text-xs text-text-muted">Community discussions</p>
         </div>
         <Link
           href="/forum/new"
           className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 hover:opacity-90"
           style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-            color: '#f4f4f5',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
+            backgroundColor: 'var(--surface-3)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-strong)',
           }}
         >
           <Plus size={13} strokeWidth={2} />
@@ -128,12 +128,12 @@ export default async function ForumPage({
       {/* Thread list */}
       <section>
         {threads.length === 0 ? (
-          <div className="rounded-xl border border-white/[0.06] bg-black/40 px-6 py-10 text-center">
-            <p className="text-sm text-neutral-500">No discussions yet. Be the first to start one.</p>
+          <div className="rounded-xl border border-border bg-surface-1 px-6 py-10 text-center">
+            <p className="text-sm text-text-muted">No discussions yet. Be the first to start one.</p>
             <p className="mt-2">
               <Link
                 href="/forum/new"
-                className="text-xs text-neutral-400 underline underline-offset-2 hover:text-neutral-200 transition-colors"
+                className="text-xs text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
               >
                 Start a discussion
               </Link>

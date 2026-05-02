@@ -81,7 +81,7 @@ export function UploadZone() {
           ? 'border-[#89B4C8]/60 bg-[#89B4C8]/[0.06]'
           : state === 'error'
           ? 'border-red-500/40 bg-red-500/[0.04]'
-          : 'border-white/10 bg-black/40 hover:border-white/20 hover:bg-black/60'
+          : 'border-border bg-surface-1 hover:border-border-strong hover:bg-surface-3'
       )}
       onDragOver={(e) => {
         e.preventDefault()
@@ -112,12 +112,12 @@ export function UploadZone() {
       {/* Text */}
       <div className="text-center">
         {isUploading ? (
-          <p className="text-sm text-neutral-300">{progress}</p>
+          <p className="text-sm text-text-secondary">{progress}</p>
         ) : state === 'error' ? (
           <>
             <p className="text-sm font-medium text-red-400">{error}</p>
             <button
-              className="mt-2 text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-300 transition-colors"
+              className="mt-2 text-xs text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
               onClick={() => {
                 setState('idle')
                 setError(null)
@@ -128,7 +128,7 @@ export function UploadZone() {
           </>
         ) : (
           <>
-            <p className="text-sm font-medium text-neutral-200">
+            <p className="text-sm font-medium text-text-primary">
               Drop a PDF here or{' '}
               <button
                 className="text-[#89B4C8] hover:underline underline-offset-2 transition-colors"
@@ -137,7 +137,7 @@ export function UploadZone() {
                 browse
               </button>
             </p>
-            <p className="mt-1 text-xs text-neutral-500">Government documents only. Max 10MB.</p>
+            <p className="mt-1 text-xs text-text-muted">Government documents only. Max 10MB.</p>
           </>
         )}
       </div>

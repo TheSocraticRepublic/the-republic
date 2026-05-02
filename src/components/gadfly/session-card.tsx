@@ -46,7 +46,7 @@ export function SessionCard({
   return (
     <Link
       href={`/gadfly/${id}`}
-      className="block rounded-xl border border-white/[0.08] bg-black/60 backdrop-blur-md p-4 transition-all duration-150 hover:border-white/[0.15] hover:bg-black/70"
+      className="block rounded-xl border border-border bg-surface-1 shadow-sm p-4 transition-all duration-150 hover:border-border-strong hover:bg-surface-3"
     >
       <div className="flex items-start gap-3">
         {/* Icon */}
@@ -63,7 +63,7 @@ export function SessionCard({
         {/* Main content */}
         <div className="flex-1 min-w-0">
           <p
-            className="truncate text-sm font-medium text-neutral-200 leading-snug"
+            className="truncate text-sm font-medium text-text-primary leading-snug"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {title}
@@ -86,7 +86,7 @@ export function SessionCard({
           </div>
 
           {/* Counts + date */}
-          <div className="mt-2.5 flex items-center gap-4 text-[11px] text-neutral-500">
+          <div className="mt-2.5 flex items-center gap-4 text-[11px] text-text-muted">
             <span>{questionCount} {questionCount === 1 ? 'question' : 'questions'}</span>
             {insightCount > 0 && (
               <span style={{ color: '#C8A84B' }}>

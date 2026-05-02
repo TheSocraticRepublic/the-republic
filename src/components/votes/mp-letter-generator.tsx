@@ -113,11 +113,11 @@ export function MpLetterGenerator({
     <div
       className="rounded-xl border px-5 py-5 space-y-4"
       style={{
-        borderColor: 'rgba(255,255,255,0.08)',
-        backgroundColor: 'rgba(255,255,255,0.02)',
+        borderColor: 'var(--border)',
+        backgroundColor: 'var(--surface-1)',
       }}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
         Write to {mpName}
       </p>
       <textarea
@@ -125,13 +125,13 @@ export function MpLetterGenerator({
         onChange={(e) => setConcern(e.target.value)}
         placeholder="What do you want to tell your MP about?"
         rows={4}
-        className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-neutral-500 resize-none"
-        style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+        className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm text-text-primary placeholder-text-faint focus:outline-none focus:border-neutral-500 resize-none"
+        style={{ borderColor: 'var(--border-strong)' }}
       />
       <div className="flex items-center gap-2 justify-end">
         <button
           onClick={() => setShowForm(false)}
-          className="text-[10px] text-neutral-600 hover:text-neutral-400 transition-colors px-3 py-1.5"
+          className="text-[10px] text-text-faint hover:text-text-secondary transition-colors px-3 py-1.5"
         >
           Cancel
         </button>

@@ -52,9 +52,9 @@ export default async function OracleDocumentPage({ params }: PageProps) {
       <div className="mb-8">
         <a
           href="/oracle"
-          className="mb-5 inline-flex items-center gap-1.5 text-xs text-neutral-500 transition-colors hover:text-neutral-300"
+          className="mb-5 inline-flex items-center gap-1.5 text-xs text-text-muted transition-colors hover:text-text-secondary"
         >
-          <span className="text-neutral-600">←</span>
+          <span className="text-text-faint">←</span>
           All documents
         </a>
 
@@ -71,12 +71,12 @@ export default async function OracleDocumentPage({ params }: PageProps) {
 
           <div className="flex-1 min-w-0">
             <h1
-              className="text-xl font-bold leading-snug tracking-tight text-neutral-100"
+              className="text-xl font-bold leading-snug tracking-tight text-text-primary"
               style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
             >
               {doc.title}
             </h1>
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-neutral-500">
+            <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-text-muted">
               <span>{formatDocType(doc.documentType)}</span>
               {doc.pageCount != null && (
                 <span>{doc.pageCount} {doc.pageCount === 1 ? 'page' : 'pages'}</span>
@@ -124,8 +124,8 @@ export default async function OracleDocumentPage({ params }: PageProps) {
           />
 
           {/* Cross-arm navigation */}
-          <div className="mt-6 border-t border-white/[0.06] pt-6">
-            <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-neutral-600">
+          <div className="mt-6 border-t border-border pt-6">
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-text-faint">
               Continue your inquiry
             </p>
             <CrossArmActions

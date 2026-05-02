@@ -65,10 +65,10 @@ export default async function BillDetailPage({ params }: PageProps) {
       <div
         className="rounded-xl border px-6 py-6"
         style={{
-          borderColor: 'rgba(255,255,255,0.08)',
+          borderColor: 'var(--border)',
           borderLeftWidth: '3px',
           borderLeftColor: '#D4764E',
-          backgroundColor: 'rgba(255,255,255,0.02)',
+          backgroundColor: 'var(--surface-1)',
         }}
       >
         <div className="flex items-center gap-2 mb-3">
@@ -78,7 +78,7 @@ export default async function BillDetailPage({ params }: PageProps) {
           >
             {bill.number}
           </span>
-          <span className="text-[10px] text-neutral-600">{bill.session}</span>
+          <span className="text-[10px] text-text-faint">{bill.session}</span>
           {bill.isLaw && (
             <span className="rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-400/10">
               Law
@@ -87,7 +87,7 @@ export default async function BillDetailPage({ params }: PageProps) {
         </div>
 
         <h1
-          className="text-base font-semibold text-neutral-100 leading-relaxed mb-4"
+          className="text-base font-semibold text-text-primary leading-relaxed mb-4"
           style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         >
           {bill.titleEn}
@@ -95,14 +95,14 @@ export default async function BillDetailPage({ params }: PageProps) {
 
         <div className="flex flex-wrap items-center gap-4 text-xs">
           {bill.introduced && (
-            <span className="text-neutral-500">Introduced {bill.introduced}</span>
+            <span className="text-text-muted">Introduced {bill.introduced}</span>
           )}
           {bill.sponsorName && (
             <span className="flex items-center gap-1.5">
-              <span className="text-neutral-600">Sponsor:</span>
+              <span className="text-text-faint">Sponsor:</span>
               <Link
                 href={`/votes/mp/${bill.sponsorMpId}`}
-                className="text-neutral-400 hover:text-neutral-200 underline underline-offset-2 transition-colors"
+                className="text-text-secondary hover:text-text-primary underline underline-offset-2 transition-colors"
               >
                 {bill.sponsorName}
               </Link>
@@ -110,7 +110,7 @@ export default async function BillDetailPage({ params }: PageProps) {
             </span>
           )}
           {bill.statusCode && (
-            <span className="text-neutral-600">{bill.statusCode}</span>
+            <span className="text-text-faint">{bill.statusCode}</span>
           )}
         </div>
 
@@ -119,7 +119,7 @@ export default async function BillDetailPage({ params }: PageProps) {
             href={bill.legisInfoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-block text-xs text-neutral-500 hover:text-neutral-300 underline underline-offset-2 transition-colors"
+            className="mt-3 inline-block text-xs text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
           >
             View on LEGISinfo
           </a>
@@ -137,7 +137,7 @@ export default async function BillDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-3 mb-6">
             <div
               className="h-px flex-1"
-              style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+              style={{ backgroundColor: 'var(--surface-3)' }}
             />
             <span
               className="text-[10px] font-semibold uppercase tracking-[0.12em]"
@@ -147,7 +147,7 @@ export default async function BillDetailPage({ params }: PageProps) {
             </span>
             <div
               className="h-px flex-1"
-              style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+              style={{ backgroundColor: 'var(--surface-3)' }}
             />
           </div>
 
@@ -156,17 +156,17 @@ export default async function BillDetailPage({ params }: PageProps) {
               <Link
                 key={vote.id}
                 href={`/votes/vote/${vote.id}`}
-                className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-white/[0.04] hover:border-white/[0.10]"
+                className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
                 style={{
-                  borderColor: 'rgba(255,255,255,0.06)',
-                  backgroundColor: 'rgba(255,255,255,0.015)',
+                  borderColor: 'var(--border)',
+                  backgroundColor: 'var(--surface-1)',
                 }}
               >
-                <p className="text-xs text-neutral-300 leading-snug mb-1.5">
+                <p className="text-xs text-text-secondary leading-snug mb-1.5">
                   {vote.descriptionEn}
                 </p>
                 <div className="flex items-center gap-3 text-[10px]">
-                  <span className="text-neutral-600">{vote.date}</span>
+                  <span className="text-text-faint">{vote.date}</span>
                   <span
                     style={{
                       color: vote.result === 'passed' ? '#4ade80' : '#ef4444',
@@ -174,7 +174,7 @@ export default async function BillDetailPage({ params }: PageProps) {
                   >
                     {vote.result}
                   </span>
-                  <span className="text-neutral-700">
+                  <span className="text-text-faint">
                     {vote.yeaTotal}Y / {vote.nayTotal}N
                   </span>
                 </div>

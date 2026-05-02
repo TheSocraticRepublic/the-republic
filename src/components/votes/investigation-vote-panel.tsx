@@ -51,11 +51,11 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
       <div
         className="rounded-xl border px-5 py-4 animate-pulse"
         style={{
-          borderColor: 'rgba(255,255,255,0.06)',
-          backgroundColor: 'rgba(255,255,255,0.015)',
+          borderColor: 'var(--border)',
+          backgroundColor: 'var(--surface-1)',
         }}
       >
-        <div className="h-4 w-40 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+        <div className="h-4 w-40 rounded" style={{ backgroundColor: 'var(--surface-3)' }} />
       </div>
     )
   }
@@ -65,24 +65,24 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+        <div className="h-px flex-1" style={{ backgroundColor: 'var(--surface-3)' }} />
         <span
           className="text-[10px] font-semibold uppercase tracking-[0.12em]"
           style={{ color: '#D4764E' }}
         >
           Your MP's Record
         </span>
-        <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+        <div className="h-px flex-1" style={{ backgroundColor: 'var(--surface-3)' }} />
       </div>
 
       {/* Compact MP card */}
       {mp && (
         <Link
           href={`/votes/mp/${mp.id}`}
-          className="group flex items-center gap-3 rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-white/[0.04]"
+          className="group flex items-center gap-3 rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3"
           style={{
-            borderColor: 'rgba(255,255,255,0.06)',
-            backgroundColor: 'rgba(255,255,255,0.015)',
+            borderColor: 'var(--border)',
+            backgroundColor: 'var(--surface-1)',
           }}
         >
           {mp.photoUrl ? (
@@ -90,16 +90,16 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
           ) : (
             <div
               className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold"
-              style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#525252' }}
+              style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-faint)' }}
             >
               {mp.name.charAt(0)}
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-sm font-medium text-neutral-200 truncate">{mp.name}</p>
+            <p className="text-sm font-medium text-text-primary truncate">{mp.name}</p>
             <div className="flex items-center gap-2">
               <PartyBadge party={mp.party} />
-              <span className="text-[10px] text-neutral-600">{mp.ridingName}</span>
+              <span className="text-[10px] text-text-faint">{mp.ridingName}</span>
             </div>
           </div>
         </Link>
@@ -112,23 +112,23 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
             <Link
               key={vote.voteId}
               href={`/votes/vote/${vote.voteId}`}
-              className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-white/[0.04]"
+              className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3"
               style={{
-                borderColor: 'rgba(255,255,255,0.06)',
-                backgroundColor: 'rgba(255,255,255,0.015)',
+                borderColor: 'var(--border)',
+                backgroundColor: 'var(--surface-1)',
               }}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-neutral-300 leading-snug line-clamp-2">
+                  <p className="text-xs text-text-secondary leading-snug line-clamp-2">
                     {vote.descriptionEn}
                   </p>
                   {vote.relevanceExplanation && (
-                    <p className="mt-1 text-[10px] text-neutral-500 italic">
+                    <p className="mt-1 text-[10px] text-text-muted italic">
                       {vote.relevanceExplanation}
                     </p>
                   )}
-                  <span className="mt-1 text-[10px] text-neutral-600">{vote.date}</span>
+                  <span className="mt-1 text-[10px] text-text-faint">{vote.date}</span>
                 </div>
                 {vote.mpBallot && <VoteBadge ballot={vote.mpBallot} size="md" />}
               </div>
@@ -138,7 +138,7 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
       )}
 
       {mp && votes.length === 0 && (
-        <p className="text-xs text-neutral-600 text-center py-2">
+        <p className="text-xs text-text-faint text-center py-2">
           No directly relevant votes found for this concern.
         </p>
       )}

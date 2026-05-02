@@ -145,7 +145,7 @@ export function GadflySheet({
           style={{
             width: 'min(680px, 90vw)',
             backgroundColor: '#0a0a0a',
-            borderLeft: '1px solid rgba(255,255,255,0.07)',
+            borderLeft: '1px solid var(--border)',
             transform: open ? 'translateX(0)' : 'translateX(100%)',
             visibility: open ? 'visible' : 'hidden',
             transition: 'transform 200ms ease-out, visibility 200ms ease-out',
@@ -154,7 +154,7 @@ export function GadflySheet({
           {/* Header */}
           <div
             className="flex flex-shrink-0 items-center justify-between border-b px-6 py-4"
-            style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+            style={{ borderColor: 'var(--border)' }}
           >
             <div className="flex items-center gap-3">
               <span
@@ -168,7 +168,7 @@ export function GadflySheet({
                 ?
               </span>
               <Dialog.Title
-                className="text-sm font-semibold text-neutral-200"
+                className="text-sm font-semibold text-text-primary"
                 style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
               >
                 Socratic Inquiry
@@ -176,7 +176,7 @@ export function GadflySheet({
             </div>
 
             <Dialog.Close
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-white/[0.05] hover:text-neutral-300"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary"
               aria-label="Close inquiry panel"
             >
               <svg
@@ -201,13 +201,13 @@ export function GadflySheet({
             {error ? (
               <div className="flex h-full items-center justify-center px-8">
                 <div className="text-center">
-                  <p className="text-sm text-neutral-400">{error}</p>
+                  <p className="text-sm text-text-secondary">{error}</p>
                   <button
                     onClick={() => {
                       setError(null)
                       setResolvedSessionId(null)
                     }}
-                    className="mt-4 text-xs text-neutral-500 underline hover:text-neutral-300"
+                    className="mt-4 text-xs text-text-muted underline hover:text-text-secondary"
                   >
                     Try again
                   </button>
@@ -220,7 +220,7 @@ export function GadflySheet({
                     className="h-2 w-2 rounded-full animate-pulse"
                     style={{ backgroundColor: '#C8A84B' }}
                   />
-                  <p className="text-xs text-neutral-600">
+                  <p className="text-xs text-text-faint">
                     {isCreating ? 'Starting inquiry' : 'Loading session'}
                   </p>
                 </div>

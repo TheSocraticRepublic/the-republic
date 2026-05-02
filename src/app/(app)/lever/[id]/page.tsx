@@ -47,7 +47,7 @@ export default async function LeverActionPage({ params }: PageProps) {
       <div className="mb-6 flex items-center gap-4">
         <Link
           href="/lever"
-          className="inline-flex items-center gap-1.5 text-xs text-neutral-500 transition-colors hover:text-neutral-300"
+          className="inline-flex items-center gap-1.5 text-xs text-text-muted transition-colors hover:text-text-secondary"
         >
           <ArrowLeft size={13} strokeWidth={2} />
           All actions
@@ -55,7 +55,7 @@ export default async function LeverActionPage({ params }: PageProps) {
         {action.investigationId && (
           <Link
             href={`/investigate/${action.investigationId}`}
-            className="inline-flex items-center gap-1.5 text-xs text-neutral-500 transition-colors hover:text-neutral-300"
+            className="inline-flex items-center gap-1.5 text-xs text-text-muted transition-colors hover:text-text-secondary"
           >
             <ExternalLink size={11} strokeWidth={2} />
             View investigation
@@ -76,12 +76,12 @@ export default async function LeverActionPage({ params }: PageProps) {
         </span>
         <div className="flex-1 min-w-0">
           <h1
-            className="text-lg font-bold tracking-tight text-neutral-100 leading-snug"
+            className="text-lg font-bold tracking-tight text-text-primary leading-snug"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {action.title}
           </h1>
-          <p className="mt-0.5 text-xs text-neutral-500">{typeLabel}</p>
+          <p className="mt-0.5 text-xs text-text-muted">{typeLabel}</p>
         </div>
       </div>
 

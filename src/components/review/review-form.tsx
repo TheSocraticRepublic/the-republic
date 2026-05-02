@@ -81,19 +81,19 @@ export function ReviewForm({ investigationId, onSubmitted }: ReviewFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-xl border border-white/10 bg-black/60 p-6 backdrop-blur-md"
+      className="rounded-xl border border-border bg-surface-1 shadow-sm p-6 backdrop-blur-md"
     >
-      <p className="mb-5 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+      <p className="mb-5 text-xs font-semibold uppercase tracking-widest text-text-muted">
         Write a review
       </p>
 
       <div className="space-y-6">
         {REVIEW_DIMENSIONS.map((dim) => (
           <div key={dim}>
-            <p className="mb-0.5 text-sm font-bold text-neutral-200">
+            <p className="mb-0.5 text-sm font-bold text-text-primary">
               {DIMENSION_LABELS[dim]}
             </p>
-            <p className="mb-2 text-xs text-neutral-500">
+            <p className="mb-2 text-xs text-text-muted">
               {DIMENSION_DESCRIPTIONS[dim]}
             </p>
             <div className="flex gap-1.5">
@@ -108,8 +108,8 @@ export function ReviewForm({ investigationId, onSubmitted }: ReviewFormProps) {
                     className={clsx(
                       'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors',
                       selected
-                        ? 'bg-white/[0.12] border border-white/25 text-neutral-100'
-                        : 'bg-transparent border border-white/[0.08] text-neutral-500 hover:bg-white/[0.06]'
+                        ? 'bg-surface-3 border border-border-strong text-text-primary'
+                        : 'bg-transparent border border-border text-text-muted hover:bg-surface-3'
                     )}
                   >
                     {score}
@@ -125,12 +125,12 @@ export function ReviewForm({ investigationId, onSubmitted }: ReviewFormProps) {
 
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <p className="text-sm font-bold text-neutral-200">Summary</p>
-            <span className="text-xs text-neutral-600">
+            <p className="text-sm font-bold text-text-primary">Summary</p>
+            <span className="text-xs text-text-faint">
               {summary.length} / {REVIEW_SUMMARY_MAX}
             </span>
           </div>
-          <p className="mb-2 text-xs text-neutral-500">
+          <p className="mb-2 text-xs text-text-muted">
             Optional. Share your overall assessment or any context for your scores.
           </p>
           <textarea
@@ -139,7 +139,7 @@ export function ReviewForm({ investigationId, onSubmitted }: ReviewFormProps) {
             maxLength={REVIEW_SUMMARY_MAX}
             rows={4}
             placeholder="Your assessment..."
-            className="w-full rounded-lg px-3 py-2 text-sm text-neutral-200 bg-white/[0.04] border border-white/[0.10] placeholder-neutral-600 resize-none focus:outline-none focus:border-white/[0.20] transition-colors"
+            className="w-full rounded-lg px-3 py-2 text-sm text-text-primary bg-surface-1 border border-border-strong placeholder-text-faint resize-none focus:outline-none focus:border-border-strong transition-colors"
           />
         </div>
       </div>
@@ -152,16 +152,16 @@ export function ReviewForm({ investigationId, onSubmitted }: ReviewFormProps) {
           disabled={!allScored || loading}
           className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
           style={{
-            backgroundColor: allScored ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            color: allScored ? '#f4f4f5' : '#52525b',
+            backgroundColor: allScored ? 'var(--surface-3)' : 'var(--surface-1)',
+            border: '1px solid var(--border-strong)',
+            color: allScored ? 'var(--text-primary)' : 'var(--text-muted)',
             cursor: allScored && !loading ? 'pointer' : 'not-allowed',
           }}
         >
           {loading ? 'Submitting...' : 'Submit review'}
         </button>
         {!allScored && (
-          <span className="text-xs text-neutral-600">Score all five dimensions to submit</span>
+          <span className="text-xs text-text-faint">Score all five dimensions to submit</span>
         )}
       </div>
     </form>

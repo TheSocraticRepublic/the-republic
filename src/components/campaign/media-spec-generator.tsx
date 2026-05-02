@@ -85,12 +85,12 @@ export function MediaSpecGenerator({
         >
           Generate
         </p>
-        <p className="text-sm font-medium" style={{ color: '#e2e0de' }}>{label}</p>
+        <p className="text-sm font-medium text-text-primary">{label}</p>
       </div>
 
       {/* Audience selector */}
       <div className="space-y-2">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
           Target Audience
         </p>
         <div className="flex flex-wrap gap-2">
@@ -98,15 +98,15 @@ export function MediaSpecGenerator({
             <button
               key={a}
               onClick={() => setAudience(a)}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
+              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
               style={{
                 backgroundColor: audience === a
                   ? 'rgba(200, 91, 91, 0.18)'
-                  : 'rgba(255,255,255,0.04)',
-                color: audience === a ? '#C85B5B' : '#71717a',
+                  : 'var(--surface-1)',
+                color: audience === a ? '#C85B5B' : 'var(--text-muted)',
                 border: audience === a
                   ? '1px solid rgba(200, 91, 91, 0.35)'
-                  : '1px solid rgba(255,255,255,0.07)',
+                  : '1px solid var(--border)',
               }}
             >
               {AUDIENCE_LABELS[a]}
@@ -121,7 +121,7 @@ export function MediaSpecGenerator({
           <p className="text-xs" style={{ color: '#C85B5B' }}>{error}</p>
           <button
             onClick={handleGenerate}
-            className="text-xs underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
+            className="text-xs underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
             style={{ color: '#C85B5B' }}
           >
             Try again
@@ -134,7 +134,7 @@ export function MediaSpecGenerator({
         <button
           onClick={handleGenerate}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
+          className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
           style={{
             backgroundColor: loading ? 'rgba(200,91,91,0.12)' : 'rgba(200, 91, 91, 0.18)',
             color: '#C85B5B',
@@ -157,7 +157,7 @@ export function MediaSpecGenerator({
         <button
           onClick={onCancel}
           disabled={loading}
-          className="text-sm text-neutral-600 hover:text-neutral-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
+          className="text-sm text-text-faint hover:text-text-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
         >
           Cancel
         </button>

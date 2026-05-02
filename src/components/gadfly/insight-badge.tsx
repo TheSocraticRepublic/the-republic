@@ -15,7 +15,7 @@ export function InsightBadge({ insight }: InsightBadgeProps) {
       <span className="mt-px flex-shrink-0 text-[10px] font-semibold uppercase tracking-widest opacity-60">
         insight
       </span>
-      <span className="text-neutral-300">{insight}</span>
+      <span className="text-text-secondary">{insight}</span>
     </div>
   )
 }

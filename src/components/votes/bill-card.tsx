@@ -20,10 +20,10 @@ export function BillCard({
   return (
     <Link
       href={`/votes/bill/${id}`}
-      className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-white/[0.04] hover:border-white/[0.10]"
+      className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
       style={{
-        borderColor: 'rgba(255,255,255,0.06)',
-        backgroundColor: 'rgba(255,255,255,0.015)',
+        borderColor: 'var(--border)',
+        backgroundColor: 'var(--surface-1)',
       }}
     >
       <div className="flex items-start justify-between gap-3">
@@ -35,21 +35,21 @@ export function BillCard({
             >
               {number}
             </span>
-            <span className="text-[10px] text-neutral-700">{session}</span>
+            <span className="text-[10px] text-text-faint">{session}</span>
           </div>
-          <p className="text-xs text-neutral-300 leading-snug line-clamp-2">
+          <p className="text-xs text-text-secondary leading-snug line-clamp-2">
             {titleEn}
           </p>
           {sponsorName && (
-            <p className="mt-1 text-[10px] text-neutral-600">
+            <p className="mt-1 text-[10px] text-text-faint">
               Sponsored by {sponsorName}
             </p>
           )}
         </div>
         {statusCode && (
           <span
-            className="flex-shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-neutral-500"
-            style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
+            className="flex-shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-text-muted"
+            style={{ backgroundColor: 'var(--surface-1)' }}
           >
             {statusCode.replace(/([A-Z])/g, ' $1').trim()}
           </span>

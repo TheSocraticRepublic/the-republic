@@ -53,8 +53,8 @@ export default async function VoteDetailPage({ params }: PageProps) {
         <section
           className="rounded-xl border px-6 py-6"
           style={{
-            borderColor: 'rgba(255,255,255,0.08)',
-            backgroundColor: 'rgba(255,255,255,0.02)',
+            borderColor: 'var(--border)',
+            backgroundColor: 'var(--surface-1)',
           }}
         >
           <PartyBreakdown partyVotes={partyVoteData} />
@@ -64,7 +64,7 @@ export default async function VoteDetailPage({ params }: PageProps) {
       <section>
         <div
           className="mb-6 h-px w-full"
-          style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+          style={{ backgroundColor: 'var(--surface-3)' }}
         />
         <BallotList voteId={voteId} />
       </section>

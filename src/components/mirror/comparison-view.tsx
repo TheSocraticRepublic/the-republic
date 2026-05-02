@@ -121,12 +121,12 @@ function AlternativeCard({ block }: { block: string }) {
 
   return (
     <div
-      className="rounded-xl border border-white/[0.08] bg-black/50 p-5 backdrop-blur-md"
+      className="rounded-xl border border-border bg-surface-1 shadow-sm p-5"
     >
       {jurisdictionName && (
         <div className="mb-3 flex items-center justify-between gap-2">
           <span
-            className="text-sm font-semibold text-neutral-100"
+            className="text-sm font-semibold text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {jurisdictionName}
@@ -139,16 +139,16 @@ function AlternativeCard({ block }: { block: string }) {
         <div className="space-y-3">
           {fields.map((field, i) => (
             <div key={i}>
-              <span className="block text-xs font-semibold uppercase tracking-wider text-neutral-500">
+              <span className="block text-xs font-semibold uppercase tracking-wider text-text-muted">
                 {field.label}
               </span>
-              <p className="mt-0.5 text-sm leading-relaxed text-neutral-300">{field.value}</p>
+              <p className="mt-0.5 text-sm leading-relaxed text-text-secondary">{field.value}</p>
             </div>
           ))}
         </div>
       ) : (
         // Fallback: render raw content if parsing yields nothing
-        <p className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">{block}</p>
+        <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">{block}</p>
       )}
     </div>
   )
@@ -194,7 +194,7 @@ function ProseSection({ content }: { content: string }) {
   return (
     <div className="space-y-3">
       {paragraphs.map((para, i) => (
-        <p key={i} className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">
+        <p key={i} className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">
           {para.replace(/\*\*(.+?)\*\*/g, '$1')}
         </p>
       ))}
@@ -209,8 +209,8 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
   // During streaming, if we haven't parsed any sections yet, show raw text
   if (isStreaming && !hasSections) {
     return (
-      <div className="rounded-xl border border-white/[0.06] bg-black/40 p-5">
-        <p className="text-sm leading-relaxed text-neutral-400 whitespace-pre-wrap">{text}</p>
+      <div className="rounded-xl border border-border bg-surface-1 p-5">
+        <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">{text}</p>
         <span className="mt-1 inline-block h-4 w-1 animate-pulse bg-[#5BC88A]/60" />
       </div>
     )
@@ -226,11 +226,11 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
           return (
             <div key={i}>
               <h3
-                className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500"
+                className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted"
               >
                 Issue Summary
               </h3>
-              <div className="rounded-xl border border-white/[0.08] bg-black/50 p-5 backdrop-blur-md">
+              <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
                 <ProseSection content={section.content} />
               </div>
             </div>
@@ -243,7 +243,7 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
           return (
             <div key={i}>
               <h3
-                className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500"
+                className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted"
               >
                 Alternatives Found
               </h3>
@@ -261,11 +261,11 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
           return (
             <div key={i}>
               <h3
-                className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500"
+                className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted"
               >
                 Pattern Analysis
               </h3>
-              <div className="rounded-xl border border-white/[0.08] bg-black/50 p-5 backdrop-blur-md">
+              <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
                 <ProseSection content={section.content} />
               </div>
             </div>
@@ -299,11 +299,11 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
         return (
           <div key={i}>
             <h3
-              className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500"
+              className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted"
             >
               {section.heading}
             </h3>
-            <div className="rounded-xl border border-white/[0.08] bg-black/50 p-5 backdrop-blur-md">
+            <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
               <ProseSection content={section.content} />
             </div>
           </div>

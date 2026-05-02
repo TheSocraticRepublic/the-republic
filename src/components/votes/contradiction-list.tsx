@@ -42,11 +42,11 @@ export function ContradictionList({ mpId }: ContradictionListProps) {
       <div
         className="rounded-xl border px-6 py-6 text-center"
         style={{
-          borderColor: 'rgba(255,255,255,0.06)',
-          backgroundColor: 'rgba(255,255,255,0.015)',
+          borderColor: 'var(--border)',
+          backgroundColor: 'var(--surface-1)',
         }}
       >
-        <p className="text-xs text-neutral-500 mb-4">
+        <p className="text-xs text-text-muted mb-4">
           Compare what this MP has said in Parliament against how they voted.
         </p>
         <button
@@ -70,8 +70,8 @@ export function ContradictionList({ mpId }: ContradictionListProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-2 py-8">
-        <Loader2 size={14} className="animate-spin text-neutral-500" />
-        <span className="text-xs text-neutral-500">
+        <Loader2 size={14} className="animate-spin text-text-muted" />
+        <span className="text-xs text-text-muted">
           Analyzing statements against voting record...
         </span>
       </div>
@@ -83,11 +83,11 @@ export function ContradictionList({ mpId }: ContradictionListProps) {
       <div
         className="rounded-xl border px-6 py-6 text-center"
         style={{
-          borderColor: 'rgba(255,255,255,0.06)',
-          backgroundColor: 'rgba(255,255,255,0.015)',
+          borderColor: 'var(--border)',
+          backgroundColor: 'var(--surface-1)',
         }}
       >
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-text-muted">
           No clear contradictions found between statements and votes. This is a valid outcome.
         </p>
       </div>

@@ -29,18 +29,18 @@ export function ThreadCard({
   return (
     <Link
       href={`/forum/${id}`}
-      className="group block rounded-xl border border-white/[0.06] bg-black/40 px-5 py-4 transition-all duration-150 hover:bg-white/[0.04] hover:border-white/[0.10]"
+      className="group block rounded-xl border border-border bg-surface-1 px-5 py-4 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1.5">
             {pinned && (
-              <Pin size={12} className="text-neutral-500 flex-shrink-0" strokeWidth={1.75} />
+              <Pin size={12} className="text-text-muted flex-shrink-0" strokeWidth={1.75} />
             )}
             {status === 'locked' && (
-              <Lock size={12} className="text-neutral-500 flex-shrink-0" strokeWidth={1.75} />
+              <Lock size={12} className="text-text-muted flex-shrink-0" strokeWidth={1.75} />
             )}
-            <p className="text-sm font-semibold text-neutral-200 group-hover:text-neutral-100 transition-colors truncate">
+            <p className="text-sm font-semibold text-text-primary group-hover:text-text-primary transition-colors truncate">
               {title}
             </p>
           </div>
@@ -76,7 +76,7 @@ export function ThreadCard({
         </div>
         <div className="flex-shrink-0 flex flex-col items-end gap-1 text-right">
           {lastPostAt && (
-            <span className="text-[10px] text-neutral-600">
+            <span className="text-[10px] text-text-faint">
               {formatRelativeTime(lastPostAt)}
             </span>
           )}

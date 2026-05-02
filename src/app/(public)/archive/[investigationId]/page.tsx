@@ -104,13 +104,13 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <h1
-              className="text-lg font-bold tracking-tight text-neutral-100 leading-snug"
+              className="text-lg font-bold tracking-tight text-text-primary leading-snug"
               style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
             >
               {archive.concern}
             </h1>
             {archive.jurisdictionName && (
-              <p className="mt-1 text-sm text-neutral-500">{archive.jurisdictionName}</p>
+              <p className="mt-1 text-sm text-text-muted">{archive.jurisdictionName}</p>
             )}
           </div>
           <div className="flex-shrink-0 pt-0.5">
@@ -118,20 +118,20 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        <p className="mt-2 text-xs text-neutral-600">
+        <p className="mt-2 text-xs text-text-faint">
           Archived by{' '}
-          <span className="text-neutral-500">{archive.archivedBy}</span>
+          <span className="text-text-muted">{archive.archivedBy}</span>
         </p>
       </div>
 
       {/* Briefing */}
       {archive.briefingText && (
         <section>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
             Briefing
           </h2>
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-4">
-            <p className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">
+          <div className="rounded-xl border border-border bg-surface-1 px-5 py-4">
+            <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">
               {archive.briefingText}
             </p>
           </div>
@@ -140,7 +140,7 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
 
       {/* Provenance chain */}
       <section>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-text-muted">
           Provenance
         </h2>
         <ProvenanceChain
@@ -156,7 +156,7 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
       {/* Document diff history */}
       {versionRows.length > 0 && (
         <section>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
             Document changes detected
           </h2>
           <DiffViewer versions={versionRows} />
@@ -166,7 +166,7 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
       {/* Shadow alerts */}
       {alertRows.length > 0 && (
         <section>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
             Shadow alerts
           </h2>
           <div className="space-y-2">

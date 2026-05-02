@@ -20,7 +20,7 @@ export function PartyBadge({ party }: PartyBadgeProps) {
         className="h-2 w-2 rounded-full flex-shrink-0"
         style={{ backgroundColor: color }}
       />
-      <span className="text-xs text-neutral-400">{party}</span>
+      <span className="text-xs text-text-secondary">{party}</span>
     </span>
   )
 }

@@ -42,7 +42,7 @@ export function PreserveButton({ investigationId }: PreserveButtonProps) {
         onClick={handlePreserve}
         disabled={loading}
         aria-busy={loading}
-        className="inline-flex items-center rounded-xl px-3 py-1.5 text-xs font-medium transition-all duration-150 disabled:opacity-50 bg-white/[0.06] border border-white/[0.10] text-neutral-300 hover:bg-white/[0.10] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+        className="inline-flex items-center rounded-xl px-3 py-1.5 text-xs font-medium transition-all duration-150 disabled:opacity-50 bg-surface-3 border border-border-strong text-text-secondary hover:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong"
       >
         {loading ? 'Preserving…' : 'Preserve to Archive'}
       </button>

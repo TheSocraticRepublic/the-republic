@@ -37,7 +37,7 @@ export function BallotList({ voteId }: BallotListProps) {
           <div
             key={i}
             className="h-10 rounded-lg animate-pulse"
-            style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+            style={{ backgroundColor: 'var(--surface-1)' }}
           />
         ))}
       </div>
@@ -53,7 +53,7 @@ export function BallotList({ voteId }: BallotListProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
           All Ballots ({ballots.length})
         </p>
         <div className="flex gap-2">
@@ -79,10 +79,10 @@ export function BallotList({ voteId }: BallotListProps) {
           <Link
             key={b.mpId}
             href={`/votes/mp/${b.mpId}`}
-            className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 transition-all duration-150 hover:bg-white/[0.04]"
+            className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 transition-all duration-150 hover:bg-surface-3"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="text-xs text-neutral-300 truncate">
+              <span className="text-xs text-text-secondary truncate">
                 {b.mpName}
               </span>
               <PartyBadge party={b.party} />

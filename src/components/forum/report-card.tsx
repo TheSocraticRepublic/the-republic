@@ -94,14 +94,14 @@ export function ReportCard({
 
   return (
     <div
-      className="rounded-xl border border-white/[0.07] bg-black/40 p-4 space-y-3"
+      className="rounded-xl border border-border bg-surface-1 p-4 space-y-3"
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs text-neutral-500">
+        <div className="flex items-center gap-2 text-xs text-text-muted">
           <span>
             Reported {targetType} by{' '}
-            <span className="text-neutral-400">{reporterDisplayName}</span>
+            <span className="text-text-secondary">{reporterDisplayName}</span>
           </span>
           <span>{formatRelativeTime(createdAt)}</span>
         </div>
@@ -121,9 +121,9 @@ export function ReportCard({
           <span
             className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded"
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              backgroundColor: 'var(--surface-3)',
               color: '#a1a1aa',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              border: '1px solid var(--border)',
             }}
           >
             {REASON_LABELS[reason] ?? reason}
@@ -134,10 +134,10 @@ export function ReportCard({
       {/* Content preview */}
       {target && (
         <div
-          className="rounded-lg px-3 py-2 text-xs text-neutral-400"
-          style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
+          className="rounded-lg px-3 py-2 text-xs text-text-secondary"
+          style={{ backgroundColor: 'var(--surface-1)', border: '1px solid var(--border)' }}
         >
-          <p className="text-[10px] text-neutral-600 mb-1">
+          <p className="text-[10px] text-text-faint mb-1">
             {isPost ? 'Post' : 'Thread'} by {target.authorDisplayName}
             {target.status !== 'visible' && target.status !== 'open' && (
               <span className="ml-2 text-amber-600">({target.status})</span>
@@ -149,7 +149,7 @@ export function ReportCard({
 
       {/* Reporter description */}
       {description && (
-        <p className="text-xs text-neutral-500 italic">&ldquo;{description}&rdquo;</p>
+        <p className="text-xs text-text-muted italic">&ldquo;{description}&rdquo;</p>
       )}
 
       {/* Action area */}
@@ -160,7 +160,7 @@ export function ReportCard({
           maxLength={1000}
           rows={2}
           placeholder="Reason for action (required)"
-          className="w-full rounded-md px-2 py-1.5 text-xs text-neutral-200 bg-white/[0.04] border border-white/[0.08] placeholder-neutral-600 resize-none focus:outline-none focus:border-white/[0.18] transition-colors"
+          className="w-full rounded-md px-2 py-1.5 text-xs text-text-primary bg-surface-1 border border-border placeholder-text-faint resize-none focus:outline-none focus:border-border-strong transition-colors"
         />
         {error && <p className="text-xs text-red-400">{error}</p>}
         <div className="flex flex-wrap items-center gap-2">
@@ -223,10 +223,10 @@ export function ReportCard({
           <button
             onClick={() => applyAction('dismiss_report')}
             disabled={loading}
-            className="text-xs px-3 py-1.5 rounded-md transition-colors text-neutral-500 hover:text-neutral-300 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="text-xs px-3 py-1.5 rounded-md transition-colors text-text-muted hover:text-text-secondary disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: 'var(--surface-1)',
+              border: '1px solid var(--border)',
             }}
           >
             Dismiss

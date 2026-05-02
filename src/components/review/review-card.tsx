@@ -39,10 +39,10 @@ export function ReviewCard({
   }
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-black/40 p-5">
+    <div className="rounded-xl border border-border bg-surface-1 p-5">
       <div className="mb-4 flex items-center justify-between">
         <ProfileBadge displayName={reviewerDisplayName} size="sm" />
-        <span className="text-[10px] text-neutral-600">{formatRelativeTime(createdAt)}</span>
+        <span className="text-[10px] text-text-faint">{formatRelativeTime(createdAt)}</span>
       </div>
 
       <div className="space-y-2">
@@ -50,14 +50,14 @@ export function ReviewCard({
           const score = scoreMap[key]
           return (
             <div key={key} className="flex items-center gap-2">
-              <span className="w-20 flex-shrink-0 text-[10px] text-neutral-600">{label}</span>
-              <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+              <span className="w-20 flex-shrink-0 text-[10px] text-text-faint">{label}</span>
+              <div className="flex-1 h-1.5 bg-surface-3 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full bg-white/20"
                   style={{ width: `${(score / 5) * 100}%` }}
                 />
               </div>
-              <span className="w-4 flex-shrink-0 text-xs text-neutral-500 text-right">
+              <span className="w-4 flex-shrink-0 text-xs text-text-muted text-right">
                 {score}
               </span>
             </div>
@@ -66,7 +66,7 @@ export function ReviewCard({
       </div>
 
       {summary && (
-        <p className="mt-4 text-sm leading-relaxed text-neutral-400">{summary}</p>
+        <p className="mt-4 text-sm leading-relaxed text-text-secondary">{summary}</p>
       )}
     </div>
   )

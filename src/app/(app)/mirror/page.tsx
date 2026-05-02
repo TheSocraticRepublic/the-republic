@@ -27,12 +27,12 @@ export default async function MirrorPage({ searchParams }: MirrorPageProps) {
         </span>
         <div>
           <h1
-            className="text-xl font-bold tracking-tight text-neutral-100"
+            className="text-xl font-bold tracking-tight text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             Mirror
           </h1>
-          <p className="text-xs text-neutral-500">Cross-jurisdiction comparison</p>
+          <p className="text-xs text-text-muted">Cross-jurisdiction comparison</p>
         </div>
       </div>
 

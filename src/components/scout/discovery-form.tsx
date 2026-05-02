@@ -130,14 +130,14 @@ export function DiscoveryForm() {
     <div className="space-y-8">
       {/* Form */}
       <section>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
           Describe your concern
         </h2>
 
         <div className="space-y-4">
           {/* Concern textarea — primary input */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-neutral-400">
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
               What concerns you?
             </label>
             <textarea
@@ -145,24 +145,24 @@ export function DiscoveryForm() {
               onChange={(e) => setConcern(e.target.value)}
               placeholder="e.g. I got towed for a minor parking infraction in Squamish and the fee seemed excessive"
               rows={5}
-              className="w-full resize-none rounded-lg border border-white/[0.1] bg-black/60 px-3 py-2.5 text-sm text-neutral-200 placeholder-neutral-600 outline-none focus:border-[#B088C8]/40"
+              className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[#B088C8]/40"
               disabled={loading}
             />
           </div>
 
           {/* Jurisdiction selector */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-neutral-400">
-              Jurisdiction <span className="text-neutral-600">(optional)</span>
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+              Jurisdiction <span className="text-text-faint">(optional)</span>
             </label>
             {fetchingJurisdictions ? (
-              <div className="h-9 animate-pulse rounded-lg bg-white/[0.04]" />
+              <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
             ) : (
               <div className="relative">
                 <select
                   value={selectedJurisdictionId}
                   onChange={(e) => setSelectedJurisdictionId(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-white/[0.1] bg-black/60 px-3 py-2 pr-8 text-sm text-neutral-200 outline-none focus:border-[#B088C8]/40 focus:ring-0"
+                  className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#B088C8]/40 focus:ring-0"
                   disabled={loading}
                 >
                   <option value="">Any jurisdiction</option>
@@ -176,7 +176,7 @@ export function DiscoveryForm() {
                 <ChevronDown
                   size={13}
                   strokeWidth={2}
-                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
                 />
               </div>
             )}
@@ -184,14 +184,14 @@ export function DiscoveryForm() {
 
           {/* Policy area */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-neutral-400">
-              Policy area <span className="text-neutral-600">(optional)</span>
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+              Policy area <span className="text-text-faint">(optional)</span>
             </label>
             <div className="relative">
               <select
                 value={policyArea}
                 onChange={(e) => setPolicyArea(e.target.value)}
-                className="w-full appearance-none rounded-lg border border-white/[0.1] bg-black/60 px-3 py-2 pr-8 text-sm text-neutral-200 outline-none focus:border-[#B088C8]/40 focus:ring-0"
+                className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#B088C8]/40 focus:ring-0"
                 disabled={loading}
               >
                 {POLICY_AREAS.map((area) => (
@@ -203,7 +203,7 @@ export function DiscoveryForm() {
               <ChevronDown
                 size={13}
                 strokeWidth={2}
-                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
+                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
               />
             </div>
           </div>
@@ -213,7 +213,7 @@ export function DiscoveryForm() {
             {isStreaming && (
               <button
                 onClick={handleCancel}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-neutral-500 transition-colors hover:text-neutral-300"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-text-muted transition-colors hover:text-text-secondary"
               >
                 <X size={12} strokeWidth={2} />
                 Cancel
@@ -253,7 +253,7 @@ export function DiscoveryForm() {
       {/* Results */}
       {(isStreaming || hasResult) && streamedText && (
         <section>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
             Discovery results
           </h2>
           <ScoutResultView text={streamedText} isStreaming={isStreaming} />

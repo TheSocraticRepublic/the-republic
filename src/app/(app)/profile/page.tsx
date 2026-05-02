@@ -84,32 +84,32 @@ export default async function ProfilePage() {
       {/* Header */}
       <div className="mb-8">
         <h1
-          className="text-xl font-bold tracking-tight text-neutral-100"
+          className="text-xl font-bold tracking-tight text-text-primary"
           style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         >
           Profile
         </h1>
-        <p className="mt-0.5 text-xs text-neutral-500">Your public identity</p>
+        <p className="mt-0.5 text-xs text-text-muted">Your public identity</p>
       </div>
 
       {/* Profile card */}
-      <div className="rounded-xl border border-white/[0.08] bg-black/50 p-6 backdrop-blur-md">
+      <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-3">
             <ProfileBadge displayName={profile.displayName} size="md" />
             {profile.bio && (
-              <p className="max-w-md text-sm leading-relaxed text-neutral-400">
+              <p className="max-w-md text-sm leading-relaxed text-text-secondary">
                 {profile.bio}
               </p>
             )}
-            <p className="text-xs text-neutral-600">
+            <p className="text-xs text-text-faint">
               Joined {formatDate(profile.createdAt)}
             </p>
           </div>
 
           <Link
             href="/profile/setup"
-            className="flex-shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-neutral-400 transition-colors hover:bg-white/[0.07] hover:text-neutral-200"
+            className="flex-shrink-0 rounded-lg border border-border bg-surface-1 px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-3 hover:text-text-primary"
           >
             Edit
           </Link>
@@ -117,11 +117,11 @@ export default async function ProfilePage() {
       </div>
 
       {/* Public link note */}
-      <p className="mt-4 text-xs text-neutral-700">
+      <p className="mt-4 text-xs text-text-faint">
         Your public profile is visible at{' '}
         <Link
           href={`/u/${profile.displayName}`}
-          className="text-neutral-500 underline underline-offset-2 transition-colors hover:text-neutral-300"
+          className="text-text-muted underline underline-offset-2 transition-colors hover:text-text-secondary"
         >
           /u/{profile.displayName}
         </Link>

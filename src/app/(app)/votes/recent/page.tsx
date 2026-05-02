@@ -36,12 +36,12 @@ export default function RecentVotesPage() {
     <div className="mx-auto max-w-3xl px-6 py-10">
       <div className="mb-8">
         <h1
-          className="mb-2 text-xl font-bold tracking-tight text-neutral-100"
+          className="mb-2 text-xl font-bold tracking-tight text-text-primary"
           style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         >
           Recent Votes
         </h1>
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-text-muted">
           Recorded divisions in the House of Commons
         </p>
       </div>
@@ -52,7 +52,7 @@ export default function RecentVotesPage() {
             <div
               key={i}
               className="h-16 rounded-xl animate-pulse"
-              style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+              style={{ backgroundColor: 'var(--surface-1)' }}
             />
           ))}
         </div>
@@ -60,11 +60,11 @@ export default function RecentVotesPage() {
         <div
           className="rounded-xl border px-6 py-10 text-center"
           style={{
-            borderColor: 'rgba(255,255,255,0.06)',
-            backgroundColor: 'rgba(255,255,255,0.015)',
+            borderColor: 'var(--border)',
+            backgroundColor: 'var(--surface-1)',
           }}
         >
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-text-muted">
             No vote data available. Run a sync to populate parliamentary data.
           </p>
         </div>
@@ -75,17 +75,17 @@ export default function RecentVotesPage() {
               <Link
                 key={vote.id}
                 href={`/votes/vote/${vote.id}`}
-                className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-white/[0.04] hover:border-white/[0.10]"
+                className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
                 style={{
-                  borderColor: 'rgba(255,255,255,0.06)',
-                  backgroundColor: 'rgba(255,255,255,0.015)',
+                  borderColor: 'var(--border)',
+                  backgroundColor: 'var(--surface-1)',
                 }}
               >
-                <p className="text-xs font-medium text-neutral-300 leading-snug line-clamp-2 mb-1.5">
+                <p className="text-xs font-medium text-text-secondary leading-snug line-clamp-2 mb-1.5">
                   {vote.descriptionEn}
                 </p>
                 <div className="flex items-center gap-3 text-[10px]">
-                  <span className="text-neutral-600">{vote.date}</span>
+                  <span className="text-text-faint">{vote.date}</span>
                   <span
                     className="rounded-md px-1.5 py-0.5 font-semibold uppercase tracking-wider"
                     style={{
@@ -98,7 +98,7 @@ export default function RecentVotesPage() {
                   >
                     {vote.result}
                   </span>
-                  <span className="text-neutral-700">
+                  <span className="text-text-faint">
                     {vote.yeaTotal}Y / {vote.nayTotal}N
                   </span>
                 </div>
@@ -111,15 +111,15 @@ export default function RecentVotesPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="text-xs text-neutral-500 hover:text-neutral-300 disabled:opacity-30 transition-colors"
+                className="text-xs text-text-muted hover:text-text-secondary disabled:opacity-30 transition-colors"
               >
                 Previous
               </button>
-              <span className="text-[10px] text-neutral-600">Page {page}</span>
+              <span className="text-[10px] text-text-faint">Page {page}</span>
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={!hasMore}
-                className="text-xs text-neutral-500 hover:text-neutral-300 disabled:opacity-30 transition-colors"
+                className="text-xs text-text-muted hover:text-text-secondary disabled:opacity-30 transition-colors"
               >
                 Next
               </button>

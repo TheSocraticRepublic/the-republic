@@ -105,13 +105,13 @@ export function ProvenanceChain({
               <div className="flex items-center gap-2 flex-wrap">
                 <span
                   className={`text-sm font-medium ${
-                    isComplete ? 'text-neutral-200' : 'text-neutral-600'
+                    isComplete ? 'text-text-primary' : 'text-text-faint'
                   }`}
                 >
                   {step.label}
                 </span>
                 {isComplete && step.completedAt && (
-                  <span className="text-xs text-neutral-600">
+                  <span className="text-xs text-text-faint">
                     {formatDate(step.completedAt)}
                   </span>
                 )}
@@ -119,7 +119,7 @@ export function ProvenanceChain({
 
               <p
                 className={`mt-0.5 text-xs leading-relaxed ${
-                  isComplete ? 'text-neutral-500' : 'text-neutral-700'
+                  isComplete ? 'text-text-muted' : 'text-text-faint'
                 }`}
               >
                 {step.description}
@@ -138,7 +138,7 @@ export function ProvenanceChain({
                       {step.copyLabel}
                     </a>
                   ) : (
-                    <span className="font-mono text-[11px] text-neutral-500">
+                    <span className="font-mono text-[11px] text-text-muted">
                       {step.copyLabel}
                     </span>
                   )}
@@ -146,7 +146,7 @@ export function ProvenanceChain({
                     type="button"
                     aria-label="Copy identifier"
                     onClick={() => handleCopy(step.copyValue!, step.label)}
-                    className="text-[10px] text-neutral-600 hover:text-neutral-400 transition-colors px-1.5 py-0.5 rounded border border-white/[0.06] hover:border-white/[0.12]"
+                    className="text-[10px] text-text-faint hover:text-text-secondary transition-colors px-1.5 py-0.5 rounded border border-border hover:border-border-strong"
                   >
                     {copied === step.label ? 'Copied' : 'Copy'}
                   </button>

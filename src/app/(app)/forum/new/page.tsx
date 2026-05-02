@@ -66,27 +66,27 @@ function NewThreadForm() {
   }
 
   const inputClass =
-    'w-full rounded-lg px-3 py-2.5 text-sm text-neutral-200 bg-white/[0.04] border border-white/[0.10] placeholder-neutral-600 focus:outline-none focus:border-white/[0.20] transition-colors'
+    'w-full rounded-lg px-3 py-2.5 text-sm text-text-primary bg-surface-1 border border-border-strong placeholder-text-faint focus:outline-none focus:border-border-strong transition-colors'
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
       <div className="mb-8">
         <h1
-          className="text-xl font-bold tracking-tight text-neutral-100"
+          className="text-xl font-bold tracking-tight text-text-primary"
           style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         >
           New Thread
         </h1>
-        <p className="mt-0.5 text-xs text-neutral-500">Start a community discussion</p>
+        <p className="mt-0.5 text-xs text-text-muted">Start a community discussion</p>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-xl border border-white/10 bg-black/60 p-6 backdrop-blur-md space-y-5"
+        className="rounded-xl border border-border bg-surface-1 shadow-sm p-6 backdrop-blur-md space-y-5"
       >
         {/* Title */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-neutral-400">Title</label>
+          <label className="text-xs font-medium text-text-secondary">Title</label>
           <input
             type="text"
             value={title}
@@ -96,14 +96,14 @@ function NewThreadForm() {
             required
             className={inputClass}
           />
-          <p className="text-[10px] text-neutral-600 text-right">
+          <p className="text-[10px] text-text-faint text-right">
             {title.length}/{THREAD_TITLE_MAX}
           </p>
         </div>
 
         {/* Content */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-neutral-400">Content</label>
+          <label className="text-xs font-medium text-text-secondary">Content</label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -113,7 +113,7 @@ function NewThreadForm() {
             rows={8}
             className={`${inputClass} resize-none`}
           />
-          <p className="text-[10px] text-neutral-600 text-right">
+          <p className="text-[10px] text-text-faint text-right">
             {content.length}/{POST_CONTENT_MAX}
           </p>
         </div>
@@ -125,7 +125,7 @@ function NewThreadForm() {
         <div className="flex items-center justify-end gap-3 pt-1">
           <a
             href="/forum"
-            className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
+            className="text-xs text-text-faint hover:text-text-secondary transition-colors"
           >
             Cancel
           </a>
@@ -134,9 +134,9 @@ function NewThreadForm() {
             disabled={submitting || !title.trim() || !content.trim()}
             className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.08)',
-              color: '#f4f4f5',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              backgroundColor: 'var(--surface-3)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-strong)',
             }}
           >
             {submitting && <Loader2 size={13} className="animate-spin" />}
@@ -153,8 +153,8 @@ export default function NewThreadPage() {
     <Suspense
       fallback={
         <div className="mx-auto max-w-3xl px-6 py-10">
-          <div className="rounded-xl border border-white/[0.06] bg-black/40 px-6 py-10 text-center">
-            <p className="text-sm text-neutral-500">Loading...</p>
+          <div className="rounded-xl border border-border bg-surface-1 px-6 py-10 text-center">
+            <p className="text-sm text-text-muted">Loading...</p>
           </div>
         </div>
       }

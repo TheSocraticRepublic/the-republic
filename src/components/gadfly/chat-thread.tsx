@@ -55,7 +55,7 @@ function GadflyMessage({
           borderLeftColor: '#C8A84B',
         }}
       >
-        <p className="text-sm leading-relaxed text-neutral-200 whitespace-pre-wrap">
+        <p className="text-sm leading-relaxed text-text-primary whitespace-pre-wrap">
           {content}
           {isStreaming && (
             <span
@@ -66,7 +66,7 @@ function GadflyMessage({
         </p>
       </div>
       {questionType && QUESTION_TYPE_LABELS[questionType] && (
-        <span className="mt-1 text-[10px] text-neutral-600 uppercase tracking-widest px-1">
+        <span className="mt-1 text-[10px] text-text-faint uppercase tracking-widest px-1">
           {QUESTION_TYPE_LABELS[questionType]}
         </span>
       )}
@@ -83,11 +83,11 @@ function CitizenMessage({ content }: { content: string }) {
       <div
         className="max-w-[80%] rounded-xl rounded-tr-sm border px-4 py-3"
         style={{
-          borderColor: 'rgba(255, 255, 255, 0.08)',
-          backgroundColor: 'rgba(255, 255, 255, 0.06)',
+          borderColor: 'var(--border)',
+          backgroundColor: 'var(--surface-3)',
         }}
       >
-        <p className="text-sm leading-relaxed text-neutral-200 whitespace-pre-wrap">{content}</p>
+        <p className="text-sm leading-relaxed text-text-primary whitespace-pre-wrap">{content}</p>
       </div>
     </div>
   )
@@ -109,10 +109,10 @@ export function ChatThread({
     return (
       <div className="flex flex-1 items-center justify-center py-16">
         <div className="text-center">
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-text-muted">
             The inquiry begins when you speak.
           </p>
-          <p className="mt-1 text-xs text-neutral-600">
+          <p className="mt-1 text-xs text-text-faint">
             What do you notice about this document?
           </p>
         </div>

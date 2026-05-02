@@ -62,10 +62,10 @@ export function PostComposer({
         onChange={(e) => setContent(e.target.value)}
         placeholder={placeholder}
         rows={parentId ? 3 : 5}
-        className="w-full rounded-lg px-3 py-2.5 text-sm text-neutral-200 bg-white/[0.04] border border-white/[0.10] placeholder-neutral-600 resize-none focus:outline-none focus:border-white/[0.20] transition-colors"
+        className="w-full rounded-lg px-3 py-2.5 text-sm text-text-primary bg-surface-1 border border-border-strong placeholder-text-faint resize-none focus:outline-none focus:border-border-strong transition-colors"
       />
       <div className="flex items-center justify-between">
-        <span className={`text-[10px] ${isOverLimit ? 'text-red-400' : 'text-neutral-600'}`}>
+        <span className={`text-[10px] ${isOverLimit ? 'text-red-400' : 'text-text-faint'}`}>
           {charCount}/{POST_CONTENT_MAX}
         </span>
         <div className="flex items-center gap-2">
@@ -73,7 +73,7 @@ export function PostComposer({
             <button
               type="button"
               onClick={onCancel}
-              className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors px-3 py-1.5"
+              className="text-xs text-text-faint hover:text-text-secondary transition-colors px-3 py-1.5"
             >
               Cancel
             </button>
@@ -83,9 +83,9 @@ export function PostComposer({
             disabled={loading || !content.trim() || isOverLimit}
             className="inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.08)',
-              color: '#f4f4f5',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              backgroundColor: 'var(--surface-3)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-strong)',
             }}
           >
             {loading && <Loader2 size={11} className="animate-spin" />}
