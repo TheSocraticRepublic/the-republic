@@ -187,7 +187,7 @@ export function PostCard({
 
   return (
     <div
-      className="rounded-xl border border-border bg-surface-1 px-4 py-4"
+      className="rounded-xl border border-border bg-surface-1 shadow-sm px-4 py-4"
       style={{ marginLeft: depth * 24 }}
     >
       <div className="flex items-center justify-between mb-3">

@@ -20,7 +20,7 @@ export function BillCard({
   return (
     <Link
       href={`/votes/bill/${id}`}
-      className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
+      className="card-lift group block rounded-xl border px-4 py-3 shadow-sm transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
       style={{
         borderColor: 'var(--border)',
         backgroundColor: 'var(--surface-1)',

@@ -141,10 +141,10 @@ export function GadflySheet({
         <Dialog.Content
           forceMount
           data-state={open ? 'open' : 'closed'}
-          className="fixed top-0 right-0 z-50 h-full flex flex-col focus:outline-none"
+          className="dark-island fixed top-0 right-0 z-50 h-full flex flex-col shadow-lg focus:outline-none"
           style={{
             width: 'min(680px, 90vw)',
-            backgroundColor: '#0a0a0a',
+            backgroundColor: 'var(--surface-0)',
             borderLeft: '1px solid var(--border)',
             transform: open ? 'translateX(0)' : 'translateX(100%)',
             visibility: open ? 'visible' : 'hidden',

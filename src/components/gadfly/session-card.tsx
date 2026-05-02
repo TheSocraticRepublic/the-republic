@@ -46,7 +46,7 @@ export function SessionCard({
   return (
     <Link
       href={`/gadfly/${id}`}
-      className="block rounded-xl border border-border bg-surface-1 shadow-sm p-4 transition-all duration-150 hover:border-border-strong hover:bg-surface-3"
+      className="card-lift block rounded-xl border border-border bg-surface-1 shadow-sm p-4 transition-all duration-150 hover:border-border-strong hover:bg-surface-3"
     >
       <div className="flex items-start gap-3">
         {/* Icon */}

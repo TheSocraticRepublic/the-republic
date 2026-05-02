@@ -97,7 +97,7 @@ export function OracleAnalysisPanel({
 
       {/* Pre-analysis state */}
       {!hasStarted && !showContent && (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border bg-surface-1 px-6 py-14 text-center">
+        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border bg-surface-1 shadow-sm px-6 py-14 text-center">
           <span
             className="flex h-12 w-12 items-center justify-center rounded-xl border"
             style={{

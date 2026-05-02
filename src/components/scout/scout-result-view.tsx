@@ -424,7 +424,7 @@ export function ScoutResultView({ text, isStreaming }: ScoutResultViewProps) {
   // During streaming, if no sections yet, show raw text with cursor
   if (isStreaming && !hasSections) {
     return (
-      <div className="rounded-xl border border-border bg-surface-1 p-5">
+      <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
         <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">{text}</p>
         <span className="mt-1 inline-block h-4 w-1 animate-pulse bg-[#B088C8]/60" />
       </div>

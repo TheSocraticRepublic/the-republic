@@ -39,7 +39,7 @@ export function ReviewCard({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface-1 p-5">
+    <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
       <div className="mb-4 flex items-center justify-between">
         <ProfileBadge displayName={reviewerDisplayName} size="sm" />
         <span className="text-[10px] text-text-faint">{formatRelativeTime(createdAt)}</span>

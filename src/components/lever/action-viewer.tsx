@@ -347,7 +347,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       {/* Document display */}
       {mode === 'generating' && (
         <div
-          className="relative rounded-xl border border-border bg-surface-1 p-6"
+          className="relative rounded-xl border border-border bg-surface-1 shadow-sm p-6"
           style={{ minHeight: '400px' }}
         >
           {/* Generating indicator */}
@@ -373,7 +373,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       )}
 
       {mode === 'viewing' && (
-        <div className="rounded-xl border border-border bg-surface-1 p-6">
+        <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-6">
           {content ? (
             <pre
               className="whitespace-pre-wrap text-sm leading-relaxed text-text-secondary"
@@ -390,7 +390,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       )}
 
       {mode === 'editing' && (
-        <div className="rounded-xl border border-border bg-surface-1 overflow-hidden">
+        <div className="rounded-xl border border-border bg-surface-1 shadow-sm overflow-hidden">
           <div className="px-4 py-2.5 border-b border-border bg-surface-1">
             <p className="text-[11px] text-text-muted">
               Edit the document text directly. Changes are saved when you click Save.

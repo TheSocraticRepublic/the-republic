@@ -93,7 +93,7 @@ export default async function InvestigationsPage() {
               <Link
                 key={inv.id}
                 href={`/investigate/${inv.id}`}
-                className="group block rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-4 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
+                className="card-lift group block rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-4 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">

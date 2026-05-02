@@ -21,7 +21,7 @@ export function MpProfileCard({
 
   return (
     <div
-      className="rounded-xl border px-6 py-6"
+      className="rounded-xl border shadow-sm px-6 py-6"
       style={{
         borderColor: 'var(--border)',
         borderLeftWidth: '3px',

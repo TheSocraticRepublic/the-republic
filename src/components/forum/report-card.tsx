@@ -94,7 +94,7 @@ export function ReportCard({
 
   return (
     <div
-      className="rounded-xl border border-border bg-surface-1 p-4 space-y-3"
+      className="rounded-xl border border-border bg-surface-1 shadow-sm p-4 space-y-3"
     >
       {/* Header */}
       <div className="flex items-center justify-between">
