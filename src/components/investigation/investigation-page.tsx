@@ -78,26 +78,26 @@ export function InvestigationPage({
       <div
         className="rounded-xl border px-5 py-4"
         style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.03)',
-          borderColor: 'rgba(255, 255, 255, 0.07)',
+          backgroundColor: 'var(--surface-1)',
+          borderColor: 'var(--border)',
         }}
       >
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-text-faint">
           Your concern
           {jurisdictionName && (
-            <span className="ml-2 normal-case tracking-normal font-normal text-neutral-700">
+            <span className="ml-2 normal-case tracking-normal font-normal text-text-faint">
               — {jurisdictionName}
             </span>
           )}
         </p>
-        <p className="text-sm leading-relaxed text-neutral-300">{concern}</p>
+        <p className="text-sm leading-relaxed text-text-secondary">{concern}</p>
       </div>
 
       {/* 2. Briefing content */}
       <section>
         <div
           className="mb-6 h-px w-full"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
+          style={{ backgroundColor: 'var(--border)' }}
         />
         <BriefingView text={briefingText} isStreaming={false} />
       </section>
@@ -107,7 +107,7 @@ export function InvestigationPage({
         <section>
           <div
             className="mb-6 h-px w-full"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
+            style={{ backgroundColor: 'var(--border)' }}
           />
           <EscalationCard
             investigationId={id}
@@ -152,21 +152,21 @@ export function InvestigationPage({
         <section>
           <div
             className="mb-6 h-px w-full"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
+            style={{ backgroundColor: 'var(--border)' }}
           />
           <div className="mb-4 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+            <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">
               Discussions
             </p>
             <Link
               href={`/forum?investigation=${id}`}
-              className="text-xs text-neutral-500 hover:text-neutral-300 underline underline-offset-2 transition-colors"
+              className="text-xs text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
             >
               View all in Forum
             </Link>
           </div>
           {discussionLoading ? (
-            <p className="text-sm text-neutral-600">Loading discussions...</p>
+            <p className="text-sm text-text-faint">Loading discussions...</p>
           ) : discussionThreads.length > 0 ? (
             <div className="space-y-3">
               {discussionThreads.slice(0, 3).map((thread) => (
@@ -175,19 +175,19 @@ export function InvestigationPage({
               {discussionThreads.length > 3 && (
                 <Link
                   href={`/forum?investigation=${id}`}
-                  className="block text-xs text-neutral-500 hover:text-neutral-300 transition-colors text-center py-2"
+                  className="block text-xs text-text-muted hover:text-text-secondary transition-colors text-center py-2"
                 >
                   View all {discussionThreads.length} discussions
                 </Link>
               )}
             </div>
           ) : (
-            <div className="rounded-xl border border-white/[0.06] bg-black/40 px-5 py-6 text-center">
-              <p className="text-sm text-neutral-500">No discussions yet.</p>
+            <div className="rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-6 text-center">
+              <p className="text-sm text-text-muted">No discussions yet.</p>
               <p className="mt-1.5">
                 <Link
                   href={`/forum/new?investigationId=${id}`}
-                  className="text-xs text-neutral-400 underline underline-offset-2 hover:text-neutral-200 transition-colors"
+                  className="text-xs text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
                 >
                   Start a discussion
                 </Link>
@@ -206,7 +206,7 @@ export function InvestigationPage({
 
       {/* 7. Peer Reviews */}
       <section>
-        <div className="mb-6 h-px w-full" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
+        <div className="mb-6 h-px w-full" style={{ backgroundColor: 'var(--border)' }} />
         <ReviewSection investigationId={id} isAuthor={isAuthor} />
       </section>
 

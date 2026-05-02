@@ -147,30 +147,30 @@ export function BriefingForm() {
               placeholder="e.g., I got towed for parking 5 minutes over a meter in Squamish. $300."
               rows={6}
               className={clsx(
-                'w-full resize-none rounded-xl border bg-black/60 px-4 py-4 text-base leading-relaxed text-neutral-200 placeholder-neutral-600 outline-none backdrop-blur-md transition-all duration-200',
-                'focus:border-white/20',
-                loading ? 'opacity-50' : 'border-white/[0.1]'
+                'w-full resize-none rounded-xl border bg-surface-1 shadow-sm px-4 py-4 text-base leading-relaxed text-text-primary placeholder-text-faint outline-none transition-all duration-200',
+                'focus:border-border-strong',
+                loading ? 'opacity-50' : 'border-border'
               )}
               disabled={loading}
             />
-            <p className="mt-1.5 text-xs text-neutral-600">
+            <p className="mt-1.5 text-xs text-text-faint">
               Press Cmd+Enter to investigate
             </p>
           </div>
 
           {/* Jurisdiction selector */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-neutral-500">
-              Jurisdiction <span className="text-neutral-700">(optional — helps with document discovery)</span>
+            <label className="mb-1.5 block text-xs font-medium text-text-muted">
+              Jurisdiction <span className="text-text-faint">(optional — helps with document discovery)</span>
             </label>
             {fetchingJurisdictions ? (
-              <div className="h-9 animate-pulse rounded-lg bg-white/[0.04]" />
+              <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
             ) : (
               <div className="relative">
                 <select
                   value={selectedJurisdictionId}
                   onChange={(e) => setSelectedJurisdictionId(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-white/[0.08] bg-black/60 px-3 py-2 pr-8 text-sm text-neutral-300 outline-none focus:border-white/20 focus:ring-0"
+                  className="w-full appearance-none rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-secondary outline-none focus:border-border-strong focus:ring-0"
                   disabled={loading}
                 >
                   <option value="">Any jurisdiction</option>
@@ -184,7 +184,7 @@ export function BriefingForm() {
                 <ChevronDown
                   size={13}
                   strokeWidth={2}
-                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-600"
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-faint"
                 />
               </div>
             )}
@@ -195,7 +195,7 @@ export function BriefingForm() {
             {isStreaming && (
               <button
                 onClick={handleCancel}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-neutral-500 transition-colors hover:text-neutral-300"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-text-muted transition-colors hover:text-text-secondary"
               >
                 <X size={12} strokeWidth={2} />
                 Cancel
@@ -211,9 +211,9 @@ export function BriefingForm() {
                   : 'cursor-not-allowed opacity-30'
               )}
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                color: '#f4f4f5',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
+                backgroundColor: 'var(--surface-3)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-strong)',
               }}
             >
               {loading ? (
@@ -237,7 +237,7 @@ export function BriefingForm() {
         <section>
           <div
             className="mb-6 h-px w-full"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
+            style={{ backgroundColor: 'var(--border)' }}
           />
           <BriefingView text={streamedText} isStreaming={isStreaming} />
         </section>

@@ -24,19 +24,19 @@ export function EscalationCard({
     <div
       className="rounded-2xl border"
       style={{
-        backgroundColor: 'rgba(245, 243, 240, 0.035)',
-        borderColor: 'rgba(255, 255, 255, 0.07)',
+        backgroundColor: 'var(--surface-1)',
+        borderColor: 'var(--border)',
       }}
     >
-      <div className="px-6 py-5 border-b" style={{ borderColor: 'rgba(255, 255, 255, 0.06)' }}>
-        <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+      <div className="px-6 py-5 border-b" style={{ borderColor: 'var(--border)' }}>
+        <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">
           Where do you want to go from here?
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-px sm:grid-cols-3" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+      <div className="grid grid-cols-1 gap-px sm:grid-cols-3" style={{ backgroundColor: 'var(--border)' }}>
         {/* Left: Go Deeper (Gadfly / Lens) — enabled */}
-        <div className="flex flex-col gap-4 bg-neutral-950 px-6 py-6 rounded-bl-2xl sm:rounded-bl-2xl sm:rounded-br-none">
+        <div className="flex flex-col gap-4 bg-surface-0 px-6 py-6 rounded-bl-2xl sm:rounded-bl-2xl sm:rounded-br-none">
           <div className="flex items-center gap-2.5">
             <span
               className="h-2 w-2 rounded-full flex-shrink-0"
@@ -49,7 +49,7 @@ export function EscalationCard({
               I want to understand this deeper
             </span>
           </div>
-          <p className="text-sm leading-relaxed text-neutral-400">
+          <p className="text-sm leading-relaxed text-text-secondary">
             Explore this issue with guided questions, see who the key players are, and understand the deeper context.
           </p>
           <div className="mt-auto">
@@ -86,7 +86,7 @@ export function EscalationCard({
         </div>
 
         {/* Center: Take Action (Lever / Campaign) — enabled */}
-        <div className="flex flex-col gap-4 bg-neutral-950 px-6 py-6">
+        <div className="flex flex-col gap-4 bg-surface-0 px-6 py-6">
           <div className="flex items-center gap-2.5">
             <span
               className="h-2 w-2 rounded-full flex-shrink-0"
@@ -99,7 +99,7 @@ export function EscalationCard({
               I want to do something about this
             </span>
           </div>
-          <p className="text-sm leading-relaxed text-neutral-400">
+          <p className="text-sm leading-relaxed text-text-secondary">
             Generate FOI requests, public comments, campaign materials, and talking points.
           </p>
           <div className="mt-auto">
@@ -136,7 +136,7 @@ export function EscalationCard({
         </div>
 
         {/* Right: Discuss (Forum) */}
-        <div className="flex flex-col gap-4 bg-neutral-950 px-6 py-6 sm:rounded-br-2xl">
+        <div className="flex flex-col gap-4 bg-surface-0 px-6 py-6 sm:rounded-br-2xl">
           <div className="flex items-center gap-2.5">
             <span
               className="h-2 w-2 rounded-full flex-shrink-0"
@@ -149,7 +149,7 @@ export function EscalationCard({
               I want to discuss this with others
             </span>
           </div>
-          <p className="text-sm leading-relaxed text-neutral-400">
+          <p className="text-sm leading-relaxed text-text-secondary">
             Start or join a conversation about this investigation with other citizens.
           </p>
           <div className="mt-auto">

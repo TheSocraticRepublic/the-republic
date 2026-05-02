@@ -62,9 +62,9 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
   if (!investigation.briefingText) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-12">
-        <div className="rounded-xl border border-white/[0.06] bg-black/40 px-6 py-10 text-center">
-          <p className="text-sm text-neutral-400">Briefing in progress...</p>
-          <p className="mt-1.5 text-xs text-neutral-600">
+        <div className="rounded-xl border border-border bg-surface-1 shadow-sm px-6 py-10 text-center">
+          <p className="text-sm text-text-secondary">Briefing in progress...</p>
+          <p className="mt-1.5 text-xs text-text-faint">
             Your investigation is being prepared. Refresh in a moment.
           </p>
         </div>
@@ -88,10 +88,10 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
 
       {/* Archive status section */}
       <div className="mx-auto max-w-3xl px-6 pb-10">
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-4">
+        <div className="rounded-xl border border-border bg-surface-1 px-5 py-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+              <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
                 Archive
               </p>
               {archiveRow ? (
@@ -99,13 +99,13 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
                   <PermanenceBadge status={archiveRow.archiveStatus} />
                   <Link
                     href={`/archive/${investigation.id}`}
-                    className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors underline underline-offset-2"
+                    className="text-xs text-text-muted hover:text-text-secondary transition-colors underline underline-offset-2"
                   >
                     View archived record
                   </Link>
                 </div>
               ) : (
-                <p className="mt-1 text-xs text-neutral-600">
+                <p className="mt-1 text-xs text-text-faint">
                   This investigation has not been preserved.
                 </p>
               )}
