@@ -118,14 +118,14 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
     <div className="space-y-8 pt-2">
       {/* Section label */}
       <div className="flex items-center gap-3">
-        <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+        <div className="h-px flex-1 bg-border" />
         <span
           className="text-[10px] font-semibold uppercase tracking-[0.12em]"
           style={{ color: '#C85B5B' }}
         >
           Campaign Materials
         </span>
-        <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+        <div className="h-px flex-1 bg-border" />
       </div>
 
       {/* Material type grid */}
@@ -141,20 +141,20 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
               style={{
                 backgroundColor: isGenerating
                   ? 'rgba(200, 91, 91, 0.04)'
-                  : 'rgba(255, 255, 255, 0.025)',
+                  : 'var(--surface-1)',
                 borderColor: isGenerating
                   ? 'rgba(200, 91, 91, 0.25)'
                   : existing
                   ? 'rgba(200, 91, 91, 0.15)'
-                  : 'rgba(255, 255, 255, 0.07)',
+                  : 'var(--border)',
               }}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold" style={{ color: '#e2e0de' }}>
+                  <p className="text-sm font-semibold text-text-primary">
                     {MATERIAL_TYPE_LABELS[type]}
                   </p>
-                  <p className="text-xs leading-relaxed text-neutral-500">
+                  <p className="text-xs leading-relaxed text-text-muted">
                     {MATERIAL_TYPE_DESCRIPTIONS[type]}
                   </p>
                 </div>
@@ -200,7 +200,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
       {/* Cross-arm: File as FIPPA request when fact_sheet or talking_points exist */}
       {materials.some((m) => m.materialType === 'fact_sheet' || m.materialType === 'talking_points') && (
         <div className="space-y-3">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
             Civic Actions
           </p>
           <CrossArmActions
@@ -221,7 +221,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                 <div
                   key={action.id}
                   className="flex items-center gap-2 rounded-lg px-3 py-1.5"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.025)' }}
+                  style={{ backgroundColor: 'var(--surface-1)' }}
                 >
                   <span
                     className="inline-block h-1.5 w-1.5 rounded-full"
@@ -232,7 +232,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                           : '#C8A84B',
                     }}
                   />
-                  <span className="text-xs text-neutral-400 truncate flex-1">
+                  <span className="text-xs text-text-secondary truncate flex-1">
                     {action.title}
                   </span>
                   <span
@@ -256,15 +256,15 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
       {/* Loading skeleton */}
       {loading && (
         <div className="space-y-2">
-          <div className="h-4 w-1/3 rounded animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} />
-          <div className="h-4 w-2/3 rounded animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }} />
+          <div className="h-4 w-1/3 rounded animate-pulse bg-surface-3" />
+          <div className="h-4 w-2/3 rounded animate-pulse bg-surface-3" />
         </div>
       )}
 
       {/* Generated materials */}
       {materials.length > 0 && (
         <section className="space-y-6">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
             Generated Materials
           </p>
           {materials.map((material) => (

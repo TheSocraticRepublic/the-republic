@@ -44,19 +44,19 @@ export default async function OraclePage() {
         </span>
         <div>
           <h1
-            className="text-xl font-bold tracking-tight text-neutral-100"
+            className="text-xl font-bold tracking-tight text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             Oracle
           </h1>
-          <p className="text-xs text-neutral-500">Civic document analysis</p>
+          <p className="text-xs text-text-muted">Civic document analysis</p>
         </div>
       </div>
 
       {/* Upload */}
       <section className="mb-10">
         <h2
-          className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500"
+          className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted"
         >
           Upload a document
         </h2>
@@ -65,18 +65,18 @@ export default async function OraclePage() {
 
       {/* Document list */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
           Your documents
           {docs.length > 0 && (
-            <span className="ml-2 font-normal normal-case tracking-normal text-neutral-600">
+            <span className="ml-2 font-normal normal-case tracking-normal text-text-faint">
               {docs.length} {docs.length === 1 ? 'document' : 'documents'}
             </span>
           )}
         </h2>
 
         {docs.length === 0 ? (
-          <div className="rounded-xl border border-white/[0.06] bg-black/40 px-6 py-10 text-center">
-            <p className="text-sm text-neutral-500">
+          <div className="rounded-xl border border-border bg-surface-1 px-6 py-10 text-center">
+            <p className="text-sm text-text-muted">
               No documents yet. Upload a government document to begin.
             </p>
           </div>

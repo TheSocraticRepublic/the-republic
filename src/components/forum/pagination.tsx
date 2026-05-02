@@ -34,17 +34,17 @@ export function Pagination({ currentPage, totalPages, baseUrl, queryParams }: Pa
       {currentPage > 1 ? (
         <Link
           href={buildUrl(baseUrl, currentPage - 1, queryParams)}
-          className="px-3 py-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors rounded-lg hover:bg-white/[0.04]"
+          className="px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-surface-3"
         >
           Previous
         </Link>
       ) : (
-        <button disabled aria-disabled="true" className="px-3 py-1.5 text-xs text-neutral-700 cursor-not-allowed">Previous</button>
+        <button disabled aria-disabled="true" className="px-3 py-1.5 text-xs text-text-faint cursor-not-allowed">Previous</button>
       )}
 
       {pages.map((page, i) =>
         page === 'ellipsis' ? (
-          <span key={`ellipsis-${i}`} className="px-2 text-xs text-neutral-700">
+          <span key={`ellipsis-${i}`} className="px-2 text-xs text-text-faint">
             ...
           </span>
         ) : (
@@ -53,8 +53,8 @@ export function Pagination({ currentPage, totalPages, baseUrl, queryParams }: Pa
             href={buildUrl(baseUrl, page, queryParams)}
             className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
               page === currentPage
-                ? 'text-neutral-100 bg-white/[0.08]'
-                : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.04]'
+                ? 'text-text-primary bg-surface-3'
+                : 'text-text-muted hover:text-text-secondary hover:bg-surface-3'
             }`}
           >
             {page}
@@ -65,12 +65,12 @@ export function Pagination({ currentPage, totalPages, baseUrl, queryParams }: Pa
       {currentPage < totalPages ? (
         <Link
           href={buildUrl(baseUrl, currentPage + 1, queryParams)}
-          className="px-3 py-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors rounded-lg hover:bg-white/[0.04]"
+          className="px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-surface-3"
         >
           Next
         </Link>
       ) : (
-        <button disabled aria-disabled="true" className="px-3 py-1.5 text-xs text-neutral-700 cursor-not-allowed">Next</button>
+        <button disabled aria-disabled="true" className="px-3 py-1.5 text-xs text-text-faint cursor-not-allowed">Next</button>
       )}
     </nav>
   )

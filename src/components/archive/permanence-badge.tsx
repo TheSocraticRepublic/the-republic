@@ -8,7 +8,7 @@ export function PermanenceBadge({ status }: PermanenceBadgeProps) {
   const variants: Record<ArchiveStatus, { label: string; className: string }> = {
     pending: {
       label: 'Not preserved',
-      className: 'bg-white/[0.04] border border-white/[0.08] text-neutral-500',
+      className: 'bg-surface-1 border border-border text-text-muted',
     },
     ipfs_pinned: {
       label: 'IPFS Preserved',

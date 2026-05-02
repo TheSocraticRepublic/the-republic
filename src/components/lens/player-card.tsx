@@ -95,14 +95,14 @@ export function PlayerCard({
   return (
     <div
       className={`flex flex-col gap-3 rounded-xl p-5 flex-shrink-0 transition-all duration-150 ${
-        onToggle ? 'cursor-pointer hover:bg-white/[0.04]' : ''
+        onToggle ? 'cursor-pointer hover:bg-surface-3' : ''
       } ${expanded ? 'sm:col-span-2' : ''}`}
       style={{
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid var(--border)',
         borderLeft: isRightsHolder
           ? '3px solid #f59e0b'
-          : '1px solid rgba(255,255,255,0.08)',
-        backgroundColor: expanded ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.02)',
+          : '1px solid var(--border)',
+        backgroundColor: expanded ? 'var(--surface-3)' : 'var(--surface-1)',
         width: expanded ? '100%' : '260px',
         minWidth: '220px',
       }}
@@ -112,7 +112,7 @@ export function PlayerCard({
       <div className="flex items-start justify-between gap-2">
         <p
           className="text-sm font-semibold leading-snug"
-          style={{ color: '#f5f5f5' }}
+          style={{ color: 'var(--text-primary)' }}
         >
           {name}
         </p>
@@ -145,8 +145,8 @@ export function PlayerCard({
           className="rounded-md px-2 py-0.5 text-[10px] font-medium"
           style={{
             color: '#78716c',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            backgroundColor: 'var(--surface-1)',
+            border: '1px solid var(--border)',
           }}
         >
           {formatRole(role)}
@@ -155,7 +155,7 @@ export function PlayerCard({
 
       {/* Context text */}
       {(context || description) && (
-        <p className="text-sm leading-relaxed" style={{ color: '#a3a3a3' }}>
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
           {context || description}
         </p>
       )}
@@ -164,13 +164,13 @@ export function PlayerCard({
       {expanded && (
         <div
           className="mt-2 space-y-4 border-t pt-4"
-          style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+          style={{ borderColor: 'var(--border)' }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Track Record */}
           {appearances && appearances.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600 mb-2">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-2">
                 Track Record
               </p>
               <div className="space-y-2">
@@ -178,17 +178,17 @@ export function PlayerCard({
                   <div
                     key={a.investigationId}
                     className="rounded-lg px-3 py-2"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
+                    style={{ backgroundColor: 'var(--surface-1)' }}
                   >
-                    <p className="text-xs text-neutral-400 leading-snug">
+                    <p className="text-xs text-text-secondary leading-snug">
                       {a.concern}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-[10px] text-neutral-600">
+                      <span className="text-[10px] text-text-faint">
                         {formatRole(a.role)}
                       </span>
                       {a.jurisdictionName && (
-                        <span className="text-[10px] text-neutral-700">
+                        <span className="text-[10px] text-text-faint">
                           {a.jurisdictionName}
                         </span>
                       )}
@@ -202,7 +202,7 @@ export function PlayerCard({
           {/* Connections */}
           {relatedPlayers && relatedPlayers.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600 mb-2">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-2">
                 Connections
               </p>
               <div className="flex flex-wrap gap-2">
@@ -213,15 +213,15 @@ export function PlayerCard({
                       key={rp.playerId}
                       className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1"
                       style={{
-                        backgroundColor: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.06)',
+                        backgroundColor: 'var(--surface-1)',
+                        border: '1px solid var(--border)',
                       }}
                     >
                       <span
                         className="h-1.5 w-1.5 rounded-full flex-shrink-0"
                         style={{ backgroundColor: rpStyles.color }}
                       />
-                      <span className="text-xs text-neutral-400">{rp.name}</span>
+                      <span className="text-xs text-text-secondary">{rp.name}</span>
                     </span>
                   )
                 })}
@@ -232,7 +232,7 @@ export function PlayerCard({
           {/* External links */}
           {links.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600 mb-2">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-2">
                 External Records
               </p>
               <div className="flex flex-wrap gap-2">
@@ -242,7 +242,7 @@ export function PlayerCard({
                     href={link.urlTemplate(name)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-neutral-500 hover:text-neutral-300 underline underline-offset-2 transition-colors"
+                    className="text-xs text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
                   >
                     {link.label} →
                   </a>
@@ -255,7 +255,7 @@ export function PlayerCard({
           {(!appearances || appearances.length === 0) &&
             (!relatedPlayers || relatedPlayers.length === 0) &&
             links.length === 0 && (
-              <p className="text-xs text-neutral-700">
+              <p className="text-xs text-text-faint">
                 No additional intelligence available for this entity.
               </p>
             )}

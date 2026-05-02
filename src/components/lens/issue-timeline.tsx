@@ -22,7 +22,7 @@ const EVENT_TYPE_STYLES: Record<string, { color: string; bg: string }> = {
   comment_period: { color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
   meeting: { color: '#60a5fa', bg: 'rgba(96,165,250,0.10)' },
   decision: { color: '#4ade80', bg: 'rgba(74,222,128,0.10)' },
-  custom: { color: '#a3a3a3', bg: 'rgba(255,255,255,0.05)' },
+  custom: { color: '#a3a3a3', bg: 'rgba(163,163,163,0.08)' },
 }
 
 function getDotColor(eventType: string): string {
@@ -78,19 +78,19 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
       <div
         className="rounded-xl border px-6 py-8 text-center"
         style={{
-          borderColor: 'rgba(255,255,255,0.06)',
-          backgroundColor: 'rgba(255,255,255,0.015)',
+          borderColor: 'var(--border)',
+          backgroundColor: 'var(--surface-1)',
         }}
       >
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600 mb-2">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-2">
           Timeline
         </p>
-        <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+        <p className="text-sm text-text-faint leading-relaxed mb-4">
           No events tracked yet. Deadlines and comment periods will appear here.
         </p>
         <button
           onClick={() => setShowForm(true)}
-          className="text-xs text-neutral-500 hover:text-neutral-300 underline underline-offset-2 transition-colors"
+          className="text-xs text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
         >
           Add an event
         </button>
@@ -101,13 +101,13 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
   return (
     <div className="space-y-1">
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
           Timeline
         </p>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="text-[10px] text-neutral-600 hover:text-neutral-400 transition-colors"
+            className="text-[10px] text-text-faint hover:text-text-secondary transition-colors"
           >
             + Add event
           </button>
@@ -119,7 +119,7 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
         <div className="relative">
           <div
             className="absolute left-2 top-3 bottom-3 w-px"
-            style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}
+            style={{ backgroundColor: 'var(--border)' }}
           />
 
           <div className="space-y-4">
@@ -141,14 +141,14 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
                   </div>
 
                   <div className="flex-1 min-w-0 pb-2">
-                    <p className="text-xs font-medium text-neutral-300 leading-snug">{event.title}</p>
+                    <p className="text-xs font-medium text-text-primary leading-snug">{event.title}</p>
                     {event.description && (
-                      <p className="mt-0.5 text-[11px] text-neutral-600 leading-relaxed">
+                      <p className="mt-0.5 text-[11px] text-text-faint leading-relaxed">
                         {event.description}
                       </p>
                     )}
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-[10px] text-neutral-600">{event.eventDate}</span>
+                      <span className="text-[10px] text-text-faint">{event.eventDate}</span>
                       <span
                         className="rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider"
                         style={{ color: style.color, backgroundColor: style.bg }}
@@ -170,8 +170,8 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
           onSubmit={handleSubmit}
           className="mt-4 rounded-xl border px-4 py-4 space-y-3"
           style={{
-            borderColor: 'rgba(255,255,255,0.08)',
-            backgroundColor: 'rgba(255,255,255,0.02)',
+            borderColor: 'var(--border)',
+            backgroundColor: 'var(--surface-1)',
           }}
         >
           <input
@@ -179,22 +179,22 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
             placeholder="Event title"
             value={formTitle}
             onChange={(e) => setFormTitle(e.target.value)}
-            className="w-full rounded-lg border px-3 py-2 text-xs bg-transparent text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-neutral-500"
-            style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+            className="w-full rounded-lg border px-3 py-2 text-xs bg-transparent text-text-primary placeholder-text-faint focus:outline-none focus:border-border-strong"
+            style={{ borderColor: 'var(--border)' }}
           />
           <div className="flex gap-2">
             <input
               type="date"
               value={formDate}
               onChange={(e) => setFormDate(e.target.value)}
-              className="flex-1 rounded-lg border px-3 py-2 text-xs bg-transparent text-neutral-200 focus:outline-none focus:border-neutral-500"
-              style={{ borderColor: 'rgba(255,255,255,0.1)', colorScheme: 'dark' }}
+              className="flex-1 rounded-lg border px-3 py-2 text-xs bg-transparent text-text-primary focus:outline-none focus:border-border-strong"
+              style={{ borderColor: 'var(--border)' }}
             />
             <select
               value={formType}
               onChange={(e) => setFormType(e.target.value)}
-              className="flex-1 rounded-lg border px-3 py-2 text-xs bg-transparent text-neutral-200 focus:outline-none focus:border-neutral-500"
-              style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+              className="flex-1 rounded-lg border px-3 py-2 text-xs bg-transparent text-text-primary focus:outline-none focus:border-border-strong"
+              style={{ borderColor: 'var(--border)' }}
             >
               <option value="deadline">Deadline</option>
               <option value="meeting">Meeting</option>
@@ -208,14 +208,14 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
             value={formDescription}
             onChange={(e) => setFormDescription(e.target.value)}
             rows={2}
-            className="w-full rounded-lg border px-3 py-2 text-xs bg-transparent text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-neutral-500 resize-none"
-            style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+            className="w-full rounded-lg border px-3 py-2 text-xs bg-transparent text-text-primary placeholder-text-faint focus:outline-none focus:border-border-strong resize-none"
+            style={{ borderColor: 'var(--border)' }}
           />
           <div className="flex items-center gap-2 justify-end">
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="text-[10px] text-neutral-600 hover:text-neutral-400 transition-colors px-3 py-1.5"
+              className="text-[10px] text-text-faint hover:text-text-secondary transition-colors px-3 py-1.5"
             >
               Cancel
             </button>

@@ -48,17 +48,17 @@ export default async function InvestigationsPage() {
       <div className="mb-10 flex items-center justify-between">
         <div>
           <h1
-            className="text-xl font-bold tracking-tight text-neutral-100"
+            className="text-xl font-bold tracking-tight text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             Investigations
             {records.length > 0 && (
-              <span className="ml-2.5 text-sm font-normal text-neutral-500">
+              <span className="ml-2.5 text-sm font-normal text-text-muted">
                 {records.length}
               </span>
             )}
           </h1>
-          <p className="mt-0.5 text-xs text-neutral-500">
+          <p className="mt-0.5 text-xs text-text-muted">
             Your civic inquiries
           </p>
         </div>
@@ -66,9 +66,9 @@ export default async function InvestigationsPage() {
           href="/investigate"
           className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 hover:opacity-90"
           style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-            color: '#f4f4f5',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
+            backgroundColor: 'var(--surface-3)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-strong)',
           }}
         >
           <Search size={13} strokeWidth={2} />
@@ -79,10 +79,10 @@ export default async function InvestigationsPage() {
       {/* List */}
       <section>
         {records.length === 0 ? (
-          <div className="rounded-xl border border-white/[0.06] bg-black/40 px-6 py-10 text-center">
-            <p className="text-sm text-neutral-500">No investigations yet. Start one.</p>
-            <p className="mt-1 text-xs text-neutral-600">
-              <Link href="/investigate" className="text-neutral-400 underline underline-offset-2 hover:text-neutral-200 transition-colors">
+          <div className="rounded-xl border border-border bg-surface-1 shadow-sm px-6 py-10 text-center">
+            <p className="text-sm text-text-muted">No investigations yet. Start one.</p>
+            <p className="mt-1 text-xs text-text-faint">
+              <Link href="/investigate" className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors">
                 Start your first investigation
               </Link>
             </p>
@@ -93,15 +93,15 @@ export default async function InvestigationsPage() {
               <Link
                 key={inv.id}
                 href={`/investigate/${inv.id}`}
-                className="group block rounded-xl border border-white/[0.06] bg-black/40 px-5 py-4 transition-all duration-150 hover:bg-white/[0.04] hover:border-white/[0.10]"
+                className="card-lift group block rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-4 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm leading-relaxed text-neutral-200 group-hover:text-neutral-100 transition-colors">
+                    <p className="text-sm leading-relaxed text-text-primary group-hover:text-text-primary transition-colors">
                       {truncate(inv.concern)}
                     </p>
                     {inv.jurisdictionName && (
-                      <p className="mt-1 text-xs text-neutral-600">
+                      <p className="mt-1 text-xs text-text-faint">
                         {inv.jurisdictionName}
                       </p>
                     )}
@@ -117,7 +117,7 @@ export default async function InvestigationsPage() {
                     >
                       {inv.briefingText ? 'Complete' : 'In progress'}
                     </span>
-                    <span className="text-[10px] text-neutral-600">
+                    <span className="text-[10px] text-text-faint">
                       {formatDate(inv.createdAt)}
                     </span>
                   </div>

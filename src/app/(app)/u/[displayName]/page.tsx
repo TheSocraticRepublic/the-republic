@@ -94,26 +94,26 @@ export default async function PublicProfilePage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
       {/* Profile card */}
-      <div className="rounded-xl border border-white/[0.08] bg-black/50 p-6 backdrop-blur-md">
+      <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-6">
         <div className="flex flex-col gap-4">
           <ProfileBadge displayName={profile.displayName} size="md" />
 
           {profile.bio && (
-            <p className="max-w-md text-sm leading-relaxed text-neutral-400">
+            <p className="max-w-md text-sm leading-relaxed text-text-secondary">
               {profile.bio}
             </p>
           )}
 
           <div className="flex items-center gap-3">
-            <p className="text-xs text-neutral-600">
+            <p className="text-xs text-text-faint">
               Joined {formatDate(profile.createdAt)}
             </p>
             {effectiveTotal > 0 && (
               <>
-                <span className="text-neutral-600">·</span>
-                <p className="text-xs text-neutral-500">
+                <span className="text-text-faint">·</span>
+                <p className="text-xs text-text-muted">
                   Civic weight{' '}
-                  <span className="text-neutral-300 font-medium">{effectiveTotal}</span>
+                  <span className="text-text-secondary font-medium">{effectiveTotal}</span>
                 </p>
               </>
             )}

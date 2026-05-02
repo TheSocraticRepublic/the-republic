@@ -92,20 +92,20 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
       </Dialog.Trigger>
 
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
 
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/[0.1] bg-neutral-950 p-6 shadow-2xl focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border-strong bg-surface-1 p-6 shadow-2xl focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
         >
           {/* Header */}
           <div className="mb-5 flex items-center justify-between">
             <Dialog.Title
-              className="text-base font-semibold text-neutral-100"
+              className="text-base font-semibold text-text-primary"
               style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
             >
               Begin Inquiry
             </Dialog.Title>
-            <Dialog.Close className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-white/[0.06] hover:text-neutral-300">
+            <Dialog.Close className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary">
               <X size={14} strokeWidth={2} />
             </Dialog.Close>
           </div>
@@ -113,17 +113,17 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
           <div className="space-y-4">
             {/* Document selector */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-neutral-400">
-                Document <span className="text-neutral-600">(optional)</span>
+              <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+                Document <span className="text-text-faint">(optional)</span>
               </label>
               {fetchingDocs ? (
-                <div className="h-9 animate-pulse rounded-lg bg-white/[0.04]" />
+                <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
               ) : (
                 <div className="relative">
                   <select
                     value={selectedDocId}
                     onChange={(e) => setSelectedDocId(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-white/[0.1] bg-black/60 px-3 py-2 pr-8 text-sm text-neutral-200 outline-none focus:border-[#C8A84B]/40 focus:ring-0"
+                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#C8A84B]/40 focus:ring-0"
                   >
                     <option value="">No document — open inquiry</option>
                     {documents.map((doc) => (
@@ -135,7 +135,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
                   <ChevronDown
                     size={13}
                     strokeWidth={2}
-                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
+                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
                   />
                 </div>
               )}
@@ -143,8 +143,8 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
 
             {/* Title */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-neutral-400">
-                Title <span className="text-neutral-600">(optional)</span>
+              <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+                Title <span className="text-text-faint">(optional)</span>
               </label>
               <input
                 type="text"
@@ -155,13 +155,13 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
                     ? 'Auto-generated from document title'
                     : 'New Inquiry'
                 }
-                className="w-full rounded-lg border border-white/[0.1] bg-black/60 px-3 py-2 text-sm text-neutral-200 placeholder-neutral-600 outline-none focus:border-[#C8A84B]/40"
+                className="w-full rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[#C8A84B]/40"
               />
             </div>
 
             {/* Mode selector */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-neutral-400">Mode</label>
+              <label className="mb-1.5 block text-xs font-medium text-text-secondary">Mode</label>
               <div className="grid grid-cols-2 gap-2">
                 {(['socratic', 'direct'] as const).map((m) => (
                   <button
@@ -171,7 +171,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
                       'rounded-lg border px-3 py-2.5 text-sm font-medium transition-all duration-150',
                       mode === m
                         ? 'border-[#C8A84B]/40 bg-[#C8A84B]/10 text-[#C8A84B]'
-                        : 'border-white/[0.08] bg-black/40 text-neutral-500 hover:border-white/[0.15] hover:text-neutral-300'
+                        : 'border-border bg-surface-1 text-text-muted hover:border-border-strong hover:text-text-secondary'
                     )}
                   >
                     <span className="block font-medium capitalize">{m}</span>
@@ -186,7 +186,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
 
           {/* Action */}
           <div className="mt-6 flex justify-end gap-3">
-            <Dialog.Close className="rounded-lg px-4 py-2 text-sm text-neutral-500 transition-colors hover:text-neutral-300">
+            <Dialog.Close className="rounded-lg px-4 py-2 text-sm text-text-muted transition-colors hover:text-text-secondary">
               Cancel
             </Dialog.Close>
             <button

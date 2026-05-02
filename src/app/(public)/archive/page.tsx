@@ -53,17 +53,17 @@ export default async function ArchivePage({
       {/* Header */}
       <div className="mb-10">
         <h1
-          className="text-xl font-bold tracking-tight text-neutral-100"
+          className="text-xl font-bold tracking-tight text-text-primary"
           style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         >
           The Archive
           {total > 0 && (
-            <span className="ml-2.5 text-sm font-normal text-neutral-500">
+            <span className="ml-2.5 text-sm font-normal text-text-muted">
               {total}
             </span>
           )}
         </h1>
-        <p className="mt-0.5 text-xs text-neutral-500">
+        <p className="mt-0.5 text-xs text-text-muted">
           Preserved civic investigations. Public, permanent, unforgeable.
         </p>
       </div>
@@ -71,9 +71,9 @@ export default async function ArchivePage({
       {/* List */}
       <section>
         {records.length === 0 ? (
-          <div className="rounded-xl border border-white/[0.06] bg-black/40 px-6 py-10 text-center">
-            <p className="text-sm text-neutral-500">No investigations have been archived yet.</p>
-            <p className="mt-1 text-xs text-neutral-600">
+          <div className="rounded-xl border border-border bg-surface-1 px-6 py-10 text-center">
+            <p className="text-sm text-text-muted">No investigations have been archived yet.</p>
+            <p className="mt-1 text-xs text-text-faint">
               Archived investigations are preserved permanently and will appear here.
             </p>
           </div>

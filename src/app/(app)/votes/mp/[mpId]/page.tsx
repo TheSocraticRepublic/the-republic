@@ -61,12 +61,12 @@ export default async function MpProfilePage({ params }: PageProps) {
       <section>
         <div
           className="mb-6 h-px w-full"
-          style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+          style={{ backgroundColor: 'var(--surface-3)' }}
         />
         <div className="flex items-center gap-3 mb-6">
           <div
             className="h-px flex-1"
-            style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+            style={{ backgroundColor: 'var(--surface-3)' }}
           />
           <span
             className="text-[10px] font-semibold uppercase tracking-[0.12em]"
@@ -76,7 +76,7 @@ export default async function MpProfilePage({ params }: PageProps) {
           </span>
           <div
             className="h-px flex-1"
-            style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+            style={{ backgroundColor: 'var(--surface-3)' }}
           />
         </div>
 

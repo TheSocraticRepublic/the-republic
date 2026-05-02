@@ -43,7 +43,7 @@ export function ActionCard({ id, title, actionType, status, createdAt }: ActionC
   return (
     <Link
       href={`/lever/${id}`}
-      className="block rounded-xl border border-white/[0.08] bg-black/60 backdrop-blur-md p-4 transition-all duration-150 hover:border-white/[0.15] hover:bg-black/70"
+      className="card-lift block rounded-xl border border-border bg-surface-1 shadow-sm p-4 transition-all duration-150 hover:border-border-strong hover:bg-surface-3"
     >
       <div className="flex items-start gap-3">
         {/* Icon */}
@@ -60,7 +60,7 @@ export function ActionCard({ id, title, actionType, status, createdAt }: ActionC
         {/* Main content */}
         <div className="flex-1 min-w-0">
           <p
-            className="truncate text-sm font-medium text-neutral-200 leading-snug"
+            className="truncate text-sm font-medium text-text-primary leading-snug"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {title}
@@ -83,7 +83,7 @@ export function ActionCard({ id, title, actionType, status, createdAt }: ActionC
           </div>
 
           {/* Date */}
-          <div className="mt-2.5 flex items-center text-[11px] text-neutral-500">
+          <div className="mt-2.5 flex items-center text-[11px] text-text-muted">
             <span className="ml-auto">{formatDate(createdAt)}</span>
           </div>
         </div>

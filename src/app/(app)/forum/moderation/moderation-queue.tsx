@@ -58,7 +58,7 @@ export function ModerationQueue() {
 
   if (loading) {
     return (
-      <div className="text-sm text-neutral-600 py-8 text-center">
+      <div className="text-sm text-text-faint py-8 text-center">
         Loading reports...
       </div>
     )
@@ -75,7 +75,7 @@ export function ModerationQueue() {
   if (reports.length === 0) {
     return (
       <div
-        className="rounded-xl border border-white/[0.06] bg-black/30 px-5 py-8 text-center text-sm text-neutral-600"
+        className="rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-8 text-center text-sm text-text-faint"
       >
         No pending reports. The queue is clear.
       </div>

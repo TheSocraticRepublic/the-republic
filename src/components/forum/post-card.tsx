@@ -120,10 +120,10 @@ export function PostCard({
         className="py-3 px-4 rounded-lg"
         style={{ marginLeft: depth * 24 }}
       >
-        <p className="text-xs text-neutral-600 italic">
+        <p className="text-xs text-text-faint italic">
           [This post was removed by the author]
           {' '}
-          <span className="text-neutral-700">{formatRelativeTime(createdAt)}</span>
+          <span className="text-text-faint">{formatRelativeTime(createdAt)}</span>
         </p>
       </div>
     )
@@ -132,16 +132,16 @@ export function PostCard({
   if (status === 'hidden') {
     return (
       <div
-        className="py-3 px-4 rounded-lg border border-white/[0.04] bg-white/[0.02] min-h-[36px] flex items-center"
+        className="py-3 px-4 rounded-lg border border-border bg-surface-1 min-h-[36px] flex items-center"
         style={{ marginLeft: depth * 24 }}
       >
         {isAuthor ? (
           <div className="space-y-2">
-            <p className="text-xs text-neutral-600 italic">
+            <p className="text-xs text-text-faint italic">
               [Hidden by moderator —{' '}
               <button
                 onClick={() => setAppealing((v) => !v)}
-                className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2 transition-colors"
+                className="text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
               >
                 appeal
               </button>
@@ -155,20 +155,20 @@ export function PostCard({
                   maxLength={1000}
                   rows={2}
                   placeholder="Why should this be reviewed again?"
-                  className="w-full rounded-md px-2 py-1.5 text-xs text-neutral-200 bg-white/[0.04] border border-white/[0.08] placeholder-neutral-600 resize-none focus:outline-none focus:border-white/[0.18] transition-colors"
+                  className="w-full rounded-md px-2 py-1.5 text-xs text-text-primary bg-surface-1 border border-border placeholder-text-faint resize-none focus:outline-none focus:border-border-strong transition-colors"
                 />
                 {appealError && <p className="text-xs text-red-400">{appealError}</p>}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => reportId && handleAppeal(reportId)}
                     disabled={appealLoading || !reportId}
-                    className="text-xs px-3 py-1.5 rounded-md transition-colors bg-white/[0.07] border border-white/[0.12] text-neutral-100 hover:bg-white/[0.12] disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="text-xs px-3 py-1.5 rounded-md transition-colors bg-surface-3 border border-border-strong text-text-primary hover:bg-surface-3 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {appealLoading ? 'Submitting...' : 'Submit appeal'}
                   </button>
                   <button
                     onClick={() => { setAppealing(false); setAppealReason('') }}
-                    className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
+                    className="text-xs text-text-faint hover:text-text-secondary transition-colors"
                   >
                     Cancel
                   </button>
@@ -177,7 +177,7 @@ export function PostCard({
             )}
           </div>
         ) : (
-          <p className="text-xs text-neutral-600 italic">
+          <p className="text-xs text-text-faint italic">
             [Content hidden by moderator]
           </p>
         )}
@@ -187,14 +187,14 @@ export function PostCard({
 
   return (
     <div
-      className="rounded-xl border border-white/[0.06] bg-black/40 px-4 py-4"
+      className="rounded-xl border border-border bg-surface-1 shadow-sm px-4 py-4"
       style={{ marginLeft: depth * 24 }}
     >
       <div className="flex items-center justify-between mb-3">
         <ProfileBadge displayName={authorDisplayName} size="sm" />
-        <div className="flex items-center gap-2 text-[10px] text-neutral-600">
+        <div className="flex items-center gap-2 text-[10px] text-text-faint">
           <span>{formatRelativeTime(createdAt)}</span>
-          {editedAt && <span className="text-neutral-700">(edited)</span>}
+          {editedAt && <span className="text-text-faint">(edited)</span>}
         </div>
       </div>
 
@@ -205,7 +205,7 @@ export function PostCard({
             onChange={(e) => setEditContent(e.target.value)}
             maxLength={5000}
             rows={4}
-            className="w-full rounded-lg px-3 py-2 text-sm text-neutral-200 bg-white/[0.04] border border-white/[0.10] placeholder-neutral-600 resize-none focus:outline-none focus:border-white/[0.20] transition-colors"
+            className="w-full rounded-lg px-3 py-2 text-sm text-text-primary bg-surface-1 border border-border-strong placeholder-text-faint resize-none focus:outline-none focus:border-border-strong transition-colors"
           />
           <div className="flex items-center gap-2">
             <button
@@ -213,16 +213,16 @@ export function PostCard({
               disabled={editLoading}
               className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                color: '#f4f4f5',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
+                backgroundColor: 'var(--surface-3)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-strong)',
               }}
             >
               {editLoading ? 'Saving...' : 'Save'}
             </button>
             <button
               onClick={() => { setEditing(false); setEditContent(content ?? '') }}
-              className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
+              className="text-xs text-text-faint hover:text-text-secondary transition-colors"
             >
               Cancel
             </button>
@@ -231,14 +231,14 @@ export function PostCard({
         </div>
       ) : (
         <>
-          <p className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">{content ?? ''}</p>
+          <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">{content ?? ''}</p>
           {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
           {showActions && (
             <div className="flex items-center gap-3 mt-3">
               {depth < MAX_REPLY_DEPTH && onReply && (
                 <button
                   onClick={() => onReply(id)}
-                  className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
+                  className="text-xs text-text-faint hover:text-text-secondary transition-colors"
                 >
                   Reply
                 </button>
@@ -246,7 +246,7 @@ export function PostCard({
               {isAuthor && onEdit && (
                 <button
                   onClick={() => setEditing(true)}
-                  className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
+                  className="text-xs text-text-faint hover:text-text-secondary transition-colors"
                 >
                   Edit
                 </button>
@@ -263,7 +263,7 @@ export function PostCard({
                     </button>
                     <button
                       onClick={() => setConfirming(false)}
-                      className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
+                      className="text-xs text-text-faint hover:text-text-secondary transition-colors"
                     >
                       Keep
                     </button>
@@ -271,7 +271,7 @@ export function PostCard({
                 ) : (
                   <button
                     onClick={() => setConfirming(true)}
-                    className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
+                    className="text-xs text-text-faint hover:text-text-secondary transition-colors"
                   >
                     Delete
                   </button>
@@ -280,7 +280,7 @@ export function PostCard({
               {!isAuthor && !reported && (
                 <button
                   onClick={() => setReporting((v) => !v)}
-                  className="ml-auto flex items-center gap-1 text-xs text-neutral-700 hover:text-neutral-400 transition-colors"
+                  className="ml-auto flex items-center gap-1 text-xs text-text-faint hover:text-text-secondary transition-colors"
                   title="Report this post"
                 >
                   <Flag size={12} strokeWidth={1.75} />
@@ -288,7 +288,7 @@ export function PostCard({
                 </button>
               )}
               {!isAuthor && reported && (
-                <span className="ml-auto text-xs text-neutral-600">Reported</span>
+                <span className="ml-auto text-xs text-text-faint">Reported</span>
               )}
             </div>
           )}

@@ -251,7 +251,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
             {/* Edit */}
             <button
               onClick={() => { setEditContent(content); setMode('editing') }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-neutral-400 transition-colors hover:text-neutral-200 border border-white/[0.08] hover:border-white/[0.15]"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
             >
               <Pencil size={12} strokeWidth={2} />
               Edit
@@ -260,7 +260,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
             {/* Re-generate */}
             <button
               onClick={runGenerate}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-neutral-400 transition-colors hover:text-neutral-200 border border-white/[0.08] hover:border-white/[0.15]"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
             >
               <RefreshCw size={12} strokeWidth={2} />
               Re-generate
@@ -273,7 +273,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
               className={clsx(
                 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
                 exporting || !content
-                  ? 'cursor-not-allowed opacity-50 text-neutral-600 border border-white/[0.06]'
+                  ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
                   : 'text-[#C85B5B] border border-[rgba(200,91,91,0.25)] hover:bg-[rgba(200,91,91,0.08)]'
               )}
             >
@@ -288,7 +288,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
               className={clsx(
                 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
                 !content
-                  ? 'cursor-not-allowed opacity-50 text-neutral-600 border border-white/[0.06]'
+                  ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
                   : 'text-[#C85B5B] border border-[rgba(200,91,91,0.25)] hover:bg-[rgba(200,91,91,0.08)]'
               )}
             >
@@ -304,7 +304,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
                 className={clsx(
                   'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
                   pdfExporting || !content
-                    ? 'cursor-not-allowed opacity-50 text-neutral-600 border border-white/[0.06]'
+                    ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
                     : 'text-[#C85B5B] border border-[rgba(200,91,91,0.25)] hover:bg-[rgba(200,91,91,0.08)]'
                 )}
               >
@@ -335,7 +335,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
             </button>
             <button
               onClick={handleCancelEdit}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-neutral-400 transition-colors hover:text-neutral-200 border border-white/[0.08]"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border"
             >
               <X size={12} strokeWidth={2} />
               Cancel
@@ -347,18 +347,18 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       {/* Document display */}
       {mode === 'generating' && (
         <div
-          className="relative rounded-xl border border-white/[0.08] bg-neutral-950/80 p-6"
+          className="relative rounded-xl border border-border bg-surface-1 shadow-sm p-6"
           style={{ minHeight: '400px' }}
         >
           {/* Generating indicator */}
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[11px] text-neutral-500">
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[11px] text-text-muted">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#C85B5B] animate-pulse" />
             Generating
           </div>
 
           {streamedContent ? (
             <pre
-              className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-300"
+              className="whitespace-pre-wrap text-sm leading-relaxed text-text-secondary"
               style={{ fontFamily: '"SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace' }}
             >
               {streamedContent}
@@ -366,40 +366,40 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
             </pre>
           ) : (
             <div className="flex items-center justify-center h-48">
-              <p className="text-sm text-neutral-600">Preparing your document...</p>
+              <p className="text-sm text-text-faint">Preparing your document...</p>
             </div>
           )}
         </div>
       )}
 
       {mode === 'viewing' && (
-        <div className="rounded-xl border border-white/[0.08] bg-neutral-950/80 p-6">
+        <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-6">
           {content ? (
             <pre
-              className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-300"
+              className="whitespace-pre-wrap text-sm leading-relaxed text-text-secondary"
               style={{ fontFamily: '"SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace' }}
             >
               {content}
             </pre>
           ) : (
             <div className="flex items-center justify-center h-48">
-              <p className="text-sm text-neutral-600">No content yet. Click Re-generate to produce the document.</p>
+              <p className="text-sm text-text-faint">No content yet. Click Re-generate to produce the document.</p>
             </div>
           )}
         </div>
       )}
 
       {mode === 'editing' && (
-        <div className="rounded-xl border border-white/[0.08] bg-neutral-950/80 overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.02]">
-            <p className="text-[11px] text-neutral-500">
+        <div className="rounded-xl border border-border bg-surface-1 shadow-sm overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-border bg-surface-1">
+            <p className="text-[11px] text-text-muted">
               Edit the document text directly. Changes are saved when you click Save.
             </p>
           </div>
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full resize-none bg-transparent px-6 py-5 text-sm leading-relaxed text-neutral-300 outline-none"
+            className="w-full resize-none bg-transparent px-6 py-5 text-sm leading-relaxed text-text-secondary outline-none"
             style={{
               fontFamily: '"SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace',
               minHeight: '500px',

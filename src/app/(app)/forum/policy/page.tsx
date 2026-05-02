@@ -2,20 +2,20 @@ export default function ForumPolicyPage() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       <h1
-        className="text-xl font-bold tracking-tight text-neutral-100 mb-2"
+        className="text-xl font-bold tracking-tight text-text-primary mb-2"
         style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
       >
         Forum Content Policy
       </h1>
-      <p className="text-xs text-neutral-500 mb-10">
+      <p className="text-xs text-text-muted mb-10">
         How this community moderates itself — and how to appeal a decision.
       </p>
 
       <div className="space-y-8">
         <section>
-          <h2 className="text-sm font-semibold text-neutral-200 mb-3">What the Forum is For</h2>
+          <h2 className="text-sm font-semibold text-text-primary mb-3">What the Forum is For</h2>
           <div
-            className="rounded-xl border border-white/[0.06] bg-black/30 px-5 py-4 text-sm text-neutral-400 leading-relaxed space-y-2"
+            className="rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-4 text-sm text-text-secondary leading-relaxed space-y-2"
           >
             <p>
               The Republic Forum is a space for people doing civic work — investigating public
@@ -31,9 +31,9 @@ export default function ForumPolicyPage() {
         </section>
 
         <section>
-          <h2 className="text-sm font-semibold text-neutral-200 mb-3">Moderation System</h2>
+          <h2 className="text-sm font-semibold text-text-primary mb-3">Moderation System</h2>
           <div
-            className="rounded-xl border border-white/[0.06] bg-black/30 px-5 py-4 text-sm text-neutral-400 leading-relaxed space-y-2"
+            className="rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-4 text-sm text-text-secondary leading-relaxed space-y-2"
           >
             <p>
               There are no appointed moderators. Access to the moderation queue is earned through
@@ -50,28 +50,28 @@ export default function ForumPolicyPage() {
         </section>
 
         <section>
-          <h2 className="text-sm font-semibold text-neutral-200 mb-3">What Can Be Reported</h2>
+          <h2 className="text-sm font-semibold text-text-primary mb-3">What Can Be Reported</h2>
           <div
-            className="rounded-xl border border-white/[0.06] bg-black/30 px-5 py-4"
+            className="rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-4"
           >
-            <ul className="space-y-2 text-sm text-neutral-400">
+            <ul className="space-y-2 text-sm text-text-secondary">
               <li className="flex gap-3">
-                <span className="text-neutral-600 flex-shrink-0 w-24">Spam</span>
+                <span className="text-text-faint flex-shrink-0 w-24">Spam</span>
                 <span>Promotional content, off-platform solicitation, repetitive posts.</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-neutral-600 flex-shrink-0 w-24">Harassment</span>
+                <span className="text-text-faint flex-shrink-0 w-24">Harassment</span>
                 <span>Personal attacks, threats, coordinated targeting of individuals.</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-neutral-600 flex-shrink-0 w-24">Misinformation</span>
+                <span className="text-text-faint flex-shrink-0 w-24">Misinformation</span>
                 <span>
                   Demonstrably false claims about public officials, institutions, or policy
                   outcomes presented as fact.
                 </span>
               </li>
               <li className="flex gap-3">
-                <span className="text-neutral-600 flex-shrink-0 w-24">Off topic</span>
+                <span className="text-text-faint flex-shrink-0 w-24">Off topic</span>
                 <span>Content unrelated to civic work or the investigation it&apos;s attached to.</span>
               </li>
             </ul>
@@ -79,9 +79,9 @@ export default function ForumPolicyPage() {
         </section>
 
         <section>
-          <h2 className="text-sm font-semibold text-neutral-200 mb-3">Appeals</h2>
+          <h2 className="text-sm font-semibold text-text-primary mb-3">Appeals</h2>
           <div
-            className="rounded-xl border border-white/[0.06] bg-black/30 px-5 py-4 text-sm text-neutral-400 leading-relaxed space-y-2"
+            className="rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-4 text-sm text-text-secondary leading-relaxed space-y-2"
           >
             <p>
               If your content is hidden and you believe it was done in error, you can appeal. The
@@ -96,9 +96,9 @@ export default function ForumPolicyPage() {
         </section>
 
         <section>
-          <h2 className="text-sm font-semibold text-neutral-200 mb-3">Earning Moderator Access</h2>
+          <h2 className="text-sm font-semibold text-text-primary mb-3">Earning Moderator Access</h2>
           <div
-            className="rounded-xl border border-white/[0.06] bg-black/30 px-5 py-4 text-sm text-neutral-400 leading-relaxed"
+            className="rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-4 text-sm text-text-secondary leading-relaxed"
           >
             <p>
               Credential weight accumulates through diverse civic actions. A single path — for example,

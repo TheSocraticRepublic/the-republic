@@ -105,24 +105,24 @@ function ProfileSetupForm() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-950">
-        <Loader2 size={20} className="animate-spin text-neutral-500" />
+      <div className="flex min-h-screen flex-col items-center justify-center bg-surface-0">
+        <Loader2 size={20} className="animate-spin text-text-muted" />
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-950 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-surface-0 px-4">
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-8 text-center">
           <h1
-            className="mb-1 text-xl font-bold text-neutral-100"
+            className="mb-1 text-xl font-bold text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {isEdit ? 'Edit Profile' : 'Choose your identity'}
           </h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-text-muted">
             {isEdit
               ? 'Update your public display name and bio'
               : 'Your display name is public. Your email stays private.'}
@@ -130,13 +130,13 @@ function ProfileSetupForm() {
         </div>
 
         {/* Card */}
-        <div className="rounded-xl border border-white/10 bg-black/60 p-6 backdrop-blur-md">
+        <div className="rounded-xl border border-border-strong bg-surface-1 p-6 shadow-md">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Display name */}
             <div>
               <label
                 htmlFor="displayName"
-                className="mb-1.5 block text-xs font-medium text-neutral-400"
+                className="mb-1.5 block text-xs font-medium text-text-secondary"
               >
                 Display name
               </label>
@@ -149,12 +149,12 @@ function ProfileSetupForm() {
                 value={displayName}
                 onChange={(e) => handleNameChange(e.target.value)}
                 placeholder="citizen_42"
-                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition-colors focus:border-white/20 focus:bg-white/[0.06]"
+                className="w-full rounded-lg border border-border bg-surface-0 px-3.5 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none transition-colors focus:border-border-strong focus:bg-surface-1"
               />
               {nameError && (
-                <p className="mt-1 text-xs text-red-400">{nameError}</p>
+                <p className="mt-1 text-xs text-red-600">{nameError}</p>
               )}
-              <p className="mt-1 text-[11px] text-neutral-600">
+              <p className="mt-1 text-[11px] text-text-faint">
                 Lowercase letters, numbers, underscores, and hyphens only
               </p>
             </div>
@@ -163,10 +163,10 @@ function ProfileSetupForm() {
             <div>
               <label
                 htmlFor="bio"
-                className="mb-1.5 block text-xs font-medium text-neutral-400"
+                className="mb-1.5 block text-xs font-medium text-text-secondary"
               >
                 Bio{' '}
-                <span className="font-normal text-neutral-600">— optional</span>
+                <span className="font-normal text-text-faint">— optional</span>
               </label>
               <textarea
                 id="bio"
@@ -175,21 +175,21 @@ function ProfileSetupForm() {
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="What brings you to The Republic?"
-                className="w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition-colors focus:border-white/20 focus:bg-white/[0.06]"
+                className="w-full resize-none rounded-lg border border-border bg-surface-0 px-3.5 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none transition-colors focus:border-border-strong focus:bg-surface-1"
               />
-              <p className="mt-1 text-right text-[11px] text-neutral-600">
+              <p className="mt-1 text-right text-[11px] text-text-faint">
                 {bio.length}/500
               </p>
             </div>
 
             {error && (
-              <p className="text-xs text-red-400">{error}</p>
+              <p className="text-xs text-red-600">{error}</p>
             )}
 
             <button
               type="submit"
               disabled={submitting || !!nameError || displayName.length < 3}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.07] py-2.5 text-sm font-semibold text-neutral-100 transition-all duration-150 hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-border-strong bg-surface-3 py-2.5 text-sm font-semibold text-text-primary transition-all duration-150 hover:bg-text-faint/20 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {submitting ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -199,7 +199,7 @@ function ProfileSetupForm() {
           </form>
         </div>
 
-        <p className="mt-4 text-center text-xs text-neutral-700">
+        <p className="mt-4 text-center text-xs text-text-faint">
           Display names can be changed once every 30 days.
         </p>
       </div>
@@ -211,8 +211,8 @@ export default function ProfileSetupPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-950">
-          <Loader2 size={20} className="animate-spin text-neutral-500" />
+        <div className="flex min-h-screen flex-col items-center justify-center bg-surface-0">
+          <Loader2 size={20} className="animate-spin text-text-muted" />
         </div>
       }
     >

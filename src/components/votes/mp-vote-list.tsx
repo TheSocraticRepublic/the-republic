@@ -43,7 +43,7 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
           <div
             key={i}
             className="h-16 rounded-xl animate-pulse"
-            style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+            style={{ backgroundColor: 'var(--surface-1)' }}
           />
         ))}
       </div>
@@ -55,11 +55,11 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
       <div
         className="rounded-xl border px-6 py-8 text-center"
         style={{
-          borderColor: 'rgba(255,255,255,0.06)',
-          backgroundColor: 'rgba(255,255,255,0.015)',
+          borderColor: 'var(--border)',
+          backgroundColor: 'var(--surface-1)',
         }}
       >
-        <p className="text-sm text-neutral-600">No voting records found.</p>
+        <p className="text-sm text-text-faint">No voting records found.</p>
       </div>
     )
   }
@@ -70,19 +70,19 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
         <Link
           key={vote.voteId}
           href={`/votes/vote/${vote.voteId}`}
-          className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-white/[0.04] hover:border-white/[0.10]"
+          className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
           style={{
-            borderColor: 'rgba(255,255,255,0.06)',
-            backgroundColor: 'rgba(255,255,255,0.015)',
+            borderColor: 'var(--border)',
+            backgroundColor: 'var(--surface-1)',
           }}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-neutral-300 leading-snug line-clamp-2">
+              <p className="text-xs font-medium text-text-secondary leading-snug line-clamp-2">
                 {vote.descriptionEn}
               </p>
               <div className="mt-1.5 flex items-center gap-2">
-                <span className="text-[10px] text-neutral-600">{vote.date}</span>
+                <span className="text-[10px] text-text-faint">{vote.date}</span>
                 <span
                   className="rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider"
                   style={{
@@ -108,15 +108,15 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="text-xs text-neutral-500 hover:text-neutral-300 disabled:opacity-30 transition-colors"
+            className="text-xs text-text-muted hover:text-text-secondary disabled:opacity-30 transition-colors"
           >
             Previous
           </button>
-          <span className="text-[10px] text-neutral-600">Page {page}</span>
+          <span className="text-[10px] text-text-faint">Page {page}</span>
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={!hasMore}
-            className="text-xs text-neutral-500 hover:text-neutral-300 disabled:opacity-30 transition-colors"
+            className="text-xs text-text-muted hover:text-text-secondary disabled:opacity-30 transition-colors"
           >
             Next
           </button>

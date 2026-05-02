@@ -2,24 +2,28 @@
 @import "tailwindcss";
 
 @theme {
-  /* Base colors */
-  --color-background: #090909;
-  --color-foreground: #f4f4f5;
+  /* Surface hierarchy (warm stone palette) */
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
 
-  /* Arm accent colors */
-  --color-scout: #b088c8;
-  --color-oracle: #89b4c8;
-  --color-gadfly: #c8a84b;
-  --color-lever: #c85b5b;
-  --color-mirror: #5bc88a;
+  /* Text hierarchy */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
 
-  /* Neutral surface scale */
-  --color-surface-0: #090909;
-  --color-surface-1: #111113;
-  --color-surface-2: #18181b;
-  --color-surface-3: #27272a;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-strong: rgba(255, 255, 255, 0.15);
+  /* Borders */
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  /* Arm accent colors (referenced via CSS vars for theme switching) */
+  --color-scout: var(--accent-scout);
+  --color-oracle: var(--accent-oracle);
+  --color-gadfly: var(--accent-gadfly);
+  --color-lever: var(--accent-lever);
+  --color-mirror: var(--accent-mirror);
 
   /* Content island — light surface for briefing document */
   --color-island-bg: #fafaf9;
@@ -34,17 +38,89 @@
   --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
   --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+
+  /* Shadows (warm-tinted, layered) */
+  --shadow-sm: 0 1px 2px rgba(28,25,23,0.04), 0 2px 4px rgba(28,25,23,0.03);
+  --shadow-md: 0 2px 4px rgba(28,25,23,0.04), 0 4px 8px rgba(28,25,23,0.03), 0 8px 16px rgba(28,25,23,0.02);
+  --shadow-lg: 0 4px 8px rgba(28,25,23,0.04), 0 8px 16px rgba(28,25,23,0.03), 0 16px 32px rgba(28,25,23,0.02);
 }
 
-/* Force dark mode globally */
+/* Light mode tokens (default) */
 :root {
+  --surface-0: #FAFAF9;
+  --surface-1: #FFFFFF;
+  --surface-2: #F5F4F2;
+  --surface-3: #EEECE8;
+
+  --text-primary: #1C1917;
+  --text-secondary: #44403C;
+  --text-muted: #78716C;
+  --text-faint: #A8A29E;
+
+  --border: rgba(28, 25, 23, 0.06);
+  --border-strong: rgba(28, 25, 23, 0.12);
+
+  --accent-scout: #9333EA;
+  --accent-oracle: #0891B2;
+  --accent-gadfly: #B45309;
+  --accent-lever: #DC2626;
+  --accent-mirror: #059669;
+
+  color-scheme: light;
+}
+
+/* Dark mode tokens */
+.dark {
+  --surface-0: #090909;
+  --surface-1: #111113;
+  --surface-2: #18181b;
+  --surface-3: #27272a;
+
+  --text-primary: #f4f4f5;
+  --text-secondary: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --text-faint: #71717a;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+
+  --accent-scout: #B088C8;
+  --accent-oracle: #89B4C8;
+  --accent-gadfly: #C8A84B;
+  --accent-lever: #C85B5B;
+  --accent-mirror: #5BC88A;
+
+  color-scheme: dark;
+}
+
+/* Dark island — focused-attention overlay (Gadfly, etc.) */
+.dark-island {
+  --surface-0: #090909;
+  --surface-1: #111113;
+  --surface-2: #18181b;
+  --surface-3: #27272a;
+
+  --text-primary: #f4f4f5;
+  --text-secondary: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --text-faint: #71717a;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+
+  --accent-scout: #B088C8;
+  --accent-oracle: #89B4C8;
+  --accent-gadfly: #C8A84B;
+  --accent-lever: #C85B5B;
+  --accent-mirror: #5BC88A;
+
   color-scheme: dark;
 }
 
 html,
 body {
-  background-color: #090909;
-  color: #f4f4f5;
+  background-color: var(--surface-0);
+  color: var(--text-primary);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -62,17 +138,17 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--border-strong);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--text-faint);
 }
 
 /* Focus rings */
 *:focus-visible {
-  outline: 2px solid rgba(137, 180, 200, 0.6);
+  outline: 2px solid color-mix(in srgb, var(--accent-oracle) 60%, transparent);
   outline-offset: 2px;
 }
 
@@ -92,6 +168,15 @@ body {
   animation: island-entrance 300ms ease-out both;
 }
 
+/* Card lift micro-interaction */
+.card-lift {
+  transition: transform 80ms ease, box-shadow 150ms ease;
+}
+.card-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .content-island,
@@ -99,5 +184,11 @@ body {
   .link-card {
     transition: none;
     animation: none;
+  }
+  .card-lift {
+    transition: none;
+  }
+  .card-lift:hover {
+    transform: none;
   }
 }

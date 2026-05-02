@@ -12,35 +12,30 @@ const arms = [
     name: 'Scout',
     href: '/scout',
     icon: Compass,
-    color: '#B088C8',
     description: 'Document discovery',
   },
   {
     name: 'Oracle',
     href: '/oracle',
     icon: Eye,
-    color: '#89B4C8',
     description: 'Document analysis',
   },
   {
     name: 'Gadfly',
     href: '/gadfly',
     icon: MessageCircleQuestion,
-    color: '#C8A84B',
     description: 'Socratic inquiry',
   },
   {
     name: 'Lever',
     href: '/lever',
     icon: FileText,
-    color: '#C85B5B',
     description: 'Civic actions',
   },
   {
     name: 'Mirror',
     href: '/mirror',
     icon: GitCompare,
-    color: '#5BC88A',
     description: 'Policy comparison',
   },
 ]
@@ -64,18 +59,18 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
   const isModerator = effectiveWeight >= 10
 
   return (
-    <nav className="flex h-full w-56 flex-col border-r border-white/[0.06] bg-black/40 backdrop-blur-xl">
+    <nav className="flex h-full w-56 flex-col border-r border-border bg-surface-2">
       {/* Wordmark */}
       <div className="px-5 py-6">
         <Link href="/" className="block">
           <span
-            className="text-base font-bold tracking-tight text-neutral-100"
+            className="text-base font-bold tracking-tight text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             The Republic
           </span>
         </Link>
-        <p className="mt-0.5 text-[11px] tracking-wider text-neutral-500 uppercase">
+        <p className="mt-0.5 text-[11px] tracking-wider text-text-muted uppercase">
           Civic AI Framework
         </p>
       </div>
@@ -87,32 +82,32 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
           className={clsx(
             'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
             investigateActive
-              ? 'bg-white/[0.09] text-neutral-100'
-              : 'text-neutral-300 hover:bg-white/[0.05] hover:text-neutral-100'
+              ? 'bg-surface-3 text-text-primary'
+              : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
           )}
         >
           <span
             className={clsx(
               'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
               investigateActive
-                ? 'bg-white/[0.10] border-white/[0.15]'
-                : 'border-white/[0.08] group-hover:bg-white/[0.06] group-hover:border-white/[0.12]'
+                ? 'bg-surface-1 border-border-strong shadow-sm'
+                : 'border-border group-hover:bg-surface-1 group-hover:border-border-strong'
             )}
           >
             <Search
               size={14}
               strokeWidth={1.75}
               className={clsx(
-                investigateActive ? 'text-neutral-100' : 'text-neutral-400 group-hover:text-neutral-200'
+                investigateActive ? 'text-text-primary' : 'text-text-muted group-hover:text-text-secondary'
               )}
             />
           </span>
           <span className="flex flex-col">
             <span className="font-semibold leading-tight">New Investigation</span>
-            <span className="text-[10px] text-neutral-600 leading-tight">Start here</span>
+            <span className="text-[10px] text-text-faint leading-tight">Start here</span>
           </span>
           {investigateActive && (
-            <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
+            <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
           )}
         </Link>
 
@@ -122,32 +117,32 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
           className={clsx(
             'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
             investigationsActive
-              ? 'bg-white/[0.09] text-neutral-100'
-              : 'text-neutral-300 hover:bg-white/[0.05] hover:text-neutral-100'
+              ? 'bg-surface-3 text-text-primary'
+              : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
           )}
         >
           <span
             className={clsx(
               'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
               investigationsActive
-                ? 'bg-white/[0.10] border-white/[0.15]'
-                : 'border-white/[0.08] group-hover:bg-white/[0.06] group-hover:border-white/[0.12]'
+                ? 'bg-surface-1 border-border-strong shadow-sm'
+                : 'border-border group-hover:bg-surface-1 group-hover:border-border-strong'
             )}
           >
             <List
               size={14}
               strokeWidth={1.75}
               className={clsx(
-                investigationsActive ? 'text-neutral-100' : 'text-neutral-400 group-hover:text-neutral-200'
+                investigationsActive ? 'text-text-primary' : 'text-text-muted group-hover:text-text-secondary'
               )}
             />
           </span>
           <span className="flex flex-col">
             <span className="font-semibold leading-tight">Investigations</span>
-            <span className="text-[10px] text-neutral-600 leading-tight">Your history</span>
+            <span className="text-[10px] text-text-faint leading-tight">Your history</span>
           </span>
           {investigationsActive && (
-            <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
+            <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
           )}
         </Link>
 
@@ -157,17 +152,17 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
           title="Forum — coming soon"
         >
           <span
-            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-white/[0.06]"
+            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-border"
           >
             <MessageSquare
               size={14}
               strokeWidth={1.75}
-              className="text-neutral-500"
+              className="text-text-muted"
             />
           </span>
           <span className="flex flex-col">
-            <span className="font-semibold leading-tight text-neutral-500">Forum</span>
-            <span className="text-[10px] text-neutral-700 leading-tight">Coming soon</span>
+            <span className="font-semibold leading-tight text-text-muted">Forum</span>
+            <span className="text-[10px] text-text-faint leading-tight">Coming soon</span>
           </span>
         </span>
 
@@ -177,16 +172,16 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
           className={clsx(
             'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
             votesActive
-              ? 'bg-white/[0.09] text-neutral-100'
-              : 'text-neutral-300 hover:bg-white/[0.05] hover:text-neutral-100'
+              ? 'bg-surface-3 text-text-primary'
+              : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
           )}
         >
           <span
             className={clsx(
               'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
               votesActive
-                ? 'bg-white/[0.10] border-white/[0.15]'
-                : 'border-white/[0.08] group-hover:bg-white/[0.06] group-hover:border-white/[0.12]'
+                ? 'bg-surface-1 border-border-strong shadow-sm'
+                : 'border-border group-hover:bg-surface-1 group-hover:border-border-strong'
             )}
           >
             <Vote
@@ -194,13 +189,13 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
               strokeWidth={1.75}
               style={votesActive ? { color: '#D4764E' } : undefined}
               className={clsx(
-                !votesActive && 'text-neutral-400 group-hover:text-neutral-200'
+                !votesActive && 'text-text-muted group-hover:text-text-secondary'
               )}
             />
           </span>
           <span className="flex flex-col">
             <span className="font-semibold leading-tight">Vote Tracker</span>
-            <span className="text-[10px] text-neutral-600 leading-tight">MP voting records</span>
+            <span className="text-[10px] text-text-faint leading-tight">MP voting records</span>
           </span>
           {votesActive && (
             <span
@@ -217,32 +212,32 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
             className={clsx(
               'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
               moderationActive
-                ? 'bg-white/[0.09] text-neutral-100'
-                : 'text-neutral-300 hover:bg-white/[0.05] hover:text-neutral-100'
+                ? 'bg-surface-3 text-text-primary'
+                : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
             )}
           >
             <span
               className={clsx(
                 'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
                 moderationActive
-                  ? 'bg-white/[0.10] border-white/[0.15]'
-                  : 'border-white/[0.08] group-hover:bg-white/[0.06] group-hover:border-white/[0.12]'
+                  ? 'bg-surface-1 border-border-strong shadow-sm'
+                  : 'border-border group-hover:bg-surface-1 group-hover:border-border-strong'
               )}
             >
               <Shield
                 size={14}
                 strokeWidth={1.75}
                 className={clsx(
-                  moderationActive ? 'text-neutral-100' : 'text-neutral-400 group-hover:text-neutral-200'
+                  moderationActive ? 'text-text-primary' : 'text-text-muted group-hover:text-text-secondary'
                 )}
               />
             </span>
             <span className="flex flex-col">
               <span className="font-semibold leading-tight">Moderation</span>
-              <span className="text-[10px] text-neutral-600 leading-tight">Review reports</span>
+              <span className="text-[10px] text-text-faint leading-tight">Review reports</span>
             </span>
             {moderationActive && (
-              <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
+              <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
             )}
           </Link>
         )}
@@ -253,43 +248,43 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
           className={clsx(
             'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
             profileActive
-              ? 'bg-white/[0.09] text-neutral-100'
-              : 'text-neutral-300 hover:bg-white/[0.05] hover:text-neutral-100'
+              ? 'bg-surface-3 text-text-primary'
+              : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
           )}
         >
           <span
             className={clsx(
               'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
               profileActive
-                ? 'bg-white/[0.10] border-white/[0.15]'
-                : 'border-white/[0.08] group-hover:bg-white/[0.06] group-hover:border-white/[0.12]'
+                ? 'bg-surface-1 border-border-strong shadow-sm'
+                : 'border-border group-hover:bg-surface-1 group-hover:border-border-strong'
             )}
           >
             <User
               size={14}
               strokeWidth={1.75}
               className={clsx(
-                profileActive ? 'text-neutral-100' : 'text-neutral-400 group-hover:text-neutral-200'
+                profileActive ? 'text-text-primary' : 'text-text-muted group-hover:text-text-secondary'
               )}
             />
           </span>
           <span className="flex flex-col">
             <span className="font-semibold leading-tight">Profile</span>
-            <span className="text-[10px] text-neutral-600 leading-tight">Your identity</span>
+            <span className="text-[10px] text-text-faint leading-tight">Your identity</span>
           </span>
           {profileActive && (
-            <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-neutral-300" />
+            <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
           )}
         </Link>
 
         {/* Divider */}
-        <div className="mx-3 my-3 h-px" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />
+        <div className="mx-3 my-3 h-px bg-border" />
 
         {/* Expert Tools — collapsible section */}
         <div>
           <button
             onClick={() => setExpertToolsOpen((v) => !v)}
-            className="flex w-full items-center justify-between px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-600 hover:text-neutral-400 transition-colors"
+            className="flex w-full items-center justify-between px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-text-faint hover:text-text-muted transition-colors"
           >
             <span>Expert Tools</span>
             <ChevronDown
@@ -314,33 +309,33 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
                       className={clsx(
                         'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
                         isActive
-                          ? 'bg-white/[0.07] text-neutral-100'
-                          : 'text-neutral-400 hover:bg-white/[0.04] hover:text-neutral-200'
+                          ? 'bg-surface-3 text-text-primary'
+                          : 'text-text-muted hover:bg-surface-3 hover:text-text-secondary'
                       )}
                     >
                       <span
                         className={clsx(
                           'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150',
-                          isActive ? 'bg-white/[0.08]' : 'group-hover:bg-white/[0.05]'
+                          isActive ? 'bg-surface-1 shadow-sm' : 'group-hover:bg-surface-1'
                         )}
                       >
                         <Icon
                           size={15}
-                          style={{ color: isActive ? arm.color : undefined }}
-                          className={clsx(!isActive && 'text-neutral-500 group-hover:text-neutral-300')}
+                          className={clsx(!isActive && 'text-text-muted group-hover:text-text-secondary')}
+                          style={isActive ? { color: `var(--accent-${arm.name.toLowerCase()})` } : undefined}
                           strokeWidth={1.75}
                         />
                       </span>
                       <span className="flex flex-col">
                         <span className="font-medium leading-tight">{arm.name}</span>
-                        <span className="text-[10px] text-neutral-600 leading-tight">
+                        <span className="text-[10px] text-text-faint leading-tight">
                           {arm.description}
                         </span>
                       </span>
                       {isActive && (
                         <span
                           className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: arm.color }}
+                          style={{ backgroundColor: `var(--accent-${arm.name.toLowerCase()})` }}
                         />
                       )}
                     </Link>
@@ -353,14 +348,14 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
       </div>
 
       {/* User / sign out */}
-      <div className="border-t border-white/[0.06] px-3 py-4">
+      <div className="border-t border-border px-3 py-4">
         {(displayName || userEmail) && (
           <div className="mb-2 px-3">
             {displayName ? (
               <ProfileBadge displayName={displayName} size="sm" />
             ) : null}
             {userEmail && (
-              <p className="truncate text-[11px] text-neutral-500 mt-1">
+              <p className="truncate text-[11px] text-text-muted mt-1">
                 {userEmail}
               </p>
             )}
@@ -369,7 +364,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
         <form action="/api/auth/signout" method="POST">
           <button
             type="submit"
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-neutral-500 transition-colors hover:bg-white/[0.04] hover:text-neutral-300"
+            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary"
           >
             <LogOut size={14} strokeWidth={1.75} />
             Sign out

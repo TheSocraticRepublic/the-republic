@@ -87,8 +87,8 @@ function SectionShell({
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-xl border border-white/10 bg-black/60 backdrop-blur-md">
-      <div className="border-b border-white/[0.06] px-5 py-3.5">
+    <section className="rounded-xl border border-border bg-surface-1 shadow-sm">
+      <div className="border-b border-border px-5 py-3.5">
         <h3
           className="text-sm font-semibold tracking-wide"
           style={{
@@ -107,7 +107,7 @@ function SectionShell({
 function PlainSummary({ content }: { content: string }) {
   return (
     <SectionShell heading="Plain Language Summary">
-      <p className="text-sm leading-relaxed text-neutral-300">{content}</p>
+      <p className="text-sm leading-relaxed text-text-secondary">{content}</p>
     </SectionShell>
   )
 }
@@ -117,7 +117,7 @@ function KeyFindingsSection({ content }: { content: string }) {
   if (!findings.length) {
     return (
       <SectionShell heading="Key Findings">
-        <p className="text-sm text-neutral-400">{content}</p>
+        <p className="text-sm text-text-secondary">{content}</p>
       </SectionShell>
     )
   }
@@ -131,8 +131,8 @@ function KeyFindingsSection({ content }: { content: string }) {
             className={clsx(
               'rounded-lg px-4 py-3 text-sm leading-relaxed',
               f.hasQuote
-                ? 'border-l-2 border-[#89B4C8]/40 bg-white/[0.03] text-neutral-200'
-                : 'text-neutral-300'
+                ? 'border-l-2 border-[#89B4C8]/40 bg-surface-1 text-text-primary'
+                : 'text-text-secondary'
             )}
           >
             {f.text}
@@ -157,7 +157,7 @@ function PowerMapSection({ content }: { content: string }) {
   if (!entries.length) {
     return (
       <SectionShell heading="Power Map">
-        <p className="text-sm text-neutral-400 whitespace-pre-line">{content}</p>
+        <p className="text-sm text-text-secondary whitespace-pre-line">{content}</p>
       </SectionShell>
     )
   }
@@ -166,17 +166,17 @@ function PowerMapSection({ content }: { content: string }) {
     <SectionShell heading="Power Map">
       <div className="grid gap-3 sm:grid-cols-2">
         {entries.map((entry) => {
-          const labelColor = POWER_MAP_COLORS[entry.label] ?? 'text-neutral-400'
+          const labelColor = POWER_MAP_COLORS[entry.label] ?? 'text-text-secondary'
           return (
             <div
               key={entry.label}
-              className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+              className="rounded-lg border border-border bg-surface-1 px-4 py-3"
             >
               <p className={clsx('mb-1.5 text-[11px] font-semibold uppercase tracking-widest', labelColor)}>
                 {entry.label}
               </p>
-              <p className="text-sm leading-relaxed text-neutral-300">
-                {entry.text || <span className="italic text-neutral-500">Not identified</span>}
+              <p className="text-sm leading-relaxed text-text-secondary">
+                {entry.text || <span className="italic text-text-muted">Not identified</span>}
               </p>
             </div>
           )
@@ -194,7 +194,7 @@ function BulletSection({ heading, content }: { heading: string; content: string 
       {bullets.length > 0 ? (
         <ul className="space-y-2">
           {bullets.map((bullet, i) => (
-            <li key={i} className="flex items-start gap-2.5 text-sm text-neutral-300 leading-relaxed">
+            <li key={i} className="flex items-start gap-2.5 text-sm text-text-secondary leading-relaxed">
               <span
                 className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full"
                 style={{ backgroundColor: '#89B4C8', opacity: 0.7 }}
@@ -204,7 +204,7 @@ function BulletSection({ heading, content }: { heading: string; content: string 
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-neutral-400 whitespace-pre-line">{content}</p>
+        <p className="text-sm text-text-secondary whitespace-pre-line">{content}</p>
       )}
     </SectionShell>
   )
@@ -228,12 +228,12 @@ function QuestionsSection({ content }: { content: string }) {
               >
                 {i + 1}
               </span>
-              <p className="text-sm leading-relaxed text-neutral-300">{q}</p>
+              <p className="text-sm leading-relaxed text-text-secondary">{q}</p>
             </li>
           ))}
         </ol>
       ) : (
-        <p className="text-sm text-neutral-400 whitespace-pre-line">{content}</p>
+        <p className="text-sm text-text-secondary whitespace-pre-line">{content}</p>
       )}
     </SectionShell>
   )
@@ -242,15 +242,15 @@ function QuestionsSection({ content }: { content: string }) {
 // Streaming placeholder
 function StreamingFallback({ content }: { content: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/60 backdrop-blur-md px-5 py-4">
+    <div className="rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-4">
       <div className="flex items-center gap-2 mb-3">
         <span
           className="h-1.5 w-1.5 rounded-full animate-pulse"
           style={{ backgroundColor: '#89B4C8' }}
         />
-        <span className="text-xs text-neutral-500 tracking-wide">Analyzing...</span>
+        <span className="text-xs text-text-muted tracking-wide">Analyzing...</span>
       </div>
-      <pre className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-300 font-sans">
+      <pre className="whitespace-pre-wrap text-sm leading-relaxed text-text-secondary font-sans">
         {content}
       </pre>
     </div>
@@ -303,7 +303,7 @@ export function AnalysisView({ content, isStreaming = false }: AnalysisViewProps
             className="h-1.5 w-1.5 rounded-full animate-pulse"
             style={{ backgroundColor: '#89B4C8' }}
           />
-          <span className="text-xs text-neutral-500">Oracle is thinking...</span>
+          <span className="text-xs text-text-muted">Oracle is thinking...</span>
         </div>
       )}
     </div>

@@ -82,8 +82,8 @@ export function ReviewSection({ investigationId, isAuthor }: ReviewSectionProps)
         <div
           className="h-4 w-4 animate-spin rounded-full border-2"
           style={{
-            borderColor: 'rgba(255, 255, 255, 0.12)',
-            borderTopColor: 'rgba(255, 255, 255, 0.4)',
+            borderColor: 'var(--border-strong)',
+            borderTopColor: 'var(--text-secondary)',
           }}
         />
       </div>
@@ -99,8 +99,8 @@ export function ReviewSection({ investigationId, isAuthor }: ReviewSectionProps)
           <div
             className="h-3 w-3 animate-spin rounded-full border-2 flex-shrink-0"
             style={{
-              borderColor: 'rgba(255, 255, 255, 0.12)',
-              borderTopColor: 'rgba(255, 255, 255, 0.4)',
+              borderColor: 'var(--border-strong)',
+              borderTopColor: 'var(--text-secondary)',
             }}
           />
           <span className="text-xs text-neutral-500">Refreshing reviews...</span>

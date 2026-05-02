@@ -48,7 +48,7 @@ function ChangeTypeBadge({ type }: { type: DocumentChangeType }) {
 export function DiffViewer({ versions }: DiffViewerProps) {
   if (versions.length === 0) {
     return (
-      <p className="text-sm text-neutral-600">No document versions recorded.</p>
+      <p className="text-sm text-text-faint">No document versions recorded.</p>
     )
   }
 
@@ -57,22 +57,22 @@ export function DiffViewer({ versions }: DiffViewerProps) {
       {versions.map((version) => (
         <div
           key={version.id}
-          className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+          className="rounded-xl border border-border bg-surface-1 px-4 py-3"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-neutral-600 tabular-nums">
+              <span className="text-xs text-text-faint tabular-nums">
                 v{version.versionNumber}
               </span>
               <ChangeTypeBadge type={version.changeType} />
             </div>
-            <span className="text-[10px] text-neutral-600 flex-shrink-0">
+            <span className="text-[10px] text-text-faint flex-shrink-0">
               {formatDate(version.detectedAt)}
             </span>
           </div>
 
           {version.diffSummary && (
-            <p className="mt-2 text-xs leading-relaxed text-neutral-500">
+            <p className="mt-2 text-xs leading-relaxed text-text-muted">
               {version.diffSummary}
             </p>
           )}

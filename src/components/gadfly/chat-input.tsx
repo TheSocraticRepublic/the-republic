@@ -48,7 +48,7 @@ export function ChatInput({ onSubmit, disabled = false, value, onChange }: ChatI
   const canSubmit = value.trim().length > 0 && !disabled
 
   return (
-    <div className="flex items-end gap-3 rounded-xl border border-white/[0.1] bg-black/60 backdrop-blur-md p-3">
+    <div className="flex items-end gap-3 rounded-xl border border-border-strong bg-surface-1 shadow-sm p-3">
       <textarea
         ref={textareaRef}
         value={value}
@@ -58,7 +58,7 @@ export function ChatInput({ onSubmit, disabled = false, value, onChange }: ChatI
         rows={1}
         placeholder={disabled ? 'Waiting for response...' : 'Share your thoughts... (Cmd+Enter to send)'}
         className={clsx(
-          'flex-1 resize-none bg-transparent text-sm leading-relaxed text-neutral-200 placeholder-neutral-600 outline-none',
+          'flex-1 resize-none bg-transparent text-sm leading-relaxed text-text-primary placeholder-text-faint outline-none',
           'min-h-[24px] max-h-[200px]',
           disabled && 'opacity-50 cursor-not-allowed'
         )}
@@ -70,7 +70,7 @@ export function ChatInput({ onSubmit, disabled = false, value, onChange }: ChatI
           'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-all duration-150',
           canSubmit
             ? 'bg-[#C8A84B]/20 text-[#C8A84B] hover:bg-[#C8A84B]/30'
-            : 'bg-white/[0.04] text-neutral-600 cursor-not-allowed'
+            : 'bg-surface-1 text-text-faint cursor-not-allowed'
         )}
         aria-label="Send message"
       >

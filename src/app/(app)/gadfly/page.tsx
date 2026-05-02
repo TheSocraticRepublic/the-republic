@@ -52,12 +52,12 @@ export default async function GadflyPage({ searchParams }: GadflyPageProps) {
           </span>
           <div>
             <h1
-              className="text-xl font-bold tracking-tight text-neutral-100"
+              className="text-xl font-bold tracking-tight text-text-primary"
               style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
             >
               Gadfly
             </h1>
-            <p className="text-xs text-neutral-500">Socratic inquiry</p>
+            <p className="text-xs text-text-muted">Socratic inquiry</p>
           </div>
         </div>
 
@@ -69,19 +69,19 @@ export default async function GadflyPage({ searchParams }: GadflyPageProps) {
 
       {/* Session list */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
           Your inquiries
           {sessions.length > 0 && (
-            <span className="ml-2 font-normal normal-case tracking-normal text-neutral-600">
+            <span className="ml-2 font-normal normal-case tracking-normal text-text-faint">
               {sessions.length} {sessions.length === 1 ? 'session' : 'sessions'}
             </span>
           )}
         </h2>
 
         {sessions.length === 0 ? (
-          <div className="rounded-xl border border-white/[0.06] bg-black/40 px-6 py-10 text-center">
-            <p className="text-sm text-neutral-500">No inquiries yet.</p>
-            <p className="mt-1 text-xs text-neutral-600">
+          <div className="rounded-xl border border-border bg-surface-1 px-6 py-10 text-center">
+            <p className="text-sm text-text-muted">No inquiries yet.</p>
+            <p className="mt-1 text-xs text-text-faint">
               Begin an inquiry to start the Socratic process.
             </p>
           </div>

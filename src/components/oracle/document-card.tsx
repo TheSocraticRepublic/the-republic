@@ -62,8 +62,8 @@ export function DocumentCard({
   const inner = (
     <div
       className={clsx(
-        'group flex flex-col gap-4 rounded-xl border border-white/10 bg-black/60 p-5 backdrop-blur-md transition-all duration-150',
-        status === 'ready' && 'hover:border-[#89B4C8]/30 hover:bg-black/80 cursor-pointer'
+        'group flex flex-col gap-4 rounded-xl border border-border bg-surface-1 shadow-sm p-5 backdrop-blur-md transition-all duration-150',
+        status === 'ready' && 'hover:border-[#89B4C8]/30 hover:bg-surface-3 cursor-pointer'
       )}
     >
       {/* Top row: icon + title */}
@@ -80,12 +80,12 @@ export function DocumentCard({
 
         <div className="flex-1 min-w-0">
           <h3
-            className="truncate text-sm font-semibold leading-snug text-neutral-100"
+            className="truncate text-sm font-semibold leading-snug text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {title}
           </h3>
-          <p className="mt-0.5 text-[11px] text-neutral-500">{formatDocType(documentType)}</p>
+          <p className="mt-0.5 text-[11px] text-text-muted">{formatDocType(documentType)}</p>
         </div>
 
         {/* Status badge */}
@@ -96,7 +96,7 @@ export function DocumentCard({
       </div>
 
       {/* Metadata row */}
-      <div className="flex items-center gap-4 text-[11px] text-neutral-500">
+      <div className="flex items-center gap-4 text-[11px] text-text-muted">
         {pageCount != null && (
           <span>{pageCount} {pageCount === 1 ? 'page' : 'pages'}</span>
         )}

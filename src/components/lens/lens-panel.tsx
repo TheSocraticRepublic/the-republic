@@ -207,7 +207,7 @@ export function LensPanel({
       <div className="flex items-center gap-3">
         <div
           className="h-px flex-1"
-          style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+          style={{ backgroundColor: 'var(--border)' }}
         />
         <span
           className="text-[10px] font-semibold uppercase tracking-[0.12em]"
@@ -217,21 +217,21 @@ export function LensPanel({
         </span>
         <div
           className="h-px flex-1"
-          style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+          style={{ backgroundColor: 'var(--border)' }}
         />
       </div>
 
       {/* Player profiles */}
       <section>
-        <p className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
+        <p className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-text-faint">
           Key Players
         </p>
         {players.length === 0 ? (
           <div
             className="rounded-xl border px-5 py-4"
             style={{
-              borderColor: 'rgba(255,255,255,0.06)',
-              backgroundColor: 'rgba(255,255,255,0.015)',
+              borderColor: 'var(--border)',
+              backgroundColor: 'var(--surface-1)',
             }}
           >
             <div className="flex items-center gap-2">
@@ -239,7 +239,7 @@ export function LensPanel({
                 className="h-1.5 w-1.5 rounded-full animate-pulse"
                 style={{ backgroundColor: '#a3a3a3' }}
               />
-              <p className="text-xs text-neutral-600">Identifying players from the briefing</p>
+              <p className="text-xs text-text-faint">Identifying players from the briefing</p>
             </div>
           </div>
         ) : (

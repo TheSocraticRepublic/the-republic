@@ -57,7 +57,7 @@ export function PostalCodeForm() {
       <div>
         <label
           htmlFor="postal-code"
-          className="block text-[10px] font-semibold uppercase tracking-widest text-neutral-500 mb-2"
+          className="block text-[10px] font-semibold uppercase tracking-widest text-text-muted mb-2"
         >
           Your postal code
         </label>
@@ -70,8 +70,8 @@ export function PostalCodeForm() {
             setError(null)
           }}
           placeholder="V8B 0A1"
-          className="w-full rounded-xl border bg-transparent px-4 py-3 text-lg text-neutral-100 placeholder-neutral-700 focus:outline-none focus:border-neutral-500 tracking-wider font-mono"
-          style={{ borderColor: 'rgba(255,255,255,0.10)' }}
+          className="w-full rounded-xl border bg-transparent px-4 py-3 text-lg text-text-primary placeholder-neutral-700 focus:outline-none focus:border-neutral-500 tracking-wider font-mono"
+          style={{ borderColor: 'var(--border-strong)' }}
           autoComplete="postal-code"
           maxLength={7}
         />

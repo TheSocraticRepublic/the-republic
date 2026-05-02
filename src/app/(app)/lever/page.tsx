@@ -58,12 +58,12 @@ export default async function LeverPage({ searchParams }: LeverPageProps) {
           </span>
           <div>
             <h1
-              className="text-xl font-bold tracking-tight text-neutral-100"
+              className="text-xl font-bold tracking-tight text-text-primary"
               style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
             >
               Lever
             </h1>
-            <p className="text-xs text-neutral-500">Civic action documents</p>
+            <p className="text-xs text-text-muted">Civic action documents</p>
           </div>
         </div>
 
@@ -77,19 +77,19 @@ export default async function LeverPage({ searchParams }: LeverPageProps) {
 
       {/* Action list */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
           Your actions
           {actions.length > 0 && (
-            <span className="ml-2 font-normal normal-case tracking-normal text-neutral-600">
+            <span className="ml-2 font-normal normal-case tracking-normal text-text-faint">
               {actions.length} {actions.length === 1 ? 'document' : 'documents'}
             </span>
           )}
         </h2>
 
         {actions.length === 0 ? (
-          <div className="rounded-xl border border-white/[0.06] bg-black/40 px-6 py-10 text-center">
-            <p className="text-sm text-neutral-500">No actions yet.</p>
-            <p className="mt-1 text-xs text-neutral-600">
+          <div className="rounded-xl border border-border bg-surface-1 px-6 py-10 text-center">
+            <p className="text-sm text-text-muted">No actions yet.</p>
+            <p className="mt-1 text-xs text-text-faint">
               Generate a FIPPA request, public comment, or policy brief to begin.
             </p>
           </div>

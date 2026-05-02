@@ -900,7 +900,7 @@ export function BriefingView({ text, isStreaming }: BriefingViewProps) {
           margin: '0 auto',
           padding: '40px',
           borderRadius: '16px',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.4), 0 20px 60px -10px rgba(0,0,0,0.6)',
+          boxShadow: '0 4px 8px rgba(28,25,23,0.04), 0 8px 16px rgba(28,25,23,0.03), 0 16px 32px rgba(28,25,23,0.02)',
         }}
       >
         <p
@@ -924,7 +924,7 @@ export function BriefingView({ text, isStreaming }: BriefingViewProps) {
         margin: '0 auto',
         padding: 'clamp(32px, 5vw, 40px) clamp(20px, 5vw, 40px)',
         borderRadius: 'clamp(12px, 2vw, 16px)',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.4), 0 20px 60px -10px rgba(0,0,0,0.6)',
+        boxShadow: '0 4px 8px rgba(28,25,23,0.04), 0 8px 16px rgba(28,25,23,0.03), 0 16px 32px rgba(28,25,23,0.02)',
       }}
     >
       {/* Executive card — always first when we have sections */}

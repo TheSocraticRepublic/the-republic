@@ -151,16 +151,16 @@ export function GadflySession({
   return (
     <div className="flex h-full flex-col">
       {/* Top bar */}
-      <div className="flex-shrink-0 border-b border-white/[0.06] px-6 py-4">
+      <div className="flex-shrink-0 border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <Link
               href="/gadfly"
-              className="flex-shrink-0 text-neutral-500 transition-colors hover:text-neutral-300 text-xs"
+              className="flex-shrink-0 text-text-muted transition-colors hover:text-text-secondary text-xs"
             >
               ← All inquiries
             </Link>
-            <span className="text-neutral-700">·</span>
+            <span className="text-text-faint">·</span>
             <span
               className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border"
               style={{
@@ -171,7 +171,7 @@ export function GadflySession({
               <MessageCircleQuestion size={13} strokeWidth={1.75} style={{ color: '#C8A84B' }} />
             </span>
             <h1
-              className="truncate text-sm font-semibold text-neutral-200"
+              className="truncate text-sm font-semibold text-text-primary"
               style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
             >
               {session.title}
@@ -203,7 +203,7 @@ export function GadflySession({
           />
 
           {/* Input */}
-          <div className="flex-shrink-0 border-t border-white/[0.06] p-4 space-y-3">
+          <div className="flex-shrink-0 border-t border-border p-4 space-y-3">
             {isActive ? (
               <ChatInput
                 value={inputValue}
@@ -212,7 +212,7 @@ export function GadflySession({
                 disabled={isStreaming}
               />
             ) : (
-              <div className="rounded-xl border border-white/[0.06] bg-black/40 px-4 py-3 text-center text-xs text-neutral-500">
+              <div className="rounded-xl border border-border bg-surface-1 px-4 py-3 text-center text-xs text-text-muted">
                 This inquiry is {session.status}. Start a new inquiry to continue.
               </div>
             )}
@@ -234,7 +234,7 @@ export function GadflySession({
         </div>
 
         {/* Stats sidebar */}
-        <div className="flex-shrink-0 w-64 border-l border-white/[0.06] p-4">
+        <div className="flex-shrink-0 w-64 border-l border-border p-4">
           <SessionStats
             questionCount={questionCount}
             insightCount={insightCount}

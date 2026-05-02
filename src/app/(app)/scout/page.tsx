@@ -21,12 +21,12 @@ export default function ScoutPage() {
         </span>
         <div>
           <h1
-            className="text-xl font-bold tracking-tight text-neutral-100"
+            className="text-xl font-bold tracking-tight text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             Scout
           </h1>
-          <p className="text-xs text-neutral-500">Document discovery</p>
+          <p className="text-xs text-text-muted">Document discovery</p>
         </div>
       </div>
 

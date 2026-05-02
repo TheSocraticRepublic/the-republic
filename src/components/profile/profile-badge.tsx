@@ -34,7 +34,7 @@ export function ProfileBadge({ displayName, size = 'md' }: ProfileBadgeProps) {
       >
         {initial}
       </span>
-      <span className={`${textSizeClass} text-neutral-200 font-medium`}>
+      <span className={`${textSizeClass} text-text-primary font-medium`}>
         {displayName}
       </span>
     </span>

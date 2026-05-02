@@ -56,13 +56,13 @@ export function ReportForm({ targetType, targetId, onSubmitted, onCancel }: Repo
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-2 rounded-lg border border-white/[0.08] bg-black/60 p-3 space-y-2"
+      className="mt-2 rounded-lg border border-border bg-surface-1 shadow-sm p-3 space-y-2"
     >
-      <p className="text-xs font-medium text-neutral-400">Report this {targetType}</p>
+      <p className="text-xs font-medium text-text-secondary">Report this {targetType}</p>
       <select
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        className="w-full rounded-md px-2 py-1.5 text-xs text-neutral-200 bg-white/[0.05] border border-white/[0.10] focus:outline-none focus:border-white/[0.20] transition-colors"
+        className="w-full rounded-md px-2 py-1.5 text-xs text-text-primary bg-surface-3 border border-border-strong focus:outline-none focus:border-border-strong transition-colors"
       >
         <option value="">Select a reason</option>
         {Object.entries(REASON_LABELS).map(([value, label]) => (
@@ -77,21 +77,21 @@ export function ReportForm({ targetType, targetId, onSubmitted, onCancel }: Repo
         maxLength={1000}
         rows={2}
         placeholder="Additional context (optional)"
-        className="w-full rounded-md px-2 py-1.5 text-xs text-neutral-200 bg-white/[0.04] border border-white/[0.08] placeholder-neutral-600 resize-none focus:outline-none focus:border-white/[0.18] transition-colors"
+        className="w-full rounded-md px-2 py-1.5 text-xs text-text-primary bg-surface-1 border border-border placeholder-text-faint resize-none focus:outline-none focus:border-border-strong transition-colors"
       />
       {error && <p className="text-xs text-red-400">{error}</p>}
       <div className="flex items-center gap-2">
         <button
           type="submit"
           disabled={loading}
-          className="text-xs px-3 py-1.5 rounded-md font-medium transition-colors bg-white/[0.07] border border-white/[0.12] text-neutral-100 hover:bg-white/[0.12] disabled:opacity-40 disabled:cursor-not-allowed"
+          className="text-xs px-3 py-1.5 rounded-md font-medium transition-colors bg-surface-3 border border-border-strong text-text-primary hover:bg-surface-3 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {loading ? 'Submitting...' : 'Submit report'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors"
+          className="text-xs text-text-faint hover:text-text-secondary transition-colors"
         >
           Cancel
         </button>

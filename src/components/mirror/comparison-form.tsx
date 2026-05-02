@@ -125,24 +125,24 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
     <div className="space-y-8">
       {/* Form */}
       <section>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
           Comparison parameters
         </h2>
 
         <div className="space-y-4">
           {/* Document selector */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-neutral-400">
-              Linked document <span className="text-neutral-600">(optional)</span>
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+              Linked document <span className="text-text-faint">(optional)</span>
             </label>
             {fetchingDocs ? (
-              <div className="h-9 animate-pulse rounded-lg bg-white/[0.04]" />
+              <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
             ) : (
               <div className="relative">
                 <select
                   value={selectedDocId}
                   onChange={(e) => setSelectedDocId(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-white/[0.1] bg-black/60 px-3 py-2 pr-8 text-sm text-neutral-200 outline-none focus:border-[#5BC88A]/40 focus:ring-0"
+                  className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#5BC88A]/40 focus:ring-0"
                   disabled={loading}
                 >
                   <option value="">No linked document</option>
@@ -155,7 +155,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
                 <ChevronDown
                   size={13}
                   strokeWidth={2}
-                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
                 />
               </div>
             )}
@@ -163,14 +163,14 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
 
           {/* Policy area */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-neutral-400">
-              Policy area <span className="text-neutral-600">(optional)</span>
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+              Policy area <span className="text-text-faint">(optional)</span>
             </label>
             <div className="relative">
               <select
                 value={policyArea}
                 onChange={(e) => setPolicyArea(e.target.value)}
-                className="w-full appearance-none rounded-lg border border-white/[0.1] bg-black/60 px-3 py-2 pr-8 text-sm text-neutral-200 outline-none focus:border-[#5BC88A]/40 focus:ring-0"
+                className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#5BC88A]/40 focus:ring-0"
                 disabled={loading}
               >
                 {POLICY_AREAS.map((area) => (
@@ -182,14 +182,14 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
               <ChevronDown
                 size={13}
                 strokeWidth={2}
-                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
+                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
               />
             </div>
           </div>
 
           {/* Description */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-neutral-400">
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
               What policy question do you want to compare?
             </label>
             <textarea
@@ -197,7 +197,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. How have other BC municipalities handled short-term rental bylaws? What did they actually do, and what happened?"
               rows={4}
-              className="w-full resize-none rounded-lg border border-white/[0.1] bg-black/60 px-3 py-2.5 text-sm text-neutral-200 placeholder-neutral-600 outline-none focus:border-[#5BC88A]/40"
+              className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[#5BC88A]/40"
               disabled={loading}
             />
           </div>
@@ -238,7 +238,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
       {/* Results */}
       {(isStreaming || hasResult) && streamedText && (
         <section>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
             Comparison results
           </h2>
           <ComparisonView text={streamedText} isStreaming={isStreaming} />

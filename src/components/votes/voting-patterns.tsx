@@ -54,11 +54,11 @@ export function VotingPatterns({ mpId }: VotingPatternsProps) {
       <div
         className="rounded-xl border px-6 py-6 text-center"
         style={{
-          borderColor: 'rgba(255,255,255,0.06)',
-          backgroundColor: 'rgba(255,255,255,0.015)',
+          borderColor: 'var(--border)',
+          backgroundColor: 'var(--surface-1)',
         }}
       >
-        <p className="text-xs text-neutral-500 mb-4">
+        <p className="text-xs text-text-muted mb-4">
           See how this MP generally votes across policy areas.
         </p>
         <button

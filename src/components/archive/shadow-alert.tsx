@@ -29,11 +29,11 @@ export function ShadowAlert({
             <span className="text-[10px] font-medium uppercase tracking-wider text-amber-600/80">
               {ALERT_TYPE_LABELS[alertType]}
             </span>
-            <span className="text-[10px] text-neutral-600">
+            <span className="text-[10px] text-text-faint">
               {referenceCount} reference{referenceCount !== 1 ? 's' : ''}
             </span>
           </div>
-          <p className="mt-1 text-sm text-neutral-300">
+          <p className="mt-1 text-sm text-text-secondary">
             {missingTopic}
           </p>
         </div>
@@ -43,7 +43,7 @@ export function ShadowAlert({
           <span className="text-xs font-medium tabular-nums text-amber-500">
             {confidencePct}%
           </span>
-          <p className="text-[10px] text-neutral-600">confidence</p>
+          <p className="text-[10px] text-text-faint">confidence</p>
         </div>
       </div>
     </div>

@@ -153,8 +153,8 @@ function DocumentCard({ block }: { block: string }) {
   if (fields.length === 0) {
     // Fallback: render as prose
     return (
-      <div className="rounded-xl border border-white/[0.08] bg-black/50 p-5 backdrop-blur-md">
-        <p className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">
+      <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
+        <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">
           {block.replace(/\*\*(.+?)\*\*/g, '$1')}
         </p>
       </div>
@@ -162,12 +162,12 @@ function DocumentCard({ block }: { block: string }) {
   }
 
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-black/50 p-5 backdrop-blur-md">
+    <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
       {/* Header */}
       <div className="mb-4 flex items-start justify-between gap-3">
         {docName ? (
           <span
-            className="text-sm font-semibold text-neutral-100"
+            className="text-sm font-semibold text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {docName}
@@ -181,10 +181,10 @@ function DocumentCard({ block }: { block: string }) {
         <div className="space-y-3">
           {mainFields.map((field, i) => (
             <div key={i}>
-              <span className="block text-xs font-semibold uppercase tracking-wider text-neutral-500">
+              <span className="block text-xs font-semibold uppercase tracking-wider text-text-muted">
                 {field.label}
               </span>
-              <p className="mt-0.5 text-sm leading-relaxed text-neutral-300">{field.value}</p>
+              <p className="mt-0.5 text-sm leading-relaxed text-text-secondary">{field.value}</p>
             </div>
           ))}
         </div>
@@ -193,12 +193,12 @@ function DocumentCard({ block }: { block: string }) {
       {/* "How to find it" footer */}
       {howToFindField && (
         <div
-          className="mt-4 border-t border-white/[0.06] pt-3"
+          className="mt-4 border-t border-border pt-3"
         >
-          <span className="block text-xs font-semibold uppercase tracking-wider text-neutral-600">
+          <span className="block text-xs font-semibold uppercase tracking-wider text-text-faint">
             How to find it
           </span>
-          <p className="mt-0.5 text-xs leading-relaxed text-neutral-500">{howToFindField.value}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-text-muted">{howToFindField.value}</p>
         </div>
       )}
     </div>
@@ -238,7 +238,7 @@ function FippaCard({ block }: { block: string }) {
           border: '1px solid rgba(200, 168, 75, 0.25)',
         }}
       >
-        <p className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">
+        <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">
           {block.replace(/\*\*(.+?)\*\*/g, '$1')}
         </p>
       </div>
@@ -256,7 +256,7 @@ function FippaCard({ block }: { block: string }) {
       <div className="mb-3 flex items-start justify-between gap-3">
         {docName && (
           <span
-            className="text-sm font-semibold text-neutral-100"
+            className="text-sm font-semibold text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {docName}
@@ -268,10 +268,10 @@ function FippaCard({ block }: { block: string }) {
       <div className="space-y-3">
         {bodyFields.map((field, i) => (
           <div key={i}>
-            <span className="block text-xs font-semibold uppercase tracking-wider text-neutral-500">
+            <span className="block text-xs font-semibold uppercase tracking-wider text-text-muted">
               {field.label}
             </span>
-            <p className="mt-0.5 text-sm leading-relaxed text-neutral-300">{field.value}</p>
+            <p className="mt-0.5 text-sm leading-relaxed text-text-secondary">{field.value}</p>
           </div>
         ))}
       </div>
@@ -317,7 +317,7 @@ function ProseSection({ content }: { content: string }) {
   return (
     <div className="space-y-3">
       {paragraphs.map((para, i) => (
-        <p key={i} className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap">
+        <p key={i} className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">
           {para.replace(/\*\*(.+?)\*\*/g, '$1')}
         </p>
       ))}
@@ -403,7 +403,7 @@ function NextStepsSection({ content }: { content: string }) {
                 >
                   {action.label}
                 </span>
-                <span className="mt-0.5 text-xs leading-tight text-neutral-500">
+                <span className="mt-0.5 text-xs leading-tight text-text-muted">
                   {action.description}
                 </span>
               </span>
@@ -424,8 +424,8 @@ export function ScoutResultView({ text, isStreaming }: ScoutResultViewProps) {
   // During streaming, if no sections yet, show raw text with cursor
   if (isStreaming && !hasSections) {
     return (
-      <div className="rounded-xl border border-white/[0.06] bg-black/40 p-5">
-        <p className="text-sm leading-relaxed text-neutral-400 whitespace-pre-wrap">{text}</p>
+      <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
+        <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">{text}</p>
         <span className="mt-1 inline-block h-4 w-1 animate-pulse bg-[#B088C8]/60" />
       </div>
     )
@@ -440,7 +440,7 @@ export function ScoutResultView({ text, isStreaming }: ScoutResultViewProps) {
         if (headingLower.includes('your concern') || headingLower.includes('concern')) {
           return (
             <div key={i}>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
                 Your Concern
               </h3>
               <div
@@ -461,7 +461,7 @@ export function ScoutResultView({ text, isStreaming }: ScoutResultViewProps) {
           const blocks = splitDocumentBlocks(section.content)
           return (
             <div key={i}>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
                 Relevant Documents
               </h3>
               <div className="space-y-4">
@@ -503,10 +503,10 @@ export function ScoutResultView({ text, isStreaming }: ScoutResultViewProps) {
         if (headingLower.includes('paper trail') || headingLower.includes('trail')) {
           return (
             <div key={i}>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
                 The Paper Trail
               </h3>
-              <div className="rounded-xl border border-white/[0.08] bg-black/50 p-5 backdrop-blur-md">
+              <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
                 <ProseSection content={section.content} />
               </div>
             </div>
@@ -531,10 +531,10 @@ export function ScoutResultView({ text, isStreaming }: ScoutResultViewProps) {
         // --- Fallback ---
         return (
           <div key={i}>
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
               {section.heading}
             </h3>
-            <div className="rounded-xl border border-white/[0.08] bg-black/50 p-5 backdrop-blur-md">
+            <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
               <ProseSection content={section.content} />
             </div>
           </div>

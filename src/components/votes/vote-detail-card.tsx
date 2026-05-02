@@ -21,25 +21,25 @@ export function VoteDetailCard({
 }: VoteDetailCardProps) {
   return (
     <div
-      className="rounded-xl border px-6 py-6"
+      className="rounded-xl border shadow-sm px-6 py-6"
       style={{
-        borderColor: 'rgba(255,255,255,0.08)',
-        backgroundColor: 'rgba(255,255,255,0.02)',
+        borderColor: 'var(--border)',
+        backgroundColor: 'var(--surface-1)',
       }}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600 mb-3">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-3">
         Vote {session}/{number}
       </p>
 
       <p
-        className="text-base font-semibold text-neutral-100 leading-relaxed mb-4"
+        className="text-base font-semibold text-text-primary leading-relaxed mb-4"
         style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
       >
         {descriptionEn}
       </p>
 
       <div className="flex flex-wrap items-center gap-4">
-        <span className="text-xs text-neutral-500">{date}</span>
+        <span className="text-xs text-text-muted">{date}</span>
 
         <span
           className="rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"

@@ -21,12 +21,12 @@ export function MpProfileCard({
 
   return (
     <div
-      className="rounded-xl border px-6 py-6"
+      className="rounded-xl border shadow-sm px-6 py-6"
       style={{
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: 'var(--border)',
         borderLeftWidth: '3px',
         borderLeftColor: partyColor,
-        backgroundColor: 'rgba(255,255,255,0.02)',
+        backgroundColor: 'var(--surface-1)',
       }}
     >
       <div className="flex items-start gap-5">
@@ -36,14 +36,14 @@ export function MpProfileCard({
             src={photoUrl}
             alt={name}
             className="h-16 w-16 rounded-full object-cover flex-shrink-0"
-            style={{ border: '2px solid rgba(255,255,255,0.08)' }}
+            style={{ border: '2px solid var(--border)' }}
           />
         ) : (
           <div
             className="h-16 w-16 rounded-full flex-shrink-0 flex items-center justify-center text-xl font-bold"
             style={{
-              backgroundColor: 'rgba(255,255,255,0.06)',
-              color: '#525252',
+              backgroundColor: 'var(--surface-3)',
+              color: 'var(--text-faint)',
             }}
           >
             {name.charAt(0)}
@@ -52,7 +52,7 @@ export function MpProfileCard({
 
         <div className="flex-1 min-w-0">
           <h2
-            className="text-lg font-bold text-neutral-100 leading-tight"
+            className="text-lg font-bold text-text-primary leading-tight"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {name}
@@ -60,7 +60,7 @@ export function MpProfileCard({
 
           <div className="mt-1.5 flex flex-wrap items-center gap-3">
             <PartyBadge party={party} />
-            <span className="text-xs text-neutral-500">
+            <span className="text-xs text-text-muted">
               {ridingName}, {ridingProvince}
             </span>
           </div>
@@ -68,7 +68,7 @@ export function MpProfileCard({
           {email && (
             <a
               href={`mailto:${email}`}
-              className="mt-2 inline-block text-xs text-neutral-500 hover:text-neutral-300 underline underline-offset-2 transition-colors"
+              className="mt-2 inline-block text-xs text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
             >
               {email}
             </a>

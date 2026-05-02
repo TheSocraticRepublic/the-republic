@@ -43,7 +43,7 @@ export function ThreadFilters({
   }
 
   const selectClass =
-    'rounded-lg px-3 py-1.5 text-xs text-neutral-300 bg-white/[0.04] border border-white/[0.08] focus:outline-none focus:border-white/[0.20] transition-colors cursor-pointer'
+    'rounded-lg px-3 py-1.5 text-xs text-text-secondary bg-surface-1 border border-border focus:outline-none focus:border-border-strong transition-colors cursor-pointer'
 
   return (
     <div className="flex items-center gap-3">

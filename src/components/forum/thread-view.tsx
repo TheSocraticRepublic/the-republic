@@ -207,7 +207,7 @@ export function ThreadView({
       <div className="mb-8">
         <div className="flex items-start justify-between gap-4">
           <h1
-            className="text-xl font-bold tracking-tight text-neutral-100 mb-3"
+            className="text-xl font-bold tracking-tight text-text-primary mb-3"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {thread.title}
@@ -215,7 +215,7 @@ export function ThreadView({
           {thread.authorId !== currentUserId && !threadReported && (
             <button
               onClick={() => setReportingThread((v) => !v)}
-              className="flex-shrink-0 flex items-center gap-1 text-xs text-neutral-700 hover:text-neutral-400 transition-colors mt-1"
+              className="flex-shrink-0 flex items-center gap-1 text-xs text-text-faint hover:text-text-secondary transition-colors mt-1"
               title="Report this thread"
             >
               <Flag size={12} strokeWidth={1.75} />
@@ -223,7 +223,7 @@ export function ThreadView({
             </button>
           )}
           {threadReported && (
-            <span className="flex-shrink-0 text-xs text-neutral-600 mt-1">Reported</span>
+            <span className="flex-shrink-0 text-xs text-text-faint mt-1">Reported</span>
           )}
         </div>
         {reportingThread && (
@@ -236,13 +236,13 @@ export function ThreadView({
             />
           </div>
         )}
-        <div className="flex items-center gap-3 text-xs text-neutral-500">
+        <div className="flex items-center gap-3 text-xs text-text-muted">
           <ProfileBadge displayName={thread.authorDisplayName} size="sm" />
           <span>{formatRelativeTime(thread.createdAt)}</span>
           {thread.investigationId && (
             <Link
               href={`/investigate/${thread.investigationId}`}
-              className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2 transition-colors"
+              className="text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
             >
               View investigation
             </Link>
@@ -250,8 +250,8 @@ export function ThreadView({
         </div>
         {thread.status !== 'open' && (
           <div
-            className="mt-3 rounded-lg px-3 py-2 text-xs text-neutral-500"
-            style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+            className="mt-3 rounded-lg px-3 py-2 text-xs text-text-muted"
+            style={{ backgroundColor: 'var(--surface-1)', border: '1px solid var(--border)' }}
           >
             This thread is {thread.status === 'locked' ? 'locked' : 'archived'} and no longer accepts replies.
           </div>
@@ -287,7 +287,7 @@ export function ThreadView({
       {/* Top-level composer */}
       {thread.status === 'open' && (
         <div className="mt-8 space-y-3">
-          <div className="h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+          <div className="h-px" style={{ backgroundColor: 'var(--border)' }} />
           <PostComposer
             threadId={thread.id}
             onPostCreated={handleTopLevelPost}

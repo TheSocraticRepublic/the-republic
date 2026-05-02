@@ -16,7 +16,7 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
 
   return (
     <div className="space-y-3">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
         Party Breakdown
       </p>
       {partyVotes.map((pv) => {
@@ -35,15 +35,15 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
                   className="h-2 w-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: partyColor }}
                 />
-                <span className="text-xs text-neutral-300">{pv.party}</span>
+                <span className="text-xs text-text-secondary">{pv.party}</span>
               </span>
-              <span className="text-[10px] text-neutral-600">
+              <span className="text-[10px] text-text-faint">
                 {pv.yea}Y / {pv.nay}N{pv.paired > 0 ? ` / ${pv.paired}P` : ''}
               </span>
             </div>
             <div
               className="flex h-2 rounded-full overflow-hidden"
-              style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
+              style={{ backgroundColor: 'var(--surface-1)' }}
             >
               {yeaPct > 0 && (
                 <div
