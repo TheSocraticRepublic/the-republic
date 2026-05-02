@@ -78,12 +78,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-950 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-surface-0 px-4">
       {/* Back to home */}
       <div className="absolute top-6 left-6">
         <Link
           href="/"
-          className="flex items-center gap-1.5 text-sm text-neutral-500 transition-colors hover:text-neutral-300"
+          className="flex items-center gap-1.5 text-sm text-text-muted transition-colors hover:text-text-secondary"
         >
           <ArrowLeft size={14} strokeWidth={1.75} />
           Back
@@ -94,31 +94,31 @@ export default function LoginPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <h1
-            className="mb-1 text-xl font-bold text-neutral-100"
+            className="mb-1 text-xl font-bold text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             The Republic
           </h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-text-muted">
             {step === 'email'
               ? 'Enter your email to continue'
               : `Code sent to ${email}`}
           </p>
           {devCode && step === 'code' && (
-            <p className="mt-2 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-400">
+            <p className="mt-2 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-600">
               Dev mode — your code is: <span className="font-mono font-bold tracking-wider">{devCode}</span>
             </p>
           )}
         </div>
 
         {/* Card */}
-        <div className="rounded-xl border border-white/10 bg-black/60 p-6 backdrop-blur-md">
+        <div className="rounded-xl border border-border-strong bg-surface-1 p-6 shadow-md">
           {step === 'email' ? (
             <form onSubmit={handleSendCode} className="space-y-4">
               <div>
                 <label
                   htmlFor="email"
-                  className="mb-1.5 block text-xs font-medium text-neutral-400"
+                  className="mb-1.5 block text-xs font-medium text-text-secondary"
                 >
                   Email address
                 </label>
@@ -130,18 +130,18 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition-colors focus:border-white/20 focus:bg-white/[0.06]"
+                  className="w-full rounded-lg border border-border bg-surface-0 px-3.5 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none transition-colors focus:border-border-strong focus:bg-surface-1"
                 />
               </div>
 
               {error && (
-                <p className="text-xs text-red-400">{error}</p>
+                <p className="text-xs text-red-600">{error}</p>
               )}
 
               <button
                 type="submit"
                 disabled={loading || !email.trim()}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.07] py-2.5 text-sm font-semibold text-neutral-100 transition-all duration-150 hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border-strong bg-surface-3 py-2.5 text-sm font-semibold text-text-primary transition-all duration-150 hover:bg-text-faint/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {loading ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -154,7 +154,7 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="code"
-                  className="mb-1.5 block text-xs font-medium text-neutral-400"
+                  className="mb-1.5 block text-xs font-medium text-text-secondary"
                 >
                   6-digit code
                 </label>
@@ -169,18 +169,18 @@ export default function LoginPage() {
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                   placeholder="000000"
-                  className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.4em] text-neutral-100 placeholder-neutral-700 outline-none transition-colors focus:border-white/20 focus:bg-white/[0.06]"
+                  className="w-full rounded-lg border border-border bg-surface-0 px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.4em] text-text-primary placeholder-text-faint outline-none transition-colors focus:border-border-strong focus:bg-surface-1"
                 />
               </div>
 
               {error && (
-                <p className="text-xs text-red-400">{error}</p>
+                <p className="text-xs text-red-600">{error}</p>
               )}
 
               <button
                 type="submit"
                 disabled={loading || code.length !== 6}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.07] py-2.5 text-sm font-semibold text-neutral-100 transition-all duration-150 hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border-strong bg-surface-3 py-2.5 text-sm font-semibold text-text-primary transition-all duration-150 hover:bg-text-faint/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {loading ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -195,7 +195,7 @@ export default function LoginPage() {
                   setCode('')
                   setError(null)
                 }}
-                className="w-full text-center text-xs text-neutral-600 transition-colors hover:text-neutral-400"
+                className="w-full text-center text-xs text-text-faint transition-colors hover:text-text-muted"
               >
                 Use a different email
               </button>
@@ -203,7 +203,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p className="mt-4 text-center text-xs text-neutral-700">
+        <p className="mt-4 text-center text-xs text-text-faint">
           No password. No tracking. Just a code.
         </p>
       </div>

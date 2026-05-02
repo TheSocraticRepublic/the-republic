@@ -9,7 +9,7 @@ interface AppShellProps {
 
 export function AppShell({ children, userEmail, displayName, effectiveWeight }: AppShellProps) {
   return (
-    <div className="flex h-screen overflow-hidden bg-neutral-950">
+    <div className="flex h-screen overflow-hidden bg-surface-0">
       {/* Sidebar */}
       <div className="hidden md:flex md:flex-shrink-0">
         <Sidebar userEmail={userEmail} displayName={displayName} effectiveWeight={effectiveWeight} />
