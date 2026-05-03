@@ -4,3 +4,874 @@ Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ 
 [   17682ms] [ERROR] [investigate] request failed: Invalid origin @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
 [   42148ms] [WARNING] Image with src "/landing/hero.jpg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
 Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[48938734ms] [ERROR] %o
+
+%s ReferenceError: EscalationCard is not defined
+    at InvestigationPage (http://localhost:3847/_next/static/chunks/src_0j-v1g.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Finvestigation%252Finvestigation-page.tsx+%255Bapp-client%255D+%2528ecmascript%2529:163:224)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:186)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at processRootScheduleInMicrotask (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10200:106)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10274:158 The above error occurred in the <InvestigationPage> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[48943239ms] [ERROR] %o
+
+%s ReferenceError: EscalationCard is not defined
+    at InvestigationPage (http://localhost:3847/_next/static/chunks/src_0j-v1g.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Finvestigation%252Finvestigation-page.tsx+%255Bapp-client%255D+%2528ecmascript%2529:109:224)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6665:639)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <InvestigationPage> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49069888ms] [ERROR] ./src/components/lens/lens-panel.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </div>
+  322 |   )
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/lens/lens-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/lens/lens-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49069995ms] [ERROR] ./src/components/lens/lens-panel.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </div>
+  322 |   )
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/lens/lens-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/lens/lens-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49079037ms] [ERROR] ./src/components/lens/lens-panel.tsx:326:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  324 |     </div>
+  325 |   )
+> 326 | }
+      | ^
+  327 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/lens/lens-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/lens/lens-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49235991ms] [ERROR] ./src/components/campaign/campaign-panel.tsx:308:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  306 |     </div>
+  307 |   )
+> 308 | }
+      | ^
+  309 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/campaign/campaign-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/campaign/campaign-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49260382ms] [ERROR] ./src/components/campaign/campaign-panel.tsx:335:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  333 |     </div>
+  334 |   )
+> 335 | }
+      | ^
+  336 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/campaign/campaign-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/campaign/campaign-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49273403ms] [ERROR] ./src/components/campaign/campaign-panel.tsx:335:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  333 |     </div>
+  334 |   )
+> 335 | }
+      | ^
+  336 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/campaign/campaign-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/campaign/campaign-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49273496ms] [ERROR] ./src/components/campaign/campaign-panel.tsx:335:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  333 |     </div>
+  334 |   )
+> 335 | }
+      | ^
+  336 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/campaign/campaign-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/campaign/campaign-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49276688ms] [ERROR] ./src/components/campaign/campaign-panel.tsx:335:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  333 |     </div>
+  334 |   )
+> 335 | }
+      | ^
+  336 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/campaign/campaign-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/campaign/campaign-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49279833ms] [ERROR] ./src/components/campaign/campaign-panel.tsx:335:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  333 |     </div>
+  334 |   )
+> 335 | }
+      | ^
+  336 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/campaign/campaign-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/campaign/campaign-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49279937ms] [ERROR] ./src/components/campaign/campaign-panel.tsx:335:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  333 |     </div>
+  334 |   )
+> 335 | }
+      | ^
+  336 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/campaign/campaign-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/campaign/campaign-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49282967ms] [ERROR] ./src/components/campaign/campaign-panel.tsx:335:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  333 |     </div>
+  334 |   )
+> 335 | }
+      | ^
+  336 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/campaign/campaign-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/campaign/campaign-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49291494ms] [ERROR] ./src/components/campaign/campaign-panel.tsx:335:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  333 |     </div>
+  334 |   )
+> 335 | }
+      | ^
+  336 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/campaign/campaign-panel.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Client Component Browser]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/campaign/campaign-panel.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Client Component SSR]
+    ./src/components/investigation/investigation-page.tsx [Server Component]
+    ./src/app/(app)/investigate/[id]/page.tsx [Server Component] @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[49511282ms] [ERROR] %o
+
+%s ReferenceError: useEffect is not defined
+    at InvestigationPage (http://localhost:3847/_next/static/chunks/src_0ff5hum._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Finvestigation%252Finvestigation-page.tsx+%255Bapp-client%255D+%2528ecmascript%2529:40:5)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:186)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at processRootScheduleInMicrotask (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10200:106)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10274:158 The above error occurred in the <InvestigationPage> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49517564ms] [ERROR] %o
+
+%s ReferenceError: useEffect is not defined
+    at InvestigationPage (http://localhost:3847/_next/static/chunks/src_0ff5hum._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Finvestigation%252Finvestigation-page.tsx+%255Bapp-client%255D+%2528ecmascript%2529:40:5)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6665:639)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <InvestigationPage> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49529335ms] [ERROR] %o
+
+%s ReferenceError: discussionOpen is not defined
+    at InvestigationPage (http://localhost:3847/_next/static/chunks/src_0ff5hum._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Finvestigation%252Finvestigation-page.tsx+%255Bapp-client%255D+%2528ecmascript%2529:101:13)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6665:639)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <InvestigationPage> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49553714ms] [ERROR] %o
+
+%s ReferenceError: PreserveButton is not defined
+    at InvestigationDetailPage (about://React/Server/file:///home/leesalo/.local/share/marvin/worktrees/the-republic/session-3fd567/.next/dev/server/chunks/ssr/%5Broot-of-the-server%5D__0jm2dvj._.js?90:226:308)
+    at resolveErrorDev (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_0p3wegg._.js:1919:150)
+    at processFullStringRow (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_0p3wegg._.js:2434:29)
+    at processFullBinaryRow (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_0p3wegg._.js:2393:9)
+    at processBinaryChunk (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_0p3wegg._.js:2502:221)
+    at progress (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_0p3wegg._.js:2689:13) The above error occurred in the <InvestigationDetailPage> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49606950ms] [ERROR] %o
+
+%s ReferenceError: useCallback is not defined
+    at InvestigationPage (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Finvestigation%252Finvestigation-page.tsx+%255Bapp-client%255D+%2528ecmascript%2529:31:28)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6665:639)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <InvestigationPage> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49857531ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49870770ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49893926ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49898412ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49910823ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49914571ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49917961ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49922151ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49927334ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49933898ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49940734ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49946286ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49955439ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49959448ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49963996ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49968245ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'muted')
+    at SectionHeader (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:114:41)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <SectionHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49980923ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'border')
+    at ExecutiveCard (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:1008:48)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <ExecutiveCard> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49985245ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'border')
+    at ExecutiveCard (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:1008:48)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <ExecutiveCard> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49992403ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'border')
+    at ExecutiveCard (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:1008:48)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <ExecutiveCard> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[49996995ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'border')
+    at ExecutiveCard (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:1008:48)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <ExecutiveCard> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[50000405ms] [ERROR] %o
+
+%s TypeError: Cannot read properties of undefined (reading 'border')
+    at ExecutiveCard (http://localhost:3847/_next/static/chunks/src_0-ikly.._.js?id=%255Bproject%255D%252Fsrc%252Fcomponents%252Fbriefing%252Fbriefing-view.tsx+%255Bapp-client%255D+%2528ecmascript%2529:1008:48)
+    at Object.react_stack_bottom_frame (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:3847/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13 The above error occurred in the <ExecutiveCard> component. It was handled by the <ErrorBoundaryHandler> error boundary. @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:1998
+[56813017ms] [ERROR] WebSocket connection to 'ws://localhost:3847/_next/webpack-hmr?id=VxFG3f1zmueBCacQYeCIB' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[56814019ms] [ERROR] WebSocket connection to 'ws://localhost:3847/_next/webpack-hmr?id=VxFG3f1zmueBCacQYeCIB' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[56815020ms] [ERROR] WebSocket connection to 'ws://localhost:3847/_next/webpack-hmr?id=VxFG3f1zmueBCacQYeCIB' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[56816021ms] [ERROR] WebSocket connection to 'ws://localhost:3847/_next/webpack-hmr?id=VxFG3f1zmueBCacQYeCIB' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[56817025ms] [ERROR] WebSocket connection to 'ws://localhost:3847/_next/webpack-hmr?id=VxFG3f1zmueBCacQYeCIB' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[65650248ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_RESET @ http://localhost:3847/api/investigate/0b9cdc98-0822-4802-82b7-0de57ec3e4c0/threads:0
+[65650249ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_RESET @ http://localhost:3847/api/investigate/0b9cdc98-0822-4802-82b7-0de57ec3e4c0/reviews:0
+[65650249ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_RESET @ http://localhost:3847/api/investigate/0b9cdc98-0822-4802-82b7-0de57ec3e4c0/votes:0
+[65651243ms] [ERROR] WebSocket connection to 'ws://localhost:3847/_next/webpack-hmr?id=5xDt9ojjUL9UM94KQnVoz' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[65652245ms] [ERROR] WebSocket connection to 'ws://localhost:3847/_next/webpack-hmr?id=5xDt9ojjUL9UM94KQnVoz' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[65653248ms] [ERROR] WebSocket connection to 'ws://localhost:3847/_next/webpack-hmr?id=5xDt9ojjUL9UM94KQnVoz' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[65654250ms] [ERROR] WebSocket connection to 'ws://localhost:3847/_next/webpack-hmr?id=5xDt9ojjUL9UM94KQnVoz' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[65655254ms] [ERROR] WebSocket connection to 'ws://localhost:3847/_next/webpack-hmr?id=5xDt9ojjUL9UM94KQnVoz' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[65660259ms] [ERROR] WebSocket connection to 'ws://localhost:3847/_next/webpack-hmr?id=5xDt9ojjUL9UM94KQnVoz' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
