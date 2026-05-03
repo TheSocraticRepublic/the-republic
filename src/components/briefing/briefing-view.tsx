@@ -43,6 +43,10 @@ const LIGHT_PALETTE = {
   cardBorder: '#e0ddd9',
   white: '#ffffff',
   warmLift: '#fffdf8',
+  // Oracle teal accents -- arm colors that work in both modes
+  evidenceCalloutBg: 'rgba(8,145,178,0.04)',
+  evidenceCalloutBorder: 'rgba(8,145,178,0.3)',
+  pullQuoteBorder: 'rgba(8,145,178,0.25)',
 }
 
 const DARK_PALETTE = {
@@ -57,6 +61,10 @@ const DARK_PALETTE = {
   cardBorder: 'rgba(255,255,255,0.15)',
   white: '#1e1e20',
   warmLift: '#141416',
+  // Oracle teal accents -- slightly higher opacity on dark surfaces
+  evidenceCalloutBg: 'rgba(8,145,178,0.08)',
+  evidenceCalloutBorder: 'rgba(8,145,178,0.3)',
+  pullQuoteBorder: 'rgba(8,145,178,0.25)',
 }
 
 type Palette = typeof LIGHT_PALETTE
@@ -141,12 +149,7 @@ function getSectionAccentColor(heading: string): string | null {
   return null
 }
 
-// ---- Oracle section detection ----
-
-function isOracleSection(heading: string): boolean {
-  const h = heading.toLowerCase()
-  return h.includes('public record') || h.includes('what governs') || h.includes('key players')
-}
+// (W4: isOracleSection removed — dead code)
 
 // ---- Section header (no arm badge — color carries identity) ----
 
@@ -186,8 +189,14 @@ function SectionHeader({
 
 // ---- Prose renderer ----
 
-function renderInline(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, '$1')
+function renderInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/)
+  if (parts.length === 1) return text
+  return parts.map((part, i) => {
+    const boldMatch = part.match(/^\*\*([^*]+)\*\*$/)
+    if (boldMatch) return <strong key={i}>{boldMatch[1]}</strong>
+    return part
+  })
 }
 
 // ---- Evidence citation detection ----
@@ -195,10 +204,10 @@ function renderInline(text: string): string {
 function isEvidenceParagraph(text: string): boolean {
   return /s\.\s*\d/.test(text) ||
     /FIPPA/i.test(text) ||
-    /\bAct\b/.test(text) ||
+    /\b[A-Z][a-z]+ Act\b/.test(text) ||
     /\bpursuant\b/i.test(text) ||
     /\bCertificate\b/.test(text) ||
-    /\([^)]*\d{4}[^)]*\)/.test(text)
+    /\([^)]*(?:19|20)\d{2}[^)]*\)/.test(text)
 }
 
 // ---- Pull quote detection ----
@@ -290,7 +299,7 @@ function ProseSection({ content, palette, oracleSerif }: { content: string; pale
             lineHeight: '1.5',
             color: palette.secondary,
             paddingLeft: '24px',
-            borderLeft: '2px solid rgba(8,145,178,0.25)',
+            borderLeft: `2px solid ${palette.pullQuoteBorder}`,
             margin: '24px 0',
             maxWidth: '55ch',
           }}
@@ -307,8 +316,8 @@ function ProseSection({ content, palette, oracleSerif }: { content: string; pale
         <div
           key={i}
           style={{
-            borderLeft: '3px solid rgba(8,145,178,0.3)',
-            backgroundColor: 'rgba(8,145,178,0.04)',
+            borderLeft: `3px solid ${palette.evidenceCalloutBorder}`,
+            backgroundColor: palette.evidenceCalloutBg,
             padding: '16px',
             borderRadius: '0 8px 8px 0',
             margin: '16px 0',
@@ -352,9 +361,10 @@ interface PlayerData {
 }
 
 function getRoleColor(role: string): string {
-  const r = role.toLowerCase()
-  if (r.includes('regulator') || r.includes('decision')) return '#0891B2'
+  const r = role.toLowerCase().replace(/_/g, ' ')
+  if (r.includes('regulator') || r.includes('decision maker')) return '#0891B2'
   if (r.includes('proponent') || r.includes('applicant') || r.includes('certificate holder')) return '#B45309'
+  if (r.includes('beneficiary') || r.includes('affected')) return '#059669'
   if (r.includes('rights holder') || r.includes('community') || r.includes('local')) return '#059669'
   if (r.includes('indigenous') || r.includes('nation') || r.includes('first nation')) return '#7C3AED'
   if (r.includes('federal')) return '#64748B'
@@ -364,15 +374,24 @@ function getRoleColor(role: string): string {
 function parsePlayers(content: string): PlayerData[] {
   const players: PlayerData[] = []
 
-  // Split content on bold name patterns: **Name** at start of line or paragraph
-  const blocks = content.split(/(?=^\*\*[^*]+\*\*)/m).filter((b) => b.trim())
+  // Step 1: Normalize bullets — strip leading `- ` or `* ` from all lines
+  const normalized = content
+    .split('\n')
+    .map((line) => line.replace(/^\s*[-*]\s+/, ''))
+    .join('\n')
+
+  // Step 2: Split on bold name lines.
+  // A name line is **text** where the text does NOT contain a colon (excludes **Role:** etc.)
+  const blocks = normalized
+    .split(/(?=^\*\*[^*:]+\*\*)/m)
+    .filter((b) => b.trim())
 
   for (const block of blocks) {
     const lines = block.split('\n').map((l) => l.trim()).filter(Boolean)
     if (lines.length === 0) continue
 
-    // First line should contain **Name**
-    const nameMatch = lines[0].match(/^\*\*([^*]+)\*\*/)
+    // First line should contain **Name** (no colon inside the bold)
+    const nameMatch = lines[0].match(/^\*\*([^*:]+)\*\*/)
     if (!nameMatch) continue
 
     const name = nameMatch[1].trim()
@@ -381,22 +400,20 @@ function parsePlayers(content: string): PlayerData[] {
     let trackRecord = ''
 
     // Remaining text after the name on the same line
-    const afterName = lines[0].replace(/^\*\*[^*]+\*\*[:\s]*/, '').trim()
+    const afterName = lines[0].replace(/^\*\*[^*:]+\*\*[:\s]*/, '').trim()
 
     // Parse structured fields from remaining lines
     const restText = [afterName, ...lines.slice(1)].join('\n')
 
-    // Try to extract Role
+    // Step 3: Extract fields (with or without bold markers, case insensitive)
     const roleMatch = restText.match(/(?:\*\*)?[Rr]ole(?:\*\*)?[:\s]+(.+?)(?:\n|$)/i)
-    if (roleMatch) role = roleMatch[1].replace(/\*\*/g, '').trim()
+    if (roleMatch) role = roleMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
 
-    // Try to extract "Why they matter"
     const whyMatch = restText.match(/(?:\*\*)?[Ww]hy\s+they\s+matter(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Tt]rack\s+record|$))/i)
-    if (whyMatch) whyTheyMatter = whyMatch[1].replace(/\*\*/g, '').trim()
+    if (whyMatch) whyTheyMatter = whyMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
 
-    // Try to extract "Track record"
     const trackMatch = restText.match(/(?:\*\*)?[Tt]rack\s+record(?:\*\*)?[:\s]+([\s\S]+)/i)
-    if (trackMatch) trackRecord = trackMatch[1].replace(/\*\*/g, '').trim()
+    if (trackMatch) trackRecord = trackMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
 
     // Fallback: if no structured fields, use lines positionally
     if (!role && !whyTheyMatter) {
@@ -539,14 +556,15 @@ function parseJurisdictions(content: string): JurisdictionData[] {
     let whyItMatters = ''
     let outcome = ''
 
-    const whatMatch = restText.match(/(?:\*\*)?[Ww]hat\s+they\s+did(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Ww]hy\s+it|[Oo]utcome|$))/i)
-    if (whatMatch) whatTheyDid = whatMatch[1].replace(/\*\*/g, '').trim()
+    // Capture only the VALUE after the label — handle optional trailing words like "differently", "for you"
+    const whatMatch = restText.match(/(?:\*\*)?[Ww]hat\s+they\s+did(?:\s+\w+)?(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Ww]hy\s+it|[Oo]utcome|$))/i)
+    if (whatMatch) whatTheyDid = whatMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
 
-    const whyMatch = restText.match(/(?:\*\*)?[Ww]hy\s+it\s+matters(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Oo]utcome|$))/i)
-    if (whyMatch) whyItMatters = whyMatch[1].replace(/\*\*/g, '').trim()
+    const whyMatch = restText.match(/(?:\*\*)?[Ww]hy\s+it\s+matters(?:\s+\w+)?(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Oo]utcome|$))/i)
+    if (whyMatch) whyItMatters = whyMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
 
-    const outcomeMatch = restText.match(/(?:\*\*)?[Oo]utcome(?:\*\*)?[:\s]+([\s\S]+)/i)
-    if (outcomeMatch) outcome = outcomeMatch[1].replace(/\*\*/g, '').trim()
+    const outcomeMatch = restText.match(/(?:\*\*)?[Oo]utcome(?:\s+\w+)?(?:\*\*)?[:\s]+([\s\S]+)/i)
+    if (outcomeMatch) outcome = outcomeMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
 
     // Fallback: split paragraphs positionally
     if (!whatTheyDid && !whyItMatters) {
@@ -1236,11 +1254,10 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuest
     <div
       style={{
         marginBottom: '40px',
-        paddingBottom: '32px',
         borderBottom: `2px solid ${palette.border}`,
         backgroundColor: palette.warmLift,
         borderRadius: '12px',
-        padding: '24px',
+        padding: '24px 24px 32px 24px',
       }}
     >
       {concernText && (
