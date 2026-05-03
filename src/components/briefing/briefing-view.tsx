@@ -7,12 +7,13 @@ import {
   Eye,
   MessageCircleQuestion,
   FileText,
-  GitCompare,
+  GitCompareArrows,
   Copy,
   Check,
   Download,
   Sun,
   Moon,
+  EyeOff,
 } from 'lucide-react'
 
 // ---- Types ----
@@ -41,6 +42,7 @@ const LIGHT_PALETTE = {
   cardBg: '#f5f4f3',
   cardBorder: '#e0ddd9',
   white: '#ffffff',
+  warmLift: '#fffdf8',
 }
 
 const DARK_PALETTE = {
@@ -54,6 +56,7 @@ const DARK_PALETTE = {
   cardBg: '#18181b',
   cardBorder: 'rgba(255,255,255,0.15)',
   white: '#1e1e20',
+  warmLift: '#141416',
 }
 
 type Palette = typeof LIGHT_PALETTE
@@ -124,6 +127,27 @@ function parseSections(text: string): ParsedSection[] {
   return sections
 }
 
+// ---- Section accent color map ----
+
+function getSectionAccentColor(heading: string): string | null {
+  const h = heading.toLowerCase()
+  if (h.includes('what governs')) return '#B088C8'     // Scout purple
+  if (h.includes('public record')) return '#89B4C8'    // Oracle teal
+  if (h.includes('key players')) return '#89B4C8'      // Oracle teal
+  if (h.includes('what you can do')) return '#C85B5B'  // Lever red
+  if (h.includes('other places') || h.includes('jurisdictions')) return '#5BC88A' // Mirror green
+  if (h.includes('questions')) return '#C8A84B'        // Gadfly gold
+  // "cannot see" / "limitations" -> no bar
+  return null
+}
+
+// ---- Oracle section detection ----
+
+function isOracleSection(heading: string): boolean {
+  const h = heading.toLowerCase()
+  return h.includes('public record') || h.includes('what governs') || h.includes('key players')
+}
+
 // ---- Section header (no arm badge — color carries identity) ----
 
 function SectionHeader({
@@ -135,8 +159,21 @@ function SectionHeader({
   color?: string
   palette: Palette
 }) {
+  const accentColor = getSectionAccentColor(heading)
+
   return (
-    <div className="mb-6 flex items-center gap-2">
+    <div className="mb-6 flex flex-col">
+      {accentColor && (
+        <div
+          style={{
+            width: '48px',
+            height: '2px',
+            backgroundColor: accentColor,
+            opacity: 0.4,
+            marginBottom: '8px',
+          }}
+        />
+      )}
       <h3
         className="text-[11px] font-semibold uppercase tracking-[0.1em]"
         style={{ color: color ?? palette.muted }}
@@ -153,57 +190,483 @@ function renderInline(text: string): string {
   return text.replace(/\*\*(.+?)\*\*/g, '$1')
 }
 
-function ProseSection({ content, palette }: { content: string; palette: Palette }) {
+// ---- Evidence citation detection ----
+
+function isEvidenceParagraph(text: string): boolean {
+  return /s\.\s*\d/.test(text) ||
+    /FIPPA/i.test(text) ||
+    /\bAct\b/.test(text) ||
+    /\bpursuant\b/i.test(text) ||
+    /\bCertificate\b/.test(text) ||
+    /\([^)]*\d{4}[^)]*\)/.test(text)
+}
+
+// ---- Pull quote detection ----
+
+function isPullQuote(text: string): boolean {
+  const trimmed = text.trim()
+  // Starts and ends with quotation marks (straight or curly)
+  if (/^[""“]/.test(trimmed) && /[""”][\.\,\;]?$/.test(trimmed)) return true
+  // Contains a full sentence in quotes (at least 30 chars inside quotes)
+  if (/[""“][^""”]{30,}[""”]/.test(trimmed)) return true
+  return false
+}
+
+function ProseSection({ content, palette, oracleSerif }: { content: string; palette: Palette; oracleSerif?: boolean }) {
   const paragraphs = content
     .split(/\n{2,}/)
     .map((p) => p.trim())
     .filter(Boolean)
 
-  return (
-    <div className="space-y-4">
-      {paragraphs.map((para, i) => {
-        // Bullet list paragraph
-        if (para.match(/^[-*]\s+/m)) {
-          const items = para
-            .split('\n')
-            .filter((line) => line.trim())
-            .map((line) => line.replace(/^[-*]\s+/, '').trim())
-          return (
-            <ul key={i} className="space-y-1.5 pl-0">
-              {items.map((item, j) => (
-                <li key={j} className="flex items-start gap-2" style={{ fontSize: '15px', lineHeight: '1.6', color: palette.secondary }}>
-                  <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: palette.faint }} />
-                  <span>{renderInline(item)}</span>
-                </li>
-              ))}
-            </ul>
-          )
-        }
+  const baseFont = oracleSerif
+    ? { fontFamily: '"Source Serif 4", Georgia, serif', fontSize: '16px', lineHeight: '1.75', fontWeight: 400 as const }
+    : { fontSize: '16px', lineHeight: '1.7' }
 
-        // Bold field line (e.g. **Label:** value)
-        const boldFieldMatch = para.match(/^\*\*(.+?):\*\*\s*(.+)$/)
-        if (boldFieldMatch) {
-          return (
-            <div key={i}>
-              <span
-                className="block font-semibold uppercase tracking-wider"
-                style={{ fontSize: '11px', color: palette.muted }}
-              >
-                {boldFieldMatch[1]}
-              </span>
-              <p className="mt-0.5" style={{ fontSize: '16px', lineHeight: '1.7', color: palette.body }}>
-                {renderInline(boldFieldMatch[2])}
-              </p>
-            </div>
-          )
-        }
+  const elements: React.ReactNode[] = []
 
-        return (
-          <p key={i} className="whitespace-pre-wrap" style={{ fontSize: '16px', lineHeight: '1.7', color: palette.body }}>
+  paragraphs.forEach((para, i) => {
+    // Insert section break rule after every 4th paragraph
+    if (i > 0 && i % 4 === 0) {
+      elements.push(
+        <div
+          key={`rule-${i}`}
+          style={{
+            width: '40%',
+            margin: '24px auto',
+            height: '1px',
+            backgroundColor: palette.border,
+          }}
+        />
+      )
+    }
+
+    // Bullet list paragraph
+    if (para.match(/^[-*]\s+/m)) {
+      const items = para
+        .split('\n')
+        .filter((line) => line.trim())
+        .map((line) => line.replace(/^[-*]\s+/, '').trim())
+      elements.push(
+        <ul key={i} className="space-y-1.5 pl-0">
+          {items.map((item, j) => (
+            <li key={j} className="flex items-start gap-2" style={{ fontSize: '15px', lineHeight: '1.6', color: palette.secondary }}>
+              <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: palette.faint }} />
+              <span>{renderInline(item)}</span>
+            </li>
+          ))}
+        </ul>
+      )
+      return
+    }
+
+    // Bold field line (e.g. **Label:** value)
+    const boldFieldMatch = para.match(/^\*\*(.+?):\*\*\s*(.+)$/)
+    if (boldFieldMatch) {
+      elements.push(
+        <div key={i}>
+          <span
+            className="block font-semibold uppercase tracking-wider"
+            style={{ fontSize: '11px', color: palette.muted }}
+          >
+            {boldFieldMatch[1]}
+          </span>
+          <p className="mt-0.5" style={{ ...baseFont, color: palette.body }}>
+            {renderInline(boldFieldMatch[2])}
+          </p>
+        </div>
+      )
+      return
+    }
+
+    // Pull quote (Oracle sections only)
+    if (oracleSerif && isPullQuote(para)) {
+      elements.push(
+        <blockquote
+          key={i}
+          style={{
+            fontFamily: '"Source Serif 4", Georgia, serif',
+            fontStyle: 'italic',
+            fontSize: '18px',
+            lineHeight: '1.5',
+            color: palette.secondary,
+            paddingLeft: '24px',
+            borderLeft: '2px solid rgba(8,145,178,0.25)',
+            margin: '24px 0',
+            maxWidth: '55ch',
+          }}
+        >
+          {renderInline(para)}
+        </blockquote>
+      )
+      return
+    }
+
+    // Evidence callout
+    if (isEvidenceParagraph(para)) {
+      elements.push(
+        <div
+          key={i}
+          style={{
+            borderLeft: '3px solid rgba(8,145,178,0.3)',
+            backgroundColor: 'rgba(8,145,178,0.04)',
+            padding: '16px',
+            borderRadius: '0 8px 8px 0',
+            margin: '16px 0',
+          }}
+        >
+          <p className="whitespace-pre-wrap" style={{ ...baseFont, color: palette.body, margin: 0 }}>
             {renderInline(para)}
           </p>
+        </div>
+      )
+      return
+    }
+
+    // Lead paragraph (first paragraph gets larger treatment)
+    const isLead = i === 0
+    const leadFont = isLead
+      ? { fontSize: '17px', lineHeight: '1.75' }
+      : {}
+
+    elements.push(
+      <p key={i} className="whitespace-pre-wrap" style={{ ...baseFont, ...leadFont, color: palette.body }}>
+        {renderInline(para)}
+      </p>
+    )
+  })
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {elements}
+    </div>
+  )
+}
+
+// ---- Key Players parser and renderer (Step 1) ----
+
+interface PlayerData {
+  name: string
+  role: string
+  whyTheyMatter: string
+  trackRecord: string
+}
+
+function getRoleColor(role: string): string {
+  const r = role.toLowerCase()
+  if (r.includes('regulator') || r.includes('decision')) return '#0891B2'
+  if (r.includes('proponent') || r.includes('applicant') || r.includes('certificate holder')) return '#B45309'
+  if (r.includes('rights holder') || r.includes('community') || r.includes('local')) return '#059669'
+  if (r.includes('indigenous') || r.includes('nation') || r.includes('first nation')) return '#7C3AED'
+  if (r.includes('federal')) return '#64748B'
+  return '#64748B'
+}
+
+function parsePlayers(content: string): PlayerData[] {
+  const players: PlayerData[] = []
+
+  // Split content on bold name patterns: **Name** at start of line or paragraph
+  const blocks = content.split(/(?=^\*\*[^*]+\*\*)/m).filter((b) => b.trim())
+
+  for (const block of blocks) {
+    const lines = block.split('\n').map((l) => l.trim()).filter(Boolean)
+    if (lines.length === 0) continue
+
+    // First line should contain **Name**
+    const nameMatch = lines[0].match(/^\*\*([^*]+)\*\*/)
+    if (!nameMatch) continue
+
+    const name = nameMatch[1].trim()
+    let role = ''
+    let whyTheyMatter = ''
+    let trackRecord = ''
+
+    // Remaining text after the name on the same line
+    const afterName = lines[0].replace(/^\*\*[^*]+\*\*[:\s]*/, '').trim()
+
+    // Parse structured fields from remaining lines
+    const restText = [afterName, ...lines.slice(1)].join('\n')
+
+    // Try to extract Role
+    const roleMatch = restText.match(/(?:\*\*)?[Rr]ole(?:\*\*)?[:\s]+(.+?)(?:\n|$)/i)
+    if (roleMatch) role = roleMatch[1].replace(/\*\*/g, '').trim()
+
+    // Try to extract "Why they matter"
+    const whyMatch = restText.match(/(?:\*\*)?[Ww]hy\s+they\s+matter(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Tt]rack\s+record|$))/i)
+    if (whyMatch) whyTheyMatter = whyMatch[1].replace(/\*\*/g, '').trim()
+
+    // Try to extract "Track record"
+    const trackMatch = restText.match(/(?:\*\*)?[Tt]rack\s+record(?:\*\*)?[:\s]+([\s\S]+)/i)
+    if (trackMatch) trackRecord = trackMatch[1].replace(/\*\*/g, '').trim()
+
+    // Fallback: if no structured fields, use lines positionally
+    if (!role && !whyTheyMatter) {
+      const plainLines = restText.split('\n').map((l) => l.replace(/\*\*/g, '').trim()).filter(Boolean)
+      if (plainLines.length >= 1) role = plainLines[0]
+      if (plainLines.length >= 2) whyTheyMatter = plainLines.slice(1).join(' ')
+    }
+
+    if (name) {
+      players.push({ name, role, whyTheyMatter, trackRecord })
+    }
+  }
+
+  return players
+}
+
+function PlayersSection({ content, palette }: { content: string; palette: Palette }) {
+  const players = parsePlayers(content)
+
+  if (players.length === 0) {
+    return <ProseSection content={content} palette={palette} oracleSerif />
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {players.map((player, i) => {
+        const roleColor = getRoleColor(player.role)
+        return (
+          <div
+            key={i}
+            style={{
+              backgroundColor: palette.cardBg,
+              border: `1px solid ${palette.cardBorder}`,
+              borderLeft: `2px solid ${roleColor}`,
+              borderRadius: '12px',
+              padding: '16px 20px',
+            }}
+          >
+            {/* Name + role badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: palette.text,
+                }}
+              >
+                {player.name}
+              </span>
+              {player.role && (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    borderRadius: '9999px',
+                    padding: '2px 10px',
+                    fontSize: '10px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    backgroundColor: `${roleColor}14`,
+                    color: roleColor,
+                    fontWeight: 500,
+                  }}
+                >
+                  {player.role}
+                </span>
+              )}
+            </div>
+
+            {/* Why they matter */}
+            {player.whyTheyMatter && (
+              <p
+                style={{
+                  fontFamily: '"Inter", system-ui, sans-serif',
+                  fontSize: '14px',
+                  lineHeight: '1.5',
+                  color: palette.secondary,
+                  marginTop: '8px',
+                  marginBottom: 0,
+                }}
+              >
+                {player.whyTheyMatter}
+              </p>
+            )}
+
+            {/* Track record */}
+            {player.trackRecord && (
+              <p
+                style={{
+                  fontFamily: '"Inter", system-ui, sans-serif',
+                  fontSize: '13px',
+                  lineHeight: '1.5',
+                  color: palette.muted,
+                  marginTop: '8px',
+                  marginBottom: 0,
+                }}
+              >
+                {player.trackRecord}
+              </p>
+            )}
+          </div>
         )
       })}
+    </div>
+  )
+}
+
+// ---- Mirror Comparison parser and renderer (Step 2) ----
+
+interface JurisdictionData {
+  name: string
+  whatTheyDid: string
+  whyItMatters: string
+  outcome: string
+}
+
+function parseJurisdictions(content: string): JurisdictionData[] {
+  const jurisdictions: JurisdictionData[] = []
+
+  // Split on ### headings or **Bold Name** delimiters
+  const blocks = content.split(/(?=^###\s+|^\*\*[^*]+\*\*\s*$)/m).filter((b) => b.trim())
+
+  for (const block of blocks) {
+    const lines = block.split('\n').map((l) => l.trim()).filter(Boolean)
+    if (lines.length === 0) continue
+
+    // Extract jurisdiction name from heading or bold text
+    let name = ''
+    const h3Match = lines[0].match(/^###\s+(.+)/)
+    const boldMatch = lines[0].match(/^\*\*(.+?)\*\*/)
+    if (h3Match) name = h3Match[1].replace(/\*\*/g, '').trim()
+    else if (boldMatch) name = boldMatch[1].trim()
+    else continue
+
+    const restLines = lines.slice(1)
+    const restText = restLines.join('\n')
+
+    // Try structured field extraction
+    let whatTheyDid = ''
+    let whyItMatters = ''
+    let outcome = ''
+
+    const whatMatch = restText.match(/(?:\*\*)?[Ww]hat\s+they\s+did(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Ww]hy\s+it|[Oo]utcome|$))/i)
+    if (whatMatch) whatTheyDid = whatMatch[1].replace(/\*\*/g, '').trim()
+
+    const whyMatch = restText.match(/(?:\*\*)?[Ww]hy\s+it\s+matters(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Oo]utcome|$))/i)
+    if (whyMatch) whyItMatters = whyMatch[1].replace(/\*\*/g, '').trim()
+
+    const outcomeMatch = restText.match(/(?:\*\*)?[Oo]utcome(?:\*\*)?[:\s]+([\s\S]+)/i)
+    if (outcomeMatch) outcome = outcomeMatch[1].replace(/\*\*/g, '').trim()
+
+    // Fallback: split paragraphs positionally
+    if (!whatTheyDid && !whyItMatters) {
+      const paras = restText.split(/\n{2,}/).map((p) => p.replace(/\*\*/g, '').trim()).filter(Boolean)
+      if (paras.length >= 1) whatTheyDid = paras[0]
+      if (paras.length >= 2) whyItMatters = paras[1]
+      if (paras.length >= 3) outcome = paras[2]
+    }
+
+    if (name) {
+      jurisdictions.push({ name, whatTheyDid, whyItMatters, outcome })
+    }
+  }
+
+  return jurisdictions
+}
+
+function ComparisonSection({ content, palette }: { content: string; palette: Palette }) {
+  const jurisdictions = parseJurisdictions(content)
+
+  if (jurisdictions.length === 0) {
+    return <ProseSection content={content} palette={palette} />
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {jurisdictions.map((jur, i) => (
+        <div
+          key={i}
+          style={{
+            backgroundColor: palette.cardBg,
+            border: `1px solid ${palette.cardBorder}`,
+            borderLeft: '2px solid #5BC88A',
+            borderRadius: '12px',
+            padding: '16px 20px',
+          }}
+        >
+          {/* Jurisdiction name */}
+          <span
+            style={{
+              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: palette.text,
+              display: 'block',
+              marginBottom: '12px',
+            }}
+          >
+            {jur.name}
+          </span>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {jur.whatTheyDid && (
+              <div>
+                <span
+                  style={{
+                    display: 'block',
+                    fontFamily: '"Inter", system-ui, sans-serif',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    textTransform: 'uppercase' as const,
+                    letterSpacing: '0.08em',
+                    color: palette.muted,
+                    marginBottom: '4px',
+                  }}
+                >
+                  WHAT THEY DID
+                </span>
+                <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary, margin: 0 }}>
+                  {jur.whatTheyDid}
+                </p>
+              </div>
+            )}
+
+            {jur.whyItMatters && (
+              <div>
+                <span
+                  style={{
+                    display: 'block',
+                    fontFamily: '"Inter", system-ui, sans-serif',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    textTransform: 'uppercase' as const,
+                    letterSpacing: '0.08em',
+                    color: palette.muted,
+                    marginBottom: '4px',
+                  }}
+                >
+                  WHY IT MATTERS
+                </span>
+                <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary, margin: 0 }}>
+                  {jur.whyItMatters}
+                </p>
+              </div>
+            )}
+
+            {jur.outcome && (
+              <div>
+                <span
+                  style={{
+                    display: 'block',
+                    fontFamily: '"Inter", system-ui, sans-serif',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    textTransform: 'uppercase' as const,
+                    letterSpacing: '0.08em',
+                    color: palette.muted,
+                    marginBottom: '4px',
+                  }}
+                >
+                  OUTCOME
+                </span>
+                <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary, margin: 0 }}>
+                  {jur.outcome}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -589,34 +1052,48 @@ function QuestionsSection({ content, palette }: { content: string; palette: Pale
   }
 
   return (
-    <ol className="space-y-4 list-none p-0" aria-label="Questions worth asking">
-      {questions.map((q, i) => (
-        <li key={i} className="flex items-start gap-4">
-          <span
-            aria-hidden="true"
-            className="flex-shrink-0 flex items-center justify-center rounded-full font-bold"
-            style={{
-              width: '24px',
-              height: '24px',
-              fontSize: '11px',
-              lineHeight: '1',
-              backgroundColor: 'rgba(200,168,75,0.10)',
-              border: '1px solid rgba(200,168,75,0.25)',
-              color: '#C8A84B',
-              marginTop: '1px',
-            }}
-          >
-            {i + 1}
-          </span>
-          <p
-            className="font-medium"
-            style={{ fontSize: '15px', lineHeight: '1.55', color: palette.text }}
-          >
-            {renderInline(q)}
-          </p>
-        </li>
-      ))}
-    </ol>
+    <div>
+      {/* Introductory line */}
+      <p
+        style={{
+          fontFamily: '"Source Serif 4", Georgia, serif',
+          fontStyle: 'italic',
+          fontSize: '15px',
+          color: palette.muted,
+          marginBottom: '20px',
+        }}
+      >
+        These are questions this analysis surfaced but cannot answer.
+      </p>
+      <ol style={{ display: 'flex', flexDirection: 'column', gap: '20px', listStyle: 'none', padding: 0, margin: 0 }} aria-label="Questions worth asking">
+        {questions.map((q, i) => (
+          <li key={i} className="flex items-start gap-4">
+            <span
+              aria-hidden="true"
+              className="flex-shrink-0 flex items-center justify-center rounded-full font-bold"
+              style={{
+                width: '28px',
+                height: '28px',
+                fontSize: '12px',
+                lineHeight: '1',
+                backgroundColor: 'rgba(200,168,75,0.10)',
+                border: '1px solid rgba(200,168,75,0.25)',
+                color: '#C8A84B',
+                marginTop: '1px',
+              }}
+            >
+              {i + 1}
+            </span>
+            <p
+              className="font-medium"
+              style={{ fontSize: '16px', lineHeight: '1.55', color: palette.text }}
+            >
+              {renderInline(q)}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </div>
   )
 }
 
@@ -625,23 +1102,32 @@ function QuestionsSection({ content, palette }: { content: string; palette: Pale
 function LimitationsSection({ content, palette }: { content: string; palette: Palette }) {
   return (
     <div
-      role="note"
       style={{
-        backgroundColor: 'rgba(120,113,108,0.04)',
-        border: `1px solid ${palette.cardBorder}`,
-        borderLeft: `3px solid ${palette.faint}`,
-        borderRadius: '0 8px 8px 0',
-        padding: '16px 20px',
+        borderTop: `2px solid ${palette.cardBorder}`,
+        marginTop: '32px',
+        paddingTop: '24px',
       }}
     >
       <div
-        className="font-semibold uppercase tracking-[0.1em]"
-        style={{ fontSize: '10px', color: palette.faint, marginBottom: '10px' }}
+        role="note"
+        style={{
+          backgroundColor: 'rgba(120,113,108,0.04)',
+          border: `1px solid ${palette.cardBorder}`,
+          borderLeft: `3px solid ${palette.faint}`,
+          borderRadius: '0 8px 8px 0',
+          padding: '16px 20px',
+        }}
       >
-        What This Analysis Cannot See
-      </div>
-      <div style={{ fontSize: '15px', lineHeight: '1.6', color: palette.muted }}>
-        <ProseSection content={content} palette={palette} />
+        <div
+          className="font-semibold uppercase tracking-[0.1em]"
+          style={{ fontSize: '10px', color: palette.faint, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <EyeOff size={14} strokeWidth={1.75} style={{ color: palette.faint }} />
+          What This Analysis Cannot See
+        </div>
+        <div style={{ fontSize: '15px', lineHeight: '1.6', color: palette.muted }}>
+          <ProseSection content={content} palette={palette} />
+        </div>
       </div>
     </div>
   )
@@ -752,6 +1238,9 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuest
         marginBottom: '40px',
         paddingBottom: '32px',
         borderBottom: `2px solid ${palette.border}`,
+        backgroundColor: palette.warmLift,
+        borderRadius: '12px',
+        padding: '24px',
       }}
     >
       {concernText && (
@@ -762,9 +1251,18 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuest
           >
             Your Concern
           </div>
-          <p style={{ fontSize: '16px', lineHeight: '1.6', color: palette.secondary, maxWidth: '60ch' }}>
+          <p style={{
+            fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+            fontSize: '24px',
+            fontWeight: 700,
+            lineHeight: '1.3',
+            color: palette.text,
+            maxWidth: '60ch',
+            marginBottom: '16px',
+          }}>
             {concernText}
           </p>
+          <div style={{ height: '1px', backgroundColor: palette.border, marginBottom: '16px' }} />
         </>
       )}
 
@@ -856,49 +1354,49 @@ function SectionDivider({ palette }: { palette: Palette }) {
 
 const EXPERT_LINKS = [
   {
-    label: 'Explore documents in detail',
+    arm: 'Scout',
+    archetype: 'THE PERIPATETIC',
+    tagline: 'Find what they filed. Find what they didn\'t.',
     href: '/scout',
     icon: Compass,
     color: '#B088C8',
-    bg: 'rgba(176,136,200,0.06)',
     border: 'rgba(176,136,200,0.18)',
-    arm: 'Scout',
   },
   {
-    label: 'Upload a document for analysis',
+    arm: 'Oracle',
+    archetype: 'THE PYTHIA',
+    tagline: 'Read what the document says. Then read what it doesn\'t.',
     href: '/oracle',
     icon: Eye,
     color: '#89B4C8',
-    bg: 'rgba(137,180,200,0.06)',
     border: 'rgba(137,180,200,0.18)',
-    arm: 'Oracle',
   },
   {
-    label: 'Investigate through questions',
+    arm: 'Gadfly',
+    archetype: 'THE GADFLY',
+    tagline: 'The question nobody asked.',
     href: '/gadfly',
     icon: MessageCircleQuestion,
     color: '#C8A84B',
-    bg: 'rgba(200,168,75,0.06)',
     border: 'rgba(200,168,75,0.18)',
-    arm: 'Gadfly',
   },
   {
-    label: 'Generate more civic actions',
+    arm: 'Lever',
+    archetype: 'THE HERALD',
+    tagline: 'Your concern. Their paperwork.',
     href: '/lever',
     icon: FileText,
     color: '#C85B5B',
-    bg: 'rgba(200,91,91,0.06)',
     border: 'rgba(200,91,91,0.18)',
-    arm: 'Lever',
   },
   {
-    label: 'Compare more jurisdictions',
-    href: '/mirror',
-    icon: GitCompare,
-    color: '#5BC88A',
-    bg: 'rgba(91,200,138,0.06)',
-    border: 'rgba(91,200,138,0.18)',
     arm: 'Mirror',
+    archetype: 'THE TRAVELLER',
+    tagline: 'Someone else already solved this.',
+    href: '/mirror',
+    icon: GitCompareArrows,
+    color: '#5BC88A',
+    border: 'rgba(91,200,138,0.18)',
   },
 ]
 
@@ -925,29 +1423,44 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, palette }: { onOpenCampaign?: 
           const cardStyle = {
             padding: '12px 14px',
             minHeight: '44px',
-            backgroundColor: link.bg,
+            background: `linear-gradient(to bottom, ${link.color}08, ${link.color}10)`,
             border: `1px solid ${link.border}`,
           }
           const cardContent = (
             <>
               <span
-                className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
-                style={{ backgroundColor: `${link.color}18` }}
+                className="flex flex-shrink-0 items-center justify-center rounded-full"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  backgroundColor: `${link.color}1A`,
+                }}
               >
-                <Icon size={13} strokeWidth={1.75} style={{ color: link.color }} />
+                <Icon size={14} strokeWidth={1.75} style={{ color: link.color }} />
               </span>
               <span className="flex flex-col">
                 <span
                   className="font-semibold leading-snug"
-                  style={{ fontSize: '11px', color: link.color }}
+                  style={{ fontSize: '12px', color: link.color }}
                 >
                   {link.arm}
                 </span>
                 <span
-                  className="leading-snug"
-                  style={{ fontSize: '11px', color: palette.muted, marginTop: '3px' }}
+                  style={{
+                    fontSize: '9px',
+                    textTransform: 'uppercase' as const,
+                    letterSpacing: '0.1em',
+                    color: palette.faint,
+                    marginTop: '1px',
+                  }}
                 >
-                  {link.label}
+                  {link.archetype}
+                </span>
+                <span
+                  className="leading-snug"
+                  style={{ fontSize: '11px', color: palette.muted, marginTop: '4px' }}
+                >
+                  {link.tagline}
                 </span>
               </span>
             </>
@@ -1052,7 +1565,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         margin: '0 auto',
         padding: 'clamp(32px, 5vw, 40px) clamp(20px, 5vw, 40px)',
         borderRadius: 'clamp(12px, 2vw, 16px)',
-        boxShadow: '0 4px 8px rgba(28,25,23,0.04), 0 8px 16px rgba(28,25,23,0.03), 0 16px 32px rgba(28,25,23,0.02)',
+        boxShadow: '0 4px 8px rgba(28,25,23,0.04), 0 8px 16px rgba(28,25,23,0.03), 0 16px 32px rgba(28,25,23,0.02), 0 32px 64px rgba(120,90,50,0.015)',
       }}
     >
       {onToggleDarkMode && (
@@ -1122,8 +1635,19 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
                   ))}
                 </div>
               ) : (
-                <ProseSection content={section.content} palette={palette} />
+                <ProseSection content={section.content} palette={palette} oracleSerif />
               )}
+            </div>
+          )
+        }
+
+        // --- Key Players ---
+        if (headingLower.includes('key players')) {
+          return (
+            <div key={i}>
+              {showDivider && <SectionDivider palette={palette} />}
+              <SectionHeader heading="Key Players" palette={palette} />
+              <PlayersSection content={section.content} palette={palette} />
             </div>
           )
         }
@@ -1134,7 +1658,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
             <div key={i}>
               {showDivider && <SectionDivider palette={palette} />}
               <SectionHeader heading="What the Public Record Shows" palette={palette} />
-              <ProseSection content={section.content} palette={palette} />
+              <ProseSection content={section.content} palette={palette} oracleSerif />
               <InlineGadflyAction onOpenGadfly={onOpenGadfly} palette={palette} />
             </div>
           )
@@ -1157,7 +1681,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
             <div key={i}>
               {showDivider && <SectionDivider palette={palette} />}
               <SectionHeader heading="How Other Places Handle This" palette={palette} />
-              <ProseSection content={section.content} palette={palette} />
+              <ComparisonSection content={section.content} palette={palette} />
             </div>
           )
         }
@@ -1165,7 +1689,16 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         // --- Questions Worth Asking (gadfly) ---
         if (headingLower.includes('questions worth') || headingLower.includes('worth asking')) {
           return (
-            <div key={i} id="questions-section">
+            <div
+              key={i}
+              id="questions-section"
+              style={{
+                backgroundColor: palette.warmLift,
+                borderRadius: '12px',
+                padding: '24px',
+                marginTop: '16px',
+              }}
+            >
               {showDivider && <SectionDivider palette={palette} />}
               <SectionHeader heading="Questions Worth Asking" color="#C8A84B" palette={palette} />
               <QuestionsSection content={section.content} palette={palette} />
