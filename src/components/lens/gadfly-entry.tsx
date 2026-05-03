@@ -39,10 +39,10 @@ export function GadflyEntry({
       {/* Seeded question */}
       <p
         className="mb-6 text-sm leading-relaxed"
-        style={{ color: '#d4d4d4' }}
+        style={{ color: '#44403c' }}
       >
         You've read the briefing. Here's a question worth sitting with:{' '}
-        <strong style={{ color: '#f5f5f5', fontWeight: 600 }}>
+        <strong style={{ color: '#1c1917', fontWeight: 600 }}>
           {seededQuestion || DEFAULT_QUESTION}
         </strong>
       </p>

@@ -95,16 +95,22 @@ export function PlayerCard({
   return (
     <div
       className={`flex flex-col gap-3 rounded-xl p-5 flex-shrink-0 transition-all duration-150 ${
-        onToggle ? 'cursor-pointer hover:bg-surface-3' : ''
+        onToggle ? 'cursor-pointer' : ''
       } ${expanded ? 'sm:col-span-2' : ''}`}
       style={{
-        border: '1px solid var(--border)',
+        border: '1px solid #e0ddd9',
         borderLeft: isRightsHolder
           ? '3px solid #f59e0b'
-          : '1px solid var(--border)',
-        backgroundColor: expanded ? 'var(--surface-3)' : 'var(--surface-1)',
+          : '1px solid #e0ddd9',
+        backgroundColor: expanded ? '#eeece8' : '#ffffff',
         width: expanded ? '100%' : '260px',
         minWidth: '220px',
+      }}
+      onMouseEnter={(e) => {
+        if (onToggle && !expanded) e.currentTarget.style.backgroundColor = '#f5f4f2'
+      }}
+      onMouseLeave={(e) => {
+        if (onToggle) e.currentTarget.style.backgroundColor = expanded ? '#eeece8' : '#ffffff'
       }}
       onClick={onToggle}
     >
@@ -112,7 +118,7 @@ export function PlayerCard({
       <div className="flex items-start justify-between gap-2">
         <p
           className="text-sm font-semibold leading-snug"
-          style={{ color: 'var(--text-primary)' }}
+          style={{ color: '#1c1917' }}
         >
           {name}
         </p>
@@ -145,8 +151,8 @@ export function PlayerCard({
           className="rounded-md px-2 py-0.5 text-[10px] font-medium"
           style={{
             color: '#78716c',
-            backgroundColor: 'var(--surface-1)',
-            border: '1px solid var(--border)',
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0ddd9',
           }}
         >
           {formatRole(role)}
@@ -155,7 +161,7 @@ export function PlayerCard({
 
       {/* Context text */}
       {(context || description) && (
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-sm leading-relaxed" style={{ color: '#44403c' }}>
           {context || description}
         </p>
       )}
@@ -164,13 +170,13 @@ export function PlayerCard({
       {expanded && (
         <div
           className="mt-2 space-y-4 border-t pt-4"
-          style={{ borderColor: 'var(--border)' }}
+          style={{ borderColor: 'rgba(28, 25, 23, 0.06)' }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Track Record */}
           {appearances && appearances.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-2">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#a8a29e] mb-2">
                 Track Record
               </p>
               <div className="space-y-2">
@@ -178,17 +184,17 @@ export function PlayerCard({
                   <div
                     key={a.investigationId}
                     className="rounded-lg px-3 py-2"
-                    style={{ backgroundColor: 'var(--surface-1)' }}
+                    style={{ backgroundColor: '#ffffff' }}
                   >
-                    <p className="text-xs text-text-secondary leading-snug">
+                    <p className="text-xs text-[#44403c] leading-snug">
                       {a.concern}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-[10px] text-text-faint">
+                      <span className="text-[10px] text-[#a8a29e]">
                         {formatRole(a.role)}
                       </span>
                       {a.jurisdictionName && (
-                        <span className="text-[10px] text-text-faint">
+                        <span className="text-[10px] text-[#a8a29e]">
                           {a.jurisdictionName}
                         </span>
                       )}
@@ -202,7 +208,7 @@ export function PlayerCard({
           {/* Connections */}
           {relatedPlayers && relatedPlayers.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-2">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#a8a29e] mb-2">
                 Connections
               </p>
               <div className="flex flex-wrap gap-2">
@@ -213,15 +219,15 @@ export function PlayerCard({
                       key={rp.playerId}
                       className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1"
                       style={{
-                        backgroundColor: 'var(--surface-1)',
-                        border: '1px solid var(--border)',
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e0ddd9',
                       }}
                     >
                       <span
                         className="h-1.5 w-1.5 rounded-full flex-shrink-0"
                         style={{ backgroundColor: rpStyles.color }}
                       />
-                      <span className="text-xs text-text-secondary">{rp.name}</span>
+                      <span className="text-xs text-[#44403c]">{rp.name}</span>
                     </span>
                   )
                 })}
@@ -232,7 +238,7 @@ export function PlayerCard({
           {/* External links */}
           {links.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-2">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#a8a29e] mb-2">
                 External Records
               </p>
               <div className="flex flex-wrap gap-2">
@@ -242,7 +248,7 @@ export function PlayerCard({
                     href={link.urlTemplate(name)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
+                    className="text-xs text-[#78716c] hover:text-[#44403c] underline underline-offset-2 transition-colors"
                   >
                     {link.label} →
                   </a>
@@ -255,7 +261,7 @@ export function PlayerCard({
           {(!appearances || appearances.length === 0) &&
             (!relatedPlayers || relatedPlayers.length === 0) &&
             links.length === 0 && (
-              <p className="text-xs text-text-faint">
+              <p className="text-xs text-[#a8a29e]">
                 No additional intelligence available for this entity.
               </p>
             )}

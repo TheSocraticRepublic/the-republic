@@ -202,36 +202,44 @@ export function LensPanel({
   }, [])
 
   return (
-    <div className="space-y-8 pt-2">
+    <div
+      className="rounded-xl overflow-hidden max-w-3xl mx-auto"
+      style={{
+        backgroundColor: '#f5f4f3',
+        border: '1px solid #e0ddd9',
+        borderTop: '2px solid #C8A84B',
+        padding: 'clamp(24px, 4vw, 32px)',
+      }}
+    >
+      <div className="space-y-8">
       {/* Section label */}
-      <div className="flex items-center gap-3">
-        <div
-          className="h-px flex-1"
-          style={{ backgroundColor: 'var(--border)' }}
-        />
-        <span
-          className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-          style={{ color: '#C8A84B' }}
-        >
-          Deeper Layer
-        </span>
-        <div
-          className="h-px flex-1"
-          style={{ backgroundColor: 'var(--border)' }}
-        />
-      </div>
+      <p
+        style={{
+          fontSize: '10px',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.12em',
+          color: '#C8A84B',
+          margin: 0,
+        }}
+      >
+        The Lens
+      </p>
 
       {/* Player profiles */}
       <section>
-        <p className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-text-faint">
+        <p
+          className="mb-4 text-[10px] font-semibold uppercase tracking-widest"
+          style={{ color: '#a8a29e' }}
+        >
           Key Players
         </p>
         {players.length === 0 ? (
           <div
-            className="rounded-xl border px-5 py-4"
+            className="rounded-xl px-5 py-4"
             style={{
-              borderColor: 'var(--border)',
-              backgroundColor: 'var(--surface-1)',
+              border: '1px solid #e0ddd9',
+              backgroundColor: '#ffffff',
             }}
           >
             <div className="flex items-center gap-2">
@@ -239,7 +247,7 @@ export function LensPanel({
                 className="h-1.5 w-1.5 rounded-full animate-pulse"
                 style={{ backgroundColor: '#a3a3a3' }}
               />
-              <p className="text-xs text-text-faint">Identifying players from the briefing</p>
+              <p className="text-xs" style={{ color: '#a8a29e' }}>Identifying players from the briefing</p>
             </div>
           </div>
         ) : (
@@ -313,6 +321,7 @@ export function LensPanel({
           onOpenGadfly={onOpenGadfly}
         />
       </section>
+      </div>
     </div>
   )
 }
