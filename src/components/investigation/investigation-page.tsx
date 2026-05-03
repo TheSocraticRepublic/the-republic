@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { BriefingView } from '@/components/briefing/briefing-view'
-import { EscalationCard } from './escalation-card'
 import { LensPanel } from '@/components/lens/lens-panel'
 import { GadflySheet } from '@/components/lens/gadfly-sheet'
 import { CampaignPanel } from '@/components/campaign/campaign-panel'
@@ -74,31 +73,8 @@ export function InvestigationPage({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12 space-y-10">
-      {/* 1. Concern context card */}
-      <div
-        className="rounded-xl border px-5 py-4"
-        style={{
-          backgroundColor: 'var(--surface-1)',
-          borderColor: 'var(--border)',
-        }}
-      >
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-text-faint">
-          Your concern
-          {jurisdictionName && (
-            <span className="ml-2 normal-case tracking-normal font-normal text-text-faint">
-              — {jurisdictionName}
-            </span>
-          )}
-        </p>
-        <p className="text-sm leading-relaxed text-text-secondary">{concern}</p>
-      </div>
-
-      {/* 2. Briefing content */}
+      {/* Briefing content */}
       <section>
-        <div
-          className="mb-6 h-px w-full"
-          style={{ backgroundColor: 'var(--border)' }}
-        />
         <BriefingView
           text={briefingText}
           isStreaming={false}
@@ -111,26 +87,7 @@ export function InvestigationPage({
         />
       </section>
 
-      {/* 3. Escalation paths — author only */}
-      {isAuthor && (
-        <section>
-          <div
-            className="mb-6 h-px w-full"
-            style={{ backgroundColor: 'var(--border)' }}
-          />
-          <EscalationCard
-            investigationId={id}
-            onGoDeeper={handleGoDeeper}
-            onTakeAction={handleTakeAction}
-            onDiscuss={handleDiscuss}
-            lensOpen={lensOpen}
-            campaignOpen={campaignOpen}
-            discussionOpen={discussionOpen}
-          />
-        </section>
-      )}
-
-      {/* 4. Lens panel — author only, conditionally rendered */}
+      {/* Lens panel — author only, conditionally rendered */}
       {isAuthor && lensOpen && (
         <section>
           <LensPanel
