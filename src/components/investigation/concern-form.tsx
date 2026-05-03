@@ -131,7 +131,7 @@ export function ConcernForm() {
           value={concern}
           onChange={(e) => setConcern(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="e.g., I got towed for parking 5 minutes over a meter in Squamish. $300."
+          placeholder="e.g., A gravel mine expansion near the Mamquam River was approved in 2019 but the conditions of approval haven't been publicly reported on."
           rows={6}
           maxLength={2000}
           aria-label="Describe your concern"

@@ -143,7 +143,7 @@ export function DiscoveryForm() {
             <textarea
               value={concern}
               onChange={(e) => setConcern(e.target.value)}
-              placeholder="e.g. I got towed for a minor parking infraction in Squamish and the fee seemed excessive"
+              placeholder="e.g., A gravel mine expansion near the Mamquam River was approved in 2019 but the conditions haven't been reported on."
               rows={5}
               className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[#B088C8]/40"
               disabled={loading}

@@ -25,6 +25,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/u/') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
+    pathname.startsWith('/landing') ||
     // ActivityPub / WebFinger — public by protocol.
     // Enumerated explicitly so that any new /ap/* routes require a conscious
     // decision to exempt from auth, rather than being public by default.
@@ -42,8 +43,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return applySecurityHeaders(NextResponse.next())
   }
 
-  // CSRF: reject cross-origin state-changing requests
-  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+  // CSRF: reject cross-origin state-changing requests (skip in dev)
+  if (
+    process.env.NODE_ENV !== 'development' &&
+    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)
+  ) {
     const origin = request.headers.get('origin')
     const appUrl = process.env.NEXT_PUBLIC_APP_URL
     if (origin && appUrl) {

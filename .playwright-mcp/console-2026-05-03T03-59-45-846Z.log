@@ -1,0 +1,6 @@
+[     588ms] [WARNING] Image with src "/landing/hero.jpg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[   17681ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:3847/api/investigate:0
+[   17682ms] [ERROR] [investigate] request failed: Invalid origin @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[   42148ms] [WARNING] Image with src "/landing/hero.jpg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ http://localhost:3847/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
