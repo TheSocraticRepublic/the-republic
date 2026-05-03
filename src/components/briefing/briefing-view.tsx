@@ -694,7 +694,7 @@ function InlineGadflyAction({ onOpenGadfly, palette }: { onOpenGadfly?: () => vo
 
 // ---- Executive card (always first) ----
 
-function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, palette }: { sections: ParsedSection[]; onOpenCampaign?: () => void; onOpenGadfly?: () => void; palette: Palette }) {
+function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuestions, palette }: { sections: ParsedSection[]; onOpenCampaign?: () => void; onOpenGadfly?: () => void; onScrollToQuestions?: () => void; palette: Palette }) {
   const concernSection = sections.find((s) => s.heading.toLowerCase().includes('your concern'))
   const concernText = concernSection?.content
     ? concernSection.content
@@ -741,7 +741,7 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, palette }: { se
     })
   }
   if (hasMirror) chips.push({ label: 'Compare Jurisdictions', arm: 'mirror', href: '/mirror' })
-  if (hasGadfly) chips.push({ label: 'Ask Gadfly', arm: 'gadfly', ...(onOpenGadfly ? { onClick: onOpenGadfly } : { href: '/gadfly' }) })
+  if (hasGadfly) chips.push({ label: 'Questions Worth Asking', arm: 'gadfly', ...(onScrollToQuestions ? { onClick: onScrollToQuestions } : { href: '#questions-section' }) })
   if (hasOracle) chips.push({ label: 'Analyse Documents', arm: 'oracle', href: '/oracle' })
 
   if (!concernText && findingHeadings.length === 0) return null
@@ -902,7 +902,7 @@ const EXPERT_LINKS = [
   },
 ]
 
-function GoDeeper({ onOpenLens, onOpenCampaign, onOpenGadfly, palette }: { onOpenLens?: () => void; onOpenCampaign?: () => void; onOpenGadfly?: () => void; palette: Palette }) {
+function GoDeeper({ onOpenCampaign, onOpenGadfly, palette }: { onOpenCampaign?: () => void; onOpenGadfly?: () => void; palette: Palette }) {
   // Map arm names to callbacks for arms that support in-page panels
   const armCallbacks: Record<string, (() => void) | undefined> = {
     Gadfly: onOpenGadfly,
@@ -1081,7 +1081,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
       )}
 
       {/* Executive card — always first when we have sections */}
-      {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} palette={palette} />}
+      {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} onScrollToQuestions={onScrollToQuestions} palette={palette} />}
 
       {sections.map((section, i) => {
         const headingLower = section.heading.toLowerCase()
@@ -1201,7 +1201,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
       )}
 
       {/* Go Deeper footer — only when streaming is complete */}
-      {!isStreaming && hasSections && <GoDeeper onOpenLens={onOpenLens} onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} palette={palette} />}
+      {!isStreaming && hasSections && <GoDeeper onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} palette={palette} />}
     </article>
   )
 }
