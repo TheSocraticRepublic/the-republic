@@ -115,92 +115,130 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
   }
 
   return (
-    <div className="space-y-8 pt-2">
+    <div
+      className="rounded-xl overflow-hidden max-w-3xl mx-auto"
+      style={{
+        backgroundColor: '#f5f4f3',
+        border: '1px solid #e0ddd9',
+        borderTop: '2px solid #C85B5B',
+        padding: 'clamp(24px, 4vw, 32px)',
+      }}
+    >
+      <div className="space-y-8">
       {/* Section label */}
-      <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-border" />
-        <span
-          className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-          style={{ color: '#C85B5B' }}
-        >
-          Campaign Materials
-        </span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
+      <p
+        style={{
+          fontSize: '10px',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.12em',
+          color: '#C85B5B',
+          margin: 0,
+        }}
+      >
+        Campaign
+      </p>
 
-      {/* Material type grid */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {MATERIAL_TYPES.map((type) => {
-          const existing = materials.find((m) => m.materialType === type)
-          const isGenerating = activeMaterialType === type
+      {/* Generated material cards (vertical) */}
+      {MATERIAL_TYPES.filter((type) => materials.some((m) => m.materialType === type) || activeMaterialType === type).length > 0 && (
+        <div className="space-y-4">
+          {MATERIAL_TYPES.filter((type) => materials.some((m) => m.materialType === type) || activeMaterialType === type).map((type) => {
+            const existing = materials.find((m) => m.materialType === type)
+            const isGenerating = activeMaterialType === type
 
-          return (
-            <div
-              key={type}
-              className="rounded-xl border px-5 py-4 space-y-3"
-              style={{
-                backgroundColor: isGenerating
-                  ? 'rgba(200, 91, 91, 0.04)'
-                  : 'var(--surface-1)',
-                borderColor: isGenerating
-                  ? 'rgba(200, 91, 91, 0.25)'
-                  : existing
-                  ? 'rgba(200, 91, 91, 0.15)'
-                  : 'var(--border)',
-              }}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-text-primary">
-                    {MATERIAL_TYPE_LABELS[type]}
-                  </p>
-                  <p className="text-xs leading-relaxed text-text-muted">
-                    {MATERIAL_TYPE_DESCRIPTIONS[type]}
-                  </p>
+            return (
+              <div
+                key={type}
+                className="space-y-3"
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e0ddd9',
+                  borderTop: '2px solid #C85B5B',
+                  borderRadius: '12px',
+                  padding: '20px',
+                }}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold" style={{ color: '#1c1917' }}>
+                      {MATERIAL_TYPE_LABELS[type]}
+                    </p>
+                    <p className="text-xs leading-relaxed" style={{ color: '#78716c' }}>
+                      {MATERIAL_TYPE_DESCRIPTIONS[type]}
+                    </p>
+                  </div>
+                  {existing && !isGenerating && (
+                    <span
+                      className="flex-shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest"
+                      style={{ backgroundColor: 'rgba(200,91,91,0.12)', color: '#C85B5B' }}
+                    >
+                      Done
+                    </span>
+                  )}
                 </div>
-                {existing && !isGenerating && (
-                  <span
-                    className="flex-shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest"
-                    style={{ backgroundColor: 'rgba(200,91,91,0.12)', color: '#C85B5B' }}
+
+                {!isGenerating && (
+                  <button
+                    onClick={() => setActiveMaterialType(type)}
+                    className="rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-100"
+                    style={{
+                      backgroundColor: existing
+                        ? 'rgba(200, 91, 91, 0.08)'
+                        : 'rgba(200, 91, 91, 0.12)',
+                      color: '#C85B5B',
+                      border: '1px solid rgba(200, 91, 91, 0.2)',
+                    }}
                   >
-                    Done
-                  </span>
+                    {existing ? 'Regenerate' : 'Generate'}
+                  </button>
+                )}
+
+                {isGenerating && (
+                  <MediaSpecGenerator
+                    investigationId={investigationId}
+                    materialType={type}
+                    onGenerated={handleGenerated}
+                    onCancel={() => setActiveMaterialType(null)}
+                  />
                 )}
               </div>
+            )
+          })}
+        </div>
+      )}
 
-              {!isGenerating && (
-                <button
-                  onClick={() => setActiveMaterialType(type)}
-                  className="rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-100"
-                  style={{
-                    backgroundColor: existing
-                      ? 'rgba(200, 91, 91, 0.08)'
-                      : 'rgba(200, 91, 91, 0.12)',
-                    color: '#C85B5B',
-                    border: '1px solid rgba(200, 91, 91, 0.2)',
-                  }}
-                >
-                  {existing ? 'Regenerate' : 'Generate'}
-                </button>
-              )}
-
-              {isGenerating && (
-                <MediaSpecGenerator
-                  investigationId={investigationId}
-                  materialType={type}
-                  onGenerated={handleGenerated}
-                  onCancel={() => setActiveMaterialType(null)}
-                />
-              )}
-            </div>
-          )
-        })}
-      </div>
+      {/* Un-generated types: single button to pick */}
+      {MATERIAL_TYPES.filter((type) => !materials.some((m) => m.materialType === type) && activeMaterialType !== type).length > 0 && (
+        <div className="space-y-3">
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest"
+            style={{ color: '#a8a29e' }}
+          >
+            Available
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {MATERIAL_TYPES.filter((type) => !materials.some((m) => m.materialType === type) && activeMaterialType !== type).map((type) => (
+              <button
+                key={type}
+                onClick={() => setActiveMaterialType(type)}
+                className="rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-100"
+                style={{
+                  backgroundColor: 'rgba(200, 91, 91, 0.08)',
+                  color: '#C85B5B',
+                  border: '1px solid rgba(200, 91, 91, 0.2)',
+                }}
+              >
+                {MATERIAL_TYPE_LABELS[type]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Cross-arm: File as FIPPA request when fact_sheet or talking_points exist */}
       {materials.some((m) => m.materialType === 'fact_sheet' || m.materialType === 'talking_points') && (
         <div className="space-y-3">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#a8a29e]">
             Civic Actions
           </p>
           <CrossArmActions
@@ -221,7 +259,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                 <div
                   key={action.id}
                   className="flex items-center gap-2 rounded-lg px-3 py-1.5"
-                  style={{ backgroundColor: 'var(--surface-1)' }}
+                  style={{ backgroundColor: '#ffffff' }}
                 >
                   <span
                     className="inline-block h-1.5 w-1.5 rounded-full"
@@ -232,7 +270,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                           : '#C8A84B',
                     }}
                   />
-                  <span className="text-xs text-text-secondary truncate flex-1">
+                  <span className="text-xs text-[#44403c] truncate flex-1">
                     {action.title}
                   </span>
                   <span
@@ -256,15 +294,15 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
       {/* Loading skeleton */}
       {loading && (
         <div className="space-y-2">
-          <div className="h-4 w-1/3 rounded animate-pulse bg-surface-3" />
-          <div className="h-4 w-2/3 rounded animate-pulse bg-surface-3" />
+          <div className="h-4 w-1/3 rounded animate-pulse bg-[#eeece8]" />
+          <div className="h-4 w-2/3 rounded animate-pulse bg-[#eeece8]" />
         </div>
       )}
 
       {/* Generated materials */}
       {materials.length > 0 && (
         <section className="space-y-6">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#a8a29e]">
             Generated Materials
           </p>
           {materials.map((material) => (
@@ -292,6 +330,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
           }))}
         />
       )}
+      </div>
     </div>
   )
 }

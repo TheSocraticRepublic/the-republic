@@ -437,8 +437,8 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
 
   return (
     <div
-      className="rounded-2xl border overflow-hidden"
-      style={{ borderColor: 'rgba(200, 91, 91, 0.15)' }}
+      className="rounded-2xl overflow-hidden"
+      style={{ border: '1px solid #e0ddd9' }}
     >
       {/* Header */}
       <div
