@@ -99,7 +99,16 @@ export function InvestigationPage({
           className="mb-6 h-px w-full"
           style={{ backgroundColor: 'var(--border)' }}
         />
-        <BriefingView text={briefingText} isStreaming={false} />
+        <BriefingView
+          text={briefingText}
+          isStreaming={false}
+          onOpenLens={() => setLensOpen(true)}
+          onOpenCampaign={() => setCampaignOpen(true)}
+          onOpenGadfly={() => setGadflyOpen(true)}
+          onScrollToQuestions={() => {
+            document.getElementById('questions-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}
+        />
       </section>
 
       {/* 3. Escalation paths — author only */}

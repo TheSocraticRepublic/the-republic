@@ -18,6 +18,10 @@ import {
 interface BriefingViewProps {
   text: string
   isStreaming: boolean
+  onOpenLens?: () => void
+  onOpenCampaign?: () => void
+  onOpenGadfly?: () => void
+  onScrollToQuestions?: () => void
 }
 
 interface ParsedSection {
@@ -609,7 +613,17 @@ function LimitationsSection({ content }: { content: string }) {
 
 // ---- Inline Gadfly action (after Oracle section) ----
 
-function InlineGadflyAction() {
+function InlineGadflyAction({ onOpenGadfly }: { onOpenGadfly?: () => void }) {
+  const actionClassName = "inline-flex items-center gap-1.5 rounded-lg font-semibold transition-all duration-150 hover:opacity-90"
+  const actionStyle = {
+    padding: '7px 14px',
+    fontSize: '12px',
+    lineHeight: '1' as const,
+    backgroundColor: 'rgba(200,168,75,0.08)',
+    border: '1px solid rgba(200,168,75,0.20)',
+    color: '#C8A84B',
+  }
+
   return (
     <div
       className="action-button mt-5 pt-5 flex items-center justify-between gap-4"
@@ -618,28 +632,33 @@ function InlineGadflyAction() {
       <span style={{ fontSize: '13px', lineHeight: '1', color: '#78716c' }}>
         Have more questions about this?
       </span>
-      <Link
-        href="/gadfly"
-        className="inline-flex items-center gap-1.5 rounded-lg font-semibold transition-all duration-150 hover:opacity-90"
-        style={{
-          padding: '7px 14px',
-          fontSize: '12px',
-          lineHeight: '1',
-          backgroundColor: 'rgba(200,168,75,0.08)',
-          border: '1px solid rgba(200,168,75,0.20)',
-          color: '#C8A84B',
-        }}
-      >
-        <MessageCircleQuestion size={12} strokeWidth={2} />
-        Explore with Gadfly
-      </Link>
+      {onOpenGadfly ? (
+        <button
+          type="button"
+          onClick={onOpenGadfly}
+          className={actionClassName}
+          style={actionStyle}
+        >
+          <MessageCircleQuestion size={12} strokeWidth={2} />
+          Explore with Gadfly
+        </button>
+      ) : (
+        <Link
+          href="/gadfly"
+          className={actionClassName}
+          style={actionStyle}
+        >
+          <MessageCircleQuestion size={12} strokeWidth={2} />
+          Explore with Gadfly
+        </Link>
+      )}
     </div>
   )
 }
 
 // ---- Executive card (always first) ----
 
-function ExecutiveCard({ sections }: { sections: ParsedSection[] }) {
+function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly }: { sections: ParsedSection[]; onOpenCampaign?: () => void; onOpenGadfly?: () => void }) {
   const concernSection = sections.find((s) => s.heading.toLowerCase().includes('your concern'))
   const concernText = concernSection?.content
     ? concernSection.content
@@ -660,7 +679,7 @@ function ExecutiveCard({ sections }: { sections: ParsedSection[] }) {
     )
 
   // Detect which action chips to show
-  const chips: { label: string; arm: keyof typeof ARM_COLORS; href: string }[] = []
+  const chips: { label: string; arm: keyof typeof ARM_COLORS; href?: string; onClick?: () => void }[] = []
   const hasLever = sections.some(
     (s) => s.heading.toLowerCase().includes('what you can do') || s.heading.toLowerCase().includes('you can do')
   )
@@ -682,11 +701,11 @@ function ExecutiveCard({ sections }: { sections: ParsedSection[] }) {
     chips.push({
       label: hasFippa ? 'File a FIPPA Request' : 'Take Civic Action',
       arm: 'lever',
-      href: '/lever',
+      ...(onOpenCampaign ? { onClick: onOpenCampaign } : { href: '/lever' }),
     })
   }
   if (hasMirror) chips.push({ label: 'Compare Jurisdictions', arm: 'mirror', href: '/mirror' })
-  if (hasGadfly) chips.push({ label: 'Ask Gadfly', arm: 'gadfly', href: '/gadfly' })
+  if (hasGadfly) chips.push({ label: 'Ask Gadfly', arm: 'gadfly', ...(onOpenGadfly ? { onClick: onOpenGadfly } : { href: '/gadfly' }) })
   if (hasOracle) chips.push({ label: 'Analyse Documents', arm: 'oracle', href: '/oracle' })
 
   if (!concernText && findingHeadings.length === 0) return null
@@ -742,20 +761,37 @@ function ExecutiveCard({ sections }: { sections: ParsedSection[] }) {
         >
           {chips.map((chip) => {
             const arm = ARM_COLORS[chip.arm]
+            const chipStyle = {
+              padding: '6px 14px',
+              minHeight: '36px',
+              fontSize: '12px',
+              lineHeight: '1' as const,
+              backgroundColor: arm.bg,
+              border: `1px solid ${arm.border}`,
+              color: arm.color,
+            }
+            const chipClassName = "inline-flex items-center rounded-full font-semibold transition-opacity duration-150 hover:opacity-80"
+
+            if (chip.onClick) {
+              return (
+                <button
+                  key={chip.label}
+                  type="button"
+                  onClick={chip.onClick}
+                  className={chipClassName}
+                  style={chipStyle}
+                >
+                  {chip.label}
+                </button>
+              )
+            }
+
             return (
               <Link
                 key={chip.label}
-                href={chip.href}
-                className="inline-flex items-center rounded-full font-semibold transition-opacity duration-150 hover:opacity-80"
-                style={{
-                  padding: '6px 14px',
-                  minHeight: '36px',
-                  fontSize: '12px',
-                  lineHeight: '1',
-                  backgroundColor: arm.bg,
-                  border: `1px solid ${arm.border}`,
-                  color: arm.color,
-                }}
+                href={chip.href!}
+                className={chipClassName}
+                style={chipStyle}
               >
                 {chip.label}
               </Link>
@@ -830,7 +866,13 @@ const EXPERT_LINKS = [
   },
 ]
 
-function GoDeeper() {
+function GoDeeper({ onOpenLens, onOpenCampaign, onOpenGadfly }: { onOpenLens?: () => void; onOpenCampaign?: () => void; onOpenGadfly?: () => void }) {
+  // Map arm names to callbacks for arms that support in-page panels
+  const armCallbacks: Record<string, (() => void) | undefined> = {
+    Gadfly: onOpenGadfly,
+    Lever: onOpenCampaign,
+  }
+
   return (
     <div style={{ marginTop: '40px', paddingTop: '32px', borderTop: '1px solid #e7e5e4' }}>
       <p
@@ -842,18 +884,16 @@ function GoDeeper() {
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
         {EXPERT_LINKS.map((link) => {
           const Icon = link.icon
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="link-card flex items-center gap-3 rounded-[10px] transition-opacity duration-150 hover:opacity-85"
-              style={{
-                padding: '12px 14px',
-                minHeight: '44px',
-                backgroundColor: link.bg,
-                border: `1px solid ${link.border}`,
-              }}
-            >
+          const callback = armCallbacks[link.arm]
+          const cardClassName = "link-card flex items-center gap-3 rounded-[10px] transition-opacity duration-150 hover:opacity-85"
+          const cardStyle = {
+            padding: '12px 14px',
+            minHeight: '44px',
+            backgroundColor: link.bg,
+            border: `1px solid ${link.border}`,
+          }
+          const cardContent = (
+            <>
               <span
                 className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
                 style={{ backgroundColor: `${link.color}18` }}
@@ -874,6 +914,31 @@ function GoDeeper() {
                   {link.label}
                 </span>
               </span>
+            </>
+          )
+
+          if (callback) {
+            return (
+              <button
+                key={link.arm}
+                type="button"
+                onClick={callback}
+                className={cardClassName}
+                style={cardStyle}
+              >
+                {cardContent}
+              </button>
+            )
+          }
+
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cardClassName}
+              style={cardStyle}
+            >
+              {cardContent}
             </Link>
           )
         })}
@@ -884,7 +949,7 @@ function GoDeeper() {
 
 // ---- Main component ----
 
-export function BriefingView({ text, isStreaming }: BriefingViewProps) {
+export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, onOpenGadfly, onScrollToQuestions }: BriefingViewProps) {
   const sections = useMemo(() => parseSections(text), [text])
   const hasSections = sections.length > 0
 
@@ -928,7 +993,7 @@ export function BriefingView({ text, isStreaming }: BriefingViewProps) {
       }}
     >
       {/* Executive card — always first when we have sections */}
-      {hasSections && <ExecutiveCard sections={sections} />}
+      {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} />}
 
       {sections.map((section, i) => {
         const headingLower = section.heading.toLowerCase()
@@ -982,7 +1047,7 @@ export function BriefingView({ text, isStreaming }: BriefingViewProps) {
               {showDivider && <SectionDivider />}
               <SectionHeader heading="What the Public Record Shows" />
               <ProseSection content={section.content} />
-              <InlineGadflyAction />
+              <InlineGadflyAction onOpenGadfly={onOpenGadfly} />
             </div>
           )
         }
@@ -1012,7 +1077,7 @@ export function BriefingView({ text, isStreaming }: BriefingViewProps) {
         // --- Questions Worth Asking (gadfly) ---
         if (headingLower.includes('questions worth') || headingLower.includes('worth asking')) {
           return (
-            <div key={i}>
+            <div key={i} id="questions-section">
               {showDivider && <SectionDivider />}
               <SectionHeader heading="Questions Worth Asking" color="#C8A84B" />
               <QuestionsSection content={section.content} />
@@ -1048,7 +1113,7 @@ export function BriefingView({ text, isStreaming }: BriefingViewProps) {
       )}
 
       {/* Go Deeper footer — only when streaming is complete */}
-      {!isStreaming && hasSections && <GoDeeper />}
+      {!isStreaming && hasSections && <GoDeeper onOpenLens={onOpenLens} onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} />}
     </article>
   )
 }
