@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { BriefingView } from '@/components/briefing/briefing-view'
 import { LensPanel } from '@/components/lens/lens-panel'
 import { GadflySheet } from '@/components/lens/gadfly-sheet'
@@ -37,6 +37,20 @@ export function InvestigationPage({
   const [civicExpanded, setCivicExpanded] = useState<'votes' | 'discussion' | 'reviews' | 'archive' | null>(null)
   const [gadflyOpen, setGadflyOpen] = useState(false)
   const [gadflySessionId, setGadflySessionId] = useState<string | null>(null)
+  const [islandDarkMode, setIslandDarkMode] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('republic-island-dark')
+    if (saved === 'true') setIslandDarkMode(true)
+  }, [])
+
+  const handleToggleDarkMode = useCallback(() => {
+    setIslandDarkMode(prev => {
+      const next = !prev
+      localStorage.setItem('republic-island-dark', String(next))
+      return next
+    })
+  }, [])
 
   function handleOpenGadfly() {
     setGadflyOpen(true)
@@ -49,6 +63,8 @@ export function InvestigationPage({
         <BriefingView
           text={briefingText}
           isStreaming={false}
+          darkMode={islandDarkMode}
+          onToggleDarkMode={handleToggleDarkMode}
           onOpenLens={() => setLensOpen(true)}
           onOpenCampaign={() => setCampaignOpen(true)}
           onOpenGadfly={() => setGadflyOpen(true)}

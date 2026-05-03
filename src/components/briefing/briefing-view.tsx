@@ -11,6 +11,8 @@ import {
   Copy,
   Check,
   Download,
+  Sun,
+  Moon,
 } from 'lucide-react'
 
 // ---- Types ----
@@ -18,11 +20,43 @@ import {
 interface BriefingViewProps {
   text: string
   isStreaming: boolean
+  darkMode?: boolean
+  onToggleDarkMode?: () => void
   onOpenLens?: () => void
   onOpenCampaign?: () => void
   onOpenGadfly?: () => void
   onScrollToQuestions?: () => void
 }
+
+// ---- Palette (light / dark island themes) ----
+
+const LIGHT_PALETTE = {
+  bg: '#fafaf9',
+  text: '#1c1917',
+  secondary: '#44403c',
+  body: '#292524',
+  muted: '#78716c',
+  faint: '#a8a29e',
+  border: '#e7e5e4',
+  cardBg: '#f5f4f3',
+  cardBorder: '#e0ddd9',
+  white: '#ffffff',
+}
+
+const DARK_PALETTE = {
+  bg: '#111113',
+  text: '#f4f4f5',
+  secondary: '#d4d4d8',
+  body: '#d4d4d8',
+  muted: '#a1a1aa',
+  faint: '#71717a',
+  border: 'rgba(255,255,255,0.08)',
+  cardBg: '#18181b',
+  cardBorder: 'rgba(255,255,255,0.15)',
+  white: '#1e1e20',
+}
+
+type Palette = typeof LIGHT_PALETTE
 
 interface ParsedSection {
   heading: string
@@ -95,15 +129,17 @@ function parseSections(text: string): ParsedSection[] {
 function SectionHeader({
   heading,
   color,
+  palette,
 }: {
   heading: string
   color?: string
+  palette: Palette
 }) {
   return (
     <div className="mb-6 flex items-center gap-2">
       <h3
         className="text-[11px] font-semibold uppercase tracking-[0.1em]"
-        style={{ color: color ?? '#78716c' }}
+        style={{ color: color ?? palette.muted }}
       >
         {heading}
       </h3>
@@ -117,7 +153,7 @@ function renderInline(text: string): string {
   return text.replace(/\*\*(.+?)\*\*/g, '$1')
 }
 
-function ProseSection({ content }: { content: string }) {
+function ProseSection({ content, palette }: { content: string; palette: Palette }) {
   const paragraphs = content
     .split(/\n{2,}/)
     .map((p) => p.trim())
@@ -135,8 +171,8 @@ function ProseSection({ content }: { content: string }) {
           return (
             <ul key={i} className="space-y-1.5 pl-0">
               {items.map((item, j) => (
-                <li key={j} className="flex items-start gap-2" style={{ fontSize: '15px', lineHeight: '1.6', color: '#44403c' }}>
-                  <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: '#a8a29e' }} />
+                <li key={j} className="flex items-start gap-2" style={{ fontSize: '15px', lineHeight: '1.6', color: palette.secondary }}>
+                  <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: palette.faint }} />
                   <span>{renderInline(item)}</span>
                 </li>
               ))}
@@ -151,11 +187,11 @@ function ProseSection({ content }: { content: string }) {
             <div key={i}>
               <span
                 className="block font-semibold uppercase tracking-wider"
-                style={{ fontSize: '11px', color: '#78716c' }}
+                style={{ fontSize: '11px', color: palette.muted }}
               >
                 {boldFieldMatch[1]}
               </span>
-              <p className="mt-0.5" style={{ fontSize: '16px', lineHeight: '1.7', color: '#292524' }}>
+              <p className="mt-0.5" style={{ fontSize: '16px', lineHeight: '1.7', color: palette.body }}>
                 {renderInline(boldFieldMatch[2])}
               </p>
             </div>
@@ -163,7 +199,7 @@ function ProseSection({ content }: { content: string }) {
         }
 
         return (
-          <p key={i} className="whitespace-pre-wrap" style={{ fontSize: '16px', lineHeight: '1.7', color: '#292524' }}>
+          <p key={i} className="whitespace-pre-wrap" style={{ fontSize: '16px', lineHeight: '1.7', color: palette.body }}>
             {renderInline(para)}
           </p>
         )
@@ -244,7 +280,7 @@ function AccessBadge({ level }: { level: AccessLevel }) {
 
 // ---- Document card (light surface) ----
 
-function DocumentCard({ block }: { block: string }) {
+function DocumentCard({ block, palette }: { block: string; palette: Palette }) {
   const fields = parseDocumentFields(block)
 
   let docName = ''
@@ -278,9 +314,9 @@ function DocumentCard({ block }: { block: string }) {
     return (
       <div
         className="rounded-xl p-5"
-        style={{ backgroundColor: '#f5f4f3', border: '1px solid #e0ddd9' }}
+        style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.cardBorder}` }}
       >
-        <p className="whitespace-pre-wrap" style={{ fontSize: '16px', lineHeight: '1.7', color: '#292524' }}>
+        <p className="whitespace-pre-wrap" style={{ fontSize: '16px', lineHeight: '1.7', color: palette.body }}>
           {renderInline(block)}
         </p>
       </div>
@@ -290,7 +326,7 @@ function DocumentCard({ block }: { block: string }) {
   return (
     <div
       className="rounded-xl p-5"
-      style={{ backgroundColor: '#f5f4f3', border: '1px solid #e0ddd9' }}
+      style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.cardBorder}` }}
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         {docName && (
@@ -300,7 +336,7 @@ function DocumentCard({ block }: { block: string }) {
               fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
               fontSize: '14px',
               lineHeight: '1.4',
-              color: '#1c1917',
+              color: palette.text,
             }}
           >
             {docName}
@@ -315,11 +351,11 @@ function DocumentCard({ block }: { block: string }) {
             <div key={i}>
               <span
                 className="block font-semibold uppercase tracking-[0.08em]"
-                style={{ fontSize: '10px', color: '#78716c', marginBottom: '4px' }}
+                style={{ fontSize: '10px', color: palette.muted, marginBottom: '4px' }}
               >
                 {field.label}
               </span>
-              <p style={{ fontSize: '14px', lineHeight: '1.5', color: '#44403c' }}>
+              <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary }}>
                 {renderInline(field.value)}
               </p>
             </div>
@@ -330,15 +366,15 @@ function DocumentCard({ block }: { block: string }) {
       {howToFindField && (
         <div
           className="mt-4 pt-3"
-          style={{ borderTop: '1px solid #e7e5e4', marginTop: '16px', paddingTop: '12px' }}
+          style={{ borderTop: `1px solid ${palette.border}`, marginTop: '16px', paddingTop: '12px' }}
         >
           <span
             className="block font-semibold uppercase tracking-[0.08em]"
-            style={{ fontSize: '10px', color: '#a8a29e' }}
+            style={{ fontSize: '10px', color: palette.faint }}
           >
             How to find it
           </span>
-          <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: '#78716c' }}>
+          <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: palette.muted }}>
             {renderInline(howToFindField.value)}
           </p>
         </div>
@@ -391,7 +427,7 @@ function extractFippaLetter(content: string): { before: string; letter: string; 
 
 // ---- FIPPA letter card (light surface, Inter body) ----
 
-function FippaLetterCard({ letter }: { letter: string }) {
+function FippaLetterCard({ letter, palette }: { letter: string; palette: Palette }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = useCallback(async () => {
@@ -418,8 +454,8 @@ function FippaLetterCard({ letter }: { letter: string }) {
     <div
       className="rounded-xl overflow-hidden"
       style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #e7e5e4',
+        backgroundColor: palette.white,
+        border: `1px solid ${palette.border}`,
         borderTop: '2px solid #C85B5B',
       }}
     >
@@ -447,7 +483,7 @@ function FippaLetterCard({ letter }: { letter: string }) {
               lineHeight: '1',
               backgroundColor: 'rgba(200,91,91,0.06)',
               border: '1px solid rgba(200,91,91,0.15)',
-              color: '#78716c',
+              color: palette.muted,
             }}
           >
             <Download size={11} strokeWidth={2} />
@@ -464,7 +500,7 @@ function FippaLetterCard({ letter }: { letter: string }) {
               border: copied
                 ? '1px solid rgba(91,200,138,0.25)'
                 : '1px solid rgba(200,91,91,0.15)',
-              color: copied ? '#5BC88A' : '#78716c',
+              color: copied ? '#5BC88A' : palette.muted,
             }}
           >
             {copied ? (
@@ -488,8 +524,8 @@ function FippaLetterCard({ letter }: { letter: string }) {
         style={{
           fontSize: '13px',
           lineHeight: '1.6',
-          color: '#78716c',
-          borderBottom: '1px dashed #e7e5e4',
+          color: palette.muted,
+          borderBottom: `1px dashed ${palette.border}`,
         }}
       >
         This is a formal request under the Freedom of Information and Protection of Privacy Act. You can copy and send this directly to the public body named above.
@@ -505,7 +541,7 @@ function FippaLetterCard({ letter }: { letter: string }) {
             fontFamily: '"Inter", system-ui, sans-serif',
             fontSize: '14px',
             lineHeight: '1.65',
-            color: '#292524',
+            color: palette.body,
           }}
         >
           {letter}
@@ -517,25 +553,25 @@ function FippaLetterCard({ letter }: { letter: string }) {
 
 // ---- Civic Actions section renderer ----
 
-function CivicActionsSection({ content }: { content: string }) {
+function CivicActionsSection({ content, palette }: { content: string; palette: Palette }) {
   const fippa = extractFippaLetter(content)
 
   if (!fippa) {
-    return <ProseSection content={content} />
+    return <ProseSection content={content} palette={palette} />
   }
 
   return (
     <div className="space-y-5">
-      {fippa.before && <ProseSection content={fippa.before} />}
-      <FippaLetterCard letter={fippa.letter} />
-      {fippa.after && <ProseSection content={fippa.after} />}
+      {fippa.before && <ProseSection content={fippa.before} palette={palette} />}
+      <FippaLetterCard letter={fippa.letter} palette={palette} />
+      {fippa.after && <ProseSection content={fippa.after} palette={palette} />}
     </div>
   )
 }
 
 // ---- Questions section renderer (Gadfly gold, light surface) ----
 
-function QuestionsSection({ content }: { content: string }) {
+function QuestionsSection({ content, palette }: { content: string; palette: Palette }) {
   const lines = content.split('\n').filter((l) => l.trim())
   const questions: string[] = []
 
@@ -549,7 +585,7 @@ function QuestionsSection({ content }: { content: string }) {
   }
 
   if (questions.length === 0) {
-    return <ProseSection content={content} />
+    return <ProseSection content={content} palette={palette} />
   }
 
   return (
@@ -574,7 +610,7 @@ function QuestionsSection({ content }: { content: string }) {
           </span>
           <p
             className="font-medium"
-            style={{ fontSize: '15px', lineHeight: '1.55', color: '#1c1917' }}
+            style={{ fontSize: '15px', lineHeight: '1.55', color: palette.text }}
           >
             {renderInline(q)}
           </p>
@@ -586,26 +622,26 @@ function QuestionsSection({ content }: { content: string }) {
 
 // ---- Limitations section renderer ----
 
-function LimitationsSection({ content }: { content: string }) {
+function LimitationsSection({ content, palette }: { content: string; palette: Palette }) {
   return (
     <div
       role="note"
       style={{
         backgroundColor: 'rgba(120,113,108,0.04)',
-        border: '1px solid #e0ddd9',
-        borderLeft: '3px solid #a8a29e',
+        border: `1px solid ${palette.cardBorder}`,
+        borderLeft: `3px solid ${palette.faint}`,
         borderRadius: '0 8px 8px 0',
         padding: '16px 20px',
       }}
     >
       <div
         className="font-semibold uppercase tracking-[0.1em]"
-        style={{ fontSize: '10px', color: '#a8a29e', marginBottom: '10px' }}
+        style={{ fontSize: '10px', color: palette.faint, marginBottom: '10px' }}
       >
         What This Analysis Cannot See
       </div>
-      <div style={{ fontSize: '15px', lineHeight: '1.6', color: '#57534e' }}>
-        <ProseSection content={content} />
+      <div style={{ fontSize: '15px', lineHeight: '1.6', color: palette.muted }}>
+        <ProseSection content={content} palette={palette} />
       </div>
     </div>
   )
@@ -613,7 +649,7 @@ function LimitationsSection({ content }: { content: string }) {
 
 // ---- Inline Gadfly action (after Oracle section) ----
 
-function InlineGadflyAction({ onOpenGadfly }: { onOpenGadfly?: () => void }) {
+function InlineGadflyAction({ onOpenGadfly, palette }: { onOpenGadfly?: () => void; palette: Palette }) {
   const actionClassName = "inline-flex items-center gap-1.5 rounded-lg font-semibold transition-all duration-150 hover:opacity-90"
   const actionStyle = {
     padding: '7px 14px',
@@ -627,9 +663,9 @@ function InlineGadflyAction({ onOpenGadfly }: { onOpenGadfly?: () => void }) {
   return (
     <div
       className="action-button mt-5 pt-5 flex items-center justify-between gap-4"
-      style={{ borderTop: '1px solid #e7e5e4' }}
+      style={{ borderTop: `1px solid ${palette.border}` }}
     >
-      <span style={{ fontSize: '13px', lineHeight: '1', color: '#78716c' }}>
+      <span style={{ fontSize: '13px', lineHeight: '1', color: palette.muted }}>
         Have more questions about this?
       </span>
       {onOpenGadfly ? (
@@ -658,7 +694,7 @@ function InlineGadflyAction({ onOpenGadfly }: { onOpenGadfly?: () => void }) {
 
 // ---- Executive card (always first) ----
 
-function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly }: { sections: ParsedSection[]; onOpenCampaign?: () => void; onOpenGadfly?: () => void }) {
+function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, palette }: { sections: ParsedSection[]; onOpenCampaign?: () => void; onOpenGadfly?: () => void; palette: Palette }) {
   const concernSection = sections.find((s) => s.heading.toLowerCase().includes('your concern'))
   const concernText = concernSection?.content
     ? concernSection.content
@@ -715,18 +751,18 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly }: { sections: P
       style={{
         marginBottom: '40px',
         paddingBottom: '32px',
-        borderBottom: '2px solid #e7e5e4',
+        borderBottom: `2px solid ${palette.border}`,
       }}
     >
       {concernText && (
         <>
           <div
             className="font-semibold uppercase tracking-[0.1em]"
-            style={{ fontSize: '11px', color: '#78716c', marginBottom: '8px' }}
+            style={{ fontSize: '11px', color: palette.muted, marginBottom: '8px' }}
           >
             Your Concern
           </div>
-          <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#44403c', maxWidth: '60ch' }}>
+          <p style={{ fontSize: '16px', lineHeight: '1.6', color: palette.secondary, maxWidth: '60ch' }}>
             {concernText}
           </p>
         </>
@@ -736,13 +772,13 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly }: { sections: P
         <>
           <div
             className="font-semibold uppercase tracking-[0.1em]"
-            style={{ fontSize: '11px', color: '#78716c', marginTop: '24px', marginBottom: '12px' }}
+            style={{ fontSize: '11px', color: palette.muted, marginTop: '24px', marginBottom: '12px' }}
           >
             Key Areas
           </div>
           <ul className="space-y-2 list-none p-0">
             {findingHeadings.map((heading, i) => (
-              <li key={i} className="flex items-start gap-2.5" style={{ fontSize: '14px', lineHeight: '1.5', color: '#292524' }}>
+              <li key={i} className="flex items-start gap-2.5" style={{ fontSize: '14px', lineHeight: '1.5', color: palette.body }}>
                 <span
                   className="flex-shrink-0 rounded-full"
                   style={{ width: '6px', height: '6px', backgroundColor: '#C85B5B', marginTop: '6px' }}
@@ -805,11 +841,11 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly }: { sections: P
 
 // ---- Section divider ----
 
-function SectionDivider() {
+function SectionDivider({ palette }: { palette: Palette }) {
   return (
     <div
       style={{
-        borderTop: '1px solid #e7e5e4',
+        borderTop: `1px solid ${palette.border}`,
         margin: '32px 0',
       }}
     />
@@ -866,7 +902,7 @@ const EXPERT_LINKS = [
   },
 ]
 
-function GoDeeper({ onOpenLens, onOpenCampaign, onOpenGadfly }: { onOpenLens?: () => void; onOpenCampaign?: () => void; onOpenGadfly?: () => void }) {
+function GoDeeper({ onOpenLens, onOpenCampaign, onOpenGadfly, palette }: { onOpenLens?: () => void; onOpenCampaign?: () => void; onOpenGadfly?: () => void; palette: Palette }) {
   // Map arm names to callbacks for arms that support in-page panels
   const armCallbacks: Record<string, (() => void) | undefined> = {
     Gadfly: onOpenGadfly,
@@ -874,10 +910,10 @@ function GoDeeper({ onOpenLens, onOpenCampaign, onOpenGadfly }: { onOpenLens?: (
   }
 
   return (
-    <div style={{ marginTop: '40px', paddingTop: '32px', borderTop: '1px solid #e7e5e4' }}>
+    <div style={{ marginTop: '40px', paddingTop: '32px', borderTop: `1px solid ${palette.border}` }}>
       <p
         className="font-semibold uppercase tracking-[0.1em]"
-        style={{ fontSize: '11px', color: '#a8a29e', marginBottom: '16px' }}
+        style={{ fontSize: '11px', color: palette.faint, marginBottom: '16px' }}
       >
         Want to go deeper?
       </p>
@@ -909,7 +945,7 @@ function GoDeeper({ onOpenLens, onOpenCampaign, onOpenGadfly }: { onOpenLens?: (
                 </span>
                 <span
                   className="leading-snug"
-                  style={{ fontSize: '11px', color: '#78716c', marginTop: '3px' }}
+                  style={{ fontSize: '11px', color: palette.muted, marginTop: '3px' }}
                 >
                   {link.label}
                 </span>
@@ -949,9 +985,10 @@ function GoDeeper({ onOpenLens, onOpenCampaign, onOpenGadfly }: { onOpenLens?: (
 
 // ---- Main component ----
 
-export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, onOpenGadfly, onScrollToQuestions }: BriefingViewProps) {
+export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, onOpenLens, onOpenCampaign, onOpenGadfly, onScrollToQuestions }: BriefingViewProps) {
   const sections = useMemo(() => parseSections(text), [text])
   const hasSections = sections.length > 0
+  const palette = darkMode ? DARK_PALETTE : LIGHT_PALETTE
 
   // Raw streaming before first section
   if (isStreaming && !hasSections) {
@@ -959,8 +996,9 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
       <article
         className="content-island"
         style={{
-          backgroundColor: '#fafaf9',
-          color: '#1c1917',
+          position: 'relative',
+          backgroundColor: palette.bg,
+          color: palette.text,
           maxWidth: '672px',
           margin: '0 auto',
           padding: '40px',
@@ -968,13 +1006,37 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
           boxShadow: '0 4px 8px rgba(28,25,23,0.04), 0 8px 16px rgba(28,25,23,0.03), 0 16px 32px rgba(28,25,23,0.02)',
         }}
       >
+        {onToggleDarkMode && (
+          <button
+            onClick={onToggleDarkMode}
+            type="button"
+            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              borderRadius: '9999px',
+              padding: '6px',
+              backgroundColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+              color: palette.muted,
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background-color 150ms ease',
+            }}
+          >
+            {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
+        )}
         <p
           className="whitespace-pre-wrap"
-          style={{ fontSize: '16px', lineHeight: '1.7', color: '#44403c' }}
+          style={{ fontSize: '16px', lineHeight: '1.7', color: palette.secondary }}
         >
           {text}
         </p>
-        <span className="mt-1 inline-block h-4 w-0.5 animate-pulse" style={{ backgroundColor: '#78716c' }} />
+        <span className="mt-1 inline-block h-4 w-0.5 animate-pulse" style={{ backgroundColor: palette.muted }} />
       </article>
     )
   }
@@ -983,8 +1045,9 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
     <article
       className="content-island"
       style={{
-        backgroundColor: '#fafaf9',
-        color: '#1c1917',
+        position: 'relative',
+        backgroundColor: palette.bg,
+        color: palette.text,
         maxWidth: '672px',
         margin: '0 auto',
         padding: 'clamp(32px, 5vw, 40px) clamp(20px, 5vw, 40px)',
@@ -992,8 +1055,33 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
         boxShadow: '0 4px 8px rgba(28,25,23,0.04), 0 8px 16px rgba(28,25,23,0.03), 0 16px 32px rgba(28,25,23,0.02)',
       }}
     >
+      {onToggleDarkMode && (
+        <button
+          onClick={onToggleDarkMode}
+          type="button"
+          aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            borderRadius: '9999px',
+            padding: '6px',
+            backgroundColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+            color: palette.muted,
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'background-color 150ms ease',
+          }}
+        >
+          {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+        </button>
+      )}
+
       {/* Executive card — always first when we have sections */}
-      {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} />}
+      {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} palette={palette} />}
 
       {sections.map((section, i) => {
         const headingLower = section.heading.toLowerCase()
@@ -1004,8 +1092,8 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
         if (headingLower.includes('your concern')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider />}
-              <SectionHeader heading="Your Concern" />
+              {showDivider && <SectionDivider palette={palette} />}
+              <SectionHeader heading="Your Concern" palette={palette} />
               <div
                 className="rounded-xl p-5"
                 style={{
@@ -1013,7 +1101,7 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
                   border: '1px solid rgba(176,136,200,0.18)',
                 }}
               >
-                <ProseSection content={section.content} />
+                <ProseSection content={section.content} palette={palette} />
               </div>
             </div>
           )
@@ -1025,16 +1113,16 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
           const hasCards = blocks.some((b) => parseDocumentFields(b).length > 0)
           return (
             <div key={i}>
-              {showDivider && <SectionDivider />}
-              <SectionHeader heading="What Governs This" />
+              {showDivider && <SectionDivider palette={palette} />}
+              <SectionHeader heading="What Governs This" palette={palette} />
               {hasCards ? (
                 <div className="space-y-4">
                   {blocks.map((block, j) => (
-                    <DocumentCard key={j} block={block} />
+                    <DocumentCard key={j} block={block} palette={palette} />
                   ))}
                 </div>
               ) : (
-                <ProseSection content={section.content} />
+                <ProseSection content={section.content} palette={palette} />
               )}
             </div>
           )
@@ -1044,10 +1132,10 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
         if (headingLower.includes('public record') || headingLower.includes('record shows')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider />}
-              <SectionHeader heading="What the Public Record Shows" />
-              <ProseSection content={section.content} />
-              <InlineGadflyAction onOpenGadfly={onOpenGadfly} />
+              {showDivider && <SectionDivider palette={palette} />}
+              <SectionHeader heading="What the Public Record Shows" palette={palette} />
+              <ProseSection content={section.content} palette={palette} />
+              <InlineGadflyAction onOpenGadfly={onOpenGadfly} palette={palette} />
             </div>
           )
         }
@@ -1056,9 +1144,9 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
         if (headingLower.includes('what you can do') || headingLower.includes('you can do')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider />}
-              <SectionHeader heading="What You Can Do" color="#C85B5B" />
-              <CivicActionsSection content={section.content} />
+              {showDivider && <SectionDivider palette={palette} />}
+              <SectionHeader heading="What You Can Do" color="#C85B5B" palette={palette} />
+              <CivicActionsSection content={section.content} palette={palette} />
             </div>
           )
         }
@@ -1067,9 +1155,9 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
         if (headingLower.includes('other places') || headingLower.includes('how other')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider />}
-              <SectionHeader heading="How Other Places Handle This" />
-              <ProseSection content={section.content} />
+              {showDivider && <SectionDivider palette={palette} />}
+              <SectionHeader heading="How Other Places Handle This" palette={palette} />
+              <ProseSection content={section.content} palette={palette} />
             </div>
           )
         }
@@ -1078,9 +1166,9 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
         if (headingLower.includes('questions worth') || headingLower.includes('worth asking')) {
           return (
             <div key={i} id="questions-section">
-              {showDivider && <SectionDivider />}
-              <SectionHeader heading="Questions Worth Asking" color="#C8A84B" />
-              <QuestionsSection content={section.content} />
+              {showDivider && <SectionDivider palette={palette} />}
+              <SectionHeader heading="Questions Worth Asking" color="#C8A84B" palette={palette} />
+              <QuestionsSection content={section.content} palette={palette} />
             </div>
           )
         }
@@ -1089,8 +1177,8 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
         if (headingLower.includes('cannot see') || headingLower.includes('limitations')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider />}
-              <LimitationsSection content={section.content} />
+              {showDivider && <SectionDivider palette={palette} />}
+              <LimitationsSection content={section.content} palette={palette} />
             </div>
           )
         }
@@ -1098,9 +1186,9 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
         // --- Fallback ---
         return (
           <div key={i}>
-            {showDivider && <SectionDivider />}
-            <SectionHeader heading={section.heading} />
-            <ProseSection content={section.content} />
+            {showDivider && <SectionDivider palette={palette} />}
+            <SectionHeader heading={section.heading} palette={palette} />
+            <ProseSection content={section.content} palette={palette} />
           </div>
         )
       })}
@@ -1108,12 +1196,12 @@ export function BriefingView({ text, isStreaming, onOpenLens, onOpenCampaign, on
       {isStreaming && (
         <span
           className="mt-2 inline-block h-4 w-0.5 animate-pulse"
-          style={{ backgroundColor: '#78716c' }}
+          style={{ backgroundColor: palette.muted }}
         />
       )}
 
       {/* Go Deeper footer — only when streaming is complete */}
-      {!isStreaming && hasSections && <GoDeeper onOpenLens={onOpenLens} onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} />}
+      {!isStreaming && hasSections && <GoDeeper onOpenLens={onOpenLens} onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} palette={palette} />}
     </article>
   )
 }
