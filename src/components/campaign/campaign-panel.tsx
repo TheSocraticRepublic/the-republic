@@ -8,10 +8,33 @@ import { ReasoningCard } from './reasoning-card'
 import { OutcomeTracker } from './outcome-tracker'
 import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 
+const LIGHT_MARGIN = {
+  bg: '#f5f4f3',
+  cardBg: '#ffffff',
+  cardBgHover: '#eeece8',
+  border: '#e0ddd9',
+  text: '#1c1917',
+  secondary: '#44403c',
+  muted: '#78716c',
+  faint: '#a8a29e',
+}
+
+const DARK_MARGIN = {
+  bg: '#18181b',
+  cardBg: '#1e1e20',
+  cardBgHover: '#27272a',
+  border: 'rgba(255,255,255,0.1)',
+  text: '#f4f4f5',
+  secondary: '#d4d4d8',
+  muted: '#a1a1aa',
+  faint: '#71717a',
+}
+
 interface CampaignPanelProps {
   investigationId: string
   concern: string
   jurisdictionName?: string | null
+  darkMode?: boolean
 }
 
 interface SavedMaterial {
@@ -32,7 +55,8 @@ interface FiledAction {
   title: string
 }
 
-export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _j }: CampaignPanelProps) {
+export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _j, darkMode = false }: CampaignPanelProps) {
+  const palette = darkMode ? DARK_MARGIN : LIGHT_MARGIN
   const [materials, setMaterials] = useState<SavedMaterial[]>([])
   const [activeMaterialType, setActiveMaterialType] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -118,8 +142,8 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
     <div
       className="rounded-xl overflow-hidden max-w-3xl mx-auto"
       style={{
-        backgroundColor: '#f5f4f3',
-        border: '1px solid #e0ddd9',
+        backgroundColor: palette.bg,
+        border: `1px solid ${palette.border}`,
         borderTop: '2px solid #C85B5B',
         padding: 'clamp(24px, 4vw, 32px)',
       }}
@@ -151,8 +175,8 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                 key={type}
                 className="space-y-3"
                 style={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e0ddd9',
+                  backgroundColor: palette.cardBg,
+                  border: `1px solid ${palette.border}`,
                   borderTop: '2px solid #C85B5B',
                   borderRadius: '12px',
                   padding: '20px',
@@ -160,10 +184,10 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold" style={{ color: '#1c1917' }}>
+                    <p className="text-sm font-semibold" style={{ color: palette.text }}>
                       {MATERIAL_TYPE_LABELS[type]}
                     </p>
-                    <p className="text-xs leading-relaxed" style={{ color: '#78716c' }}>
+                    <p className="text-xs leading-relaxed" style={{ color: palette.muted }}>
                       {MATERIAL_TYPE_DESCRIPTIONS[type]}
                     </p>
                   </div>
@@ -212,7 +236,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
         <div className="space-y-3">
           <p
             className="text-[10px] font-semibold uppercase tracking-widest"
-            style={{ color: '#a8a29e' }}
+            style={{ color: palette.faint }}
           >
             Available
           </p>
@@ -238,7 +262,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
       {/* Cross-arm: File as FIPPA request when fact_sheet or talking_points exist */}
       {materials.some((m) => m.materialType === 'fact_sheet' || m.materialType === 'talking_points') && (
         <div className="space-y-3">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#a8a29e]">
+          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: palette.faint }}>
             Civic Actions
           </p>
           <CrossArmActions
@@ -259,7 +283,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                 <div
                   key={action.id}
                   className="flex items-center gap-2 rounded-lg px-3 py-1.5"
-                  style={{ backgroundColor: '#ffffff' }}
+                  style={{ backgroundColor: palette.cardBg }}
                 >
                   <span
                     className="inline-block h-1.5 w-1.5 rounded-full"
@@ -270,7 +294,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                           : '#C8A84B',
                     }}
                   />
-                  <span className="text-xs text-[#44403c] truncate flex-1">
+                  <span className="text-xs truncate flex-1" style={{ color: palette.secondary }}>
                     {action.title}
                   </span>
                   <span
@@ -294,15 +318,15 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
       {/* Loading skeleton */}
       {loading && (
         <div className="space-y-2">
-          <div className="h-4 w-1/3 rounded animate-pulse bg-[#eeece8]" />
-          <div className="h-4 w-2/3 rounded animate-pulse bg-[#eeece8]" />
+          <div className="h-4 w-1/3 rounded animate-pulse" style={{ backgroundColor: palette.cardBgHover }} />
+          <div className="h-4 w-2/3 rounded animate-pulse" style={{ backgroundColor: palette.cardBgHover }} />
         </div>
       )}
 
       {/* Generated materials */}
       {materials.length > 0 && (
         <section className="space-y-6">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#a8a29e]">
+          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: palette.faint }}>
             Generated Materials
           </p>
           {materials.map((material) => (
@@ -313,6 +337,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
               content={material.content}
               reasoning={material.reasoning}
               title={material.title}
+              darkMode={darkMode}
             />
           ))}
         </section>

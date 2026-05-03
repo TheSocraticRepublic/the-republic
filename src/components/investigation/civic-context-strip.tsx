@@ -48,8 +48,8 @@ interface ReviewSummaryData {
 }
 
 const ACCENTS: Record<Section, string> = {
-  votes: '#D4764E',
-  discussion: '#89B4C8',
+  votes: '#89B4C8',
+  discussion: '#C8A84B',
   reviews: '#5BC88A',
   archive: '#78716c',
 }

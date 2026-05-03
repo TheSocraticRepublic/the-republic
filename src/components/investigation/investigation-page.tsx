@@ -85,6 +85,7 @@ export function InvestigationPage({
             lensContextText={lensContextText}
             gadflySeededQuestion={gadflySeededQuestion}
             onOpenGadfly={handleOpenGadfly}
+            darkMode={islandDarkMode}
           />
         </section>
       )}
@@ -96,6 +97,7 @@ export function InvestigationPage({
             investigationId={id}
             concern={concern}
             jurisdictionName={jurisdictionName}
+            darkMode={islandDarkMode}
           />
         </section>
       )}

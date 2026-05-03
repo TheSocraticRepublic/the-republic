@@ -25,6 +25,28 @@ interface Player {
   context: string | null
 }
 
+const LIGHT_MARGIN = {
+  bg: '#f5f4f3',
+  cardBg: '#ffffff',
+  cardBgHover: '#eeece8',
+  border: '#e0ddd9',
+  text: '#1c1917',
+  secondary: '#44403c',
+  muted: '#78716c',
+  faint: '#a8a29e',
+}
+
+const DARK_MARGIN = {
+  bg: '#18181b',
+  cardBg: '#1e1e20',
+  cardBgHover: '#27272a',
+  border: 'rgba(255,255,255,0.1)',
+  text: '#f4f4f5',
+  secondary: '#d4d4d8',
+  muted: '#a1a1aa',
+  faint: '#71717a',
+}
+
 interface LensPanelProps {
   investigationId: string
   concern: string
@@ -33,6 +55,7 @@ interface LensPanelProps {
   lensContextText?: string | null
   gadflySeededQuestion?: string | null
   onOpenGadfly: () => void
+  darkMode?: boolean
 }
 
 export function LensPanel({
@@ -43,7 +66,9 @@ export function LensPanel({
   lensContextText,
   gadflySeededQuestion,
   onOpenGadfly,
+  darkMode = false,
 }: LensPanelProps) {
+  const palette = darkMode ? DARK_MARGIN : LIGHT_MARGIN
   const [players, setPlayers] = useState<Player[]>([])
   const [historicalContent, setHistoricalContent] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
@@ -205,8 +230,8 @@ export function LensPanel({
     <div
       className="rounded-xl overflow-hidden max-w-3xl mx-auto"
       style={{
-        backgroundColor: '#f5f4f3',
-        border: '1px solid #e0ddd9',
+        backgroundColor: palette.bg,
+        border: `1px solid ${palette.border}`,
         borderTop: '2px solid #C8A84B',
         padding: 'clamp(24px, 4vw, 32px)',
       }}
@@ -230,7 +255,7 @@ export function LensPanel({
       <section>
         <p
           className="mb-4 text-[10px] font-semibold uppercase tracking-widest"
-          style={{ color: '#a8a29e' }}
+          style={{ color: palette.faint }}
         >
           Key Players
         </p>
@@ -238,16 +263,16 @@ export function LensPanel({
           <div
             className="rounded-xl px-5 py-4"
             style={{
-              border: '1px solid #e0ddd9',
-              backgroundColor: '#ffffff',
+              border: `1px solid ${palette.border}`,
+              backgroundColor: palette.cardBg,
             }}
           >
             <div className="flex items-center gap-2">
               <span
                 className="h-1.5 w-1.5 rounded-full animate-pulse"
-                style={{ backgroundColor: '#a3a3a3' }}
+                style={{ backgroundColor: palette.faint }}
               />
-              <p className="text-xs" style={{ color: '#a8a29e' }}>Identifying players from the briefing</p>
+              <p className="text-xs" style={{ color: palette.faint }}>Identifying players from the briefing</p>
             </div>
           </div>
         ) : (
@@ -280,6 +305,7 @@ export function LensPanel({
                   onToggle={() => handleTogglePlayer(player.playerId)}
                   appearances={playerAppearances[player.playerId]}
                   relatedPlayers={relatedPlayerData}
+                  darkMode={darkMode}
                 />
               )
             })}
@@ -292,9 +318,9 @@ export function LensPanel({
         {deepenError ? (
           <div
             className="rounded-2xl p-8"
-            style={{ backgroundColor: '#f8f6f3' }}
+            style={{ backgroundColor: darkMode ? palette.cardBg : '#f8f6f3' }}
           >
-            <p className="text-sm" style={{ color: '#78716c' }}>
+            <p className="text-sm" style={{ color: palette.muted }}>
               Could not load historical context. Refresh to try again.
             </p>
           </div>
@@ -309,6 +335,7 @@ export function LensPanel({
           investigationId={investigationId}
           events={timelineEvents}
           onEventAdded={handleEventAdded}
+          darkMode={darkMode}
         />
       </section>
 
@@ -319,6 +346,7 @@ export function LensPanel({
           concern={concern}
           seededQuestion={resolvedSeededQuestion}
           onOpenGadfly={onOpenGadfly}
+          darkMode={darkMode}
         />
       </section>
       </div>
