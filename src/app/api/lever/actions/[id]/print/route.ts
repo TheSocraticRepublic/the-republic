@@ -3,6 +3,8 @@ import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { esc, errorPage, PRINT_CSP } from '@/lib/campaign/print-utils'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -23,7 +25,7 @@ const ACTION_TYPE_DISPLAY: Record<string, string> = {
  * GET /api/lever/actions/[id]/print
  * Returns a print-ready HTML page for a lever action.
  */
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export const GET = safeRoute(async (request: NextRequest, { params }: RouteContext) => {
   const printHeaders = {
     'Content-Type': 'text/html; charset=utf-8',
     'Content-Security-Policy': PRINT_CSP,
@@ -34,6 +36,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     return new Response(errorPage('Unauthorized'), {
       status: 401,
       headers: printHeaders,
+    })
+  }
+
+  const { success } = await checkRateLimit(`lever-print:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
     })
   }
 
@@ -83,7 +93,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     status: 200,
     headers: printHeaders,
   })
-}
+})
 
 // ---------------------------------------------------------------------------
 // Action type renderers

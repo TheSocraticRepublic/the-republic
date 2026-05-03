@@ -4,6 +4,7 @@ import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { renderLeverPdf, hasLeverPdfTemplate } from '@/lib/pdf/render'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const ACTION_TYPE_LABELS: Record<string, string> = {
   fippa_request: 'fippa-request',
@@ -36,6 +37,14 @@ export async function POST(request: NextRequest) {
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`lever-export:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }

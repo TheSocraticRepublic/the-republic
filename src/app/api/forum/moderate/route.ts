@@ -9,6 +9,7 @@ import {
 import { eq, and } from 'drizzle-orm'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 import { stripHtmlTags } from '@/lib/profile/validation'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const VALID_ACTIONS = [
   'hide_post',
@@ -24,6 +25,14 @@ export async function POST(request: NextRequest) {
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`forum-moderate:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }

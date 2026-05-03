@@ -10,11 +10,12 @@ import {
   type CredentialType,
   type CredentialSummary,
 } from '@/lib/credentials'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function GET(
+export const GET = safeRoute(async (
   request: NextRequest,
-  { params }: { params: Promise<{ displayName: string }> }
-) {
+  { params }
+) => {
   // Rate limit by IP — public endpoint
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
   const { success } = await checkRateLimit(`users-credentials:${ip}`)
@@ -88,4 +89,4 @@ export async function GET(
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})

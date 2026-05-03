@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
+import { checkTightRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { investigations, campaignMaterials, campaignMaterialTypeEnum, investigationPlayers, players, gadflySessions, gadflyTurns } from '@/lib/db/schema'
 import { buildCampaignPrompt } from '@/lib/ai/prompts/campaign-system'
@@ -29,6 +30,14 @@ export async function POST(
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkTightRateLimit(`investigate-media:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
     })
   }
 

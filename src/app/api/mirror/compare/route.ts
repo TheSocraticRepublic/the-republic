@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { checkTightRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { documents, analyses, jurisdictions } from '@/lib/db/schema'
 import { MIRROR_SYSTEM_PROMPT, MIRROR_PROMPT_VERSION } from '@/lib/ai/prompts/mirror-system'
@@ -14,6 +15,14 @@ export async function POST(request: NextRequest) {
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkTightRateLimit(`mirror-compare:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }

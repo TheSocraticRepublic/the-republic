@@ -1,16 +1,26 @@
 import { NextRequest } from 'next/server'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { federalMps, federalMpBallots, federalVotes } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function GET(
+export const GET = safeRoute(async (
   request: NextRequest,
-  { params }: { params: Promise<{ mpId: string }> }
-) {
+  { params }
+) => {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`parliament-mp-votes:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }
@@ -62,4 +72,4 @@ export async function GET(
     JSON.stringify({ votes, hasMore }),
     { headers: { 'Content-Type': 'application/json' } }
   )
-}
+})

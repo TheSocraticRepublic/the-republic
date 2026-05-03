@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { checkTightRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { investigations, players, investigationPlayers, playerTypeEnum, investigationPlayerRoleEnum } from '@/lib/db/schema'
 import { LENS_CONTEXT_SYSTEM_PROMPT } from '@/lib/ai/prompts/lens-context-system'
@@ -17,6 +18,14 @@ export async function POST(
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkTightRateLimit(`investigate-deepen:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
     })
   }
 

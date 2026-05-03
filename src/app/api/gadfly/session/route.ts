@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
 import { gadflySessions, documents, analyses } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 /**
  * POST /api/gadfly/session
@@ -11,6 +12,14 @@ export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { success } = await checkRateLimit(`gadfly-session:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   let body: { documentId?: string; title?: string; mode?: 'socratic' | 'direct'; investigationId?: string }
@@ -71,6 +80,14 @@ export async function GET(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { success } = await checkRateLimit(`gadfly-session:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const db = getDb()

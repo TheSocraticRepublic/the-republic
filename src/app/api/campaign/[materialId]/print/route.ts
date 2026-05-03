@@ -8,6 +8,7 @@ import {
 } from '@/lib/campaign/schemas'
 import type { CampaignMaterial } from '@/lib/campaign/schemas'
 import { esc, safeHref, errorPage, PRINT_CSP } from '@/lib/campaign/print-utils'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 interface RouteContext {
   params: Promise<{ materialId: string }>
@@ -28,6 +29,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     return new Response(errorPage('Unauthorized'), {
       status: 401,
       headers: printHeaders,
+    })
+  }
+
+  const { success } = await checkRateLimit(`campaign-print:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
     })
   }
 

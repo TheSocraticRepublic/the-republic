@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { POST as investigatePost } from '@/app/api/investigate/route'
+import { safeRoute } from '@/lib/api/safe-route'
 
 /**
  * POST /api/briefing
@@ -9,6 +10,6 @@ import { POST as investigatePost } from '@/app/api/investigate/route'
  * creates an investigation record, streams the briefing, and persists the result.
  * This route is kept for backward compatibility.
  */
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async (request: NextRequest) => {
   return investigatePost(request)
-}
+})

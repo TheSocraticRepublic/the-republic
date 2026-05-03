@@ -3,16 +3,26 @@ import { getDb } from '@/lib/db'
 import { investigations, campaignMaterials } from '@/lib/db/schema'
 import { MATERIAL_TYPE_LABELS, MATERIAL_TYPE_DESCRIPTIONS } from '@/lib/campaign/schemas'
 import { eq, and, sql } from 'drizzle-orm'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
 // POST: Initialize campaign — update campaignOpenedAt (idempotent), return available material types
-export async function POST(
+export const POST = safeRoute(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`investigate-action:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
     })
   }
 
@@ -53,17 +63,25 @@ export async function POST(
     }),
     { headers: { 'Content-Type': 'application/json' } }
   )
-}
+})
 
 // GET: Return existing campaign materials for this investigation
-export async function GET(
+export const GET = safeRoute(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`investigate-action:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
     })
   }
 
@@ -109,4 +127,4 @@ export async function GET(
     }),
     { headers: { 'Content-Type': 'application/json' } }
   )
-}
+})

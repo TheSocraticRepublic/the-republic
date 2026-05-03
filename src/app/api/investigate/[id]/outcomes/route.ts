@@ -7,6 +7,7 @@ import {
 } from '@/lib/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
 import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const VALID_OUTCOME_TYPES = [
   'fippa_response_received',
@@ -28,6 +29,14 @@ export async function POST(
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`investigate-outcomes:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }
@@ -188,6 +197,14 @@ export async function GET(
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`investigate-outcomes:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }

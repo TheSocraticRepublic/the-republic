@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm'
 import { campaignMaterialSchema } from '@/lib/campaign/schemas'
 import { renderCampaignPdf, hasCampaignPdfTemplate } from '@/lib/pdf/render'
 import { Readable } from 'stream'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 /**
  * POST /api/campaign/export
@@ -20,6 +21,14 @@ export async function POST(request: NextRequest) {
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`campaign-export:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }
