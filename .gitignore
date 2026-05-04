@@ -40,3 +40,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dev screenshots
+/*.png
+
+# playwright MCP logs
+.playwright-mcp/
+
+# marvin worktree metadata
+.marvin-worktree.json
