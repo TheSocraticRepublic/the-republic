@@ -25,6 +25,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/u/') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
+    pathname.startsWith('/landing') ||
     // ActivityPub / WebFinger — public by protocol.
     // Enumerated explicitly so that any new /ap/* routes require a conscious
     // decision to exempt from auth, rather than being public by default.
@@ -42,8 +43,28 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return applySecurityHeaders(NextResponse.next())
   }
 
-  // DEV: bypass auth, inject a test user
-  if (process.env.NODE_ENV === 'development') {
+  // CSRF: reject cross-origin state-changing requests (skip in dev)
+  if (
+    process.env.NODE_ENV !== 'development' &&
+    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)
+  ) {
+    const origin = request.headers.get('origin')
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+    if (origin && appUrl) {
+      const allowed = new URL(appUrl).origin
+      if (origin !== allowed) {
+        return applySecurityHeaders(
+          new NextResponse(
+            JSON.stringify({ error: 'Invalid origin' }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } }
+          )
+        )
+      }
+    }
+  }
+
+  // DEV: bypass auth, inject a test user (requires explicit opt-in)
+  if (process.env.NODE_ENV === 'development' && process.env.DEV_AUTH_BYPASS === 'true') {
     const headers = new Headers(request.headers)
     headers.set('x-user-id', '00000000-0000-0000-0000-000000000001')
     headers.set('x-user-email', 'dev@republic.local')

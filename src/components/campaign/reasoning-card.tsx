@@ -7,12 +7,49 @@ import { hasCampaignPdfTemplate } from '@/lib/pdf/types'
 import { InfographicPreview } from '@/components/campaign/infographic-preview'
 import type { CampaignMaterial } from '@/lib/campaign/schemas'
 
+const LIGHT_RC = {
+  border: '#e0ddd9',
+  headerBg: 'rgba(200, 91, 91, 0.05)',
+  headerBorder: 'rgba(200, 91, 91, 0.12)',
+  titleColor: '#292524',
+  specBg: '#faf9f7',
+  specBorder: 'rgba(0,0,0,0.06)',
+  reasoningBg: 'rgba(200, 91, 91, 0.06)',
+  textColor: '#44403c',
+  mutedColor: '#78716c',
+  faintColor: '#a8a29e',
+  buttonBg: 'rgba(0,0,0,0.05)',
+  buttonBorder: 'rgba(0,0,0,0.08)',
+  buttonColor: '#78716c',
+  popoverBg: '#fafaf9',
+  popoverBorder: '#e7e5e4',
+}
+
+const DARK_RC = {
+  border: 'rgba(255,255,255,0.1)',
+  headerBg: 'rgba(200, 91, 91, 0.08)',
+  headerBorder: 'rgba(200, 91, 91, 0.18)',
+  titleColor: '#f4f4f5',
+  specBg: '#18181b',
+  specBorder: 'rgba(255,255,255,0.06)',
+  reasoningBg: 'rgba(200, 91, 91, 0.10)',
+  textColor: '#d4d4d8',
+  mutedColor: '#a1a1aa',
+  faintColor: '#71717a',
+  buttonBg: 'rgba(255,255,255,0.06)',
+  buttonBorder: 'rgba(255,255,255,0.1)',
+  buttonColor: '#a1a1aa',
+  popoverBg: '#1e1e20',
+  popoverBorder: 'rgba(255,255,255,0.1)',
+}
+
 interface ReasoningCardProps {
   materialId?: string
   materialType: string
   content: string   // The JSON spec as a string
   reasoning: string
   title: string
+  darkMode?: boolean
 }
 
 // Parse and render an infographic spec — with Data / Preview tab toggle
@@ -279,7 +316,8 @@ function SpecView({ materialType, spec }: { materialType: string; spec: Record<s
   }
 }
 
-export function ReasoningCard({ materialId, materialType, content, reasoning, title }: ReasoningCardProps) {
+export function ReasoningCard({ materialId, materialType, content, reasoning, title, darkMode = false }: ReasoningCardProps) {
+  const rc = darkMode ? DARK_RC : LIGHT_RC
   const [copied, setCopied] = useState<string | false>(false)
   const [socialCopied, setSocialCopied] = useState<string | null>(null)
   const [showClaudeHint, setShowClaudeHint] = useState(false)
@@ -437,15 +475,15 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
 
   return (
     <div
-      className="rounded-2xl border overflow-hidden"
-      style={{ borderColor: 'rgba(200, 91, 91, 0.15)' }}
+      className="rounded-2xl overflow-hidden"
+      style={{ border: `1px solid ${rc.border}` }}
     >
       {/* Header */}
       <div
         className="px-6 py-4 flex items-center justify-between border-b"
         style={{
-          backgroundColor: 'rgba(200, 91, 91, 0.05)',
-          borderColor: 'rgba(200, 91, 91, 0.12)',
+          backgroundColor: rc.headerBg,
+          borderColor: rc.headerBorder,
         }}
       >
         <div>
@@ -455,7 +493,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
           >
             {label}
           </p>
-          <p className="mt-0.5 text-sm font-medium" style={{ color: '#292524' }}>{title}</p>
+          <p className="mt-0.5 text-sm font-medium" style={{ color: rc.titleColor }}>{title}</p>
         </div>
 
         {/* Export actions */}
@@ -464,9 +502,9 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
             onClick={handleCopy}
             className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
             style={{
-              backgroundColor: 'rgba(0,0,0,0.05)',
-              color: '#78716c',
-              border: '1px solid rgba(0,0,0,0.08)',
+              backgroundColor: rc.buttonBg,
+              color: rc.buttonColor,
+              border: `1px solid ${rc.buttonBorder}`,
             }}
           >
             {copied || 'Copy JSON'}
@@ -529,9 +567,9 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
                 onClick={() => handleCopySocial('twitter')}
                 className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                 style={{
-                  backgroundColor: 'rgba(0,0,0,0.05)',
-                  color: '#78716c',
-                  border: '1px solid rgba(0,0,0,0.08)',
+                  backgroundColor: rc.buttonBg,
+                  color: rc.buttonColor,
+                  border: `1px solid ${rc.buttonBorder}`,
                 }}
               >
                 {socialCopied === 'twitter' ? 'Copied' : socialCopied === 'failed' ? 'Failed' : 'Copy for X'}
@@ -540,9 +578,9 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
                 onClick={() => handleCopySocial('instagram')}
                 className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                 style={{
-                  backgroundColor: 'rgba(0,0,0,0.05)',
-                  color: '#78716c',
-                  border: '1px solid rgba(0,0,0,0.08)',
+                  backgroundColor: rc.buttonBg,
+                  color: rc.buttonColor,
+                  border: `1px solid ${rc.buttonBorder}`,
                 }}
               >
                 {socialCopied === 'instagram' ? 'Copied' : socialCopied === 'failed' ? 'Failed' : 'Copy for Instagram'}
@@ -567,14 +605,14 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
               <div
                 className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl p-4 shadow-lg"
                 style={{
-                  backgroundColor: '#fafaf9',
-                  border: '1px solid #e7e5e4',
+                  backgroundColor: rc.popoverBg,
+                  border: `1px solid ${rc.popoverBorder}`,
                 }}
               >
                 <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: '#89b4c8' }}>
                   Render in Claude Artifacts
                 </p>
-                <ol className="space-y-1.5 text-xs leading-relaxed" style={{ color: '#44403c' }}>
+                <ol className="space-y-1.5 text-xs leading-relaxed" style={{ color: rc.textColor }}>
                   <li>1. Click <strong>Copy JSON</strong> above to copy your spec</li>
                   <li>2. Open <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#89b4c8' }}>claude.ai</a> in a new tab</li>
                   <li>3. Use the prompt template from <code className="rounded px-1 py-0.5 text-[10px]" style={{ backgroundColor: 'rgba(0,0,0,0.06)', color: '#292524' }}>docs/claude-artifacts-template.md</code></li>
@@ -583,7 +621,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
                 <button
                   onClick={() => setShowClaudeHint(false)}
                   className="mt-3 text-[10px]"
-                  style={{ color: '#a8a29e' }}
+                  style={{ color: rc.faintColor }}
                 >
                   Dismiss
                 </button>
@@ -599,13 +637,13 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
         <div
           className="h-full px-6 py-6 border-b sm:border-b-0 sm:border-r min-h-[180px]"
           style={{
-            backgroundColor: '#faf9f7',
-            borderColor: 'rgba(0,0,0,0.06)',
+            backgroundColor: rc.specBg,
+            borderColor: rc.specBorder,
           }}
         >
           <p
             className="mb-4 text-[10px] font-semibold uppercase tracking-widest"
-            style={{ color: '#a8a29e' }}
+            style={{ color: rc.faintColor }}
           >
             Generated Spec
           </p>
@@ -615,7 +653,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
         {/* Right: Reasoning */}
         <div
           className="h-full px-6 py-6 min-h-[180px]"
-          style={{ backgroundColor: 'rgba(200, 91, 91, 0.06)' }}
+          style={{ backgroundColor: rc.reasoningBg }}
         >
           <p
             className="mb-4 text-[10px] font-semibold uppercase tracking-widest"
@@ -625,7 +663,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
           </p>
           <p
             className="text-sm leading-relaxed whitespace-pre-wrap"
-            style={{ color: '#44403c' }}
+            style={{ color: rc.textColor }}
           >
             {reasoning}
           </p>

@@ -1,12 +1,9 @@
 import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
 import { getDb } from '@/lib/db'
 import { investigations, archiveRecords } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { InvestigationPage } from '@/components/investigation/investigation-page'
-import { PermanenceBadge } from '@/components/archive/permanence-badge'
-import { PreserveButton } from '@/components/archive/preserve-button'
 
 export const metadata = {
   title: 'Investigation — The Republic',
@@ -73,51 +70,17 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
   }
 
   return (
-    <>
-      <InvestigationPage
-        id={investigation.id}
-        concern={investigation.concern}
-        jurisdictionName={investigation.jurisdictionName ?? null}
-        briefingText={investigation.briefingText}
-        initialLensOpen={!!investigation.lensOpenedAt}
-        lensContextText={investigation.lensContextText ?? null}
-        gadflySeededQuestion={investigation.gadflySeededQuestion ?? null}
-        initialCampaignOpen={!!investigation.campaignOpenedAt}
-        isAuthor={isAuthor}
-      />
-
-      {/* Archive status section */}
-      <div className="mx-auto max-w-3xl px-6 pb-10">
-        <div className="rounded-xl border border-border bg-surface-1 px-5 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-                Archive
-              </p>
-              {archiveRow ? (
-                <div className="mt-1.5 flex items-center gap-2">
-                  <PermanenceBadge status={archiveRow.archiveStatus} />
-                  <Link
-                    href={`/archive/${investigation.id}`}
-                    className="text-xs text-text-muted hover:text-text-secondary transition-colors underline underline-offset-2"
-                  >
-                    View archived record
-                  </Link>
-                </div>
-              ) : (
-                <p className="mt-1 text-xs text-text-faint">
-                  This investigation has not been preserved.
-                </p>
-              )}
-            </div>
-
-            {/* Preserve to Archive — only shown to investigation author when not yet archived */}
-            {isAuthor && !archiveRow && (
-              <PreserveButton investigationId={investigation.id} />
-            )}
-          </div>
-        </div>
-      </div>
-    </>
+    <InvestigationPage
+      id={investigation.id}
+      concern={investigation.concern}
+      jurisdictionName={investigation.jurisdictionName ?? null}
+      briefingText={investigation.briefingText}
+      initialLensOpen={!!investigation.lensOpenedAt}
+      lensContextText={investigation.lensContextText ?? null}
+      gadflySeededQuestion={investigation.gadflySeededQuestion ?? null}
+      initialCampaignOpen={!!investigation.campaignOpenedAt}
+      isAuthor={isAuthor}
+      archiveStatus={archiveRow?.archiveStatus ?? null}
+    />
   )
 }

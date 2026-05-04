@@ -10,8 +10,9 @@ import {
   type CredentialSummary,
 } from '@/lib/credentials'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function GET(request: NextRequest) {
+export const GET = safeRoute(async (request: NextRequest) => {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -72,4 +73,4 @@ export async function GET(request: NextRequest) {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})

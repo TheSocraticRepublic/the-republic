@@ -4,11 +4,12 @@ import { userProfiles, credentialEvents } from '@/lib/db/schema'
 import { eq, sum, sql } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { computeEffectiveWeight, computeDecayMultiplier } from '@/lib/credentials'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function GET(
+export const GET = safeRoute(async (
   request: NextRequest,
-  { params }: { params: Promise<{ displayName: string }> }
-) {
+  { params }
+) => {
   // Rate limit by IP — unauthenticated public endpoint
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
   const { success } = await checkRateLimit(`users-profile:${ip}`)
@@ -75,4 +76,4 @@ export async function GET(
       headers: { 'Content-Type': 'application/json' },
     }
   )
-}
+})

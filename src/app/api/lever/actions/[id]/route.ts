@@ -7,6 +7,7 @@ import {
 } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -20,6 +21,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { success } = await checkRateLimit(`lever-action:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const { id } = await params
@@ -50,6 +59,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { success } = await checkRateLimit(`lever-action:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const { id } = await params

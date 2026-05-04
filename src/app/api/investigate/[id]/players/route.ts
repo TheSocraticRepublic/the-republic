@@ -1,16 +1,26 @@
 import { NextRequest } from 'next/server'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { investigations, investigationPlayers, players } from '@/lib/db/schema'
 import { eq, and, ne, isNotNull, or, sql } from 'drizzle-orm'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function GET(
+export const GET = safeRoute(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`investigate-players:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
     })
   }
 
@@ -107,4 +117,4 @@ export async function GET(
     JSON.stringify({ players: results, appearances, relationships }),
     { headers: { 'Content-Type': 'application/json' } }
   )
-}
+})

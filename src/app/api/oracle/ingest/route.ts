@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkTightRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { documents, documentChunks } from '@/lib/db/schema'
 import { parsePDF } from '@/lib/documents/parser'
@@ -20,6 +21,14 @@ export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { success } = await checkTightRateLimit(`oracle-ingest:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   let formData: FormData

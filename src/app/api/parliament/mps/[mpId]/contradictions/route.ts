@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { checkTightRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import {
   federalMps,
@@ -33,6 +34,14 @@ export async function POST(
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkTightRateLimit(`mp-contradictions:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }

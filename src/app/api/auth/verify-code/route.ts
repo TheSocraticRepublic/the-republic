@@ -5,10 +5,21 @@ import { users } from '@/lib/db/schema'
 import { signJWT } from '@/lib/auth/jwt'
 import { eq } from 'drizzle-orm'
 import { AUTH_COOKIE } from '@/lib/auth/middleware'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 // 7 days in seconds
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async (request: NextRequest) => {
+  const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
+  const { success } = await checkRateLimit(`verify-code:${ip}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   const body = await request.json().catch(() => null)
   const email = body?.email?.toString().trim().toLowerCase()
   const code = body?.code?.toString().trim()
@@ -59,4 +70,4 @@ export async function POST(request: NextRequest) {
   })
 
   return response
-}
+})

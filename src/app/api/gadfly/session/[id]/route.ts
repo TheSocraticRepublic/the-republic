@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { gadflySessions, gadflyTurns, insightMarkers } from '@/lib/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
-
-interface RouteContext {
-  params: Promise<{ id: string }>
-}
+import { safeRoute } from '@/lib/api/safe-route'
 
 /**
  * GET /api/gadfly/session/[id]
  * Fetch session detail with all turns and insight markers.
  */
-export async function GET(request: NextRequest, context: RouteContext) {
-  const { id } = await context.params
+export const GET = safeRoute(async (request: NextRequest, { params }) => {
+  const { id } = await params
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { success } = await checkRateLimit(`gadfly-session-detail:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const db = getDb()
@@ -52,4 +58,4 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 
   return NextResponse.json({ session, turns, insightsByTurn })
-}
+})

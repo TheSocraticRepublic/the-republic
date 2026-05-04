@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { postalCodeCache, federalMps } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
@@ -16,6 +17,14 @@ export async function GET(request: NextRequest) {
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`parliament-lookup:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }

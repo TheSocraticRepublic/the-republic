@@ -1,27 +1,11 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
-import Link from 'next/link'
+import { useState, useEffect, useCallback } from 'react'
 import { BriefingView } from '@/components/briefing/briefing-view'
-import { EscalationCard } from './escalation-card'
 import { LensPanel } from '@/components/lens/lens-panel'
 import { GadflySheet } from '@/components/lens/gadfly-sheet'
 import { CampaignPanel } from '@/components/campaign/campaign-panel'
-import { ThreadCard } from '@/components/forum/thread-card'
-import { ReviewSection } from '@/components/review/review-section'
-import { InvestigationVotePanel } from '@/components/votes/investigation-vote-panel'
-
-interface ThreadSummary {
-  id: string
-  title: string
-  authorDisplayName: string
-  postCount: number
-  lastPostAt: string | null
-  jurisdictionName?: string | null
-  concernCategory?: string | null
-  pinned: boolean
-  status: 'open' | 'locked' | 'archived'
-}
+import { CivicContextStrip } from '@/components/investigation/civic-context-strip'
 
 interface InvestigationPageProps {
   id: string
@@ -33,6 +17,7 @@ interface InvestigationPageProps {
   gadflySeededQuestion?: string | null
   initialCampaignOpen?: boolean  // true when campaignOpenedAt is set (returning user)
   isAuthor: boolean
+  archiveStatus: string | null
 }
 
 export function InvestigationPage({
@@ -45,28 +30,27 @@ export function InvestigationPage({
   gadflySeededQuestion,
   initialCampaignOpen = false,
   isAuthor,
+  archiveStatus,
 }: InvestigationPageProps) {
   const [lensOpen, setLensOpen] = useState(initialLensOpen)
   const [campaignOpen, setCampaignOpen] = useState(initialCampaignOpen)
-  const [discussionOpen, setDiscussionOpen] = useState(false)
-  const [discussionThreads, setDiscussionThreads] = useState<ThreadSummary[]>([])
-  const [discussionLoading, setDiscussionLoading] = useState(false)
+  const [civicExpanded, setCivicExpanded] = useState<'votes' | 'discussion' | 'reviews' | 'archive' | null>(null)
   const [gadflyOpen, setGadflyOpen] = useState(false)
   const [gadflySessionId, setGadflySessionId] = useState<string | null>(null)
-
-  const handleGoDeeper = useCallback(() => setLensOpen(true), [])
-  const handleTakeAction = useCallback(() => setCampaignOpen(true), [])
-  const handleDiscuss = useCallback(() => setDiscussionOpen(true), [])
+  const [islandDarkMode, setIslandDarkMode] = useState(false)
 
   useEffect(() => {
-    if (!discussionOpen) return
-    setDiscussionLoading(true)
-    fetch(`/api/investigate/${id}/threads`)
-      .then((res) => (res.ok ? res.json() : { threads: [] }))
-      .then((data) => setDiscussionThreads(data.threads ?? []))
-      .catch(() => setDiscussionThreads([]))
-      .finally(() => setDiscussionLoading(false))
-  }, [discussionOpen, id])
+    const saved = localStorage.getItem('republic-island-dark')
+    if (saved === 'true') setIslandDarkMode(true)
+  }, [])
+
+  const handleToggleDarkMode = useCallback(() => {
+    setIslandDarkMode(prev => {
+      const next = !prev
+      localStorage.setItem('republic-island-dark', String(next))
+      return next
+    })
+  }, [])
 
   function handleOpenGadfly() {
     setGadflyOpen(true)
@@ -74,54 +58,23 @@ export function InvestigationPage({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12 space-y-10">
-      {/* 1. Concern context card */}
-      <div
-        className="rounded-xl border px-5 py-4"
-        style={{
-          backgroundColor: 'var(--surface-1)',
-          borderColor: 'var(--border)',
-        }}
-      >
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-text-faint">
-          Your concern
-          {jurisdictionName && (
-            <span className="ml-2 normal-case tracking-normal font-normal text-text-faint">
-              — {jurisdictionName}
-            </span>
-          )}
-        </p>
-        <p className="text-sm leading-relaxed text-text-secondary">{concern}</p>
-      </div>
-
-      {/* 2. Briefing content */}
+      {/* Briefing content */}
       <section>
-        <div
-          className="mb-6 h-px w-full"
-          style={{ backgroundColor: 'var(--border)' }}
+        <BriefingView
+          text={briefingText}
+          isStreaming={false}
+          darkMode={islandDarkMode}
+          onToggleDarkMode={handleToggleDarkMode}
+          onOpenLens={() => setLensOpen(true)}
+          onOpenCampaign={() => setCampaignOpen(true)}
+          onOpenGadfly={() => setGadflyOpen(true)}
+          onScrollToQuestions={() => {
+            document.getElementById('questions-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}
         />
-        <BriefingView text={briefingText} isStreaming={false} />
       </section>
 
-      {/* 3. Escalation paths — author only */}
-      {isAuthor && (
-        <section>
-          <div
-            className="mb-6 h-px w-full"
-            style={{ backgroundColor: 'var(--border)' }}
-          />
-          <EscalationCard
-            investigationId={id}
-            onGoDeeper={handleGoDeeper}
-            onTakeAction={handleTakeAction}
-            onDiscuss={handleDiscuss}
-            lensOpen={lensOpen}
-            campaignOpen={campaignOpen}
-            discussionOpen={discussionOpen}
-          />
-        </section>
-      )}
-
-      {/* 4. Lens panel — author only, conditionally rendered */}
+      {/* Lens panel — author only, conditionally rendered */}
       {isAuthor && lensOpen && (
         <section>
           <LensPanel
@@ -132,6 +85,7 @@ export function InvestigationPage({
             lensContextText={lensContextText}
             gadflySeededQuestion={gadflySeededQuestion}
             onOpenGadfly={handleOpenGadfly}
+            darkMode={islandDarkMode}
           />
         </section>
       )}
@@ -143,74 +97,21 @@ export function InvestigationPage({
             investigationId={id}
             concern={concern}
             jurisdictionName={jurisdictionName}
+            darkMode={islandDarkMode}
           />
         </section>
       )}
 
-      {/* 6. Discussion panel — conditionally rendered */}
-      {discussionOpen && (
-        <section>
-          <div
-            className="mb-6 h-px w-full"
-            style={{ backgroundColor: 'var(--border)' }}
-          />
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">
-              Discussions
-            </p>
-            <Link
-              href={`/forum?investigation=${id}`}
-              className="text-xs text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
-            >
-              View all in Forum
-            </Link>
-          </div>
-          {discussionLoading ? (
-            <p className="text-sm text-text-faint">Loading discussions...</p>
-          ) : discussionThreads.length > 0 ? (
-            <div className="space-y-3">
-              {discussionThreads.slice(0, 3).map((thread) => (
-                <ThreadCard key={thread.id} {...thread} />
-              ))}
-              {discussionThreads.length > 3 && (
-                <Link
-                  href={`/forum?investigation=${id}`}
-                  className="block text-xs text-text-muted hover:text-text-secondary transition-colors text-center py-2"
-                >
-                  View all {discussionThreads.length} discussions
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-6 text-center">
-              <p className="text-sm text-text-muted">No discussions yet.</p>
-              <p className="mt-1.5">
-                <Link
-                  href={`/forum/new?investigationId=${id}`}
-                  className="text-xs text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
-                >
-                  Start a discussion
-                </Link>
-              </p>
-            </div>
-          )}
-        </section>
-      )}
+      {/* 6. Civic Context strip — votes, discussion, reviews, archive */}
+      <CivicContextStrip
+        investigationId={id}
+        isAuthor={isAuthor}
+        archiveStatus={archiveStatus}
+        expanded={civicExpanded}
+        onExpand={setCivicExpanded}
+      />
 
-      {/* 6.5. Vote Tracker — MP voting record relevant to this concern */}
-      {isAuthor && (
-        <section>
-          <InvestigationVotePanel investigationId={id} />
-        </section>
-      )}
-
-      {/* 7. Peer Reviews */}
-      <section>
-        <div className="mb-6 h-px w-full" style={{ backgroundColor: 'var(--border)' }} />
-        <ReviewSection investigationId={id} isAuthor={isAuthor} />
-      </section>
-
-      {/* 8. Gadfly slide-over dialog */}
+      {/* 7. Gadfly slide-over dialog */}
       <GadflySheet
         open={gadflyOpen}
         onOpenChange={setGadflyOpen}

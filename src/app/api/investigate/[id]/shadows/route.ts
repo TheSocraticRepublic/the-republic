@@ -1,19 +1,29 @@
 import { NextRequest } from 'next/server'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { investigations, shadowAlerts } from '@/lib/db/schema'
 import { and, eq, isNull } from 'drizzle-orm'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-export async function GET(
+export const GET = safeRoute(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   // Auth required
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`investigate-shadows:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }
@@ -66,4 +76,4 @@ export async function GET(
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})

@@ -9,6 +9,7 @@ interface GadflyEntryProps {
   concern: string
   seededQuestion?: string | null
   onOpenGadfly: () => void
+  darkMode?: boolean
 }
 
 export function GadflyEntry({
@@ -16,13 +17,17 @@ export function GadflyEntry({
   concern: _concern,
   seededQuestion,
   onOpenGadfly,
+  darkMode = false,
 }: GadflyEntryProps) {
+  const textColor = darkMode ? '#d4d4d8' : '#44403c'
+  const strongColor = darkMode ? '#f4f4f5' : '#1c1917'
+
   return (
     <div
       className="rounded-xl p-6"
       style={{
         borderLeft: '2px solid #C8A84B',
-        backgroundColor: 'rgba(200,168,75,0.04)',
+        backgroundColor: darkMode ? 'rgba(200,168,75,0.06)' : 'rgba(200,168,75,0.04)',
         border: '1px solid rgba(200,168,75,0.12)',
         borderLeftWidth: '2px',
         borderLeftColor: '#C8A84B',
@@ -39,10 +44,10 @@ export function GadflyEntry({
       {/* Seeded question */}
       <p
         className="mb-6 text-sm leading-relaxed"
-        style={{ color: '#d4d4d4' }}
+        style={{ color: textColor }}
       >
         You've read the briefing. Here's a question worth sitting with:{' '}
-        <strong style={{ color: '#f5f5f5', fontWeight: 600 }}>
+        <strong style={{ color: strongColor, fontWeight: 600 }}>
           {seededQuestion || DEFAULT_QUESTION}
         </strong>
       </p>

@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { documents } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function GET(request: NextRequest) {
+export const GET = safeRoute(async (request: NextRequest) => {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { success } = await checkRateLimit(`oracle-documents:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const db = getDb()
@@ -29,4 +39,4 @@ export async function GET(request: NextRequest) {
     .orderBy(desc(documents.createdAt))
 
   return NextResponse.json({ documents: rows })
-}
+})

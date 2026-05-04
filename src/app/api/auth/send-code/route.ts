@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createMagicCode } from '@/lib/auth/magic-code'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async (request: NextRequest) => {
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
   const { success } = await checkRateLimit(`send-code:${ip}`)
 
@@ -23,9 +24,6 @@ export async function POST(request: NextRequest) {
   const code = createMagicCode(email)
 
   // In production: send via email (Resend, SES, etc.)
-  console.log(`[AUTH] Magic code for ${email}: ${code}`)
-
-  // Dev mode: return code in response so it shows on screen
-  const isDev = process.env.NODE_ENV === 'development'
+  const isDev = process.env.NODE_ENV === 'development' && process.env.DEV_AUTH_BYPASS === 'true'
   return NextResponse.json({ ok: true, ...(isDev && { code }) })
-}
+})

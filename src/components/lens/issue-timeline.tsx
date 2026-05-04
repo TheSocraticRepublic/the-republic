@@ -11,10 +11,31 @@ interface TimelineEvent {
   status: string
 }
 
+const LIGHT_TL = {
+  bg: '#ffffff',
+  border: '#e0ddd9',
+  text: '#1c1917',
+  secondary: '#44403c',
+  muted: '#78716c',
+  faint: '#a8a29e',
+  line: 'rgba(28, 25, 23, 0.06)',
+}
+
+const DARK_TL = {
+  bg: '#1e1e20',
+  border: 'rgba(255,255,255,0.1)',
+  text: '#f4f4f5',
+  secondary: '#d4d4d8',
+  muted: '#a1a1aa',
+  faint: '#71717a',
+  line: 'rgba(255, 255, 255, 0.06)',
+}
+
 interface IssueTimelineProps {
   investigationId: string
   events: TimelineEvent[]
   onEventAdded?: (event: TimelineEvent) => void
+  darkMode?: boolean
 }
 
 const EVENT_TYPE_STYLES: Record<string, { color: string; bg: string }> = {
@@ -33,7 +54,8 @@ function isPast(dateStr: string): boolean {
   return new Date(dateStr) < new Date()
 }
 
-export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTimelineProps) {
+export function IssueTimeline({ investigationId, events, onEventAdded, darkMode = false }: IssueTimelineProps) {
+  const tl = darkMode ? DARK_TL : LIGHT_TL
   const [showForm, setShowForm] = useState(false)
   const [formTitle, setFormTitle] = useState('')
   const [formDate, setFormDate] = useState('')
@@ -76,21 +98,22 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
   if (events.length === 0 && !showForm) {
     return (
       <div
-        className="rounded-xl border px-6 py-8 text-center"
+        className="rounded-xl px-6 py-8 text-center"
         style={{
-          borderColor: 'var(--border)',
-          backgroundColor: 'var(--surface-1)',
+          border: `1px solid ${tl.border}`,
+          backgroundColor: tl.bg,
         }}
       >
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-2">
+        <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: tl.faint }}>
           Timeline
         </p>
-        <p className="text-sm text-text-faint leading-relaxed mb-4">
+        <p className="text-sm leading-relaxed mb-4" style={{ color: tl.faint }}>
           No events tracked yet. Deadlines and comment periods will appear here.
         </p>
         <button
           onClick={() => setShowForm(true)}
-          className="text-xs text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
+          className="text-xs underline underline-offset-2 transition-colors"
+          style={{ color: tl.muted }}
         >
           Add an event
         </button>
@@ -101,13 +124,14 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
   return (
     <div className="space-y-1">
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
+        <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: tl.faint }}>
           Timeline
         </p>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="text-[10px] text-text-faint hover:text-text-secondary transition-colors"
+            className="text-[10px] transition-colors"
+            style={{ color: tl.faint }}
           >
             + Add event
           </button>
@@ -119,7 +143,7 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
         <div className="relative">
           <div
             className="absolute left-2 top-3 bottom-3 w-px"
-            style={{ backgroundColor: 'var(--border)' }}
+            style={{ backgroundColor: tl.line }}
           />
 
           <div className="space-y-4">
@@ -141,14 +165,14 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
                   </div>
 
                   <div className="flex-1 min-w-0 pb-2">
-                    <p className="text-xs font-medium text-text-primary leading-snug">{event.title}</p>
+                    <p className="text-xs font-medium leading-snug" style={{ color: tl.text }}>{event.title}</p>
                     {event.description && (
-                      <p className="mt-0.5 text-[11px] text-text-faint leading-relaxed">
+                      <p className="mt-0.5 text-[11px] leading-relaxed" style={{ color: tl.faint }}>
                         {event.description}
                       </p>
                     )}
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-[10px] text-text-faint">{event.eventDate}</span>
+                      <span className="text-[10px]" style={{ color: tl.faint }}>{event.eventDate}</span>
                       <span
                         className="rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider"
                         style={{ color: style.color, backgroundColor: style.bg }}
@@ -168,10 +192,10 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="mt-4 rounded-xl border px-4 py-4 space-y-3"
+          className="mt-4 rounded-xl px-4 py-4 space-y-3"
           style={{
-            borderColor: 'var(--border)',
-            backgroundColor: 'var(--surface-1)',
+            border: `1px solid ${tl.border}`,
+            backgroundColor: tl.bg,
           }}
         >
           <input
@@ -179,22 +203,22 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
             placeholder="Event title"
             value={formTitle}
             onChange={(e) => setFormTitle(e.target.value)}
-            className="w-full rounded-lg border px-3 py-2 text-xs bg-transparent text-text-primary placeholder-text-faint focus:outline-none focus:border-border-strong"
-            style={{ borderColor: 'var(--border)' }}
+            className="w-full rounded-lg border px-3 py-2 text-xs bg-transparent focus:outline-none"
+            style={{ borderColor: tl.border, color: tl.text }}
           />
           <div className="flex gap-2">
             <input
               type="date"
               value={formDate}
               onChange={(e) => setFormDate(e.target.value)}
-              className="flex-1 rounded-lg border px-3 py-2 text-xs bg-transparent text-text-primary focus:outline-none focus:border-border-strong"
-              style={{ borderColor: 'var(--border)' }}
+              className="flex-1 rounded-lg border px-3 py-2 text-xs bg-transparent focus:outline-none"
+              style={{ borderColor: tl.border, color: tl.text }}
             />
             <select
               value={formType}
               onChange={(e) => setFormType(e.target.value)}
-              className="flex-1 rounded-lg border px-3 py-2 text-xs bg-transparent text-text-primary focus:outline-none focus:border-border-strong"
-              style={{ borderColor: 'var(--border)' }}
+              className="flex-1 rounded-lg border px-3 py-2 text-xs bg-transparent focus:outline-none"
+              style={{ borderColor: tl.border, color: tl.text }}
             >
               <option value="deadline">Deadline</option>
               <option value="meeting">Meeting</option>
@@ -208,14 +232,15 @@ export function IssueTimeline({ investigationId, events, onEventAdded }: IssueTi
             value={formDescription}
             onChange={(e) => setFormDescription(e.target.value)}
             rows={2}
-            className="w-full rounded-lg border px-3 py-2 text-xs bg-transparent text-text-primary placeholder-text-faint focus:outline-none focus:border-border-strong resize-none"
-            style={{ borderColor: 'var(--border)' }}
+            className="w-full rounded-lg border px-3 py-2 text-xs bg-transparent focus:outline-none resize-none"
+            style={{ borderColor: tl.border, color: tl.text }}
           />
           <div className="flex items-center gap-2 justify-end">
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="text-[10px] text-text-faint hover:text-text-secondary transition-colors px-3 py-1.5"
+              className="text-[10px] transition-colors px-3 py-1.5"
+              style={{ color: tl.faint }}
             >
               Cancel
             </button>
