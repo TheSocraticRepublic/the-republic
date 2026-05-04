@@ -374,58 +374,34 @@ function getRoleColor(role: string): string {
 function parsePlayers(content: string): PlayerData[] {
   const players: PlayerData[] = []
 
-  // Step 1: Normalize bullets — strip leading `- ` or `* ` from all lines
-  const normalized = content
-    .split('\n')
-    .map((line) => line.replace(/^\s*[-*]\s+/, ''))
-    .join('\n')
+  const lines = content.split('\n').map((l) => l.replace(/^\s*[-*]\s+/, '').trim()).filter(Boolean)
 
-  // Step 2: Split on bold name lines.
-  // A name line is **text** where the text does NOT contain a colon (excludes **Role:** etc.)
-  const blocks = normalized
-    .split(/(?=^\*\*[^*:]+\*\*)/m)
-    .filter((b) => b.trim())
+  const fieldLabels = /^(?:\*\*)?(?:role|why they matter|track record|what they do|how they relate)(?:\*\*)?[:\s]/i
 
-  for (const block of blocks) {
-    const lines = block.split('\n').map((l) => l.trim()).filter(Boolean)
-    if (lines.length === 0) continue
+  let current: { name: string; role: string; whyTheyMatter: string; trackRecord: string } | null = null
 
-    // First line should contain **Name** (no colon inside the bold)
-    const nameMatch = lines[0].match(/^\*\*([^*:]+)\*\*/)
-    if (!nameMatch) continue
+  for (const line of lines) {
+    const cleanLine = line.replace(/\*\*/g, '')
 
-    const name = nameMatch[1].trim()
-    let role = ''
-    let whyTheyMatter = ''
-    let trackRecord = ''
-
-    // Remaining text after the name on the same line
-    const afterName = lines[0].replace(/^\*\*[^*:]+\*\*[:\s]*/, '').trim()
-
-    // Parse structured fields from remaining lines
-    const restText = [afterName, ...lines.slice(1)].join('\n')
-
-    // Step 3: Extract fields (with or without bold markers, case insensitive)
-    const roleMatch = restText.match(/(?:\*\*)?[Rr]ole(?:\*\*)?[:\s]+(.+?)(?:\n|$)/i)
-    if (roleMatch) role = roleMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
-
-    const whyMatch = restText.match(/(?:\*\*)?[Ww]hy\s+they\s+matter(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Tt]rack\s+record|$))/i)
-    if (whyMatch) whyTheyMatter = whyMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
-
-    const trackMatch = restText.match(/(?:\*\*)?[Tt]rack\s+record(?:\*\*)?[:\s]+([\s\S]+)/i)
-    if (trackMatch) trackRecord = trackMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
-
-    // Fallback: if no structured fields, use lines positionally
-    if (!role && !whyTheyMatter) {
-      const plainLines = restText.split('\n').map((l) => l.replace(/\*\*/g, '').trim()).filter(Boolean)
-      if (plainLines.length >= 1) role = plainLines[0]
-      if (plainLines.length >= 2) whyTheyMatter = plainLines.slice(1).join(' ')
+    if (!fieldLabels.test(cleanLine) && !cleanLine.startsWith('Role:')) {
+      if (current && current.name) players.push({ ...current })
+      current = { name: cleanLine, role: '', whyTheyMatter: '', trackRecord: '' }
+      continue
     }
 
-    if (name) {
-      players.push({ name, role, whyTheyMatter, trackRecord })
-    }
+    if (!current) continue
+
+    const roleMatch = cleanLine.match(/^(?:role)[:\s]+(.+)/i)
+    if (roleMatch) { current.role = roleMatch[1].replace(/^[-\s]+|[-\s]+$/g, ''); continue }
+
+    const whyMatch = cleanLine.match(/^(?:why they matter)[:\s]+(.+)/i)
+    if (whyMatch) { current.whyTheyMatter = whyMatch[1].replace(/^[-\s]+|[-\s]+$/g, ''); continue }
+
+    const trackMatch = cleanLine.match(/^(?:track record)[:\s]+(.+)/i)
+    if (trackMatch) { current.trackRecord = trackMatch[1].replace(/^[-\s]+|[-\s]+$/g, ''); continue }
   }
+
+  if (current && current.name) players.push({ ...current })
 
   return players
 }
