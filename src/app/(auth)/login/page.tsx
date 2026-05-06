@@ -12,7 +12,6 @@ export default function LoginPage() {
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [devCode, setDevCode] = useState<string | null>(null)
 
   async function handleSendCode(e: React.FormEvent) {
     e.preventDefault()
@@ -33,7 +32,6 @@ export default function LoginPage() {
         throw new Error(data.error ?? 'Failed to send code')
       }
 
-      if (data.code) setDevCode(data.code)
       setStep('code')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -104,11 +102,6 @@ export default function LoginPage() {
               ? 'Enter your email to continue'
               : `Code sent to ${email}`}
           </p>
-          {devCode && step === 'code' && (
-            <p className="mt-2 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-600">
-              Dev mode — your code is: <span className="font-mono font-bold tracking-wider">{devCode}</span>
-            </p>
-          )}
         </div>
 
         {/* Card */}
