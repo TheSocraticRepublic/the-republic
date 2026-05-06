@@ -49,3 +49,6 @@ next-env.d.ts
 
 # marvin worktree metadata
 .marvin-worktree.json
+
+# Local Netlify folder
+.netlify

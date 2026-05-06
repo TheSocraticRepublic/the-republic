@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description:
     'Open-source civic AI that makes institutional power legible to ordinary citizens.',
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || 'https://therepublic.ca'
+    process.env.NEXT_PUBLIC_APP_URL || 'https://opencave.ca'
   ),
   openGraph: {
     title: 'The Republic',

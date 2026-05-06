@@ -16,7 +16,7 @@ export async function sendMagicCodeEmail(
   to: string,
   code: string
 ): Promise<void> {
-  const fromEmail = process.env.RESEND_FROM_EMAIL ?? 'noreply@therepublic.ca'
+  const fromEmail = process.env.RESEND_FROM_EMAIL ?? 'noreply@opencave.ca'
   const resend = getResend()
 
   const { error } = await resend.emails.send({

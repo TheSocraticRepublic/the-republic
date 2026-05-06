@@ -42,7 +42,7 @@ export default function PublicLayout({
             href="/"
             className="text-xs text-text-faint hover:text-text-muted transition-colors"
           >
-            therepublic.ca
+            opencave.ca
           </Link>
         </div>
       </footer>

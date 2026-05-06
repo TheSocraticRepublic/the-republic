@@ -593,7 +593,7 @@ function RepublicFooter() {
   return (
     <View style={shared.footer}>
       <Text style={shared.footerText}>
-        Generated from The Republic -- therepublic.ca
+        Generated from The Republic -- opencave.ca
       </Text>
       <Text style={shared.footerText}>{date}</Text>
     </View>

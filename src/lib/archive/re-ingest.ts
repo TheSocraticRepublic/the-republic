@@ -16,7 +16,7 @@ import { computeContentHash } from './hash'
 
 const FETCH_TIMEOUT_MS = 10_000
 const MAX_RESPONSE_BYTES = 50 * 1024 * 1024  // 50MB
-const USER_AGENT = 'TheRepublic/1.0 (https://therepublic.ca; document-monitor)'
+const USER_AGENT = 'OpenCave/1.0 (https://opencave.ca; document-monitor)'
 
 export async function reIngestDocument(
   documentId: string,

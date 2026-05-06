@@ -388,7 +388,7 @@ function printPage(opts: {
   ${opts.bodyHtml}
 
   <div class="footer">
-    Generated from The Republic &mdash; therepublic.ca
+    Generated from The Republic &mdash; opencave.ca
   </div>
 </div>
 </body>

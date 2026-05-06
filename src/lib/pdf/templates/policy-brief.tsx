@@ -252,7 +252,7 @@ export function PolicyBriefTemplate({ data }: { data: PolicyBriefData }) {
         <View style={styles.docFooter}>
           <Text style={styles.footerBrand}>THE REPUBLIC</Text>
           <Text style={styles.footerUrl}>
-            Generated from The Republic -- therepublic.ca -- {date}
+            Generated from The Republic -- opencave.ca -- {date}
           </Text>
         </View>
       </RepublicPage>
@@ -296,7 +296,7 @@ export function PolicyBriefTemplate({ data }: { data: PolicyBriefData }) {
         <View style={styles.docFooter}>
           <Text style={styles.footerBrand}>THE REPUBLIC</Text>
           <Text style={styles.footerUrl}>
-            Generated from The Republic -- therepublic.ca -- {date}
+            Generated from The Republic -- opencave.ca -- {date}
           </Text>
         </View>
       </RepublicPage>
