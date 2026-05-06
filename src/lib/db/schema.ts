@@ -271,6 +271,16 @@ export const archiveAccessTypeEnum = pgEnum('archive_access_type', [
 
 // --- Tables ---
 
+export const magicCodes = pgTable('magic_codes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  email: text('email').notNull(),
+  code: text('code').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  usedAt: timestamp('used_at'),
+  attempts: integer('attempts').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   email: text('email').notNull().unique(),

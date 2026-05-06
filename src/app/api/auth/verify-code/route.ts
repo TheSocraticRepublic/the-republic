@@ -31,7 +31,7 @@ export const POST = safeRoute(async (request: NextRequest) => {
     )
   }
 
-  const result = verifyMagicCode(email, code)
+  const result = await verifyMagicCode(email, code)
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 401 })

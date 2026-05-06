@@ -21,8 +21,9 @@ const envSchema = z.object({
   IRYS_PRIVATE_KEY: z.string().optional(),
   DEV_AUTH_BYPASS: z.string().optional(),
 
-  ANTHROPIC_API_KEY: z.string().optional(),
-  TAVILY_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().min(1, 'ANTHROPIC_API_KEY is required'),
+  RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
+  RESEND_FROM_EMAIL: z.string().optional(),
 })
 
 export type Env = z.infer<typeof envSchema>

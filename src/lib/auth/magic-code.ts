@@ -1,69 +1,114 @@
 import 'server-only'
+import { randomInt, createHash } from 'crypto'
+import { getDb } from '@/lib/db'
+import { magicCodes } from '@/lib/db/schema'
+import { eq, and, gt, lt, isNull, sql } from 'drizzle-orm'
+import { sendMagicCodeEmail } from '@/lib/email'
 
-// In-process store for magic codes. Replace with Redis or DB in production
-// once Upstash is wired in — this is sufficient for Phase 0.1.
-const CODE_EXPIRY_MS = 10 * 60 * 1000 // 10 minutes
-
-interface MagicCode {
-  code: string
-  expiresAt: number
-  attempts: number
-}
-
-const store = new Map<string, MagicCode>()
+const CODE_TTL_MINUTES = 10
+const MAX_CODES_PER_HOUR = 3
+const MAX_VERIFY_ATTEMPTS = 5
 
 function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
+  return String(randomInt(10000000, 99999999))
 }
 
-/**
- * Generate and store a 6-digit code for the given email.
- * Overwrites any existing code for that email.
- */
-export function createMagicCode(email: string): string {
+function hashCode(code: string): string {
+  return createHash('sha256').update(code).digest('hex')
+}
+
+export async function sendMagicCode(email: string): Promise<void> {
+  const normalized = email.toLowerCase().trim()
+  const db = getDb()
+
+  const expiryCutoff = new Date(Date.now() - CODE_TTL_MINUTES * 60_000)
+  await db
+    .delete(magicCodes)
+    .where(
+      and(
+        eq(magicCodes.email, normalized),
+        lt(magicCodes.expiresAt, expiryCutoff)
+      )
+    )
+
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+  const recentCodes = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(magicCodes)
+    .where(
+      and(
+        eq(magicCodes.email, normalized),
+        gt(magicCodes.createdAt, oneHourAgo)
+      )
+    )
+
+  if (recentCodes[0].count >= MAX_CODES_PER_HOUR) {
+    throw new Error('Too many codes requested. Try again later.')
+  }
+
+  await db
+    .update(magicCodes)
+    .set({ usedAt: new Date() })
+    .where(and(eq(magicCodes.email, normalized), isNull(magicCodes.usedAt)))
+
   const code = generateCode()
-  store.set(email.toLowerCase(), {
-    code,
-    expiresAt: Date.now() + CODE_EXPIRY_MS,
-    attempts: 0,
+  const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60_000)
+
+  await db.insert(magicCodes).values({
+    email: normalized,
+    code: hashCode(code),
+    expiresAt,
   })
-  return code
+
+  await sendMagicCodeEmail(normalized, code)
 }
 
 export type VerifyResult =
   | { success: true }
   | { success: false; error: 'expired' | 'invalid' | 'too_many_attempts' }
 
-/**
- * Verify a magic code. Deletes the code on success.
- * Allows a maximum of 5 verification attempts before lockout.
- */
-export function verifyMagicCode(email: string, code: string): VerifyResult {
-  const entry = store.get(email.toLowerCase())
+export async function verifyMagicCode(
+  email: string,
+  code: string
+): Promise<VerifyResult> {
+  const normalized = email.toLowerCase().trim()
+  const now = new Date()
+  const db = getDb()
 
-  if (!entry) {
+  const activeCodes = await db
+    .select()
+    .from(magicCodes)
+    .where(
+      and(
+        eq(magicCodes.email, normalized),
+        isNull(magicCodes.usedAt),
+        gt(magicCodes.expiresAt, now)
+      )
+    )
+    .limit(1)
+
+  if (activeCodes.length === 0) {
     return { success: false, error: 'invalid' }
   }
 
-  if (Date.now() > entry.expiresAt) {
-    store.delete(email.toLowerCase())
-    return { success: false, error: 'expired' }
-  }
+  const activeCode = activeCodes[0]
 
-  if (entry.attempts >= 5) {
+  if (activeCode.attempts >= MAX_VERIFY_ATTEMPTS) {
     return { success: false, error: 'too_many_attempts' }
   }
 
-  if (entry.code !== code) {
-    store.set(email.toLowerCase(), { ...entry, attempts: entry.attempts + 1 })
+  if (activeCode.code !== hashCode(code)) {
+    await db
+      .update(magicCodes)
+      .set({ attempts: activeCode.attempts + 1 })
+      .where(eq(magicCodes.id, activeCode.id))
     return { success: false, error: 'invalid' }
   }
 
-  store.delete(email.toLowerCase())
-  return { success: true }
-}
+  await db
+    .update(magicCodes)
+    .set({ usedAt: now })
+    .where(eq(magicCodes.id, activeCode.id))
 
-/** Remove a code from the store (e.g. on sign-out or after use). */
-export function deleteMagicCode(email: string): void {
-  store.delete(email.toLowerCase())
+  return { success: true }
 }

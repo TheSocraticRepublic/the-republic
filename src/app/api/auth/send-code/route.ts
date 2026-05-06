@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createMagicCode } from '@/lib/auth/magic-code'
+import { sendMagicCode } from '@/lib/auth/magic-code'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
 
@@ -21,9 +21,7 @@ export const POST = safeRoute(async (request: NextRequest) => {
     return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
   }
 
-  const code = createMagicCode(email)
+  await sendMagicCode(email)
 
-  // In production: send via email (Resend, SES, etc.)
-  const isDev = process.env.NODE_ENV === 'development' && process.env.DEV_AUTH_BYPASS === 'true'
-  return NextResponse.json({ ok: true, ...(isDev && { code }) })
+  return NextResponse.json({ ok: true })
 })
