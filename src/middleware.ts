@@ -51,8 +51,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     const origin = request.headers.get('origin')
     const appUrl = process.env.NEXT_PUBLIC_APP_URL
     if (origin && appUrl) {
-      const allowed = new URL(appUrl).origin
-      if (origin !== allowed) {
+      const allowed = new Set([new URL(appUrl).origin])
+      const host = request.headers.get('host')
+      if (host) allowed.add(`https://${host}`)
+      if (!allowed.has(origin)) {
         return applySecurityHeaders(
           new NextResponse(
             JSON.stringify({ error: 'Invalid origin' }),
