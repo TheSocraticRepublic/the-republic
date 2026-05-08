@@ -24,12 +24,20 @@ export async function POST(request: NextRequest) {
     await sendMagicCode(email)
 
     return NextResponse.json({ ok: true })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    const stack = err instanceof Error ? err.stack : ''
-    console.error('[send-code] Error:', message, stack)
+  } catch (err: unknown) {
+    const e = err as Record<string, unknown>
     return NextResponse.json(
-      { error: message, debug: process.env.NODE_ENV !== 'production' ? stack : undefined },
+      {
+        error: e?.message ?? 'Unknown',
+        code: e?.code,
+        errno: e?.errno,
+        severity: e?.severity,
+        detail: e?.detail,
+        routine: e?.routine,
+        cause: e?.cause ? String(e.cause) : undefined,
+        name: e?.name,
+        stack: String(e?.stack ?? '').split('\n').slice(0, 5),
+      },
       { status: 500 }
     )
   }
