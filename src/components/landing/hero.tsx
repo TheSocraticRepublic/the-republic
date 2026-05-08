@@ -13,7 +13,7 @@ export function Hero() {
       <div className="absolute inset-0 z-0 overflow-hidden" data-scroll-hero-image>
         {hasPhoto ? (
           <Image
-            src="/landing/hero.jpg"
+            src="/landing/cave-ocean.jpg"
             alt=""
             fill
             sizes="100vw"
@@ -49,7 +49,7 @@ export function Hero() {
           textShadow: '0 2px 20px rgba(0,0,0,0.3)',
         }}
       >
-        The Republic
+        Open Cave
       </h1>
 
       <p
@@ -60,7 +60,7 @@ export function Hero() {
           lineHeight: 1.4,
         }}
       >
-        The examined institution.
+        A Republic for the examined institution.
       </p>
 
       <ScrollIndicator light />
