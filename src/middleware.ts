@@ -18,6 +18,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // Public routes — no auth required
   if (
     pathname.startsWith('/login') ||
+    pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/health') ||
     pathname.startsWith('/api/archive') ||
     pathname.startsWith('/archive') ||
