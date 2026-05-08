@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  cacheHandler: undefined,
+  cacheMaxMemorySize: 0,
 };
 
 export default nextConfig;
