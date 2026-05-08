@@ -1,0 +1,101 @@
+<!-- The Peripatetic (Scout): Aristotle in motion — forward-leaning stride, garment trailing, head tilted in contemplation -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="peripatetic-clip">
+      <circle cx="256" cy="256" r="240"/>
+    </clipPath>
+    <mask id="peripatetic-mask">
+      <circle cx="256" cy="256" r="240" fill="white"/>
+      <!-- Walking figure silhouette cut from circle -->
+      <!-- Head tilted forward, body leaning into stride -->
+      <path fill="black" d="
+        M 258 98
+        C 240 98, 226 112, 226 130
+        C 226 148, 238 162, 256 164
+        C 274 164, 286 150, 286 132
+        C 286 112, 274 98, 258 98
+        Z
+        M 252 164
+        C 248 168, 244 172, 242 178
+        L 228 210
+        C 224 218, 220 226, 218 234
+        L 208 270
+        C 204 282, 200 294, 198 306
+        L 190 342
+        C 188 352, 186 362, 186 370
+        L 184 398
+        C 183 408, 184 416, 188 420
+        L 196 432
+        C 200 436, 204 436, 208 432
+        L 216 412
+        L 224 380
+        L 234 348
+        L 244 320
+        L 250 298
+        L 256 320
+        L 266 358
+        L 278 398
+        L 286 420
+        C 290 428, 296 432, 302 430
+        L 314 422
+        C 318 418, 320 412, 318 406
+        L 310 370
+        L 298 334
+        L 286 298
+        L 278 268
+        L 272 240
+        L 268 218
+        L 264 198
+        L 260 180
+        C 258 172, 256 168, 252 164
+        Z
+        M 218 234
+        L 194 252
+        L 172 268
+        L 156 280
+        C 150 284, 148 290, 150 296
+        L 154 304
+        C 158 308, 164 308, 168 304
+        L 190 286
+        L 210 270
+        L 224 256
+        Z
+        M 268 218
+        L 290 228
+        L 314 240
+        L 338 254
+        L 354 264
+        C 360 268, 366 266, 368 260
+        L 370 252
+        C 372 246, 368 240, 362 238
+        L 338 226
+        L 312 214
+        L 288 204
+        L 272 198
+        Z
+        M 242 178
+        L 230 186
+        L 216 200
+        C 212 204, 210 210, 212 216
+        L 218 234
+        Z
+      "/>
+      <!-- Flowing garment behind -->
+      <path fill="black" d="
+        M 198 306
+        L 182 314
+        L 164 326
+        L 150 340
+        L 142 356
+        C 140 362, 142 368, 146 372
+        L 158 376
+        L 172 368
+        L 184 354
+        L 192 340
+        L 198 322
+        Z
+      "/>
+    </mask>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="#5BC88A" mask="url(#peripatetic-mask)"/>
+</svg>

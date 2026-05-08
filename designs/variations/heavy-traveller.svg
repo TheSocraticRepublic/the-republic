@@ -1,0 +1,48 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="m">
+      <circle cx="256" cy="256" r="240" fill="white"/>
+      <!-- Traveller (Herodotus/Mirror) — left-facing bust, heavy/bold.
+           THE PETASOS HAT BRIM dominates everything.
+           The brim extends FAR to the left (past the face, nearly to circle edge)
+           and also extends right. It's ABSURDLY WIDE — the single most prominent shape.
+           Below: calm face, small neat beard, normal neck/shoulders.
+           The hat makes this instantly recognizable even at tiny sizes. -->
+      <path d="
+        M 190 490
+        C 196 455, 206 435, 222 422
+        C 238 409, 250 398, 256 384
+        C 262 370, 260 354, 254 340
+        C 248 326, 238 316, 230 306
+        C 222 296, 218 284, 218 270
+        C 218 256, 224 244, 234 236
+        C 244 228, 252 222, 258 216
+        C 264 210, 268 202, 268 192
+        C 268 182, 264 174, 256 168
+        C 248 162, 236 160, 222 162
+        C 208 164, 188 168, 164 172
+        C 140 176, 112 178, 86 176
+        C 60 174, 44 166, 42 156
+        C 40 146, 50 138, 68 134
+        C 86 130, 112 128, 144 126
+        C 176 124, 210 118, 242 112
+        C 274 106, 300 104, 320 106
+        C 340 108, 358 116, 370 128
+        C 382 140, 386 156, 382 170
+        C 394 166, 408 164, 420 168
+        C 432 172, 436 180, 430 188
+        C 424 196, 412 196, 398 194
+        C 384 192, 374 190, 368 186
+        C 368 200, 362 214, 350 226
+        C 338 238, 324 248, 314 258
+        C 342 264, 364 278, 380 296
+        C 396 314, 402 336, 400 360
+        C 398 384, 388 404, 374 420
+        C 360 436, 350 458, 346 480
+        L 342 490
+        Z
+      " fill="black"/>
+    </mask>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="#5BC88A" mask="url(#m)"/>
+</svg>

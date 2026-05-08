@@ -1,0 +1,19 @@
+<!-- The Pythia (Oracle): Delphic oracle seated on tripod, head tilted back in prophetic trance, laurel crown atop. Constructed from 7 geometric elements evoking ecstatic revelation. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Head - circle tilted back -->
+  <circle cx="256" cy="108" r="50" fill="#89B4C8"/>
+  <!-- Laurel crown - three leaf shapes atop head -->
+  <ellipse cx="236" cy="62" rx="8" ry="22" fill="#89B4C8" transform="rotate(-20 236 62)"/>
+  <ellipse cx="256" cy="56" rx="8" ry="24" fill="#89B4C8"/>
+  <ellipse cx="276" cy="62" rx="8" ry="22" fill="#89B4C8" transform="rotate(20 276 62)"/>
+  <!-- Neck -->
+  <rect x="240" y="154" width="32" height="28" fill="#89B4C8" transform="rotate(5 256 168)"/>
+  <!-- Torso - wide seated form, slightly reclined -->
+  <polygon points="200,190 312,190 320,340 192,340" fill="#89B4C8"/>
+  <!-- Seated base / robes spreading on tripod -->
+  <polygon points="175,335 337,335 360,430 152,430" fill="#89B4C8"/>
+  <!-- Tripod legs - three angled rectangles beneath -->
+  <rect x="186" y="425" width="16" height="70" rx="3" fill="#89B4C8" transform="rotate(-12 194 460)"/>
+  <rect x="248" y="425" width="16" height="75" rx="3" fill="#89B4C8"/>
+  <rect x="310" y="425" width="16" height="70" rx="3" fill="#89B4C8" transform="rotate(12 318 460)"/>
+</svg>

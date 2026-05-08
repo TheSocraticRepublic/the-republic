@@ -1,0 +1,48 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="m">
+      <circle cx="256" cy="256" r="240" fill="white"/>
+      <!-- Herald (Lever) — left-facing bust, heavy/bold.
+           SQUARE JAW — angular, almost rectangular lower face.
+           OPEN MOUTH — clear gap in the profile between upper and lower lip.
+           Short helmet/cropped hair — flat on top.
+           THICK neck, military build, broad powerful shoulders.
+           The jaw and open mouth are the signature features.
+
+           The open mouth is achieved by having upper lip curve back IN
+           then lower lip/jaw jut back OUT — creating a visible gap. -->
+      <path d="
+        M 170 490
+        C 176 455, 188 435, 208 422
+        C 228 409, 244 398, 252 384
+        C 260 370, 258 354, 250 340
+        C 242 326, 230 316, 220 306
+        C 210 296, 204 284, 204 270
+        C 204 256, 208 244, 218 236
+        C 228 228, 238 224, 244 220
+        C 236 218, 226 214, 218 208
+        C 210 202, 208 194, 214 188
+        C 220 182, 228 180, 236 180
+        C 232 172, 224 162, 220 152
+        C 216 142, 218 132, 226 126
+        C 234 120, 244 120, 254 122
+        C 260 112, 268 100, 280 92
+        C 292 84, 308 80, 326 80
+        C 344 80, 362 86, 374 98
+        C 386 110, 390 126, 386 144
+        C 382 156, 376 164, 370 170
+        C 378 178, 384 188, 384 200
+        C 384 212, 378 222, 368 230
+        C 380 236, 392 248, 398 264
+        C 404 280, 404 300, 398 320
+        C 392 340, 382 358, 372 374
+        C 362 390, 354 410, 350 434
+        L 346 490
+        Z
+      " fill="black"/>
+      <!-- Open mouth gap — white notch between lips on the front profile -->
+      <path d="M 208 206 C 212 200, 220 196, 230 196 C 224 200, 216 204, 210 210 Z" fill="white"/>
+    </mask>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="#C85B5B" mask="url(#m)"/>
+</svg>

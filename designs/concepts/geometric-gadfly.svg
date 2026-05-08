@@ -1,0 +1,17 @@
+<!-- The Gadfly (Socrates): Unmistakable broad nose, heavy brow, bald dome with beard below. Leaning forward with one hand raised in questioning gesture. 6 geometric elements, maximum character. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Bald head/dome - large circle, the dominant element -->
+  <circle cx="270" cy="130" r="68" fill="#C8A84B"/>
+  <!-- Heavy brow ridge - wide rectangle jutting forward -->
+  <rect x="225" y="148" width="90" height="20" rx="3" fill="#C8A84B" transform="rotate(-4 270 158)"/>
+  <!-- Broad nose - wide triangle projecting forward, the signature feature -->
+  <polygon points="275,165 305,210 260,210" fill="#C8A84B"/>
+  <!-- Beard - rounded rectangle below, wide and substantial -->
+  <rect x="230" y="205" width="76" height="70" rx="30" fill="#C8A84B"/>
+  <!-- Torso - angled forward, questioning posture -->
+  <rect x="220" y="270" width="90" height="150" rx="8" fill="#C8A84B" transform="rotate(-8 265 345)"/>
+  <!-- Raised hand/arm - rectangle angled up and away from body -->
+  <rect x="310" y="260" width="28" height="90" rx="14" fill="#C8A84B" transform="rotate(-45 324 305)"/>
+  <!-- Hand - small circle at end of raised arm -->
+  <circle cx="350" cy="225" r="18" fill="#C8A84B"/>
+</svg>

@@ -1,0 +1,11 @@
+<!-- The Peripatetic (Scout): Aristotle in mid-stride, single continuous line flowing from trailing foot through torso to forward-leaning head, capturing the rhythm of walking thought. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <path
+    d="M 160 420 C 170 400, 185 370, 195 340 C 205 310, 200 280, 210 250 C 215 230, 225 210, 240 195 C 250 185, 260 178, 270 172 C 280 166, 290 162, 295 155 C 300 148, 298 140, 295 132 C 292 124, 285 118, 280 112 C 275 106, 272 100, 275 94 C 278 88, 285 84, 292 82 C 299 80, 308 80, 315 83 C 322 86, 328 92, 330 100 C 332 108, 330 118, 325 126 C 320 134, 312 140, 308 148 C 304 156, 305 162, 310 170 C 315 178, 325 185, 332 195 C 339 205, 343 218, 345 232 C 347 246, 346 262, 342 278 C 338 294, 330 312, 325 330 C 320 348, 318 366, 320 384 C 322 402, 328 415, 335 425"
+    fill="none"
+    stroke="#5BC88A"
+    stroke-width="10"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

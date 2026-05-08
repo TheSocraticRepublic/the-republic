@@ -1,0 +1,19 @@
+<!-- The Herald (Lever): Civic messenger in proclamation — strong jaw thrust forward, mouth open, staff held vertical. Bold upright stance with 6 geometric elements suggesting authority and voice. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Head - circle with strong forward positioning -->
+  <circle cx="275" cy="125" r="52" fill="#C85B5B"/>
+  <!-- Open mouth - triangle cut suggesting proclamation -->
+  <polygon points="295,155 325,172 295,185" fill="#C85B5B"/>
+  <!-- Strong jaw extension -->
+  <rect x="270" y="155" width="40" height="30" rx="4" fill="#C85B5B" transform="rotate(-5 290 170)"/>
+  <!-- Neck and broad shoulders -->
+  <polygon points="235,175 315,175 340,215 210,215" fill="#C85B5B"/>
+  <!-- Torso - upright rectangle, commanding stance -->
+  <rect x="220" y="210" width="100" height="180" rx="6" fill="#C85B5B"/>
+  <!-- Staff/rod - tall vertical rectangle held to the side -->
+  <rect x="168" y="80" width="14" height="380" rx="7" fill="#C85B5B"/>
+  <!-- Staff top ornament - diamond shape -->
+  <polygon points="175,80 190,55 175,30 160,55" fill="#C85B5B"/>
+  <!-- Arm holding staff -->
+  <rect x="175" y="240" width="52" height="24" rx="12" fill="#C85B5B"/>
+</svg>

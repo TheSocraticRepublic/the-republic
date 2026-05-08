@@ -1,0 +1,39 @@
+<!-- The Pythia (Oracle): Delphic oracle — head tilted back, face upward, long neck, hair cascading down the back, prominent laurel wreath creating a distinctive crown/halo shape above the head -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <path fill="#89B4C8" d="
+    M 434 490
+    L 80 490
+    Q 100 470, 132 454
+    Q 164 440, 190 424
+    Q 212 408, 222 390
+    Q 228 370, 222 350
+    Q 212 330, 192 314
+    Q 168 298, 146 280
+    Q 126 260, 112 238
+    Q 100 216, 98 192
+    Q 96 170, 106 152
+    Q 118 138, 134 128
+    Q 124 108, 116 86
+    Q 110 64, 118 44
+    Q 128 26, 148 16
+    Q 172 6, 202 2
+    Q 234 0, 268 6
+    Q 298 14, 322 32
+    Q 338 46, 348 64
+    Q 358 52, 372 48
+    Q 390 44, 404 56
+    Q 414 68, 408 84
+    Q 400 96, 388 98
+    Q 398 110, 418 124
+    Q 436 140, 440 164
+    Q 442 186, 428 200
+    Q 414 212, 400 220
+    Q 390 228, 388 246
+    Q 388 266, 398 288
+    Q 412 312, 422 340
+    Q 430 370, 430 400
+    Q 428 430, 424 458
+    L 434 490
+    Z
+  "/>
+</svg>

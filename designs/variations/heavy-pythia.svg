@@ -1,0 +1,43 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="m">
+      <circle cx="256" cy="256" r="240" fill="white"/>
+      <!-- Pythia (Oracle) — left-facing bust, heavy/bold.
+           Head thrown BACK — chin tilted up, forehead angled away.
+           LONG NECK exposed by the backward tilt — the signature.
+           Feminine profile: smaller nose, softer chin, no beard.
+           Laurel wreath as 3-4 thick leaf shapes crowning the head.
+           The neck is elongated and graceful but BOLD/thick. -->
+      <path d="
+        M 185 490
+        C 190 455, 200 435, 216 422
+        C 232 409, 244 398, 250 384
+        C 256 370, 254 354, 248 338
+        C 242 322, 234 308, 228 294
+        C 222 280, 220 264, 224 248
+        C 228 232, 238 220, 252 212
+        C 266 204, 278 194, 286 182
+        C 294 170, 296 156, 290 144
+        C 284 132, 274 126, 262 124
+        C 250 122, 242 126, 238 134
+        C 244 120, 254 110, 270 104
+        C 286 98, 306 98, 324 106
+        C 342 114, 354 128, 358 146
+        C 362 164, 356 182, 342 196
+        C 328 210, 314 220, 302 232
+        C 336 230, 358 238, 374 252
+        C 390 266, 398 284, 398 306
+        C 398 328, 390 348, 376 366
+        C 362 384, 348 398, 340 416
+        C 332 434, 328 458, 328 490
+        Z
+      " fill="black"/>
+      <!-- Bold laurel leaves — thick wedge shapes projecting up from crown -->
+      <ellipse cx="264" cy="96" rx="16" ry="34" transform="rotate(-10 264 96)" fill="black"/>
+      <ellipse cx="300" cy="90" rx="14" ry="30" transform="rotate(15 300 90)" fill="black"/>
+      <ellipse cx="232" cy="106" rx="14" ry="28" transform="rotate(-35 232 106)" fill="black"/>
+      <ellipse cx="332" cy="98" rx="12" ry="26" transform="rotate(40 332 98)" fill="black"/>
+    </mask>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="#89B4C8" mask="url(#m)"/>
+</svg>

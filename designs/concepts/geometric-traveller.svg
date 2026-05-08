@@ -1,0 +1,17 @@
+<!-- The Traveller (Mirror): Herodotus with broad-brimmed petasos hat, travel cloak, gazing toward the horizon. 6 geometric elements — the wide hat is the defining silhouette feature. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Petasos hat brim - wide ellipse, the signature element -->
+  <ellipse cx="265" cy="105" rx="105" ry="18" fill="#5BC88A"/>
+  <!-- Hat crown - smaller circle atop -->
+  <circle cx="265" cy="88" r="35" fill="#5BC88A"/>
+  <!-- Head beneath hat -->
+  <circle cx="265" cy="140" r="44" fill="#5BC88A"/>
+  <!-- Neck -->
+  <rect x="249" y="180" width="32" height="26" fill="#5BC88A"/>
+  <!-- Travel cloak - large asymmetric trapezoid draping over body -->
+  <polygon points="200,205 330,205 355,440 175,440" fill="#5BC88A"/>
+  <!-- Cloak edge / wind-blown fold - triangle off one side suggesting movement -->
+  <polygon points="330,240 370,320 340,360" fill="#5BC88A"/>
+  <!-- Forward gaze line - subtle chin/face direction using offset rectangle -->
+  <rect x="290" y="150" width="22" height="14" rx="7" fill="#5BC88A" transform="rotate(-5 301 157)"/>
+</svg>

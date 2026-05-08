@@ -1,0 +1,40 @@
+<!-- The Herald (Lever): Civic messenger — bold raised arm with open hand beside the head, creating a wide distinctive silhouette above the head, strong jaw, proclamation posture -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <path fill="#C85B5B" d="
+    M 406 490
+    L 114 490
+    Q 134 470, 164 454
+    Q 194 440, 220 424
+    Q 240 408, 250 390
+    Q 256 370, 250 350
+    Q 240 330, 222 314
+    Q 200 298, 180 280
+    Q 160 262, 148 240
+    Q 136 218, 136 194
+    Q 136 172, 146 156
+    Q 158 142, 172 134
+    Q 162 118, 154 100
+    Q 148 80, 150 60
+    Q 154 42, 168 32
+    Q 184 24, 204 22
+    Q 228 20, 252 24
+    Q 274 30, 290 42
+    L 300 50
+    L 296 26
+    Q 294 8, 308 2
+    L 380 2
+    Q 396 4, 396 20
+    L 394 50
+    L 390 72
+    Q 404 86, 412 106
+    Q 422 132, 424 162
+    Q 424 192, 414 222
+    Q 404 246, 390 266
+    Q 376 286, 368 308
+    Q 362 330, 362 354
+    Q 364 378, 376 400
+    Q 390 422, 402 450
+    L 406 490
+    Z
+  "/>
+</svg>

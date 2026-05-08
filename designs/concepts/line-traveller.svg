@@ -1,0 +1,11 @@
+<!-- The Traveller (Mirror): Herodotus in wide-brimmed petasos hat, single line sweeping from hat brim across profile and down into travel cloak — curiosity and far-seeing observation. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <path
+    d="M 145 175 C 165 170, 195 165, 225 162 C 255 159, 285 158, 310 160 C 335 162, 355 167, 365 172 C 375 177, 372 182, 362 186 C 352 190, 335 192, 318 195 C 301 198, 284 200, 275 208 C 266 216, 264 228, 268 240 C 272 252, 282 262, 288 274 C 294 286, 296 300, 292 312 C 288 324, 278 334, 270 342 C 262 350, 255 356, 250 365 C 245 374, 244 384, 248 395 C 252 406, 262 418, 272 428 C 282 438, 295 445, 305 448 C 315 451, 322 450, 330 445 C 338 440, 345 430, 348 418 C 351 406, 350 392, 342 380 C 334 368, 320 360, 305 355 C 290 350, 272 348, 255 352 C 238 356, 222 366, 210 380"
+    fill="none"
+    stroke="#5BC88A"
+    stroke-width="10"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

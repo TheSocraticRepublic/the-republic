@@ -1,0 +1,38 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="m">
+      <circle cx="256" cy="256" r="240" fill="white"/>
+      <!-- Gadfly (Socrates) — left-facing bust, heavy/bold. THE MOST EXAGGERATED.
+           ENORMOUS bald dome — top of head at y=30, fills upper 40%+ of circle.
+           WEDGE nose — juts far left to about x=110, triangular/angular.
+           BLOCK beard — rectangular mass, drops straight down from chin.
+           Deep concavity between brow and nose (sunken eyes).
+           Caricature-level bold. The dome dominates. -->
+      <path d="
+        M 185 490
+        C 190 455, 198 435, 212 422
+        C 226 409, 238 398, 244 384
+        C 250 370, 248 354, 240 340
+        C 232 326, 220 316, 210 306
+        C 200 296, 192 284, 188 270
+        C 184 256, 182 240, 186 224
+        C 178 220, 164 214, 152 204
+        C 140 194, 130 180, 126 164
+        C 122 148, 126 134, 138 124
+        C 150 114, 164 114, 174 118
+        C 180 104, 188 86, 202 68
+        C 216 50, 240 38, 270 34
+        C 300 30, 332 36, 358 52
+        C 384 68, 402 94, 408 126
+        C 414 158, 406 192, 388 220
+        C 370 248, 344 266, 318 278
+        C 350 282, 376 296, 394 316
+        C 412 336, 416 360, 410 386
+        C 404 412, 390 432, 374 448
+        C 358 464, 348 478, 344 490
+        Z
+      " fill="black"/>
+    </mask>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="#C8A84B" mask="url(#m)"/>
+</svg>

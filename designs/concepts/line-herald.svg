@@ -1,0 +1,11 @@
+<!-- The Herald (Lever): Civic messenger mid-proclamation, single line from staff base through grip, up torso to open-mouthed profile projecting authority and urgent action. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <path
+    d="M 195 450 C 195 430, 195 400, 195 370 C 195 340, 195 310, 195 280 C 195 250, 195 220, 198 195 C 201 170, 208 150, 220 138 C 232 126, 248 120, 264 118 C 280 116, 296 118, 308 124 C 320 130, 328 140, 332 152 C 336 164, 335 178, 328 188 C 321 198, 310 204, 298 206 C 286 208, 274 205, 266 198 C 258 191, 254 180, 258 172 C 262 164, 272 160, 282 162 C 292 164, 300 172, 305 180 C 310 188, 312 198, 318 204 C 324 210, 334 212, 344 208 C 354 204, 362 194, 368 184 C 374 174, 378 162, 375 152"
+    fill="none"
+    stroke="#C85B5B"
+    stroke-width="10"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

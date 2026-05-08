@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <mask id="m">
+      <circle cx="256" cy="256" r="240" fill="white"/>
+      <!-- Aristotle/Peripatetic: slightly forward-tilted head, high intellectual forehead, straight Greek nose, neat pointed beard tapering down -->
+      <path d="
+        M 300 85
+        C 278 82, 258 95, 248 115
+        C 240 132, 238 152, 242 168
+        L 238 172
+        C 232 178, 225 182, 220 190
+        C 215 198, 212 205, 208 215
+        C 205 222, 205 228, 208 232
+        C 205 236, 200 242, 198 250
+        C 195 260, 198 268, 205 272
+        C 200 278, 195 286, 192 296
+        C 188 310, 192 322, 200 330
+        L 215 360
+        C 225 380, 218 400, 210 420
+        L 205 440
+        L 355 440
+        C 350 418, 342 395, 335 375
+        C 328 355, 324 338, 324 322
+        C 324 305, 328 290, 332 278
+        C 336 265, 340 252, 338 238
+        C 336 222, 328 210, 318 200
+        C 310 192, 306 182, 306 170
+        C 306 155, 312 140, 316 125
+        C 320 110, 318 95, 308 87
+        Z" fill="black"/>
+    </mask>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="#5BC88A" mask="url(#m)"/>
+</svg>

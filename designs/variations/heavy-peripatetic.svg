@@ -1,0 +1,42 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="m">
+      <circle cx="256" cy="256" r="240" fill="white"/>
+      <!-- Peripatetic (Aristotle) — left-facing bust, heavy/bold.
+           HIGH domed forehead, heavy brow ridge, straight nose, neat squared beard.
+           Head tilted slightly forward in thought. Thick scholarly neck.
+
+           Front profile (left side) has clear: forehead dome, brow shelf,
+           nose bridge, nose tip, lips, chin, rectangular beard, throat, chest.
+           Back (right side) is smooth: back of skull, neck, shoulder slope. -->
+      <path d="
+        M 180 490
+        C 185 460, 195 440, 210 428
+        C 225 416, 238 408, 245 396
+        C 252 384, 250 370, 244 358
+        C 238 346, 228 338, 220 328
+        C 212 318, 208 306, 210 294
+        C 212 282, 218 272, 226 266
+        C 218 258, 206 250, 196 240
+        C 186 230, 180 218, 180 204
+        C 180 190, 186 178, 196 170
+        C 190 166, 180 160, 174 152
+        C 168 144, 170 134, 180 128
+        C 190 122, 200 124, 208 128
+        C 214 116, 222 102, 236 90
+        C 250 78, 270 72, 294 72
+        C 318 72, 340 80, 356 94
+        C 372 108, 380 128, 380 150
+        C 380 172, 372 192, 358 208
+        C 344 224, 330 234, 320 244
+        C 340 248, 358 258, 370 274
+        C 382 290, 386 310, 384 332
+        C 382 354, 374 374, 364 392
+        C 354 410, 346 432, 342 460
+        L 338 490
+        Z
+      " fill="black"/>
+    </mask>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="#5BC88A" mask="url(#m)"/>
+</svg>

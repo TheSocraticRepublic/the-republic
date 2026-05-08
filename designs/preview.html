@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Republic — Athenian Profile Concepts</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark { background: #111113; color: #e8e6e3; }
+    body.light { background: #FAFAF9; color: #1c1917; }
+    .controls {
+      position: sticky; top: 0; z-index: 10;
+      padding: 16px 32px;
+      display: flex; gap: 12px; align-items: center;
+      border-bottom: 1px solid rgba(128,128,128,0.2);
+    }
+    body.dark .controls { background: #111113; }
+    body.light .controls { background: #f5f4f3; }
+    .toggle {
+      padding: 6px 16px; border-radius: 4px; border: 1px solid rgba(128,128,128,0.3);
+      cursor: pointer; font-size: 13px; background: transparent;
+    }
+    body.dark .toggle { color: #e8e6e3; }
+    body.light .toggle { color: #1c1917; }
+    .toggle.active { border-color: #C8A84B; background: rgba(200,168,75,0.1); }
+    h1 { padding: 32px 32px 8px; font-weight: 300; font-size: 24px; letter-spacing: 1px; }
+    h1 span { font-size: 14px; opacity: 0.5; display: block; margin-top: 4px; font-weight: 400; }
+    .direction {
+      padding: 32px;
+      border-bottom: 1px solid rgba(128,128,128,0.1);
+    }
+    .direction h2 {
+      font-weight: 400; font-size: 16px; margin-bottom: 8px;
+      text-transform: uppercase; letter-spacing: 2px;
+    }
+    .direction p {
+      font-size: 13px; opacity: 0.6; margin-bottom: 24px; max-width: 600px; line-height: 1.6;
+    }
+    .character-row {
+      display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start;
+      margin-bottom: 24px;
+    }
+    .character {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .character-label {
+      font-size: 11px; opacity: 0.5; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .sizes {
+      display: flex; align-items: flex-end; gap: 24px;
+    }
+    .size-group { text-align: center; }
+    .size-group span {
+      display: block; font-size: 10px; opacity: 0.4; margin-top: 4px;
+    }
+    .size-group img { display: block; margin: 0 auto; }
+    .row-label {
+      font-size: 12px; font-weight: 500; opacity: 0.7; margin-bottom: 12px;
+      padding-left: 4px;
+    }
+  </style>
+</head>
+<body class="light">
+  <div class="controls">
+    <button class="toggle" onclick="setMode('dark')">Dark</button>
+    <button class="toggle active" onclick="setMode('light')">Light</button>
+  </div>
+  <h1>The Republic — Athenian Profile Concepts
+    <span>Five characters, four visual languages. Pick a direction.</span>
+  </h1>
+
+  <div class="direction">
+    <h2>1. Geometric Profile</h2>
+    <p>Pure geometric primitives compose classical profiles. Otl Aicher meets Athenian tetradrachm. Each character built from 5-7 shapes.</p>
+    <div class="character-row">
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/geometric-peripatetic.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/geometric-peripatetic.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/geometric-peripatetic.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Peripatetic</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/geometric-pythia.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/geometric-pythia.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/geometric-pythia.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Pythia</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/geometric-gadfly.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/geometric-gadfly.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/geometric-gadfly.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Gadfly</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/geometric-herald.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/geometric-herald.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/geometric-herald.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Herald</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/geometric-traveller.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/geometric-traveller.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/geometric-traveller.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Traveller</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="direction">
+    <h2>2. Negative Space Cameo</h2>
+    <p>Accent-colored circle with the profile cut away as transparent negative space. Ancient coin inverted — defined by absence. Bold enough to read at 32px.</p>
+    <div class="character-row">
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/cameo-peripatetic.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/cameo-peripatetic.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/cameo-peripatetic.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Peripatetic</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/cameo-pythia.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/cameo-pythia.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/cameo-pythia.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Pythia</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/cameo-gadfly.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/cameo-gadfly.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/cameo-gadfly.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Gadfly</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/cameo-herald.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/cameo-herald.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/cameo-herald.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Herald</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/cameo-traveller.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/cameo-traveller.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/cameo-traveller.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Traveller</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="direction">
+    <h2>3. Continuous Line</h2>
+    <p>Single unbroken stroke defines each profile. Picasso's one-line drawings applied to classical subjects. Bold stroke weight for small-size survival.</p>
+    <div class="character-row">
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/line-peripatetic.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/line-peripatetic.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/line-peripatetic.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Peripatetic</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/line-pythia.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/line-pythia.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/line-pythia.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Pythia</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/line-gadfly.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/line-gadfly.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/line-gadfly.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Gadfly</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/line-herald.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/line-herald.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/line-herald.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Herald</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/line-traveller.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/line-traveller.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/line-traveller.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Traveller</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="direction">
+    <h2>4. Bold Silhouette</h2>
+    <p>Solid filled profiles with no interior detail. Black-figure pottery meets modern pictogram. Each defined by ONE unmistakable contour. Rubber stamp energy.</p>
+    <div class="character-row">
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/silhouette-peripatetic.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/silhouette-peripatetic.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/silhouette-peripatetic.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Peripatetic</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/silhouette-pythia.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/silhouette-pythia.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/silhouette-pythia.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Pythia</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/silhouette-gadfly.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/silhouette-gadfly.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/silhouette-gadfly.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Gadfly</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/silhouette-herald.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/silhouette-herald.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/silhouette-herald.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Herald</div>
+      </div>
+      <div class="character">
+        <div class="sizes">
+          <div class="size-group"><img src="concepts/silhouette-traveller.svg" width="120" height="120"><span>120px</span></div>
+          <div class="size-group"><img src="concepts/silhouette-traveller.svg" width="48" height="48"><span>48px</span></div>
+          <div class="size-group"><img src="concepts/silhouette-traveller.svg" width="32" height="32"><span>32px</span></div>
+        </div>
+        <div class="character-label">Traveller</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function setMode(mode) {
+      document.body.className = mode;
+      document.querySelectorAll('.toggle').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>
