@@ -80,8 +80,7 @@ export default function LoginPage() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: 'url(/landing/cave-light.jpg)',
-          filter: 'brightness(0.35)',
+          backgroundImage: 'url(/cave-login.jpg)',
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
