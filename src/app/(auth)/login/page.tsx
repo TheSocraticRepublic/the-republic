@@ -42,7 +42,7 @@ export default function LoginPage() {
 
   async function handleVerifyCode(e: React.FormEvent) {
     e.preventDefault()
-    if (code.length !== 6) return
+    if (code.length !== 8) return
 
     setLoading(true)
     setError(null)
@@ -66,8 +66,7 @@ export default function LoginPage() {
         throw new Error(message)
       }
 
-      // Redirect to app on success — server sets the auth cookie
-      window.location.href = '/oracle'
+      window.location.href = '/investigate'
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -76,28 +75,41 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-surface-0 px-4">
+    <div className="relative flex min-h-screen flex-col items-center justify-center px-4">
+      {/* Cave photo background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: 'url(/landing/forest-trail.jpg)',
+          filter: 'brightness(0.3)',
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
+
       {/* Back to home */}
-      <div className="absolute top-6 left-6">
+      <div className="absolute top-6 left-6 z-10">
         <Link
           href="/"
-          className="flex items-center gap-1.5 text-sm text-text-muted transition-colors hover:text-text-secondary"
+          className="flex items-center gap-1.5 text-sm text-white/60 transition-colors hover:text-white/80"
         >
           <ArrowLeft size={14} strokeWidth={1.75} />
           Back
         </Link>
       </div>
 
-      <div className="w-full max-w-sm">
+      <div className="relative z-10 w-full max-w-sm">
         {/* Header */}
         <div className="mb-8 text-center">
           <h1
-            className="mb-1 text-xl font-bold text-text-primary"
+            className="mb-1 text-2xl font-bold text-white"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
-            The Republic
+            Open Cave
           </h1>
-          <p className="text-sm text-text-muted">
+          <p className="text-xs font-medium uppercase tracking-widest text-white/40">
+            A Republic for the examined institution
+          </p>
+          <p className="mt-4 text-sm text-white/60">
             {step === 'email'
               ? 'Enter your email to continue'
               : `Code sent to ${email}`}
@@ -105,13 +117,13 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-xl border border-border-strong bg-surface-1 p-6 shadow-md">
+        <div className="rounded-xl border border-white/10 bg-black/60 p-6 shadow-2xl backdrop-blur-md">
           {step === 'email' ? (
             <form onSubmit={handleSendCode} className="space-y-4">
               <div>
                 <label
                   htmlFor="email"
-                  className="mb-1.5 block text-xs font-medium text-text-secondary"
+                  className="mb-1.5 block text-xs font-medium text-white/50"
                 >
                   Email address
                 </label>
@@ -123,18 +135,18 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full rounded-lg border border-border bg-surface-0 px-3.5 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none transition-colors focus:border-border-strong focus:bg-surface-1"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-white/25 outline-none transition-colors focus:border-white/20 focus:bg-white/10"
                 />
               </div>
 
               {error && (
-                <p className="text-xs text-red-600">{error}</p>
+                <p className="text-xs text-red-400">{error}</p>
               )}
 
               <button
                 type="submit"
                 disabled={loading || !email.trim()}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border-strong bg-surface-3 py-2.5 text-sm font-semibold text-text-primary transition-all duration-150 hover:bg-text-faint/20 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {loading ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -147,9 +159,9 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="code"
-                  className="mb-1.5 block text-xs font-medium text-text-secondary"
+                  className="mb-1.5 block text-xs font-medium text-white/50"
                 >
-                  6-digit code
+                  8-digit code
                 </label>
                 <input
                   id="code"
@@ -157,23 +169,23 @@ export default function LoginPage() {
                   required
                   autoFocus
                   inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
+                  pattern="[0-9]{8}"
+                  maxLength={8}
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                  placeholder="000000"
-                  className="w-full rounded-lg border border-border bg-surface-0 px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.4em] text-text-primary placeholder-text-faint outline-none transition-colors focus:border-border-strong focus:bg-surface-1"
+                  placeholder="00000000"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.3em] text-white placeholder-white/25 outline-none transition-colors focus:border-white/20 focus:bg-white/10"
                 />
               </div>
 
               {error && (
-                <p className="text-xs text-red-600">{error}</p>
+                <p className="text-xs text-red-400">{error}</p>
               )}
 
               <button
                 type="submit"
-                disabled={loading || code.length !== 6}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border-strong bg-surface-3 py-2.5 text-sm font-semibold text-text-primary transition-all duration-150 hover:bg-text-faint/20 disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={loading || code.length !== 8}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {loading ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -188,7 +200,7 @@ export default function LoginPage() {
                   setCode('')
                   setError(null)
                 }}
-                className="w-full text-center text-xs text-text-faint transition-colors hover:text-text-muted"
+                className="w-full text-center text-xs text-white/30 transition-colors hover:text-white/50"
               >
                 Use a different email
               </button>
@@ -196,7 +208,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p className="mt-4 text-center text-xs text-text-faint">
+        <p className="mt-4 text-center text-xs text-white/30">
           No password. No tracking. Just a code.
         </p>
       </div>
