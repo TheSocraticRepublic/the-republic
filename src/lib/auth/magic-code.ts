@@ -6,7 +6,7 @@ import { eq, and, gt, lt, isNull, sql } from 'drizzle-orm'
 import { sendMagicCodeEmail } from '@/lib/email'
 
 const CODE_TTL_MINUTES = 10
-const MAX_CODES_PER_HOUR = 10
+const MAX_CODES_PER_HOUR = 3
 const MAX_VERIFY_ATTEMPTS = 5
 
 function generateCode(): string {
@@ -20,26 +20,6 @@ function hashCode(code: string): string {
 export async function sendMagicCode(email: string): Promise<void> {
   const normalized = email.toLowerCase().trim()
   const db = getDb()
-
-  // If there's already an unused, unexpired code created in the last 30 seconds,
-  // this is a Netlify retry — skip silently
-  const thirtySecondsAgo = new Date(Date.now() - 30_000)
-  const recentUnused = await db
-    .select({ id: magicCodes.id })
-    .from(magicCodes)
-    .where(
-      and(
-        eq(magicCodes.email, normalized),
-        isNull(magicCodes.usedAt),
-        gt(magicCodes.expiresAt, new Date()),
-        gt(magicCodes.createdAt, thirtySecondsAgo)
-      )
-    )
-    .limit(1)
-
-  if (recentUnused.length > 0) {
-    return
-  }
 
   const expiryCutoff = new Date(Date.now() - CODE_TTL_MINUTES * 60_000)
   await db
