@@ -14,6 +14,9 @@
 [functions."___netlify-server-handler"]
   max_retries = 0
 
+[functions."___netlify-server-handler".environment]
+  NODE_OPTIONS = "--unhandled-rejections=warn"
+
 [[headers]]
   for = "/*"
   [headers.values]
