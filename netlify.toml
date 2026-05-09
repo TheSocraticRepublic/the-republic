@@ -8,6 +8,12 @@
 [build.environment]
   NODE_VERSION = "22"
 
+[functions]
+  node_bundler = "esbuild"
+
+[functions."___netlify-server-handler"]
+  max_retries = 0
+
 [[headers]]
   for = "/*"
   [headers.values]
