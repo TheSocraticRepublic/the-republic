@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { Search } from 'lucide-react'
 
 export const metadata = {
-  title: 'Investigations — The Republic',
+  title: 'Investigations',
 }
 
 function truncate(text: string, max = 120): string {

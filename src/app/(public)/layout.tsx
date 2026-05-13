@@ -14,7 +14,7 @@ export default function PublicLayout({
             href="/"
             className="text-sm font-semibold tracking-tight text-text-primary hover:text-text-secondary transition-colors"
           >
-            The Republic
+            Open Cave
           </Link>
           <Link
             href="/investigate"
@@ -36,7 +36,7 @@ export default function PublicLayout({
       <footer className="border-t border-border">
         <div className="mx-auto max-w-4xl px-6 py-6 flex items-center justify-between">
           <p className="text-xs text-text-faint">
-            The Republic — making institutional power legible
+            Open Cave — making institutional power legible
           </p>
           <Link
             href="/"

@@ -7,7 +7,7 @@ import { SessionCard } from '@/components/gadfly/session-card'
 import { NewSessionDialog } from '@/components/gadfly/new-session-dialog'
 
 export const metadata = {
-  title: 'Gadfly — The Republic',
+  title: 'Gadfly',
 }
 
 interface GadflyPageProps {

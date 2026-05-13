@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps) {
     .where(eq(forumThreads.id, threadId))
     .limit(1)
   const title = rows[0]?.title ?? 'Thread'
-  return { title: `${title} — The Republic` }
+  return { title }
 }
 
 export default async function ThreadPage({ params, searchParams }: PageProps) {

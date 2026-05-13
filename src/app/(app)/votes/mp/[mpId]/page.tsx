@@ -9,7 +9,7 @@ import { MpVoteList } from '@/components/votes/mp-vote-list'
 import { MpLetterGenerator } from '@/components/votes/mp-letter-generator'
 
 export const metadata = {
-  title: 'MP Profile — The Republic',
+  title: 'MP Profile',
 }
 
 interface PageProps {

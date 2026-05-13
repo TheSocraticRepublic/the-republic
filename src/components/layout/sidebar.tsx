@@ -67,11 +67,11 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
             className="text-base font-bold tracking-tight text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
-            The Republic
+            Open Cave
           </span>
         </Link>
         <p className="mt-0.5 text-[11px] tracking-wider text-text-muted uppercase">
-          Civic AI Framework
+          Civic AI
         </p>
       </div>
 
@@ -361,15 +361,16 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
             )}
           </div>
         )}
-        <form action="/api/auth/signout" method="POST">
-          <button
-            type="submit"
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary"
-          >
-            <LogOut size={14} strokeWidth={1.75} />
-            Sign out
-          </button>
-        </form>
+        <button
+          onClick={async () => {
+            await fetch('/api/auth/signout', { method: 'POST' })
+            window.location.href = '/login'
+          }}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary"
+        >
+          <LogOut size={14} strokeWidth={1.75} />
+          Sign out
+        </button>
       </div>
     </nav>
   )

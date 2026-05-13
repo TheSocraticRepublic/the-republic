@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps) {
     .limit(1)
 
   return {
-    title: inv ? `${inv.concern.slice(0, 80)} — The Archive` : 'Archived Investigation — The Republic',
+    title: inv ? `${inv.concern.slice(0, 80)} — The Archive` : 'Archived Investigation',
   }
 }
 

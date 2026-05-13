@@ -18,7 +18,7 @@ export default function ForumPolicyPage() {
             className="rounded-xl border border-border bg-surface-1 shadow-sm px-5 py-4 text-sm text-text-secondary leading-relaxed space-y-2"
           >
             <p>
-              The Republic Forum is a space for people doing civic work — investigating public
+              The Open Cave Forum is a space for people doing civic work — investigating public
               institutions, filing access to information requests, tracking policy outcomes, and
               organizing around shared concerns. It is a tool for democratic participation, not
               a general discussion platform.

@@ -3,7 +3,7 @@ export function DemoVoteRecord() {
     <div
       className="mx-auto mt-8 max-w-lg overflow-hidden rounded-xl border border-border-strong bg-surface-1 shadow-sm"
       data-scroll-fade
-      aria-label="Example vote record from The Republic"
+      aria-label="Example vote record from Open Cave"
     >
       <div className="px-6 py-5">
         <div className="flex items-start justify-between gap-4">

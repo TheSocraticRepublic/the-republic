@@ -3,7 +3,7 @@ import { PostalCodeForm } from '@/components/votes/postal-code-form'
 import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
 export const metadata = {
-  title: 'Vote Tracker — The Republic',
+  title: 'Vote Tracker',
 }
 
 export default function VoteTrackerPage() {

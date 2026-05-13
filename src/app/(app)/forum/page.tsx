@@ -10,7 +10,7 @@ import { ThreadFilters } from '@/components/forum/thread-filters'
 import { Pagination } from '@/components/forum/pagination'
 
 export const metadata = {
-  title: 'Forum — The Republic',
+  title: 'Forum',
 }
 
 interface SearchParams {

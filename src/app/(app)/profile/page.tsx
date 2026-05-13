@@ -14,7 +14,7 @@ import {
 } from '@/lib/credentials'
 
 export const metadata = {
-  title: 'Profile — The Republic',
+  title: 'Profile',
 }
 
 function formatDate(date: Date): string {
