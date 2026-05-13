@@ -250,7 +250,7 @@ export function PolicyBriefTemplate({ data }: { data: PolicyBriefData }) {
 
         {/* Footer */}
         <View style={styles.docFooter}>
-          <Text style={styles.footerBrand}>THE REPUBLIC</Text>
+          <Text style={styles.footerBrand}>OPEN CAVE</Text>
           <Text style={styles.footerUrl}>
             Generated from Open Cave -- opencave.ca -- {date}
           </Text>
@@ -294,7 +294,7 @@ export function PolicyBriefTemplate({ data }: { data: PolicyBriefData }) {
 
         {/* Footer */}
         <View style={styles.docFooter}>
-          <Text style={styles.footerBrand}>THE REPUBLIC</Text>
+          <Text style={styles.footerBrand}>OPEN CAVE</Text>
           <Text style={styles.footerUrl}>
             Generated from Open Cave -- opencave.ca -- {date}
           </Text>

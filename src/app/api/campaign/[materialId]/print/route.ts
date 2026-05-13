@@ -546,7 +546,7 @@ function printPage(opts: {
 <button class="print-btn" onclick="window.print()">Print</button>
 <div class="page">
   <div class="header">
-    <p class="wordmark">THE REPUBLIC</p>
+    <p class="wordmark">OPEN CAVE</p>
     <p class="doc-label">${esc(opts.label)}</p>
     <h1 class="doc-title">${esc(opts.title)}</h1>
     <p class="doc-date">${esc(opts.date)}</p>

@@ -100,7 +100,7 @@ export function AccentBand({ color }: AccentBandProps) {
 }
 
 // -------------------------------------------------------------------
-// Wordmark — "THE REPUBLIC" text
+// Wordmark — "OPEN CAVE" text
 // -------------------------------------------------------------------
 
 export function Wordmark({ subtle }: { subtle?: boolean }) {
