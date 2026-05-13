@@ -13,9 +13,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  async function handleSendCode(e: React.FormEvent) {
-    e.preventDefault()
-    if (!email.trim()) return
+  async function handleSendCode() {
+    if (!email.trim() || loading) return
 
     setLoading(true)
     setError(null)
@@ -40,9 +39,8 @@ export default function LoginPage() {
     }
   }
 
-  async function handleVerifyCode(e: React.FormEvent) {
-    e.preventDefault()
-    if (code.length !== 8) return
+  async function handleVerifyCode() {
+    if (code.length !== 8 || loading) return
 
     setLoading(true)
     setError(null)
@@ -118,7 +116,7 @@ export default function LoginPage() {
         {/* Card */}
         <div className="rounded-xl border border-white/10 bg-black/60 p-6 shadow-2xl backdrop-blur-md">
           {step === 'email' ? (
-            <form onSubmit={handleSendCode} className="space-y-4">
+            <div className="space-y-4">
               <div>
                 <label
                   htmlFor="email"
@@ -129,10 +127,10 @@ export default function LoginPage() {
                 <input
                   id="email"
                   type="email"
-                  required
                   autoFocus
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && email.trim() && handleSendCode()}
                   placeholder="you@example.com"
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-white/25 outline-none transition-colors focus:border-white/20 focus:bg-white/10"
                 />
@@ -143,7 +141,7 @@ export default function LoginPage() {
               )}
 
               <button
-                type="submit"
+                onClick={handleSendCode}
                 disabled={loading || !email.trim()}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -152,9 +150,9 @@ export default function LoginPage() {
                 ) : null}
                 Send code
               </button>
-            </form>
+            </div>
           ) : (
-            <form onSubmit={handleVerifyCode} className="space-y-4">
+            <div className="space-y-4">
               <div>
                 <label
                   htmlFor="code"
@@ -165,13 +163,12 @@ export default function LoginPage() {
                 <input
                   id="code"
                   type="text"
-                  required
                   autoFocus
                   inputMode="numeric"
-                  pattern="[0-9]{8}"
                   maxLength={8}
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={(e) => e.key === 'Enter' && code.length === 8 && handleVerifyCode()}
                   placeholder="00000000"
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.3em] text-white placeholder-white/25 outline-none transition-colors focus:border-white/20 focus:bg-white/10"
                 />
@@ -182,7 +179,7 @@ export default function LoginPage() {
               )}
 
               <button
-                type="submit"
+                onClick={handleVerifyCode}
                 disabled={loading || code.length !== 8}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -193,7 +190,6 @@ export default function LoginPage() {
               </button>
 
               <button
-                type="button"
                 onClick={() => {
                   setStep('email')
                   setCode('')
@@ -203,7 +199,7 @@ export default function LoginPage() {
               >
                 Use a different email
               </button>
-            </form>
+            </div>
           )}
         </div>
 
