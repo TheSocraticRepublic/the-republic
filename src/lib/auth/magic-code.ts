@@ -17,9 +17,28 @@ function hashCode(code: string): string {
   return createHash('sha256').update(code).digest('hex')
 }
 
+const DEDUP_WINDOW_MS = 30_000
+
 export async function sendMagicCode(email: string): Promise<void> {
   const normalized = email.toLowerCase().trim()
   const db = getDb()
+
+  // Idempotency: if an unused code was created in the last 30s, treat as duplicate
+  const dedupCutoff = new Date(Date.now() - DEDUP_WINDOW_MS)
+  const existing = await db
+    .select({ id: magicCodes.id })
+    .from(magicCodes)
+    .where(
+      and(
+        eq(magicCodes.email, normalized),
+        isNull(magicCodes.usedAt),
+        gt(magicCodes.createdAt, dedupCutoff),
+        gt(magicCodes.expiresAt, new Date())
+      )
+    )
+    .limit(1)
+
+  if (existing.length > 0) return
 
   const expiryCutoff = new Date(Date.now() - CODE_TTL_MINUTES * 60_000)
   await db
