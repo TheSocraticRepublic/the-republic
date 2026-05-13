@@ -6,7 +6,7 @@ import { eq, and, gt, lt, isNull, sql } from 'drizzle-orm'
 import { sendMagicCodeEmail } from '@/lib/email'
 
 const CODE_TTL_MINUTES = 10
-const MAX_CODES_PER_HOUR = 3
+const MAX_CODES_PER_HOUR = 5
 const MAX_VERIFY_ATTEMPTS = 5
 
 function generateCode(): string {
