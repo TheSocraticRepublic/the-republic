@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
     model: anthropic(MODEL),
     system: systemPrompt,
     messages: conversationHistory,
-    maxTokens: 4096,
+    maxOutputTokens: 4096,
     onFinish: async ({ text }) => {
       try {
         const gadflyTurnIndex = nextTurnIndex + 1
@@ -199,8 +199,7 @@ export async function POST(request: NextRequest) {
                 content: `Did the citizen demonstrate a genuine insight, discovery, or independent connection in this message? If yes, state the insight in one sentence. If no, respond with NONE.\n\nCitizen message: "${content.trim()}"`,
               },
             ],
-            maxTokens: 512,
-            maxOutputTokens: 120,
+            maxOutputTokens: 512,
           })
 
           const insightText = insightResult.text.trim()

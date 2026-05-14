@@ -66,7 +66,7 @@ export async function POST(
         content: `Summarize this Canadian federal bill:\n\nBill Number: ${bill.number}\nTitle: ${bill.titleEn}\nSession: ${bill.session}\nStatus: ${bill.statusCode ?? 'Unknown'}\nIntroduced: ${bill.introduced ?? 'Unknown'}\n${bill.shortTitleEn ? `Short Title: ${bill.shortTitleEn}` : ''}\n${bill.legisInfoUrl ? `LEGISinfo: ${bill.legisInfoUrl}` : ''}`,
       },
     ],
-    maxTokens: 4096,
+    maxOutputTokens: 4096,
     onFinish: async ({ text }) => {
       try {
         await db

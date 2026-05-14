@@ -75,7 +75,7 @@ export async function POST(
         content: `Explain this recorded division in the Canadian House of Commons:\n\nVote: ${vote.session}/${vote.number}\nDate: ${vote.date}\nDescription: ${vote.descriptionEn}\nResult: ${vote.result}\nYea: ${vote.yeaTotal}, Nay: ${vote.nayTotal}, Paired: ${vote.pairedTotal ?? 0}${partyContext}`,
       },
     ],
-    maxTokens: 4096,
+    maxOutputTokens: 4096,
     onFinish: async ({ text }) => {
       try {
         await db

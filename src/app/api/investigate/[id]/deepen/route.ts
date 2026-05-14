@@ -82,7 +82,7 @@ export async function POST(
       role: 'user',
       content: `Investigation concern: ${investigation.concern}\n\nJurisdiction: ${investigation.jurisdictionName || 'Not specified'}\n\nBriefing analysis:\n${investigation.briefingText}`,
     }],
-    maxTokens: 4096,
+    maxOutputTokens: 4096,
     onFinish: async ({ text }) => {
       try {
         const match = text.match(/## The Deeper Question\s*\n+([\s\S]*?)(?=\n## |$)/)
@@ -122,7 +122,7 @@ async function extractPlayers(
       role: 'user',
       content: briefingText,
     }],
-    maxTokens: 2048,
+    maxOutputTokens: 2048,
   })
 
   // Parse the JSON response

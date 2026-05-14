@@ -311,7 +311,7 @@ export async function POST(request: NextRequest) {
     model: anthropic(MODEL),
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],
-    maxTokens: 4096,
+    maxOutputTokens: 4096,
     onFinish: async ({ text }) => {
       // --- Stage 2: Async persist after streaming completes ---
       try {
@@ -494,7 +494,7 @@ async function analyzeVoteRelevance(
     model: anthropic(MODEL),
     system: VOTE_RELEVANCE_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
-    maxTokens: 2048,
+    maxOutputTokens: 2048,
   })
 
   // Parse the JSON response

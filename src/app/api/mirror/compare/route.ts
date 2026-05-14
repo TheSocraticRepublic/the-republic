@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     model: anthropic(MODEL),
     system: MIRROR_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
-    maxTokens: 4096,
+    maxOutputTokens: 4096,
   })
 
   // Log prompt version for observability

@@ -125,7 +125,7 @@ export async function POST(
     model: anthropic(MODEL),
     system: VOTE_LETTER_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
-    maxTokens: 4096,
+    maxOutputTokens: 4096,
     onFinish: async ({ text }) => {
       try {
         await db.insert(leverActions).values({
