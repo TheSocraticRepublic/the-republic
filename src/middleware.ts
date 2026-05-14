@@ -20,6 +20,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/diagnostic/') ||
     pathname.startsWith('/api/archive') ||
     pathname.startsWith('/archive') ||
     pathname.startsWith('/api/users/') ||
