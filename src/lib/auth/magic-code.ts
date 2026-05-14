@@ -21,11 +21,7 @@ const DEDUP_WINDOW_MS = 30_000
 
 export async function sendMagicCode(email: string): Promise<void> {
   const normalized = email.toLowerCase().trim()
-  const t0 = Date.now()
-  const log = (step: string) => console.log(`[magic-code] ${step} t=${Date.now() - t0}ms`)
-
   const db = getDb()
-  log('db-ref')
 
   const dedupCutoff = new Date(Date.now() - DEDUP_WINDOW_MS)
   const existing = await db
@@ -40,12 +36,8 @@ export async function sendMagicCode(email: string): Promise<void> {
       )
     )
     .limit(1)
-  log('dedup-check')
 
-  if (existing.length > 0) {
-    log('DEDUP-HIT (returning early)')
-    return
-  }
+  if (existing.length > 0) return
 
   const expiryCutoff = new Date(Date.now() - CODE_TTL_MINUTES * 60_000)
   await db
@@ -56,7 +48,6 @@ export async function sendMagicCode(email: string): Promise<void> {
         lt(magicCodes.expiresAt, expiryCutoff)
       )
     )
-  log('cleanup')
 
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
   const recentCodes = await db
@@ -68,7 +59,6 @@ export async function sendMagicCode(email: string): Promise<void> {
         gt(magicCodes.createdAt, oneHourAgo)
       )
     )
-  log('count-check')
 
   if (recentCodes[0].count >= MAX_CODES_PER_HOUR) {
     throw new Error('Too many codes requested. Try again later.')
@@ -78,7 +68,6 @@ export async function sendMagicCode(email: string): Promise<void> {
     .update(magicCodes)
     .set({ usedAt: new Date() })
     .where(and(eq(magicCodes.email, normalized), isNull(magicCodes.usedAt)))
-  log('invalidate-old')
 
   const code = generateCode()
   const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60_000)
@@ -88,10 +77,8 @@ export async function sendMagicCode(email: string): Promise<void> {
     code: hashCode(code),
     expiresAt,
   })
-  log('insert')
 
   await sendMagicCodeEmail(normalized, code)
-  log('email-sent')
 }
 
 export type VerifyResult =
