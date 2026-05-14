@@ -32,7 +32,7 @@ export function LandingCta() {
             className="text-sm leading-relaxed text-text-secondary"
             style={{ fontFamily: 'var(--font-serif)' }}
           >
-            Describe a civic issue and Open Cave investigates it — documents,
+            Describe a civic issue and Open Cave investigates it. Documents,
             analysis, actions, and comparisons in one complete briefing.
           </p>
           <div className="mt-5">

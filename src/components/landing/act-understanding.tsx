@@ -4,14 +4,14 @@ const arms = [
   {
     name: 'Scout',
     question: 'What if you knew which documents to look for?',
-    body: 'The Scout identifies the documents that govern your issue — the cutting permit, the forest stewardship plan, the watershed assessment, the comparable harvest plans from adjacent tenure holders — before you have to read a word. You start with a concern, not a document number.',
+    body: 'The Scout identifies the documents that govern your issue: the cutting permit, the forest stewardship plan, the watershed assessment, the comparable harvest plans from adjacent tenure holders. All before you have to read a word. You start with a concern, not a document number.',
     accent: '#9333EA',
     texture: 'topo' as const,
   },
   {
     name: 'Oracle',
     question: 'What if 186 pages could speak plainly?',
-    body: 'The Oracle reads the full forest stewardship plan and surfaces what matters: which streams are classified as fish-bearing, what the cumulative cut-block percentage means for the watershed, and why the visual quality assessment doesn\'t mention the trail you walk every week. It is a lens, not an advocate. It shows you where to look.',
+    body: 'The Oracle reads the full forest stewardship plan and shows you what matters: which streams are classified as fish-bearing, what the cumulative cut-block percentage means for the watershed, and why the visual quality assessment doesn\'t mention the trail you walk every week. It is a lens, not an advocate. It shows you where to look.',
     accent: '#0891B2',
     texture: 'clean' as const,
   },

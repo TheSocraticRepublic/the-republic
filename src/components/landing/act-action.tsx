@@ -66,8 +66,8 @@ export function ActAction() {
             }}
           >
             Public statements are easy. Voting records are not. The Vote Tracker
-            surfaces the gap between what your representative says and how they
-            vote — then generates a letter you can send to their constituency
+            shows the gap between what your representative says and how they
+            vote, then generates a letter you can send to their constituency
             office.
           </p>
 
