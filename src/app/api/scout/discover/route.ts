@@ -218,6 +218,7 @@ export async function POST(request: NextRequest) {
     model: anthropic(MODEL),
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],
+    maxTokens: 4096,
   })
 
   // Log prompt version for observability

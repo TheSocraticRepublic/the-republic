@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
     model: anthropic(MODEL),
     system: ORACLE_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
+    maxTokens: 4096,
     onFinish: async ({ text }) => {
       // Save analysis to DB after streaming completes
       try {

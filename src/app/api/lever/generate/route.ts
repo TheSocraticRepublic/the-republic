@@ -216,6 +216,7 @@ Produce a complete, fileable document. Do not include explanatory preamble — g
     model: anthropic(MODEL),
     system: LEVER_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
+    maxTokens: 4096,
     onFinish: async ({ text }) => {
       try {
         await db

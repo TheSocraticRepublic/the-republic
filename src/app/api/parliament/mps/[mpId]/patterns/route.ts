@@ -107,6 +107,7 @@ export async function POST(
         content: `Analyze the voting patterns of ${mp.name} (${mp.party}).\n\nVoting record (${ballots.length} most recent votes):\n${voteRecordText}`,
       },
     ],
+    maxTokens: 4096,
     onFinish: async ({ text }) => {
       try {
         if (cached) {

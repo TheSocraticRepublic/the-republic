@@ -140,6 +140,7 @@ export async function POST(
       model: anthropic(MODEL),
       system: CONTRADICTION_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
+      maxTokens: 2048,
     })
 
     let contradictions: unknown[]

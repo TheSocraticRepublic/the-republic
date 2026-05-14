@@ -198,6 +198,7 @@ export async function POST(
       model: anthropic(MODEL),
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
+      maxTokens: 2048,
     })
     rawText = text
 
@@ -239,6 +240,7 @@ export async function POST(
             content: `Your previous response failed validation: ${safeErrorMessage}. Fix and return valid JSON.`,
           },
         ],
+        maxTokens: 2048,
       })
 
       const cleaned = retryText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
