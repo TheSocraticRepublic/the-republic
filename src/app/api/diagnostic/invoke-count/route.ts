@@ -21,9 +21,10 @@ export async function POST(request: NextRequest) {
   const tInsert = Date.now()
 
   // Count total invocations for this key
-  const [{ count }] = await db.execute(
-    sql`SELECT count(*) as count FROM magic_codes WHERE email = ${`__diag_${testKey}`}`
-  ) as [{ count: string }]
+  const rows = await db.execute(
+    sql`SELECT count(*)::int as count FROM magic_codes WHERE email = ${`__diag_${testKey}`}`
+  ) as unknown as { count: number }[]
+  const count = rows[0]?.count ?? 0
   const tCount = Date.now()
 
   console.log(`[invoke-count:${traceId}] key=${testKey} nf-req=${nfReqId} count=${count} db=${tDb - t0}ms insert=${tInsert - tDb}ms count-query=${tCount - tInsert}ms total=${tCount - t0}ms`)
