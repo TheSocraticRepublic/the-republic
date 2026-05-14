@@ -41,6 +41,9 @@ export async function sendMagicCodeEmail(
 
   if (error) {
     console.error('[email] Resend error:', JSON.stringify(error))
+    if (error.message?.includes('rate') || error.message?.includes('limit') || error.message?.includes('quota')) {
+      throw new Error('Email service is temporarily at capacity. Please try again in a few minutes.')
+    }
     throw new Error(`Failed to send email: ${error.message}`)
   }
 }

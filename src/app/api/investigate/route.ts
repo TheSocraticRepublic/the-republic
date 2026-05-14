@@ -1,5 +1,5 @@
 import { NextRequest, after } from 'next/server'
-import { checkTightRateLimit } from '@/lib/rate-limit'
+import { checkTightRateLimit, checkDailyAiLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import {
   investigations,
@@ -84,6 +84,18 @@ export async function POST(request: NextRequest) {
   const { success } = await checkTightRateLimit(`investigate:${userId}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const daily = await checkDailyAiLimit(userId)
+  if (!daily.success) {
+    return new Response(JSON.stringify({
+      error: 'Daily investigation limit reached (5 per day). Please try again tomorrow.',
+      remaining: 0,
+      reset: daily.reset,
+    }), {
       status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -299,6 +311,7 @@ export async function POST(request: NextRequest) {
     model: anthropic(MODEL),
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],
+    maxTokens: 4096,
     onFinish: async ({ text }) => {
       // --- Stage 2: Async persist after streaming completes ---
       try {
@@ -481,6 +494,7 @@ async function analyzeVoteRelevance(
     model: anthropic(MODEL),
     system: VOTE_RELEVANCE_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
+    maxTokens: 2048,
   })
 
   // Parse the JSON response

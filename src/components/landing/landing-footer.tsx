@@ -15,6 +15,15 @@ export function LandingFooter() {
         </a>
         <span className="mx-2">·</span>
         <span>AGPL-3.0</span>
+        <span className="mx-2">·</span>
+        <a
+          href="https://ko-fi.com/opencave"
+          className="underline underline-offset-2 transition-colors hover:text-text-muted"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Support this project
+        </a>
       </p>
     </footer>
   )

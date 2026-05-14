@@ -72,3 +72,33 @@ export async function checkTightRateLimit(identifier: string): Promise<{
   }
   return limiter.limit(identifier)
 }
+
+let _dailyAiLimit: Ratelimit | null = null
+
+function getDailyAiLimit(): Ratelimit | null {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null
+  }
+  if (!_dailyAiLimit) {
+    _dailyAiLimit = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.fixedWindow(5, '24 h'),
+      analytics: true,
+      prefix: 'republic-daily-ai',
+    })
+  }
+  return _dailyAiLimit
+}
+
+export async function checkDailyAiLimit(userId: string): Promise<{
+  success: boolean
+  limit: number
+  remaining: number
+  reset: number
+}> {
+  const limiter = getDailyAiLimit()
+  if (!limiter) {
+    return { success: true, limit: 5, remaining: 5, reset: Date.now() }
+  }
+  return limiter.limit(userId)
+}
