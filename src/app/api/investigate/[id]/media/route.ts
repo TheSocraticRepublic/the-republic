@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
-import { checkTightRateLimit } from '@/lib/rate-limit'
+import { checkTightRateLimit, checkDailyAiGeneralLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { investigations, campaignMaterials, campaignMaterialTypeEnum, investigationPlayers, players, gadflySessions, gadflyTurns } from '@/lib/db/schema'
 import { buildCampaignPrompt } from '@/lib/ai/prompts/campaign-system'
@@ -39,6 +39,13 @@ export async function POST(
       status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
+  }
+
+  const aiDaily = await checkDailyAiGeneralLimit(userId)
+  if (!aiDaily.success) {
+    return new Response(JSON.stringify({
+      error: 'Daily AI usage limit reached. Please try again tomorrow.',
+    }), { status: 429, headers: { 'Content-Type': 'application/json' } })
   }
 
   const { id } = await params

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { checkTightRateLimit } from '@/lib/rate-limit'
+import { checkTightRateLimit, checkDailyAiGeneralLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { investigations, players, investigationPlayers, playerTypeEnum, investigationPlayerRoleEnum } from '@/lib/db/schema'
 import { LENS_CONTEXT_SYSTEM_PROMPT } from '@/lib/ai/prompts/lens-context-system'
@@ -27,6 +27,13 @@ export async function POST(
       status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
+  }
+
+  const aiDaily = await checkDailyAiGeneralLimit(userId)
+  if (!aiDaily.success) {
+    return new Response(JSON.stringify({
+      error: 'Daily AI usage limit reached. Please try again tomorrow.',
+    }), { status: 429, headers: { 'Content-Type': 'application/json' } })
   }
 
   const { id } = await params

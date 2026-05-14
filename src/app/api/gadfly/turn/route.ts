@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { checkTightRateLimit } from '@/lib/rate-limit'
+import { checkTightRateLimit, checkDailyAiGeneralLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { gadflySessions, gadflyTurns, insightMarkers, documents, analyses } from '@/lib/db/schema'
 import { GADFLY_SYSTEM_PROMPT } from '@/lib/ai/prompts/gadfly-system'
@@ -54,6 +54,13 @@ export async function POST(request: NextRequest) {
       status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
+  }
+
+  const aiDaily = await checkDailyAiGeneralLimit(userId)
+  if (!aiDaily.success) {
+    return new Response(JSON.stringify({
+      error: 'Daily AI usage limit reached. Please try again tomorrow.',
+    }), { status: 429, headers: { 'Content-Type': 'application/json' } })
   }
 
   let body: { sessionId: string; content: string }
