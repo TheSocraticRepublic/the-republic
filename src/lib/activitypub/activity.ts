@@ -71,7 +71,7 @@ export function wrapInCreate(
 
 /**
  * Builds an Accept activity in response to a Follow.
- * Used when a remote actor sends a Follow to a Republic user's inbox.
+ * Used when a remote actor sends a Follow to an Open Cave user's inbox.
  */
 export function buildAcceptActivity(
   followActivity: { id: string; actor: string },
@@ -116,7 +116,7 @@ export function threadToArticle(thread: {
 }
 
 /**
- * Builds an Announce activity. Used when a Republic archive broadcasts
+ * Builds an Announce activity. Used when an Open Cave archive broadcasts
  * preservation of an investigation to the fediverse.
  *
  * @param actorUrl  - The full URL of the announcing actor

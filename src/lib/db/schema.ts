@@ -819,7 +819,7 @@ export const actorKeys = pgTable(
   (t) => [index('actor_keys_user_id_idx').on(t.userId)]
 )
 
-// Fediverse actors (Mastodon users, etc.) following Republic users.
+// Fediverse actors (Mastodon users, etc.) following Open Cave users.
 // actorUri is the canonical AP actor URL from the remote instance.
 export const remoteFollowers = pgTable(
   'remote_followers',

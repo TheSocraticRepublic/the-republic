@@ -20,7 +20,7 @@ export interface ApPerson {
 }
 
 /**
- * Builds the AP Person JSON-LD document for a Republic user.
+ * Builds the AP Person JSON-LD document for an Open Cave user.
  * This is what Mastodon fetches when it looks up a user.
  */
 export function buildActorJson(
