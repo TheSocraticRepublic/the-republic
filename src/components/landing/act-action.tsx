@@ -34,7 +34,7 @@ export function ActAction() {
             maxWidth: '58ch',
           }}
         >
-          The Republic does not generate summaries. It generates filings. A
+          Open Cave does not generate summaries. It generates filings. A
           Freedom of Information request citing the correct statute, addressed to
           the correct office, requesting the specific records your investigation
           identified.

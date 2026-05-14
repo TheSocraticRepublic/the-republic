@@ -5,7 +5,7 @@ import { ArchiveCard } from '@/components/archive/archive-card'
 import { Pagination } from '@/components/forum/pagination'
 
 export const metadata = {
-  title: 'The Archive — The Republic',
+  title: 'The Archive',
 }
 
 const PAGE_SIZE = 50

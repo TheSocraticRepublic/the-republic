@@ -8,7 +8,7 @@ import { OracleAnalysisPanel } from '@/components/oracle/oracle-analysis-panel'
 import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 
 export const metadata = {
-  title: 'Oracle — The Republic',
+  title: 'Oracle',
 }
 
 interface PageProps {

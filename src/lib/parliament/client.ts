@@ -7,7 +7,7 @@ import type {
 } from './types'
 
 const BASE_URL = 'https://api.openparliament.ca'
-const USER_AGENT = 'TheRepublic/1.0 (civic-ai; thesocraticrepublic@proton.me)'
+const USER_AGENT = 'OpenCave/1.0 (civic-ai; thesocraticrepublic@proton.me)'
 const MAX_RETRIES = 3
 const INITIAL_BACKOFF_MS = 1000
 

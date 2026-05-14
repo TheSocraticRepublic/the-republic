@@ -81,7 +81,7 @@ export default function LoginPage() {
           backgroundImage: 'url(/landing/cave-login.jpg)',
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/70" />
 
       {/* Back to home */}
       <div className="absolute top-6 left-6 z-10">

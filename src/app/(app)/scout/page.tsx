@@ -2,7 +2,7 @@ import { Compass } from 'lucide-react'
 import { DiscoveryForm } from '@/components/scout/discovery-form'
 
 export const metadata = {
-  title: 'Scout — The Republic',
+  title: 'Scout',
 }
 
 export default function ScoutPage() {

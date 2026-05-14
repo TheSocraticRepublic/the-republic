@@ -26,7 +26,7 @@ export function LandingHeader() {
         className="text-sm font-semibold tracking-tight text-text-muted"
         style={{ fontFamily: 'var(--font-display)' }}
       >
-        The Republic
+        Open Cave
       </span>
       <Link
         href="/login"

@@ -197,7 +197,7 @@ export function FippaRequestTemplate({ data }: { data: FippaRequestData }) {
         </View>
 
         {/* Wordmark */}
-        <Text style={styles.footerWordmark}>THE REPUBLIC</Text>
+        <Text style={styles.footerWordmark}>OPEN CAVE</Text>
       </RepublicPage>
     </RepublicDocument>
   )

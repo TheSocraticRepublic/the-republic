@@ -7,7 +7,7 @@ import { ActionCard } from '@/components/lever/action-card'
 import { NewActionDialog } from '@/components/lever/new-action-dialog'
 
 export const metadata = {
-  title: 'Lever — The Republic',
+  title: 'Lever',
 }
 
 interface LeverPageProps {

@@ -80,7 +80,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   const attributedTo = record.archivedByHandle
     ? `https://${domain}/ap/users/${record.archivedByHandle}`
-    : `https://${domain}/ap/users/republic`
+    : `https://${domain}/ap/users/opencave`
 
   const article = {
     '@context': AP_CONTEXT,

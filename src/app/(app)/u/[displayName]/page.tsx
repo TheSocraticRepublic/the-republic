@@ -26,7 +26,7 @@ function formatDate(date: Date): string {
 export async function generateMetadata({ params }: PageProps) {
   const { displayName } = await params
   return {
-    title: `${displayName} — The Republic`,
+    title: displayName,
   }
 }
 

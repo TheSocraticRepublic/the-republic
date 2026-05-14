@@ -20,12 +20,12 @@ export async function sendMagicCodeEmail(
   const resend = getResend()
 
   const { error } = await resend.emails.send({
-    from: `The Republic <${fromEmail}>`,
+    from: `Open Cave <${fromEmail}>`,
     to,
     subject: 'Your sign-in code',
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 400px; margin: 0 auto; padding: 40px 20px;">
-        <h2 style="color: #1c1917; margin-bottom: 24px; font-weight: 500;">Sign in to The Republic</h2>
+        <h2 style="color: #1c1917; margin-bottom: 24px; font-weight: 500;">Sign in to Open Cave</h2>
         <p style="color: #78716c; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">
           Enter this code to complete your sign-in:
         </p>

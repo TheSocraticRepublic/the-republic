@@ -7,7 +7,7 @@ import { PartyBadge } from '@/components/votes/party-badge'
 import { BillSummary } from '@/components/votes/bill-summary'
 
 export const metadata = {
-  title: 'Bill Detail — The Republic',
+  title: 'Bill Detail',
 }
 
 interface PageProps {

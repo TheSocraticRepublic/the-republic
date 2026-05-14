@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { ActionViewer } from '@/components/lever/action-viewer'
 
 export const metadata = {
-  title: 'Lever — The Republic',
+  title: 'Lever',
 }
 
 interface PageProps {

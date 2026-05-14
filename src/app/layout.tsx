@@ -3,8 +3,8 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'The Republic',
-    template: '%s | The Republic',
+    default: 'Open Cave',
+    template: '%s | Open Cave',
   },
   description:
     'Open-source civic AI that makes institutional power legible to ordinary citizens.',
@@ -12,17 +12,17 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL || 'https://opencave.ca'
   ),
   openGraph: {
-    title: 'The Republic',
+    title: 'Open Cave',
     description:
       'Open-source civic AI that makes institutional power legible to ordinary citizens.',
     url: '/',
-    siteName: 'The Republic',
+    siteName: 'Open Cave',
     type: 'website',
     locale: 'en_CA',
   },
   twitter: {
     card: 'summary',
-    title: 'The Republic',
+    title: 'Open Cave',
     description:
       'Open-source civic AI that makes institutional power legible to ordinary citizens.',
   },

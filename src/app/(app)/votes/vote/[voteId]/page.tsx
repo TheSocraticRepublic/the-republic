@@ -8,7 +8,7 @@ import { BallotList } from '@/components/votes/ballot-list'
 import { VoteExplanation } from '@/components/votes/vote-explanation'
 
 export const metadata = {
-  title: 'Vote Detail — The Republic',
+  title: 'Vote Detail',
 }
 
 interface PageProps {

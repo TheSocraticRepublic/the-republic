@@ -8,7 +8,7 @@ import { ConcernForm } from '@/components/investigation/concern-form'
 import { formatRelativeTime } from '@/lib/format-relative-time'
 
 export const metadata = {
-  title: 'New Investigation — The Republic',
+  title: 'New Investigation',
 }
 
 export default async function InvestigatePage() {

@@ -6,7 +6,7 @@ import { eq, and, asc } from 'drizzle-orm'
 import { GadflySession } from '@/components/gadfly/gadfly-session'
 
 export const metadata = {
-  title: 'Gadfly — The Republic',
+  title: 'Gadfly',
 }
 
 interface PageProps {

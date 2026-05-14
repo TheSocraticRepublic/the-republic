@@ -250,7 +250,7 @@ export function PublicCommentTemplate({ data }: { data: PublicCommentData }) {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Generated from The Republic -- opencave.ca
+            Generated from Open Cave -- opencave.ca
           </Text>
           <Text style={styles.footerText}>{date}</Text>
         </View>

@@ -70,11 +70,11 @@ interface RepublicDocumentProps {
 
 export function RepublicDocument({
   children,
-  title = 'The Republic',
-  author = 'The Republic Civic AI Framework',
+  title = 'Open Cave',
+  author = 'Open Cave Civic AI',
 }: RepublicDocumentProps) {
   return (
-    <Document title={title} author={author} creator="The Republic">
+    <Document title={title} author={author} creator="Open Cave">
       {children}
     </Document>
   )
@@ -100,13 +100,13 @@ export function AccentBand({ color }: AccentBandProps) {
 }
 
 // -------------------------------------------------------------------
-// Wordmark — "THE REPUBLIC" text
+// Wordmark — "OPEN CAVE" text
 // -------------------------------------------------------------------
 
 export function Wordmark({ subtle }: { subtle?: boolean }) {
   return (
     <Text style={subtle ? shared.wordmarkSubtle : shared.wordmark}>
-      THE REPUBLIC
+      OPEN CAVE
     </Text>
   )
 }
@@ -593,7 +593,7 @@ function RepublicFooter() {
   return (
     <View style={shared.footer}>
       <Text style={shared.footerText}>
-        Generated from The Republic -- opencave.ca
+        Generated from Open Cave -- opencave.ca
       </Text>
       <Text style={shared.footerText}>{date}</Text>
     </View>

@@ -5,7 +5,7 @@ import { eq, asc } from 'drizzle-orm'
 import { PartyBadge } from '@/components/votes/party-badge'
 
 export const metadata = {
-  title: 'All MPs — The Republic',
+  title: 'All MPs',
 }
 
 export default async function AllMPsPage() {

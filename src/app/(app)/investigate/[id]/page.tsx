@@ -6,7 +6,7 @@ import { eq, and } from 'drizzle-orm'
 import { InvestigationPage } from '@/components/investigation/investigation-page'
 
 export const metadata = {
-  title: 'Investigation — The Republic',
+  title: 'Investigation',
 }
 
 interface PageProps {

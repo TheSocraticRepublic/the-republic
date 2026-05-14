@@ -2,7 +2,7 @@ import { GitCompare } from 'lucide-react'
 import { ComparisonForm } from '@/components/mirror/comparison-form'
 
 export const metadata = {
-  title: 'Mirror — The Republic',
+  title: 'Mirror',
 }
 
 interface MirrorPageProps {

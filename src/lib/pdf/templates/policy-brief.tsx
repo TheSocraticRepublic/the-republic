@@ -236,7 +236,7 @@ export function PolicyBriefTemplate({ data }: { data: PolicyBriefData }) {
         <Text style={styles.briefMeta}>POLICY BRIEF</Text>
         <Text style={styles.briefTitle}>{data.title}</Text>
         <Text style={styles.briefAuthor}>
-          Prepared from investigation findings -- The Republic Civic AI Framework
+          Prepared from investigation findings -- Open Cave Civic AI
         </Text>
         <Text style={styles.briefDate}>{date}</Text>
 
@@ -250,9 +250,9 @@ export function PolicyBriefTemplate({ data }: { data: PolicyBriefData }) {
 
         {/* Footer */}
         <View style={styles.docFooter}>
-          <Text style={styles.footerBrand}>THE REPUBLIC</Text>
+          <Text style={styles.footerBrand}>OPEN CAVE</Text>
           <Text style={styles.footerUrl}>
-            Generated from The Republic -- opencave.ca -- {date}
+            Generated from Open Cave -- opencave.ca -- {date}
           </Text>
         </View>
       </RepublicPage>
@@ -294,9 +294,9 @@ export function PolicyBriefTemplate({ data }: { data: PolicyBriefData }) {
 
         {/* Footer */}
         <View style={styles.docFooter}>
-          <Text style={styles.footerBrand}>THE REPUBLIC</Text>
+          <Text style={styles.footerBrand}>OPEN CAVE</Text>
           <Text style={styles.footerUrl}>
-            Generated from The Republic -- opencave.ca -- {date}
+            Generated from Open Cave -- opencave.ca -- {date}
           </Text>
         </View>
       </RepublicPage>

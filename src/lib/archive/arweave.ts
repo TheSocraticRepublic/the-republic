@@ -19,7 +19,7 @@ export function isArweaveEnabled(): boolean {
  *
  * Tags applied to every upload:
  * - Content-Type: application/json
- * - App-Name: The Republic  (enables enumeration via Arweave GraphQL)
+ * - App-Name: Open Cave  (enables enumeration via Arweave GraphQL)
  * - Content-Hash: <sha256>   (enables integrity verification without re-fetching)
  *
  * Returns the Arweave transaction ID (receipt.id), which is the permanent
@@ -80,7 +80,7 @@ export async function permanizeInvestigation(
   const receipt = await irys.upload(bundleJson, {
     tags: [
       { name: 'Content-Type', value: 'application/json' },
-      { name: 'App-Name', value: 'The Republic' },
+      { name: 'App-Name', value: 'Open Cave' },
       { name: 'Content-Hash', value: contentHash },
     ],
   })

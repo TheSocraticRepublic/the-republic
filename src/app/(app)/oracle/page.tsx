@@ -7,7 +7,7 @@ import { UploadZone } from '@/components/oracle/upload-zone'
 import { DocumentCard } from '@/components/oracle/document-card'
 
 export const metadata = {
-  title: 'Oracle — The Republic',
+  title: 'Oracle',
 }
 
 export default async function OraclePage() {
