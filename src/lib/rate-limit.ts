@@ -102,3 +102,33 @@ export async function checkDailyAiLimit(userId: string): Promise<{
   }
   return limiter.limit(userId)
 }
+
+let _dailyAiGeneralLimit: Ratelimit | null = null
+
+function getDailyAiGeneralLimit(): Ratelimit | null {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null
+  }
+  if (!_dailyAiGeneralLimit) {
+    _dailyAiGeneralLimit = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.fixedWindow(50, '24 h'),
+      analytics: true,
+      prefix: 'republic-daily-ai-general',
+    })
+  }
+  return _dailyAiGeneralLimit
+}
+
+export async function checkDailyAiGeneralLimit(userId: string): Promise<{
+  success: boolean
+  limit: number
+  remaining: number
+  reset: number
+}> {
+  const limiter = getDailyAiGeneralLimit()
+  if (!limiter) {
+    return { success: true, limit: 50, remaining: 50, reset: Date.now() }
+  }
+  return limiter.limit(userId)
+}

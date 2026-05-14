@@ -51,7 +51,15 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   ) {
     const origin = request.headers.get('origin')
     const appUrl = process.env.NEXT_PUBLIC_APP_URL
-    if (origin && appUrl) {
+    if (!origin || !appUrl) {
+      return applySecurityHeaders(
+        new NextResponse(
+          JSON.stringify({ error: 'Missing origin or app URL' }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        )
+      )
+    }
+    {
       const allowed = new Set([new URL(appUrl).origin])
       const host = request.headers.get('host')
       if (host) allowed.add(`https://${host}`)
