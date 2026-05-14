@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare, Shield, Vote } from 'lucide-react'
+import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare, Shield, Vote, Heart } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useState } from 'react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
@@ -345,6 +345,25 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
             </ul>
           )}
         </div>
+      </div>
+
+      {/* Beta + support */}
+      <div className="mx-3 rounded-lg border border-border bg-surface-3/50 px-3 py-3">
+        <p className="text-[10px] font-medium uppercase tracking-widest text-text-faint">
+          Beta
+        </p>
+        <p className="mt-1 text-[11px] leading-relaxed text-text-muted">
+          Testing for environmental issues in BC, Alberta, and Ontario.
+        </p>
+        <a
+          href="https://ko-fi.com/opencave"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex items-center gap-1.5 text-[11px] text-text-muted transition-colors hover:text-text-secondary"
+        >
+          <Heart size={11} strokeWidth={1.75} />
+          Support this project
+        </a>
       </div>
 
       {/* User / sign out */}
