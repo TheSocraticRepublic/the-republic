@@ -112,7 +112,7 @@ function getDailyAiGeneralLimit(): Ratelimit | null {
   if (!_dailyAiGeneralLimit) {
     _dailyAiGeneralLimit = new Ratelimit({
       redis: Redis.fromEnv(),
-      limiter: Ratelimit.fixedWindow(50, '24 h'),
+      limiter: Ratelimit.fixedWindow(10, '24 h'),
       analytics: true,
       prefix: 'republic-daily-ai-general',
     })
@@ -128,7 +128,7 @@ export async function checkDailyAiGeneralLimit(userId: string): Promise<{
 }> {
   const limiter = getDailyAiGeneralLimit()
   if (!limiter) {
-    return { success: true, limit: 50, remaining: 50, reset: Date.now() }
+    return { success: true, limit: 10, remaining: 10, reset: Date.now() }
   }
   return limiter.limit(userId)
 }
