@@ -39,9 +39,9 @@ export default function RootLayout({
     <html lang="en" className="dark h-full antialiased">
       <head>
         <Script
-          src="https://ops.secretsaunacompany.ca/tracker.js"
+          src="https://ssc-ops.netlify.app/tracker.js"
           data-site-id="republic"
-          data-endpoint="https://ops.secretsaunacompany.ca/.netlify/functions/track"
+          data-endpoint="https://ssc-ops.netlify.app/.netlify/functions/track"
           strategy="afterInteractive"
         />
       </head>
