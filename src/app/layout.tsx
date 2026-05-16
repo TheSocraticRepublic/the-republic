@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -36,6 +37,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark h-full antialiased">
+      <head>
+        <Script
+          src="https://ops.secretsaunacompany.ca/tracker.js"
+          data-site-id="republic"
+          data-endpoint="https://ops.secretsaunacompany.ca/.netlify/functions/track"
+          strategy="afterInteractive"
+        />
+      </head>
       <body className="min-h-full bg-surface-0 text-text-primary">{children}</body>
     </html>
   )
