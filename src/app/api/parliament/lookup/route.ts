@@ -165,9 +165,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     console.error('[parliament/lookup] Represent API error:', err)
     return new Response(
-      JSON.stringify({
-        error: err instanceof Error ? err.message : 'Lookup failed',
-      }),
+      JSON.stringify({ error: 'Lookup failed' }),
       { status: 502, headers: { 'Content-Type': 'application/json' } }
     )
   }

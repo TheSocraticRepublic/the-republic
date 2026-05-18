@@ -1,6 +1,29 @@
 import type { Metadata } from 'next'
+import { Plus_Jakarta_Sans, Inter, Source_Serif_4 } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-plus-jakarta',
+})
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  display: 'swap',
+  variable: '--font-inter',
+})
+
+const sourceSerif4 = Source_Serif_4({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-source-serif',
+})
 
 export const metadata: Metadata = {
   title: {
@@ -36,16 +59,17 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark h-full antialiased">
-      <head>
+    <html lang="en" className={`dark h-full antialiased ${plusJakartaSans.variable} ${inter.variable} ${sourceSerif4.variable}`}>
+      <head />
+      <body className="min-h-full bg-surface-0 text-text-primary">
+        {children}
         <Script
           src="https://ssc-ops.netlify.app/tracker.js"
           data-site-id="republic"
           data-endpoint="https://ssc-ops.netlify.app/.netlify/functions/track"
           strategy="afterInteractive"
         />
-      </head>
-      <body className="min-h-full bg-surface-0 text-text-primary">{children}</body>
+      </body>
     </html>
   )
 }

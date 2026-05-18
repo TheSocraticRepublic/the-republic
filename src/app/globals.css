@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -34,11 +33,11 @@
   --color-island-card: #f5f4f3;
   --color-island-card-border: #e0ddd9;
 
-  /* Typography */
-  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  /* Typography — font families injected by next/font via CSS variables */
+  --font-display: var(--font-plus-jakarta, "Plus Jakarta Sans"), system-ui, sans-serif;
+  --font-body: var(--font-inter, "Inter"), system-ui, sans-serif;
   --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
-  --font-serif: "Source Serif 4", "Georgia", serif;
+  --font-serif: var(--font-source-serif, "Source Serif 4"), "Georgia", serif;
 
   /* Shadows (warm-tinted, layered) */
   --shadow-sm: 0 1px 2px rgba(28,25,23,0.04), 0 2px 4px rgba(28,25,23,0.03);

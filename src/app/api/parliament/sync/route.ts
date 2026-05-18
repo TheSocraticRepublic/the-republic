@@ -91,10 +91,7 @@ export async function POST(request: NextRequest) {
 
     console.error('[parliament/sync] Sync failed:', err)
     return new Response(
-      JSON.stringify({
-        error: 'Sync failed',
-        message: err instanceof Error ? err.message : String(err),
-      }),
+      JSON.stringify({ error: 'Sync failed' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }

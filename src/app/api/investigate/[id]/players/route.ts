@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { investigations, investigationPlayers, players } from '@/lib/db/schema'
-import { eq, and, ne, isNotNull, or, sql } from 'drizzle-orm'
+import { eq, and, ne, isNotNull, or, sql, inArray } from 'drizzle-orm'
 import { safeRoute } from '@/lib/api/safe-route'
 
 export const GET = safeRoute(async (
@@ -71,9 +71,10 @@ export const GET = safeRoute(async (
     jurisdictionName: string | null
   }>> = {}
 
-  for (const pid of playerIds) {
-    const rows = await db
+  if (playerIds.length > 0) {
+    const allAppearances = await db
       .select({
+        playerId: investigationPlayers.playerId,
         investigationId: investigationPlayers.investigationId,
         role: investigationPlayers.role,
         concern: investigations.concern,
@@ -86,7 +87,7 @@ export const GET = safeRoute(async (
       )
       .where(
         and(
-          eq(investigationPlayers.playerId, pid),
+          inArray(investigationPlayers.playerId, playerIds),
           ne(investigationPlayers.investigationId, id),
           or(
             isNotNull(investigations.preservedAt),
@@ -95,13 +96,16 @@ export const GET = safeRoute(async (
         )
       )
 
-    if (rows.length > 0) {
-      appearances[pid] = rows.map((r) => ({
-        investigationId: r.investigationId,
-        role: r.role,
-        concern: r.concern.slice(0, 200),
-        jurisdictionName: r.jurisdictionName,
-      }))
+    for (const row of allAppearances) {
+      if (!appearances[row.playerId]) {
+        appearances[row.playerId] = []
+      }
+      appearances[row.playerId].push({
+        investigationId: row.investigationId,
+        role: row.role,
+        concern: row.concern.slice(0, 200),
+        jurisdictionName: row.jurisdictionName,
+      })
     }
   }
 

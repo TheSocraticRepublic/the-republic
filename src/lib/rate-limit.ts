@@ -6,9 +6,18 @@ import { Redis } from '@upstash/redis'
 // (e.g. local dev without Upstash credentials).
 let _ratelimit: Ratelimit | null = null
 let _tightRatelimit: Ratelimit | null = null
+let _prodWarningLogged = false
+
+function logProdWarning(): void {
+  if (!_prodWarningLogged && process.env.NODE_ENV === 'production') {
+    _prodWarningLogged = true
+    console.warn('Rate limiting disabled: UPSTASH_REDIS_REST_URL not configured')
+  }
+}
 
 function getRatelimit(): Ratelimit | null {
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    logProdWarning()
     return null
   }
   if (!_ratelimit) {
@@ -24,6 +33,7 @@ function getRatelimit(): Ratelimit | null {
 
 function getTightRatelimit(): Ratelimit | null {
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    logProdWarning()
     return null
   }
   if (!_tightRatelimit) {
@@ -77,6 +87,7 @@ let _dailyAiLimit: Ratelimit | null = null
 
 function getDailyAiLimit(): Ratelimit | null {
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    logProdWarning()
     return null
   }
   if (!_dailyAiLimit) {
@@ -107,6 +118,7 @@ let _dailyAiGeneralLimit: Ratelimit | null = null
 
 function getDailyAiGeneralLimit(): Ratelimit | null {
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    logProdWarning()
     return null
   }
   if (!_dailyAiGeneralLimit) {
