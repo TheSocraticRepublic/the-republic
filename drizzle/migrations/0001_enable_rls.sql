@@ -256,7 +256,8 @@ CREATE POLICY "forum_posts_update_own" ON forum_posts FOR UPDATE USING (author_i
 CREATE POLICY "forum_posts_delete_own" ON forum_posts FOR DELETE USING (author_id = auth.uid());
 
 -- peer_reviews (readable by investigation owner + reviewer; writable by reviewer)
-CREATE POLICY "peer_reviews_select_own" ON peer_reviews FOR SELECT USING (reviewer_id = auth.uid());
+CREATE POLICY "peer_reviews_select_own" ON peer_reviews FOR SELECT
+  USING (reviewer_id = auth.uid() OR EXISTS (SELECT 1 FROM investigations WHERE investigations.id = peer_reviews.investigation_id AND investigations.user_id = auth.uid()));
 CREATE POLICY "peer_reviews_insert_own" ON peer_reviews FOR INSERT WITH CHECK (reviewer_id = auth.uid());
 CREATE POLICY "peer_reviews_update_own" ON peer_reviews FOR UPDATE USING (reviewer_id = auth.uid());
 CREATE POLICY "peer_reviews_delete_own" ON peer_reviews FOR DELETE USING (reviewer_id = auth.uid());

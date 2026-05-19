@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 
 type RouteContext = { params: Promise<Record<string, string>> }
 
@@ -14,6 +15,9 @@ export function safeRoute(handler: (...args: any[]) => Promise<Response>): Route
       return await handler(request, context)
     } catch (err) {
       console.error(`[${request.method} ${request.nextUrl.pathname}]`, err)
+      Sentry.captureException(err, {
+        extra: { method: request.method, pathname: request.nextUrl.pathname },
+      })
       return new Response(
         JSON.stringify({ error: 'Internal server error' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
