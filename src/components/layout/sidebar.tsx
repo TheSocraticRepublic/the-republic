@@ -44,11 +44,16 @@ interface SidebarProps {
   userEmail?: string
   displayName?: string
   effectiveWeight?: number
+  variant?: 'sidebar' | 'drawer'
+  onNavigate?: () => void
 }
 
-export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: SidebarProps) {
+export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant = 'sidebar', onNavigate }: SidebarProps) {
   const pathname = usePathname()
   const [expertToolsOpen, setExpertToolsOpen] = useState(false)
+
+  const isDrawer = variant === 'drawer'
+  const linkPy = isDrawer ? 'py-3' : 'py-2.5'
 
   const investigateActive = pathname === '/investigate'
   const investigationsActive = pathname === '/investigations' || (pathname.startsWith('/investigate/') && pathname !== '/investigate')
@@ -59,10 +64,13 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
   const isModerator = effectiveWeight >= 10
 
   return (
-    <nav className="flex h-full w-56 flex-col border-r border-border bg-surface-2">
+    <nav className={clsx(
+      'flex h-full flex-col bg-surface-2',
+      variant === 'sidebar' && 'w-56 border-r border-border',
+    )}>
       {/* Wordmark */}
       <div className="px-5 py-6">
-        <Link href="/" className="block">
+        <Link href="/" className="block" onClick={onNavigate}>
           <span
             className="text-base font-bold tracking-tight text-text-primary"
             style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
@@ -79,8 +87,9 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
         {/* New Investigation — primary entry point */}
         <Link
           href="/investigate"
+          onClick={onNavigate}
           className={clsx(
-            'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+            `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
             investigateActive
               ? 'bg-surface-3 text-text-primary'
               : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -114,8 +123,9 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
         {/* Investigations list */}
         <Link
           href="/investigations"
+          onClick={onNavigate}
           className={clsx(
-            'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+            `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
             investigationsActive
               ? 'bg-surface-3 text-text-primary'
               : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -148,7 +158,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
 
         {/* Forum — coming soon */}
         <span
-          className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm opacity-40 cursor-not-allowed"
+          className={`group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm opacity-40 cursor-not-allowed`}
           title="Forum — coming soon"
         >
           <span
@@ -169,8 +179,9 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
         {/* Vote Tracker */}
         <Link
           href="/votes"
+          onClick={onNavigate}
           className={clsx(
-            'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+            `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
             votesActive
               ? 'bg-surface-3 text-text-primary'
               : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -209,8 +220,9 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
         {isModerator && (
           <Link
             href="/forum/moderation"
+            onClick={onNavigate}
             className={clsx(
-              'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+              `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
               moderationActive
                 ? 'bg-surface-3 text-text-primary'
                 : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -245,8 +257,9 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
         {/* Profile */}
         <Link
           href="/profile"
+          onClick={onNavigate}
           className={clsx(
-            'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+            `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
             profileActive
               ? 'bg-surface-3 text-text-primary'
               : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -306,8 +319,9 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
                   <li key={arm.name}>
                     <Link
                       href={arm.href}
+                      onClick={onNavigate}
                       className={clsx(
-                        'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+                        `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
                         isActive
                           ? 'bg-surface-3 text-text-primary'
                           : 'text-text-muted hover:bg-surface-3 hover:text-text-secondary'
@@ -385,7 +399,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0 }: Sidebar
             await fetch('/api/auth/signout', { method: 'POST' })
             window.location.href = '/login'
           }}
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary"
+          className={`flex w-full items-center gap-2.5 rounded-lg px-3 ${isDrawer ? 'py-3' : 'py-2'} text-sm text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary`}
         >
           <LogOut size={14} strokeWidth={1.75} />
           Sign out

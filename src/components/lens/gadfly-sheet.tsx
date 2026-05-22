@@ -143,7 +143,7 @@ export function GadflySheet({
           data-state={open ? 'open' : 'closed'}
           className="dark-island fixed top-0 right-0 z-50 h-full flex flex-col shadow-lg focus:outline-none"
           style={{
-            width: 'min(680px, 90vw)',
+            width: 'min(680px, 100vw)',
             backgroundColor: 'var(--surface-0)',
             borderLeft: '1px solid var(--border)',
             transform: open ? 'translateX(0)' : 'translateX(100%)',
