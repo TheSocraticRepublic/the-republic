@@ -5,8 +5,10 @@ next: null
 testing: null
 pinned: true
 shipped:
+  - date: 2026-05-22
+    item: "Responsive mobile navigation — hamburger + Radix drawer for mobile nav (sidebar was hidden <768px with no alternative), touch-target sizing in drawer variant, Gadfly sheet full-width on mobile, dialog responsive sizing (action type grid 1-col on mobile), 5 files"
   - date: 2026-05-18
-    item: "Production audit remediation — archive auth bypass fixed (removed /api/archive from public paths), RLS migration for all 45 tables (not yet applied), fonts migrated to next/font/google (self-hosted), N+1 query fixed in players endpoint (inArray), CI pipeline added (lint+test+audit), CSP hardened (unsafe-eval removed), HSTS preload added, error leakage fixed in parliament routes, rate-limit production warning, magicCodes email index, unused deps removed (potrace, @neondatabase/serverless), 12 files"
+    item: "Production audit remediation — archive auth bypass fixed, RLS migration applied (45 tables, 90+ policies), fonts migrated to next/font/google, N+1 query fixed (inArray), CI pipeline (lint+test+audit), Sentry error monitoring, CSP hardened, HSTS preload, error leakage fixed, rate-limit production warning, magicCodes email index, unused deps removed, 12 files"
   - date: 2026-05-01
     item: "Campaign Export CE-A–CE-F — outcome tracking (Illich loop), vote tracker→investigation bridge (postal code→MP→relevant votes→letter), multi-jurisdiction lever (BC/ON/AB), cross-arm Campaign↔Lever integration, action status workflow (draft→final→filed + credentials), Markdown/HTML exports (6 campaign types + 3 lever types + social copy), PDF export pipeline (@react-pdf/renderer, 7 templates: fact sheet, talking points, timeline, comparison, FIPPA request, public comment, policy brief), 42 files, ~9,470 lines"
   - date: 2026-04-29
