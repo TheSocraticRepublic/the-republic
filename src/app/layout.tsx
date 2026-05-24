@@ -63,12 +63,14 @@ export default function RootLayout({
       <head />
       <body className="min-h-full bg-surface-0 text-text-primary">
         {children}
-        <Script
-          src="https://ssc-ops.netlify.app/tracker.js"
-          data-site-id="republic"
-          data-endpoint="https://ssc-ops.netlify.app/.netlify/functions/track"
-          strategy="afterInteractive"
-        />
+        {process.env.NEXT_PUBLIC_ANALYTICS_SCRIPT_URL && (
+          <Script
+            src={process.env.NEXT_PUBLIC_ANALYTICS_SCRIPT_URL}
+            data-site-id={process.env.NEXT_PUBLIC_ANALYTICS_SITE_ID ?? 'default'}
+            data-endpoint={process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT}
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   )
