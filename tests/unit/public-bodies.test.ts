@@ -10,10 +10,12 @@ describe('BC_PUBLIC_BODIES', () => {
     }
   })
 
-  it('no duplicate jurisdictions', () => {
-    const jurisdictions = BC_PUBLIC_BODIES.map((b) => b.jurisdiction)
-    const unique = new Set(jurisdictions)
-    expect(unique.size).toBe(jurisdictions.length)
+  it('all entries have a non-empty kebab-case jurisdiction', () => {
+    // Multiple bodies may share a jurisdiction (e.g. provincial ministries
+    // under bc-provincial); identity uniqueness is enforced on name instead.
+    for (const body of BC_PUBLIC_BODIES) {
+      expect(body.jurisdiction).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+    }
   })
 
   it('no duplicate names', () => {
