@@ -5,7 +5,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useRouter } from 'next/navigation'
 import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react'
 import { clsx } from 'clsx'
-import { BC_PUBLIC_BODIES } from '@/lib/lever/public-bodies'
+import { bcPublicBodies as BC_PUBLIC_BODIES } from '@/lib/jurisdictions/bc/public-bodies'
 import { leverActionTypeEnum } from '@/lib/db/schema'
 import type { PublicBody } from '@/lib/jurisdictions/types'
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { BC_PUBLIC_BODIES, type PublicBody } from '@/lib/lever/public-bodies'
+import { bcPublicBodies as BC_PUBLIC_BODIES } from '@/lib/jurisdictions/bc/public-bodies'
 
 describe('BC_PUBLIC_BODIES', () => {
   it('all entries have required fields (name, foiAddress, jurisdiction)', () => {
