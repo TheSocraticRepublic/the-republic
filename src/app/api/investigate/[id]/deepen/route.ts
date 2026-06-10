@@ -7,8 +7,7 @@ import { PLAYER_EXTRACTION_SYSTEM_PROMPT } from '@/lib/ai/prompts/player-extract
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText, generateText } from 'ai'
 import { eq, and, sql } from 'drizzle-orm'
-
-const MODEL = 'claude-sonnet-4-20250514'
+import { MODEL } from '@/lib/ai/model'
 
 export async function POST(
   request: NextRequest,

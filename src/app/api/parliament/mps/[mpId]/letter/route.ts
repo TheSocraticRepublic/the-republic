@@ -9,8 +9,7 @@ import {
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, and, inArray } from 'drizzle-orm'
-
-const MODEL = 'claude-sonnet-4-20250514'
+import { MODEL } from '@/lib/ai/model'
 
 export async function POST(
   request: NextRequest,

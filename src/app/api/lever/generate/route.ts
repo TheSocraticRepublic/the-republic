@@ -14,8 +14,7 @@ import { loadJurisdictionModule, detectJurisdiction } from '@/lib/jurisdictions'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, asc, desc, and } from 'drizzle-orm'
-
-const MODEL = 'claude-sonnet-4-20250514'
+import { MODEL } from '@/lib/ai/model'
 
 const ACTION_TYPE_LABELS: Record<string, string> = {
   fippa_request: 'FIPPA Request',

@@ -10,8 +10,7 @@ import { searchForDocument, SearchResult } from '@/lib/scout/search'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq } from 'drizzle-orm'
-
-const MODEL = 'claude-sonnet-4-20250514'
+import { MODEL } from '@/lib/ai/model'
 
 /**
  * Build the search results context block for prompt injection.

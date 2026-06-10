@@ -14,8 +14,8 @@ import {
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, and, desc } from 'drizzle-orm'
+import { MODEL } from '@/lib/ai/model'
 
-const MODEL = 'claude-sonnet-4-20250514'
 const CURRENT_SESSION = '45-1'
 
 export async function POST(

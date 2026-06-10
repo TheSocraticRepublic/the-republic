@@ -6,9 +6,9 @@ import { ORACLE_SYSTEM_PROMPT, ORACLE_PROMPT_VERSION } from '@/lib/ai/prompts/or
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, asc } from 'drizzle-orm'
+import { MODEL } from '@/lib/ai/model'
 
 const MAX_CONTENT_CHARS = 100_000
-const MODEL = 'claude-sonnet-4-20250514'
 
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')

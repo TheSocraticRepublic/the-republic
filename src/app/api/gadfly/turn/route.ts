@@ -6,9 +6,9 @@ import { GADFLY_SYSTEM_PROMPT } from '@/lib/ai/prompts/gadfly-system'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText, generateText } from 'ai'
 import { eq, and, asc, desc, sql } from 'drizzle-orm'
+import { MODEL } from '@/lib/ai/model'
 
 const MAX_DOCUMENT_CHARS = 50_000
-const MODEL = 'claude-sonnet-4-20250514'
 
 type GadflyQuestionType = 'clarifying' | 'probing' | 'challenging' | 'connecting' | 'action'
 
