@@ -18,7 +18,7 @@ interface Jurisdiction {
 export function ConcernForm() {
   const router = useRouter()
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([])
-  const [fetchingJurisdictions, setFetchingJurisdictions] = useState(false)
+  const [fetchingJurisdictions, setFetchingJurisdictions] = useState(true)
   const [selectedJurisdictionId, setSelectedJurisdictionId] = useState('')
   const [postalCode, setPostalCode] = useState('')
   const [concern, setConcern] = useState('')
@@ -33,7 +33,6 @@ export function ConcernForm() {
 
   // Fetch jurisdictions on mount
   useEffect(() => {
-    setFetchingJurisdictions(true)
     fetch('/api/mirror/jurisdictions')
       .then((r) => r.json())
       .then((data) => {
@@ -101,7 +100,7 @@ export function ConcernForm() {
       }
       setLoading(false)
     }
-  }, [concern, selectedJurisdictionId, loading, router])
+  }, [concern, selectedJurisdictionId, postalCode, loading, router])
 
   const handleCancel = useCallback(() => {
     if (abortRef.current) {

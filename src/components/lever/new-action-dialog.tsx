@@ -79,7 +79,14 @@ export function NewActionDialog({
     if (!open) return
     setFetchingContext(true)
 
-    const promises: Promise<any>[] = [
+    type ContextResponse = {
+      documents?: Document[]
+      sessions?: Session[]
+      investigation?: { jurisdictionName?: string | null }
+      actions?: ExistingAction[]
+    } | null
+
+    const promises: Promise<ContextResponse>[] = [
       fetch('/api/oracle/documents').then((r) => r.json()).catch(() => ({ documents: [] })),
       fetch('/api/gadfly/session').then((r) => r.json()).catch(() => ({ sessions: [] })),
     ]
@@ -100,9 +107,9 @@ export function NewActionDialog({
     }
 
     Promise.all(promises).then(async ([docsData, sessionsData, investigationData, actionsData]) => {
-      const ready = (docsData.documents ?? []).filter((d: Document) => d.status === 'ready')
+      const ready = (docsData?.documents ?? []).filter((d: Document) => d.status === 'ready')
       setDocuments(ready)
-      setSessions(sessionsData.sessions ?? [])
+      setSessions(sessionsData?.sessions ?? [])
 
       // Resolve jurisdiction from investigation's jurisdictionName
       if (investigationData?.investigation) {

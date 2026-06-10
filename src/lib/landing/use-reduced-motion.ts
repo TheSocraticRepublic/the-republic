@@ -1,21 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useSyncExternalStore } from 'react'
+
+const QUERY = '(prefers-reduced-motion: reduce)'
+
+function subscribe(callback: () => void) {
+  const mql = window.matchMedia(QUERY)
+  mql.addEventListener('change', callback)
+  return () => mql.removeEventListener('change', callback)
+}
 
 export function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(true)
-
-  useEffect(() => {
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setReduced(mql.matches)
-
-    function onChange(e: MediaQueryListEvent) {
-      setReduced(e.matches)
-    }
-
-    mql.addEventListener('change', onChange)
-    return () => mql.removeEventListener('change', onChange)
-  }, [])
-
-  return reduced
+  // Server snapshot defaults to reduced so SSR/first paint never animates.
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(QUERY).matches,
+    () => true
+  )
 }

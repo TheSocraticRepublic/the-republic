@@ -1,4 +1,5 @@
 import { headers } from 'next/headers'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { documents, analyses } from '@/lib/db/schema'
@@ -50,13 +51,13 @@ export default async function OracleDocumentPage({ params }: PageProps) {
     <div className="mx-auto max-w-3xl px-6 py-10">
       {/* Back + header */}
       <div className="mb-8">
-        <a
+        <Link
           href="/oracle"
           className="mb-5 inline-flex items-center gap-1.5 text-xs text-text-muted transition-colors hover:text-text-secondary"
         >
           <span className="text-text-faint">←</span>
           All documents
-        </a>
+        </Link>
 
         <div className="flex items-start gap-3">
           <span

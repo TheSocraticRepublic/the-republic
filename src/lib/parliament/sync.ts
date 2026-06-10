@@ -264,9 +264,10 @@ export async function syncParliamentData(
               ballot: normalizeBallot(ballot.ballot),
             })
             result.ballots.upserted++
-          } catch (err: any) {
-            if (err?.code !== '23505') {
-              result.errors.push(`Ballot insert failed: ${err?.message}`)
+          } catch (err) {
+            const pgErr = err as { code?: string; message?: string }
+            if (pgErr?.code !== '23505') {
+              result.errors.push(`Ballot insert failed: ${pgErr?.message}`)
             }
           }
         }

@@ -53,6 +53,7 @@ interface FiledAction {
   actionType: string
   status: string
   title: string
+  investigationId?: string | null
 }
 
 export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _j, darkMode = false }: CampaignPanelProps) {
@@ -81,7 +82,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
         if (materialsRes.ok) {
           const data = await materialsRes.json()
           const deduped = Object.values(
-            (data.materials ?? []).reduce((acc: Record<string, any>, m: any) => {
+            (data.materials ?? []).reduce((acc: Record<string, SavedMaterial>, m: SavedMaterial) => {
               if (!acc[m.materialType] || m.createdAt > acc[m.materialType].createdAt) {
                 acc[m.materialType] = m
               }
@@ -95,7 +96,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
         if (actionsRes?.ok) {
           const actionsData = await actionsRes.json()
           const related = (actionsData.actions ?? []).filter(
-            (a: any) => a.investigationId === investigationId
+            (a: FiledAction) => a.investigationId === investigationId
           )
           setFiledActions(related)
         }

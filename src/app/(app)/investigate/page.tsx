@@ -141,7 +141,7 @@ export default async function InvestigatePage() {
           className="mt-16 text-center text-sm italic text-text-faint"
           style={{ fontFamily: 'var(--font-serif)' }}
         >
-          Every investigation begins with a question you didn't know how to ask.
+          Every investigation begins with a question you didn&apos;t know how to ask.
         </p>
       </div>
     </div>

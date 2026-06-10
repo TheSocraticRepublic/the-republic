@@ -21,7 +21,6 @@ export default function RecentVotesPage() {
   const [hasMore, setHasMore] = useState(false)
 
   useEffect(() => {
-    setLoading(true)
     fetch(`/api/parliament/votes?page=${page}&limit=20`)
       .then((res) => (res.ok ? res.json() : { votes: [] }))
       .then((data) => {
@@ -109,7 +108,10 @@ export default function RecentVotesPage() {
           {(page > 1 || hasMore) && (
             <div className="flex items-center justify-center gap-4 pt-6">
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                onClick={() => {
+                  setLoading(true)
+                  setPage((p) => Math.max(1, p - 1))
+                }}
                 disabled={page <= 1}
                 className="text-xs text-text-muted hover:text-text-secondary disabled:opacity-30 transition-colors"
               >
@@ -117,7 +119,10 @@ export default function RecentVotesPage() {
               </button>
               <span className="text-[10px] text-text-faint">Page {page}</span>
               <button
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => {
+                  setLoading(true)
+                  setPage((p) => p + 1)
+                }}
                 disabled={!hasMore}
                 className="text-xs text-text-muted hover:text-text-secondary disabled:opacity-30 transition-colors"
               >

@@ -40,11 +40,11 @@ export function ActAgency() {
           <p>
             You filed a request the Ministry is legally obligated to answer. You
             submitted a comment during the review period that cited the watershed
-            assessment's own data against its conclusions. You found the
+            assessment&apos;s own data against its conclusions. You found the
             paragraph in the forest stewardship plan that contradicted the
-            licensee's public assurances.
+            licensee&apos;s public assurances.
           </p>
-          <p>You didn't need a lawyer. You needed the right question.</p>
+          <p>You didn&apos;t need a lawyer. You needed the right question.</p>
           <p>The trees are the same trees. But you see them differently now.</p>
         </div>
 

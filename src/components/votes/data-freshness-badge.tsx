@@ -17,20 +17,28 @@ interface SyncStatus {
 
 export function DataFreshnessBadge() {
   const [status, setStatus] = useState<SyncStatus | null>(null)
+  // Computed at fetch time — Date.now() is impure during render
+  const [daysSince, setDaysSince] = useState<number | null>(null)
 
   useEffect(() => {
     fetch('/api/parliament/sync/status')
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setStatus(data))
+      .then((data: SyncStatus | null) => {
+        if (!data) return
+        const last = data.lastSync?.completedAt ?? data.lastSync?.startedAt
+        setDaysSince(
+          last
+            ? Math.floor((Date.now() - new Date(last).getTime()) / (1000 * 60 * 60 * 24))
+            : null
+        )
+        setStatus(data)
+      })
       .catch(() => {})
   }, [])
 
   if (!status) return null
 
   const lastSyncDate = status.lastSync?.completedAt ?? status.lastSync?.startedAt
-  const daysSince = lastSyncDate
-    ? Math.floor((Date.now() - new Date(lastSyncDate).getTime()) / (1000 * 60 * 60 * 24))
-    : null
 
   const isStale = daysSince !== null && daysSince > 7
   const color = isStale ? '#f59e0b' : '#525252'

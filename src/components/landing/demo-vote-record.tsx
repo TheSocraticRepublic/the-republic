@@ -31,7 +31,7 @@ export function DemoVoteRecord() {
             className="mt-2 text-sm leading-relaxed text-text-secondary"
             style={{ fontFamily: 'var(--font-serif)' }}
           >
-            Called for "sustainable forestry practices" in three public town
+            Called for &quot;sustainable forestry practices&quot; in three public town
             halls, but voted against the bill that would have established
             binding old-growth protections in their riding.
           </p>

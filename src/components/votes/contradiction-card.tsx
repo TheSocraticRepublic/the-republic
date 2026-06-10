@@ -27,7 +27,7 @@ export function ContradictionCard({ contradiction }: ContradictionCardProps) {
           Said
         </p>
         <p className="text-xs text-text-secondary leading-relaxed italic">
-          "{contradiction.statement}"
+          &quot;{contradiction.statement}&quot;
         </p>
         <p className="mt-1 text-[10px] text-text-faint">
           {contradiction.statementDate} — {contradiction.statementContext}

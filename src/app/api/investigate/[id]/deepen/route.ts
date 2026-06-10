@@ -157,8 +157,8 @@ async function extractPlayers(
     const validPlayerTypes = playerTypeEnum.enumValues
     const validRoles = investigationPlayerRoleEnum.enumValues
 
-    if (!validPlayerTypes.includes(ep.playerType as any)) continue
-    if (!validRoles.includes(ep.role as any)) continue
+    if (!(validPlayerTypes as readonly string[]).includes(ep.playerType)) continue
+    if (!(validRoles as readonly string[]).includes(ep.role)) continue
 
     // Sanitize string fields: trim and cap lengths
     const name = (ep.name || '').trim().slice(0, 500)
@@ -182,7 +182,7 @@ async function extractPlayers(
         .insert(players)
         .values({
           name,
-          playerType: ep.playerType as any, // validated above
+          playerType: ep.playerType as (typeof playerTypeEnum.enumValues)[number], // validated above
           description,
         })
         .returning({ id: players.id })
@@ -194,12 +194,12 @@ async function extractPlayers(
       await db.insert(investigationPlayers).values({
         investigationId,
         playerId,
-        role: ep.role as any, // validated above
+        role: ep.role as (typeof investigationPlayerRoleEnum.enumValues)[number], // validated above
         context,
       })
-    } catch (err: any) {
+    } catch (err) {
       // Only swallow unique constraint violations (PostgreSQL code 23505)
-      if (err?.code !== '23505') {
+      if ((err as { code?: string })?.code !== '23505') {
         console.error('Failed to link player to investigation:', err)
       }
     }

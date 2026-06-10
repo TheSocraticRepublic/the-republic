@@ -63,9 +63,15 @@ export async function POST(
     })
   }
 
+  type PartyVote = {
+    party?: { short_name?: { en?: string }; name?: { en?: string } }
+    vote?: string
+    disagreement?: number
+  }
+
   const partyContext = Array.isArray(vote.partyVotes)
-    ? `\n\nParty vote breakdown:\n${(vote.partyVotes as any[])
-        .map((pv: any) => {
+    ? `\n\nParty vote breakdown:\n${(vote.partyVotes as PartyVote[])
+        .map((pv) => {
           const name = pv?.party?.short_name?.en ?? pv?.party?.name?.en ?? 'Unknown'
           return `- ${name}: ${pv?.vote ?? 'Unknown'} (disagreement: ${pv?.disagreement ?? 'N/A'})`
         })
