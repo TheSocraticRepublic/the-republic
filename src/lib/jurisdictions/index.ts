@@ -28,9 +28,9 @@ export async function loadJurisdictionModule(
   const loader = JURISDICTION_REGISTRY[jurisdictionId]
   if (!loader) return undefined
 
-  const module = await loader()
-  moduleCache.set(jurisdictionId, module.default)
-  return module.default
+  const loaded = await loader()
+  moduleCache.set(jurisdictionId, loaded.default)
+  return loaded.default
 }
 
 /**

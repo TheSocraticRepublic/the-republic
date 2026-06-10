@@ -70,7 +70,7 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
           className="text-[10px] font-semibold uppercase tracking-[0.12em]"
           style={{ color: '#D4764E' }}
         >
-          Your MP's Record
+          Your MP&apos;s Record
         </span>
         <div className="h-px flex-1" style={{ backgroundColor: 'var(--surface-3)' }} />
       </div>

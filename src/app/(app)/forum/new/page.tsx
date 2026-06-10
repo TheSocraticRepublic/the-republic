@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import {
@@ -123,12 +124,12 @@ function NewThreadForm() {
         )}
 
         <div className="flex items-center justify-end gap-3 pt-1">
-          <a
+          <Link
             href="/forum"
             className="text-xs text-text-faint hover:text-text-secondary transition-colors"
           >
             Cancel
-          </a>
+          </Link>
           <button
             type="submit"
             disabled={submitting || !title.trim() || !content.trim()}

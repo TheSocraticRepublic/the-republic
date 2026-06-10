@@ -152,7 +152,10 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     try {
       await db.transaction(async (tx) => {
         // Auto-create outcome based on action type
-        const outcomeMap: Record<string, { type: string; description: string }> = {
+        const outcomeMap: Record<
+          string,
+          { type: (typeof investigationOutcomes.$inferInsert)['outcomeType']; description: string }
+        > = {
           fippa_request: {
             type: 'fippa_response_received',
             description: 'FOI request filed — awaiting response',
@@ -168,7 +171,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           await tx.insert(investigationOutcomes).values({
             investigationId: existing.investigationId!,
             userId,
-            outcomeType: outcomeSpec.type as any,
+            outcomeType: outcomeSpec.type,
             description: outcomeSpec.description,
           })
         }

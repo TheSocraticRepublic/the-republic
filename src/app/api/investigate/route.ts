@@ -31,8 +31,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { streamText, generateText } from 'ai'
 import { eq, sql, desc } from 'drizzle-orm'
 import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
-
-const MODEL = 'claude-sonnet-4-20250514'
+import { MODEL } from '@/lib/ai/model'
 
 // Conservation keywords used for concern detection
 const CONSERVATION_KEYWORDS = [

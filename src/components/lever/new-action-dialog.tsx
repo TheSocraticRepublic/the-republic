@@ -5,7 +5,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useRouter } from 'next/navigation'
 import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react'
 import { clsx } from 'clsx'
-import { BC_PUBLIC_BODIES } from '@/lib/lever/public-bodies'
+import { bcPublicBodies as BC_PUBLIC_BODIES } from '@/lib/jurisdictions/bc/public-bodies'
 import { leverActionTypeEnum } from '@/lib/db/schema'
 import type { PublicBody } from '@/lib/jurisdictions/types'
 
@@ -79,7 +79,14 @@ export function NewActionDialog({
     if (!open) return
     setFetchingContext(true)
 
-    const promises: Promise<any>[] = [
+    type ContextResponse = {
+      documents?: Document[]
+      sessions?: Session[]
+      investigation?: { jurisdictionName?: string | null }
+      actions?: ExistingAction[]
+    } | null
+
+    const promises: Promise<ContextResponse>[] = [
       fetch('/api/oracle/documents').then((r) => r.json()).catch(() => ({ documents: [] })),
       fetch('/api/gadfly/session').then((r) => r.json()).catch(() => ({ sessions: [] })),
     ]
@@ -100,9 +107,9 @@ export function NewActionDialog({
     }
 
     Promise.all(promises).then(async ([docsData, sessionsData, investigationData, actionsData]) => {
-      const ready = (docsData.documents ?? []).filter((d: Document) => d.status === 'ready')
+      const ready = (docsData?.documents ?? []).filter((d: Document) => d.status === 'ready')
       setDocuments(ready)
-      setSessions(sessionsData.sessions ?? [])
+      setSessions(sessionsData?.sessions ?? [])
 
       // Resolve jurisdiction from investigation's jurisdictionName
       if (investigationData?.investigation) {

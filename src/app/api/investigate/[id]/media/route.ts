@@ -8,8 +8,7 @@ import { campaignMaterialSchema } from '@/lib/campaign/schemas'
 import { anthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
 import { eq, and, desc, asc } from 'drizzle-orm'
-
-const MODEL = 'claude-sonnet-4-20250514'
+import { MODEL } from '@/lib/ai/model'
 
 // The valid materialTypes the campaign system can generate (subset of the DB enum)
 const SUPPORTED_MATERIAL_TYPES = new Set([

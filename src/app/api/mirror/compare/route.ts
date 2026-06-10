@@ -6,9 +6,9 @@ import { MIRROR_SYSTEM_PROMPT, MIRROR_PROMPT_VERSION } from '@/lib/ai/prompts/mi
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, desc } from 'drizzle-orm'
+import { MODEL } from '@/lib/ai/model'
 
 const MAX_DOCUMENT_CHARS = 60_000
-const MODEL = 'claude-sonnet-4-20250514'
 
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')

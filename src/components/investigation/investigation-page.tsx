@@ -1,11 +1,23 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback, useSyncExternalStore } from 'react'
 import { BriefingView } from '@/components/briefing/briefing-view'
 import { LensPanel } from '@/components/lens/lens-panel'
 import { GadflySheet } from '@/components/lens/gadfly-sheet'
 import { CampaignPanel } from '@/components/campaign/campaign-panel'
 import { CivicContextStrip } from '@/components/investigation/civic-context-strip'
+
+const ISLAND_DARK_KEY = 'republic-island-dark'
+const ISLAND_DARK_EVENT = 'republic-island-dark-change'
+
+function subscribeIslandDark(callback: () => void) {
+  window.addEventListener(ISLAND_DARK_EVENT, callback)
+  window.addEventListener('storage', callback)
+  return () => {
+    window.removeEventListener(ISLAND_DARK_EVENT, callback)
+    window.removeEventListener('storage', callback)
+  }
+}
 
 interface InvestigationPageProps {
   id: string
@@ -37,19 +49,18 @@ export function InvestigationPage({
   const [civicExpanded, setCivicExpanded] = useState<'votes' | 'discussion' | 'reviews' | 'archive' | null>(null)
   const [gadflyOpen, setGadflyOpen] = useState(false)
   const [gadflySessionId, setGadflySessionId] = useState<string | null>(null)
-  const [islandDarkMode, setIslandDarkMode] = useState(false)
-
-  useEffect(() => {
-    const saved = localStorage.getItem('republic-island-dark')
-    if (saved === 'true') setIslandDarkMode(true)
-  }, [])
+  // localStorage as an external store: server snapshot is false, the client
+  // corrects after hydration, and same-tab toggles notify via a custom event.
+  const islandDarkMode = useSyncExternalStore(
+    subscribeIslandDark,
+    () => localStorage.getItem(ISLAND_DARK_KEY) === 'true',
+    () => false
+  )
 
   const handleToggleDarkMode = useCallback(() => {
-    setIslandDarkMode(prev => {
-      const next = !prev
-      localStorage.setItem('republic-island-dark', String(next))
-      return next
-    })
+    const next = localStorage.getItem(ISLAND_DARK_KEY) !== 'true'
+    localStorage.setItem(ISLAND_DARK_KEY, String(next))
+    window.dispatchEvent(new Event(ISLAND_DARK_EVENT))
   }, [])
 
   function handleOpenGadfly() {

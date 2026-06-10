@@ -42,7 +42,7 @@ export function DocumentFragment() {
           objectives per Section 9.1 of FPPR, including retention targets for
           wildlife tree patches (6% minimum) and riparian management areas
           consistent with Sections 47-53 of FPPR. Visual Quality Class is
-          designated as "Modification" under the Visual Landscape Inventory.
+          designated as &quot;Modification&quot; under the Visual Landscape Inventory.
         </p>
 
         {/* Redacted/blurred section */}

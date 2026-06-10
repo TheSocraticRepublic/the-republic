@@ -46,7 +46,7 @@ export function GadflyEntry({
         className="mb-6 text-sm leading-relaxed"
         style={{ color: textColor }}
       >
-        You've read the briefing. Here's a question worth sitting with:{' '}
+        You&apos;ve read the briefing. Here&apos;s a question worth sitting with:{' '}
         <strong style={{ color: strongColor, fontWeight: 600 }}>
           {seededQuestion || DEFAULT_QUESTION}
         </strong>

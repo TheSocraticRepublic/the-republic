@@ -26,12 +26,18 @@ src/
       mirror/        # Cross-jurisdiction comparison
       votes/         # Vote tracker (MP lookup, voting records, letters)
       investigate/   # Investigation hub (briefing, lens, campaign)
+      forum/         # Threads, posts, moderation
+      scout/         # Document search and ingestion
     (auth)/login/    # Magic code auth
+    (public)/        # Public archive browse (no auth)
+    ap/              # ActivityPub federation endpoints
     api/             # API routes per arm
       campaign/      # Campaign material export (PDF, print)
       investigate/   # Investigation CRUD, outcomes, media, votes
       lever/         # Action CRUD, generation, export (txt/md/pdf)
       parliament/    # MP data, votes, sync, letters
+      forum/         # Forum CRUD, reports, moderation
+      archive/       # Archive bundles + permanence
   components/
     layout/          # App shell, sidebar, nav
     oracle/          # Document cards, analysis panels
@@ -41,18 +47,24 @@ src/
     campaign/        # Campaign panel, outcome tracker, reasoning card
     votes/           # MP profiles, vote lists, letter generator
     investigation/   # Concern form, investigation page
+    forum/           # Thread list, post composer, moderation
+    landing/         # Landing page narrative scenes
     ui/              # Shared primitives (cross-arm actions)
   lib/
     ai/prompts/      # System prompts per arm (THE critical files)
-    ai/              # RAG, embeddings, cache, briefing
+    ai/              # RAG, embeddings (stubbed), search context, model ID
+    activitypub/     # AP actors, HTTP signatures, delivery, WebFinger
     auth/            # JWT, magic codes
     campaign/        # Export utilities (Markdown, print HTML, schemas)
     db/              # Drizzle schema + singleton
     documents/       # Parser, chunker, classifier, cross-ref
+    jurisdictions/   # BC/AB/ON modules: FOI citations, public bodies
     lever/           # FIPPA, public comment, policy brief
     mirror/          # Jurisdiction matching, outcome evaluation
     parliament/      # OpenParliament API client, Represent API, sync
     pdf/             # @react-pdf/renderer templates, primitives, fonts
+    archive/         # Bundles, hashing, diff, shadow detection
+    credentials/     # Credential weights, decay, moderator checks
   types/
 ```
 

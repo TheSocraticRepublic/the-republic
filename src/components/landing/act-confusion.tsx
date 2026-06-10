@@ -38,7 +38,7 @@ export function ActConfusion() {
           }}
         >
           <p>
-            You've walked this trail every week for three years. Through the
+            You&apos;ve walked this trail every week for three years. Through the
             Douglas fir and the western red cedar, along the creek that feeds
             into the river your kids swim in every August.
           </p>
@@ -50,12 +50,12 @@ export function ActConfusion() {
           </p>
           <p>
             It references the Forest and Range Practices Act, a landscape-level
-            biodiversity objective, a visual quality class you've never heard of,
+            biodiversity objective, a visual quality class you&apos;ve never heard of,
             and a watershed assessment that concludes the cumulative hydrological
-            impact is "within acceptable thresholds."
+            impact is &quot;within acceptable thresholds.&quot;
           </p>
           <p>
-            You don't know what questions to ask. You don't know what's been
+            You don&apos;t know what questions to ask. You don&apos;t know what&apos;s been
             left out. You have 30 days.
           </p>
         </div>

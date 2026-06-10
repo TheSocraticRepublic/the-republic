@@ -1,5 +1,6 @@
 import React from 'react'
 import { renderToStream } from '@react-pdf/renderer'
+import type { DocumentProps } from '@react-pdf/renderer'
 import type {
   CampaignMaterial,
   FactSheetSpec,
@@ -34,7 +35,7 @@ export async function renderCampaignPdf(
   material: CampaignMaterial
 ): Promise<NodeJS.ReadableStream> {
   const element = buildCampaignElement(material)
-  return renderToStream(element as any)
+  return renderToStream(element as React.ReactElement<DocumentProps>)
 }
 
 function buildCampaignElement(material: CampaignMaterial): React.ReactElement {
@@ -84,7 +85,7 @@ export async function renderLeverPdf(
   action: LeverActionData
 ): Promise<NodeJS.ReadableStream> {
   const element = buildLeverElement(action)
-  return renderToStream(element as any)
+  return renderToStream(element as React.ReactElement<DocumentProps>)
 }
 
 function buildLeverElement(action: LeverActionData): React.ReactElement {

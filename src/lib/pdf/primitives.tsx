@@ -27,7 +27,7 @@ interface RepublicPageProps {
   /** Show standard footer */
   footer?: boolean
   /** Custom page style overrides */
-  style?: object
+  style?: React.ComponentProps<typeof Page>['style']
   /** Use serif font family (for legal documents) */
   serif?: boolean
 }
@@ -49,7 +49,7 @@ export function RepublicPage({
     : shared.page
 
   return (
-    <Page size={size} orientation={orientation} style={[baseStyle, style as any].filter(Boolean)}>
+    <Page size={size} orientation={orientation} style={style ? [baseStyle, style].flat() : baseStyle}>
       {accentBand && <AccentBand />}
       {wordmark && <Wordmark />}
       <View style={{ flex: 1 }}>{children}</View>
@@ -93,7 +93,7 @@ export function AccentBand({ color }: AccentBandProps) {
     <View
       style={[
         shared.accentBand,
-        color ? { backgroundColor: color } : ({} as any),
+        ...(color ? [{ backgroundColor: color }] : []),
       ]}
     />
   )
@@ -362,20 +362,24 @@ export function ComparisonTable({
               {
                 width: columnWidths?.[i] ?? defaultWidth,
               },
-              i === subjectIndex
-                ? {
-                    backgroundColor: 'rgba(91, 200, 138, 0.08)',
-                    borderLeftWidth: 2,
-                    borderLeftColor: colors.mirror,
-                  }
-                : ({} as any),
-              i === 0
-                ? {
-                    color: colors.muted,
-                    fontSize: typeScale.small,
-                    fontWeight: 600,
-                  }
-                : ({} as any),
+              ...(i === subjectIndex
+                ? [
+                    {
+                      backgroundColor: 'rgba(91, 200, 138, 0.08)',
+                      borderLeftWidth: 2,
+                      borderLeftColor: colors.mirror,
+                    },
+                  ]
+                : []),
+              ...(i === 0
+                ? [
+                    {
+                      color: colors.muted,
+                      fontSize: typeScale.small,
+                      fontWeight: 600,
+                    },
+                  ]
+                : []),
             ]}
           >
             {h}
@@ -407,7 +411,7 @@ export function ComparisonTable({
                 key={ci}
                 style={[
                   ci === subjectIndex ? tableStyles.subjectCell : tableStyles.cell,
-                  ci === 0 ? { fontWeight: 600 } : ({} as any),
+                  ...(ci === 0 ? [{ fontWeight: 600 }] : []),
                   {
                     width: columnWidths?.[ci] ?? defaultWidth,
                   },
@@ -477,8 +481,8 @@ export function AccentBox({ children, borderColor, bgColor }: AccentBoxProps) {
     <View
       style={[
         accentBoxStyles.container,
-        borderColor ? { borderLeftColor: borderColor } : ({} as any),
-        bgColor ? { backgroundColor: bgColor } : ({} as any),
+        ...(borderColor ? [{ borderLeftColor: borderColor }] : []),
+        ...(bgColor ? [{ backgroundColor: bgColor }] : []),
       ]}
     >
       {typeof children === 'string' ? (
