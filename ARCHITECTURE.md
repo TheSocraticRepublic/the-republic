@@ -37,10 +37,12 @@ src/
 │   │   ├── scout/              # Document search and ingestion
 │   │   ├── briefing/           # Investigation briefing view
 │   │   ├── forum/              # Forum threads and posts
+│   │   ├── votes/              # Vote tracker (recent votes, MPs, bills, vote detail)
 │   │   ├── profile/            # User profile + credentials
 │   │   └── u/                  # Public user profile (ActivityPub actor page)
 │   ├── ap/                     # ActivityPub federation endpoints (actors, inbox, outbox, followers, content)
 │   ├── (auth)/                 # Login page (magic code auth)
+│   ├── (public)/               # Public archive browse (no auth)
 │   ├── .well-known/            # WebFinger discovery
 │   └── api/
 │       ├── auth/               # Magic code auth flow
@@ -49,6 +51,11 @@ src/
 │       ├── gadfly/             # Socratic session API (legacy)
 │       ├── lever/              # Civic action API (legacy)
 │       ├── mirror/             # Comparison API (legacy)
+│       ├── parliament/         # Vote tracker: MP/vote/bill data, AI analysis, sync
+│       ├── campaign/           # Campaign material export (PDF, print)
+│       ├── archive/            # Archive bundles + permanence
+│       ├── documents/          # Document re-ingestion
+│       ├── governance/         # Governance scores
 │       ├── scout/              # Document search API
 │       ├── briefing/           # Briefing generation API
 │       ├── forum/              # Forum CRUD + moderation
@@ -67,6 +74,9 @@ src/
 │   ├── lens/                   # Lens layer components
 │   ├── campaign/               # Campaign layer components
 │   ├── forum/                  # Forum UI
+│   ├── votes/                  # Vote tracker UI (MP profiles, ballots, letters)
+│   ├── archive/                # Archive browse UI
+│   ├── landing/                # Landing page narrative scenes
 │   ├── credentials/            # Credential display
 │   ├── review/                 # Peer review UI
 │   ├── profile/                # Profile UI
@@ -109,6 +119,15 @@ src/
     ├── campaign/               # Campaign layer logic
     ├── lever/                  # Civic action generation
     ├── mirror/                 # Cross-jurisdiction comparison
+    ├── parliament/             # OpenParliament + Represent API clients, sync
+    ├── pdf/                    # @react-pdf/renderer templates + primitives
+    ├── archive/                # Archive bundles, hashing, diff, shadow detection
+    ├── governance/             # Governance scoring
+    ├── privacy/                # Logging policy
+    ├── landing/                # Landing page hooks and data
+    ├── timeline/               # Event timeline merge logic
+    ├── api/                    # safeRoute wrapper (uncaught errors → Sentry)
+    ├── ai/model.ts             # Single source of truth for the AI model ID
     ├── scout/                  # Document ingestion and search
     ├── profile/                # User profile logic
     ├── documents/              # Document parsing and chunking
@@ -123,7 +142,7 @@ Cave-layer components are not co-located in a single directory. They are distrib
 
 An investigation is the top-level container for a citizen's inquiry. It holds documents, players, events, and outcomes.
 
-**Scout** (`src/lib/scout/`) — Gathers source material. Web search via Tavily, document ingestion via PDF parsing (`pdf-parse`), and embedding generation for semantic search. Documents are chunked into `document_chunks` with `vector(1024)` embeddings stored in PostgreSQL via pgvector.
+**Scout** (`src/lib/scout/`) — Gathers source material. Web search via DuckDuckGo (`duck-duck-scrape`), document ingestion via PDF parsing (`pdf-parse`). Documents are chunked into `document_chunks`, which carry a pgvector `vector(1024)` column — but embedding generation is currently a stub (`src/lib/ai/embeddings.ts`) awaiting a provider, so chunks store null embeddings and semantic search is disabled.
 
 **Oracle** (`src/lib/ai/prompts/`) — Analyzes documents. Streaming responses via AI SDK. Produces: plain-language summaries, power maps (beneficiaries / decision-makers / affected / funding sources / oversight gaps), missing information, hidden assumptions, and questions to ask. The Oracle is a lens, not an advocate — it surfaces structure, not conclusions.
 
@@ -142,6 +161,10 @@ An investigation is the top-level container for a citizen's inquiry. It holds do
 **Lever** (`src/lib/lever/`) — Generates fileable civic documents. FOI requests use template-based citation — never AI-generated statutory citations. The Lever knows the actual section numbers because jurisdiction modules contain them. A request that cites the wrong section number fails. This constraint is why template-based citation is non-negotiable.
 
 Action types: `fippa_request`, `public_comment`, `policy_brief`, `legal_template`, `media_spec`, `talking_points`, `coalition_template`.
+
+## The Vote Tracker
+
+Federal legislator accountability (`src/lib/parliament/`, `/votes` routes, `/api/parliament`). Data comes from openparliament.ca (MPs, votes, bills, ballots) and the Represent API (postal code → riding → MP). Vote, bill, and MP data is synced into local tables via `/api/parliament/sync`; postal-code lookups call the Represent API at request time. AI features (bill summaries, vote explanations, voting-pattern analysis, said-X-voted-Y contradiction detection) are versioned by prompt and cached in the database. Letter generation routes through the Lever. Investigations can attach relevant votes via postal code on the concern form.
 
 ## The Forum
 
