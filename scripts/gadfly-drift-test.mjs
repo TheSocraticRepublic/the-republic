@@ -15,7 +15,8 @@
 const API_KEY = process.env.ANTHROPIC_API_KEY
 if (!API_KEY) { console.error('ANTHROPIC_API_KEY not set'); process.exit(1) }
 
-const MODEL = 'claude-sonnet-4-20250514'
+// Cross-reference: src/lib/ai/model.ts must match this value.
+const MODEL = 'claude-sonnet-4-6'
 
 const TEST_DOCUMENT = `
 DISTRICT OF SQUAMISH
