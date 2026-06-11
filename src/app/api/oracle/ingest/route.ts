@@ -85,14 +85,27 @@ export async function POST(request: NextRequest) {
 
     // Embed chunk contents — ~5s total budget, per-batch failure isolation.
     // Embedding errors are fully swallowed here: they must never reach the
-    // outer catch at :112-117 (which would mark the document 'failed').
+    // outer catch below (which would mark the document 'failed').
     // Chunks with null embeddings are stored and can be backfilled later.
+    //
+    // Deadline guard: record a start time and stop embedding when fewer than
+    // 800ms remain — avoids stranding the document in 'processing' if the
+    // serverless function is killed mid-loop.  Partial embeddings already
+    // computed are preserved; remaining chunks get null and are backfillable.
+    const BATCH_SIZE = 128
+    const EMBED_DEADLINE_MS = 5000
+    const EMBED_BUDGET_RESERVE_MS = 800
     let embeddings: (number[] | null)[] = chunks.map(() => null)
     if (chunks.length > 0) {
       try {
-        const BATCH_SIZE = 128
+        const embedStart = Date.now()
         const allEmbeddings: (number[] | null)[] = new Array(chunks.length).fill(null)
         for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+          const elapsed = Date.now() - embedStart
+          if (elapsed > EMBED_DEADLINE_MS - EMBED_BUDGET_RESERVE_MS) {
+            // Budget exhausted — leave remaining chunks as null (backfillable)
+            break
+          }
           const batchTexts = chunks.slice(i, i + BATCH_SIZE).map((c) => c.content)
           try {
             const batchResult = await generateEmbeddings(batchTexts)
@@ -107,6 +120,12 @@ export async function POST(request: NextRequest) {
       } catch {
         // Outer embedding failure → all nulls, insertion proceeds normally
       }
+    }
+
+    // Log embedding outcome (when a key is configured; one line, counts only)
+    const embeddedCount = embeddings.filter((e) => e !== null).length
+    if (process.env.VOYAGE_API_KEY) {
+      console.log(`[embeddings] document=${doc.id} embedded=${embeddedCount}/${chunks.length}`)
     }
 
     // Insert chunks with their embeddings (null where embedding failed)

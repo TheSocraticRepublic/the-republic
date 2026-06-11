@@ -44,6 +44,7 @@ const QUERY_EMBED_TIMEOUT_MS = 2500
  * @param userId - The authenticated user's UUID
  * @param query - The search query text
  * @param k - Maximum number of results to return (default: 5)
+ * @param _queryVec - Optional pre-computed query vector (bypasses Voyage; used by tests)
  * @returns Array of matching chunks with title, content, and similarity
  */
 export async function searchDocumentChunks(
@@ -52,7 +53,8 @@ export async function searchDocumentChunks(
   db: PgDatabase<any, any, any>,
   userId: string,
   query: string,
-  k: number = DEFAULT_K
+  k: number = DEFAULT_K,
+  _queryVec?: number[]
 ): Promise<ChunkSearchResult[]> {
   // --- Empty-corpus short-circuit ---
   // Skip the Voyage call entirely if the user has no embedded chunks.
@@ -74,15 +76,17 @@ export async function searchDocumentChunks(
     return []
   }
 
-  // --- Embed the query ---
-  let queryVec: number[] | null = null
-  try {
-    const [vec] = await voyageEmbed([query], 'query', { timeoutMs: QUERY_EMBED_TIMEOUT_MS })
-    queryVec = vec ?? null
-  } catch {
-    return []
+  // --- Embed the query (or use a pre-computed vector for testing) ---
+  let queryVec: number[] | null = _queryVec ?? null
+  if (!queryVec) {
+    try {
+      const [vec] = await voyageEmbed([query], 'query', { timeoutMs: QUERY_EMBED_TIMEOUT_MS })
+      queryVec = vec ?? null
+    } catch {
+      return []
+    }
+    if (!queryVec) return []
   }
-  if (!queryVec) return []
 
   // --- Cosine similarity search ---
   // Raw SQL with explicit ::vector cast — see module comment for rationale.

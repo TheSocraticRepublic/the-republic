@@ -18,7 +18,7 @@
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { isNull, eq } from 'drizzle-orm'
-import { documentChunks, documents } from '../src/lib/db/schema'
+import { documentChunks } from '../src/lib/db/schema'
 import { voyageEmbedBatched } from '../src/lib/ai/voyage'
 
 const BATCH_SIZE = 64
@@ -65,14 +65,14 @@ async function main(): Promise<void> {
   const client = postgres(databaseUrl, { max: 1 })
   const db = drizzle(client)
 
-  // Fetch all chunks with missing embeddings
+  // Fetch all chunks with missing embeddings — no join needed; filtering on
+  // documentChunks alone is sufficient (the search layer handles status gating).
   const nullChunks = await db
     .select({
       id: documentChunks.id,
       content: documentChunks.content,
     })
     .from(documentChunks)
-    .innerJoin(documents, eq(documentChunks.documentId, documents.id))
     .where(isNull(documentChunks.embedding))
 
   const total = nullChunks.length

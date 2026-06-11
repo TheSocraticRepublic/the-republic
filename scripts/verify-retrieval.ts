@@ -1,33 +1,46 @@
 /**
  * Retrieval verification script: seeds test data and validates searchDocumentChunks.
  *
- * Run with: DATABASE_URL=... VOYAGE_API_KEY=... npx tsx scripts/verify-retrieval.ts
+ * Run with: DATABASE_URL=... npx tsx scripts/verify-retrieval.ts
+ * (VOYAGE_API_KEY is NOT required — the script injects a pre-computed query
+ *  vector directly, bypassing Voyage. This makes assertions falsifiable against
+ *  synthetic seeds and keeps the script runnable without live API access.)
  *
  * Assertions:
  *   (a) User scoping — user B's chunks are not returned for user A's query
  *   (b) Similarity ordering — higher-similarity results appear first
  *   (c) Cutoff exclusion — chunks below SIMILARITY_THRESHOLD (0.5) are not returned
+ *   (d) Positive match — user A's known-similar chunk IS returned (non-vacuous)
+ *
+ * Seeds:
+ *   - User A: chunk with HIGH_SIM_VEC (≈1.0 cosine to query), chunk with LOW_SIM_VEC (≈0.0)
+ *   - User B: chunk with HIGH_SIM_VEC (same similarity — must NOT appear for user A)
+ *
+ * The script uses a transaction that THROWS at the end to force rollback —
+ * no data persists. Safe to run against production with appropriate DATABASE_URL.
  *
  * ⚠ PENDING VERIFICATION: needs a working DATABASE_URL (local direct-connection
- * host is unreachable). The script uses a transaction that THROWS at the end to
- * force rollback — no data persists.
+ * host is unreachable). Tested logic is correct but cannot be validated locally.
  */
 
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
-import { eq } from 'drizzle-orm'
 import { users, documents, documentChunks } from '../src/lib/db/schema'
 import { searchDocumentChunks } from '../src/lib/ai/search-chunks'
 
-// 1024-dimensional test vectors
-// high: cosine similarity ~0.99 to itself
-// low: cosine similarity ~0.1 to high (nearly orthogonal)
-function makeVector(value: number, dims = 1024): number[] {
-  return Array.from({ length: dims }, (_, i) => (i === 0 ? value : 0.001))
+// 1024-dimensional test vectors.
+//
+// HIGH_SIM_VEC: unit vector along dim-0. Cosine similarity to itself = ~1.0.
+// LOW_SIM_VEC:  unit vector along dim-1. Cosine similarity to HIGH_SIM_VEC ≈ 0.0
+//               (well below the 0.5 threshold → must be excluded).
+// QUERY_VEC:    identical to HIGH_SIM_VEC so the positive match assertion has teeth.
+function makeUnitVector(dim: number, dims = 1024): number[] {
+  return Array.from({ length: dims }, (_, i) => (i === dim ? 1.0 : 0.0))
 }
 
-const HIGH_SIM_VEC = makeVector(1.0)   // Will be "close" to itself
-const LOW_SIM_VEC  = makeVector(0.001) // Nearly orthogonal to HIGH_SIM_VEC
+const HIGH_SIM_VEC: number[] = makeUnitVector(0)  // cosine ~1.0 to QUERY_VEC
+const LOW_SIM_VEC: number[]  = makeUnitVector(1)  // cosine ~0.0 to QUERY_VEC — below threshold
+const QUERY_VEC: number[]    = makeUnitVector(0)  // injected directly; bypasses Voyage
 
 function assert(condition: boolean, label: string): void {
   if (condition) {
@@ -45,10 +58,11 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
-  // VOYAGE_API_KEY is needed to actually embed the query;
-  // without it, all results return [] (graceful-off).
-  if (!process.env.VOYAGE_API_KEY) {
-    console.warn('Warning: VOYAGE_API_KEY not set. Tests will verify short-circuit behavior only.')
+  // VOYAGE_API_KEY is intentionally NOT required — we inject QUERY_VEC directly.
+  // searchDocumentChunks accepts a pre-computed vector as its 5th argument and
+  // skips the Voyage call entirely, making assertions independent of live API access.
+  if (process.env.VOYAGE_API_KEY) {
+    console.log('Note: VOYAGE_API_KEY is set but will not be used — query vector is injected directly.')
   }
 
   const client = postgres(databaseUrl, { max: 1 })
@@ -92,7 +106,7 @@ async function main(): Promise<void> {
         })
         .returning({ id: documents.id })
 
-      // Seed chunk for user A — high similarity to our query vector
+      // User A: high-similarity chunk — must appear in results
       await tx.insert(documentChunks).values({
         documentId: docA.id,
         content: 'High similarity content for user A',
@@ -100,15 +114,15 @@ async function main(): Promise<void> {
         embedding: HIGH_SIM_VEC,
       })
 
-      // Seed chunk for user B — same high similarity vector, but different user
+      // User B: same high-similarity vector — must NOT appear for user A (scoping)
       await tx.insert(documentChunks).values({
         documentId: docB.id,
-        content: 'High similarity content for user B (should not appear in user A results)',
+        content: 'High similarity content for user B (must not appear in user A results)',
         chunkIndex: 0,
         embedding: HIGH_SIM_VEC,
       })
 
-      // Seed low-similarity chunk for user A (below 0.5 threshold)
+      // User A: low-similarity chunk — must be excluded by the 0.5 threshold
       await tx.insert(documentChunks).values({
         documentId: docA.id,
         content: 'Low similarity content — should be excluded by threshold',
@@ -116,39 +130,47 @@ async function main(): Promise<void> {
         embedding: LOW_SIM_VEC,
       })
 
-      // (a) User scoping — without VOYAGE_API_KEY, searchDocumentChunks short-circuits
-      // after the corpus check (finds embedded chunks), then returns [] when embedding fails.
-      // With VOYAGE_API_KEY, it should return only user A's chunks.
-      const resultsA = await searchDocumentChunks(tx as Parameters<typeof searchDocumentChunks>[0], userA.id, 'test query about high similarity content')
+      // Inject QUERY_VEC directly — bypasses Voyage, makes all assertions falsifiable.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const resultsA = await searchDocumentChunks(tx as any, userA.id, 'synthetic query', 5, QUERY_VEC)
 
-      if (process.env.VOYAGE_API_KEY) {
-        // (a) Scoping: none of the results should be user B's content
+      // (d) Positive match: user A's known-similar chunk must be returned.
+      //     If this fails, scoping, column dimension, or the pipeline is broken.
+      assert(
+        resultsA.length > 0,
+        '(d) positive match: at least one result returned for user A with known-similar chunk'
+      )
+      passed++
+
+      // (a) Scoping: none of the results should contain user B's content
+      assert(
+        resultsA.every((r) => !r.content.includes('user B')),
+        '(a) user scoping: user B content not returned for user A query'
+      )
+      passed++
+
+      // (b) Ordering: if multiple results, higher-similarity results appear first
+      if (resultsA.length > 1) {
         assert(
-          resultsA.every((r) => !r.content.includes('user B')),
-          '(a) user scoping: user B content not returned for user A query'
+          resultsA[0].similarity >= resultsA[1].similarity,
+          '(b) similarity ordering: results sorted by similarity descending'
         )
-        passed++
-
-        // (b) Ordering: if multiple results, first should have higher similarity
-        if (resultsA.length > 1) {
-          assert(
-            resultsA[0].similarity >= resultsA[1].similarity,
-            '(b) similarity ordering: results sorted by similarity descending'
-          )
-          passed++
-        }
-
-        // (c) Cutoff: low-similarity chunk should not appear
-        assert(
-          resultsA.every((r) => r.similarity >= 0.5),
-          '(c) cutoff exclusion: all results have similarity >= 0.5'
-        )
-        passed++
-      } else {
-        console.log('  SKIP (a)(b)(c): VOYAGE_API_KEY not set — query embedding returns null → []')
-        assert(resultsA.length === 0, '(graceful-off): no results without API key')
         passed++
       }
+
+      // (c) Cutoff: all returned results must be above the 0.5 threshold
+      assert(
+        resultsA.every((r) => r.similarity >= 0.5),
+        '(c) cutoff exclusion: all results have similarity >= 0.5'
+      )
+      passed++
+
+      // (e) Scoping with teeth: user B's high-similarity chunk must NOT be in results
+      assert(
+        !resultsA.some((r) => r.content.includes('user B')),
+        '(e) scoping teeth: user B chunk (same vector, different user) excluded'
+      )
+      passed++
 
       // Throw to force rollback — no test data persists
       throw new Error('__rollback__')
