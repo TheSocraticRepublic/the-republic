@@ -1,10 +1,12 @@
 ---
 status: current
 current: Production deployment + first real civic outcomes
-next: null
+next: "First real investigation end-to-end on production (Voyage key provisioning, verify-retrieval + backfill run, shadow trigger prod verification)"
 testing: null
 pinned: true
 shipped:
+  - date: 2026-06-11
+    item: "First Light — AI model upgraded ahead of June 15 retirement (Gadfly drift-gated 3 runs, 59/60 Socratic compliance), Voyage AI semantic search (embedding client with graceful-off, ingest wiring with deadline budget, user-scoped pgvector retrieval injected into briefings, backfill + falsifiable verification scripts), shadow detection finally wired (persist-gated trigger on briefing completion, dismissal-aware dedup), consumeStream fix so briefing persistence survives client disconnect, PRIVACY.md Voyage disclosure, 31 new unit tests (612 total), 14 files"
   - date: 2026-05-22
     item: "Responsive mobile navigation — hamburger + Radix drawer for mobile nav (sidebar was hidden <768px with no alternative), touch-target sizing in drawer variant, Gadfly sheet full-width on mobile, dialog responsive sizing (action type grid 1-col on mobile), 5 files"
   - date: 2026-05-18
@@ -23,12 +25,6 @@ shipped:
     item: Phase 2E — Archive UI + public browse
   - date: 2026-04-22
     item: Phase 2D — diff tracking + shadow detection
-  - date: 2026-04-21
-    item: Phase 2C — archive ingestion pipeline
-  - date: 2026-04-15
-    item: Phase 2B — governance scaffolding
-  - date: 2026-04-08
-    item: Phase 0 — investigation engine, scout, briefing (25 routes, 49 tests, ~20k lines)
 ---
 
 # The Republic — Roadmap
