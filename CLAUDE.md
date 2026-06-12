@@ -52,7 +52,7 @@ src/
     ui/              # Shared primitives (cross-arm actions)
   lib/
     ai/prompts/      # System prompts per arm (THE critical files)
-    ai/              # RAG, embeddings (stubbed), search context, model ID
+    ai/              # RAG, Voyage embeddings, semantic retrieval, model ID
     activitypub/     # AP actors, HTTP signatures, delivery, WebFinger
     auth/            # JWT, magic codes
     campaign/        # Export utilities (Markdown, print HTML, schemas)
