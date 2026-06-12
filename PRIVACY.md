@@ -65,6 +65,14 @@ Your account, investigations, documents, forum posts, credentials, and governanc
 live in a PostgreSQL database. Access requires authentication. The application connects with
 a scoped service key; no client-side database access is possible.
 
+**Voyage AI (embedding processor, operator-configured)**
+When an operator configures a Voyage AI API key, document text submitted at ingest and
+concern-derived query text submitted at briefing time are sent to Voyage AI's API to
+generate vector embeddings used for semantic search. This transmission occurs only when
+`VOYAGE_API_KEY` is set by the operator; without it, semantic search is disabled and no
+text leaves the application for embedding purposes. Voyage AI's data handling is governed
+by their own privacy policy.
+
 **IPFS (distributed archive, pinned)**
 When an investigation is archived, a content bundle is pinned to IPFS. IPFS content is
 addressable by hash and publicly accessible by anyone with the CID. This is intentional —

@@ -4,6 +4,7 @@ import { getDb } from '@/lib/db'
 import { documents, documentChunks } from '@/lib/db/schema'
 import { parsePDF } from '@/lib/documents/parser'
 import { chunkDocument } from '@/lib/documents/chunker'
+import { generateEmbeddings } from '@/lib/ai/embeddings'
 import { eq } from 'drizzle-orm'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -82,15 +83,61 @@ export async function POST(request: NextRequest) {
       })
       .where(eq(documents.id, doc.id))
 
-    // Insert chunks (embeddings are null — provider not configured)
+    // Embed chunk contents — ~5s total budget, per-batch failure isolation.
+    // Embedding errors are fully swallowed here: they must never reach the
+    // outer catch below (which would mark the document 'failed').
+    // Chunks with null embeddings are stored and can be backfilled later.
+    //
+    // Deadline guard: record a start time and stop embedding when fewer than
+    // 800ms remain — avoids stranding the document in 'processing' if the
+    // serverless function is killed mid-loop.  Partial embeddings already
+    // computed are preserved; remaining chunks get null and are backfillable.
+    const BATCH_SIZE = 128
+    const EMBED_DEADLINE_MS = 5000
+    const EMBED_BUDGET_RESERVE_MS = 800
+    let embeddings: (number[] | null)[] = chunks.map(() => null)
+    if (chunks.length > 0) {
+      try {
+        const embedStart = Date.now()
+        const allEmbeddings: (number[] | null)[] = new Array(chunks.length).fill(null)
+        for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+          const elapsed = Date.now() - embedStart
+          if (elapsed > EMBED_DEADLINE_MS - EMBED_BUDGET_RESERVE_MS) {
+            // Budget exhausted — leave remaining chunks as null (backfillable)
+            break
+          }
+          const batchTexts = chunks.slice(i, i + BATCH_SIZE).map((c) => c.content)
+          try {
+            const batchResult = await generateEmbeddings(batchTexts)
+            for (let j = 0; j < batchResult.length; j++) {
+              allEmbeddings[i + j] = batchResult[j]
+            }
+          } catch {
+            // Per-batch failure → nulls for this batch, continue remaining
+          }
+        }
+        embeddings = allEmbeddings
+      } catch {
+        // Outer embedding failure → all nulls, insertion proceeds normally
+      }
+    }
+
+    // Log embedding outcome (when a key is configured; one line, counts only)
+    const embeddedCount = embeddings.filter((e) => e !== null).length
+    if (process.env.VOYAGE_API_KEY) {
+      console.log(`[embeddings] document=${doc.id} embedded=${embeddedCount}/${chunks.length}`)
+    }
+
+    // Insert chunks with their embeddings (null where embedding failed)
     if (chunks.length > 0) {
       await db.insert(documentChunks).values(
-        chunks.map((chunk) => ({
+        chunks.map((chunk, i) => ({
           documentId: doc.id,
           content: chunk.content,
           chunkIndex: chunk.chunkIndex,
           sectionHeading: chunk.sectionHeading ?? null,
           tokenCount: Math.ceil(chunk.content.length / 4), // rough estimate
+          embedding: embeddings[i] ?? null,
         }))
       )
     }
