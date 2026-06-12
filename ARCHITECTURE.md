@@ -128,6 +128,8 @@ src/
     ├── timeline/               # Event timeline merge logic
     ├── api/                    # safeRoute wrapper (uncaught errors → Sentry)
     ├── ai/model.ts             # Single source of truth for the AI model ID
+    ├── ai/voyage.ts            # Voyage embeddings client (graceful-off, script-safe)
+    ├── ai/search-chunks.ts     # Per-user semantic retrieval over document chunks
     ├── scout/                  # Document ingestion and search
     ├── profile/                # User profile logic
     ├── documents/              # Document parsing and chunking
@@ -142,7 +144,7 @@ Cave-layer components are not co-located in a single directory. They are distrib
 
 An investigation is the top-level container for a citizen's inquiry. It holds documents, players, events, and outcomes.
 
-**Scout** (`src/lib/scout/`) — Gathers source material. Web search via DuckDuckGo (`duck-duck-scrape`), document ingestion via PDF parsing (`pdf-parse`). Documents are chunked into `document_chunks`, which carry a pgvector `vector(1024)` column — but embedding generation is currently a stub (`src/lib/ai/embeddings.ts`) awaiting a provider, so chunks store null embeddings and semantic search is disabled.
+**Scout** (`src/lib/scout/`) — Gathers source material. Web search via DuckDuckGo (`duck-duck-scrape`), document ingestion via PDF parsing (`pdf-parse`). Documents are chunked into `document_chunks` with pgvector `vector(1024)` embeddings generated at ingest via Voyage AI (`voyage-4-lite`, 1024 dims — `src/lib/ai/voyage.ts` behind the `src/lib/ai/embeddings.ts` server-only wrapper). Embedding is graceful-off: without `VOYAGE_API_KEY`, chunks store null embeddings and semantic retrieval silently disables. Retrieval (`src/lib/ai/search-chunks.ts`) is strictly per-user (chunks join `documents` on owner), similarity-cutoff 0.5, and feeds a delimited untrusted-excerpts block into briefing generation. `scripts/backfill-embeddings.ts` embeds chunks ingested while no key was configured.
 
 **Oracle** (`src/lib/ai/prompts/`) — Analyzes documents. Streaming responses via AI SDK. Produces: plain-language summaries, power maps (beneficiaries / decision-makers / affected / funding sources / oversight gaps), missing information, hidden assumptions, and questions to ask. The Oracle is a lens, not an advocate — it surfaces structure, not conclusions.
 
