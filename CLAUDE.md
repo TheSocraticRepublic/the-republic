@@ -94,6 +94,7 @@ src/
 - The Lever uses template-based legal citations (never AI-generated)
 - The Oracle is a lens, not an advocate
 - The Mirror only cites real jurisdictions with real data
+- No machine output carries governance weight: no AI votes, holds credentials, moderates autonomously, or decides
 - Every feature must pass the Illich test: does it make the citizen more capable WITHOUT the tool?
 
 ## Philosophical Foundation

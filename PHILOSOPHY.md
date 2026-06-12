@@ -46,6 +46,7 @@ The Forum is the deliberative layer: where citizens who have done the work of lo
 4. **Action-oriented** — Output is filings, not content. Something you can send.
 5. **Honest** — Acknowledge limitations, surface what's missing. Uncertainty is information.
 6. **Commons-governed** — Open source, no single owner, no institutional capture.
+7. **Restrained** — The system is defined as much by what it declines to do as by what it does. Machine output never substitutes for human judgment (the restraint clause, below).
 
 ## The Illich Test
 
@@ -56,6 +57,16 @@ Every feature of The Republic must pass this test: does this make the citizen mo
 If someone uses the Oracle to analyze a document and leaves understanding nothing about how to read such documents, the tool has failed. If the Gadfly runs a session and the citizen leaves more dependent on AI to think critically, the Gadfly has failed. The goal is transfer: the analysis skills, the institutional knowledge, the templates for civic action — all of it should be usable by someone who no longer has access to this tool.
 
 If using The Republic makes people dependent on The Republic, we have failed.
+
+## The Restraint Clause
+
+The strongest argument against this project is not censorship or apathy. It is the benevolent version of itself: an AI that, having made institutions legible, starts deciding on the citizen's behalf — voting their inferred preferences, moderating on their values, governing in their name. Every step of that road is paved with convenience, and the destination is Plato's philosopher-king with better latency.
+
+The Republic refuses this structurally, not aspirationally. Machine output carries no governance weight: no AI in this system votes, holds credentials, moderates autonomously, or decides. The Gadfly never answers its own questions. The Lever never generates legal citations. Any future assistant prepares civic acts for human confirmation — it never signs.
+
+These constraints exist because the failure mode they contain is native to the technology. A language model produces the fluent appearance of wisdom whether or not the wisdom is real, and there is no way to verify benevolence in a system more capable than its examiner — that is the alignment problem, and it is the philosopher-king problem restated. The Republic therefore never requires what cannot be verified. The design target is not machine wisdom. It is auditability: every analysis traceable to its sources, every constraint public, every judgment human.
+
+The test for any feature that concentrates capability: what does it decline to do for the citizen? Does it have a sunset? A tool that prepares people for self-governance works toward its own unnecessariness. A tool that does not is an occupant.
 
 ## Credential Philosophy
 
