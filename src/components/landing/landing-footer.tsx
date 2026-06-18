@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export function LandingFooter() {
   return (
     <footer className="border-t border-border px-8 py-8 text-center">
@@ -15,6 +17,13 @@ export function LandingFooter() {
         </a>
         <span className="mx-2">·</span>
         <span>AGPL-3.0</span>
+        <span className="mx-2">·</span>
+        <Link
+          href="/foundations"
+          className="underline underline-offset-2 transition-colors hover:text-text-muted"
+        >
+          Foundations
+        </Link>
         <span className="mx-2">·</span>
         <a
           href="https://ko-fi.com/opencave"

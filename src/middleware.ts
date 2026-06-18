@@ -21,6 +21,9 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/health') ||
     pathname.startsWith('/archive') ||
+    // Foundations — the philosophical groundwork. Covers the /foundations index
+    // page AND the static /foundations/*.html papers served from public/.
+    pathname.startsWith('/foundations') ||
     pathname.startsWith('/api/users/') ||
     pathname.startsWith('/u/') ||
     pathname.startsWith('/_next') ||
