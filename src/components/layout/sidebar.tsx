@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare, Shield, Vote, Heart } from 'lucide-react'
+import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare, Shield, Vote, Heart, ScrollText } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useState } from 'react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
@@ -359,6 +359,25 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             </ul>
           )}
         </div>
+
+        {/* Foundations — the philosophical groundwork */}
+        <Link
+          href="/foundations"
+          onClick={onNavigate}
+          className={`group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm text-text-muted transition-all duration-150 hover:bg-surface-3 hover:text-text-secondary`}
+        >
+          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-border transition-all duration-150 group-hover:bg-surface-1 group-hover:border-border-strong">
+            <ScrollText
+              size={14}
+              strokeWidth={1.75}
+              className="text-text-muted group-hover:text-text-secondary"
+            />
+          </span>
+          <span className="flex flex-col">
+            <span className="font-medium leading-tight">Foundations</span>
+            <span className="text-[10px] text-text-faint leading-tight">The groundwork</span>
+          </span>
+        </Link>
       </div>
 
       {/* Beta + support */}
