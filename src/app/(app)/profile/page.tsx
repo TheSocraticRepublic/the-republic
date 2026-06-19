@@ -6,6 +6,7 @@ import { userProfiles, credentialEvents } from '@/lib/db/schema'
 import { eq, count, sum, sql } from 'drizzle-orm'
 import { ProfileBadge } from '@/components/profile/profile-badge'
 import { CredentialBreakdown } from '@/components/credentials/credential-breakdown'
+import { DeleteAccount } from '@/components/profile/delete-account'
 import {
   CREDENTIAL_LABELS,
   computeDecayMultiplier,
@@ -131,6 +132,9 @@ export default async function ProfilePage() {
       <div className="mt-6">
         <CredentialBreakdown summary={credentialSummary} />
       </div>
+
+      {/* Account deletion (PIPEDA right-to-deletion) */}
+      <DeleteAccount />
     </div>
   )
 }
