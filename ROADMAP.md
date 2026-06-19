@@ -51,6 +51,35 @@ sidebar so it always surfaces regardless of activity cadence.
 - **Philosophical body** — 4 papers (~25,500 words) at
   `content/reference/the-republic/`
 
+## Horizon — scope expansion (thesis, June 2026)
+
+The current "BC/AB/ON environmental" framing is narrower than the architecture.
+Expansion path, in tiers of increasing cost and decreasing safety:
+
+1. **All civic issues, current three provinces — mostly already built.** The concern
+   taxonomy is already general-civic (parking, towing, rezoning, development), not
+   environmental-only. The env framing is landing copy + two prompts
+   (`briefing-system`, `mp-analysis-system`) + the *optional* `assessmentFramework`.
+   Opening this up is surfacing + prompt/classifier broadening, not redesign.
+2. **More jurisdictions (QC, Maritimes, federal, eventually US) — designed for it.**
+   `JurisdictionModule` is a documented plugin (registry + `CONTRIBUTING.md`); the
+   type system already names `canada-federal`/`us-federal`; the FOI framework holds
+   FIPPA/ATIA/FOIA. Cost is legal research, not code — every module ships
+   `verified: false` until a legal professional checks the citations. Scales
+   linearly with real-world labor, deliberately.
+3. **General broad-based issues — the real boundary, and it is the mission, not the
+   code.** The whole tool orbits one lever: access-to-information. It generalizes
+   superbly across geography and government-transparency domains, less naturally to
+   civic issues whose lever isn't "get the document" (labor, consumer, mutual aid,
+   pure advocacy). Some are already covered by other levers (Vote Tracker =
+   electoral; public comment = consultation). New domains need a *new honest lever*
+   (additive — the action system already holds several), never AI-generated advice.
+
+**Guardrail:** let the mission gate generality, not the architecture. Over-generalizing
+risks dissolving the counter-hegemonic edge into a generic civic-engagement app — the
+exact dependency-creating thing the project defines itself against (Illich test). Enter
+a new civic domain only when an honest lever for it can be named.
+
 ## Reference
 
 - `state/plans/republic-roadmap-v2.md` — strategic roadmap
