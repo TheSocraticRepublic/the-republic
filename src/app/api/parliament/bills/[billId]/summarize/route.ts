@@ -8,7 +8,7 @@ import {
 } from '@/lib/ai/prompts/vote-tracker-system'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
-import { eq, sql } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 
 export async function POST(

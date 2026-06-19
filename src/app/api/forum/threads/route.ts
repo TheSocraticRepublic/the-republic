@@ -13,11 +13,10 @@ import { eq, desc, and, count, sql } from 'drizzle-orm'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { validateThreadTitle, validatePostContent } from '@/lib/forum/validation'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { isFederationConfigured, threadUrl, actorUrl } from '@/lib/activitypub/context'
+import { isFederationConfigured, threadUrl } from '@/lib/activitypub/context'
 import { getOrCreateActorKeys } from '@/lib/activitypub/keys'
 import { deliverActivity, buildKeyId } from '@/lib/activitypub/delivery'
 import { threadToArticle, wrapInCreate } from '@/lib/activitypub/activity'
-import { AP_CONTEXT } from '@/lib/activitypub/context'
 
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')

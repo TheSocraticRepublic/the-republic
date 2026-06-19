@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { documents, analyses } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
-import { Eye, FileText, AlertTriangle, MessageCircleQuestion, GitCompare } from 'lucide-react'
+import { FileText, AlertTriangle, MessageCircleQuestion, GitCompare } from 'lucide-react'
 import { OracleAnalysisPanel } from '@/components/oracle/oracle-analysis-panel'
 import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 

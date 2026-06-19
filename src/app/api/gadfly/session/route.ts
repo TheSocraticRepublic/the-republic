@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { gadflySessions, documents, analyses } from '@/lib/db/schema'
+import { gadflySessions, documents } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 

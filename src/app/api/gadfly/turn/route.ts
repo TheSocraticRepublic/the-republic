@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
         const questionType = classifyQuestionType(text)
 
         // Save the gadfly turn
-        const [gadflyTurn] = await db
+        await db
           .insert(gadflyTurns)
           .values({
             sessionId,

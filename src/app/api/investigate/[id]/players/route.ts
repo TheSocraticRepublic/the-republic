@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { investigations, investigationPlayers, players } from '@/lib/db/schema'
-import { eq, and, ne, isNotNull, or, sql, inArray } from 'drizzle-orm'
+import { eq, and, ne, isNotNull, or, inArray } from 'drizzle-orm'
 import { safeRoute } from '@/lib/api/safe-route'
 
 export const GET = safeRoute(async (

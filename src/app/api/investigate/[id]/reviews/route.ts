@@ -201,6 +201,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   const currentUserHasReviewed = rows.some((r) => r.reviewerId === userId)
 
   // Strip reviewerId before sending to client
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- omit reviewerId from the client payload
   const safeRows = rows.map(({ reviewerId: _rid, ...rest }) => rest)
 
   if (rows.length === 0) {

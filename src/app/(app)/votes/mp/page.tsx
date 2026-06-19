@@ -25,7 +25,6 @@ export default async function AllMPsPage() {
     .orderBy(asc(federalMps.name))
 
   const provinces = [...new Set(mps.map((m) => m.ridingProvince))].sort()
-  const parties = [...new Set(mps.map((m) => m.party))].sort()
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
@@ -66,6 +65,7 @@ export default async function AllMPsPage() {
               }}
             >
               {mp.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- external MP photo; next/image needs remotePatterns config (tracked as a perf follow-up)
                 <img
                   src={mp.photoUrl}
                   alt=""
