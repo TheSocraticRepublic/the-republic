@@ -48,9 +48,23 @@ function getTightRatelimit(): Ratelimit | null {
 }
 
 /**
+ * When Upstash isn't configured: fail OPEN in development (local dev needs no
+ * Redis) but fail CLOSED in production — a missing/misconfigured Redis must not
+ * silently disable abuse protection (caught in the 2026-06-18 production audit).
+ */
+function rateLimitFallback(limit: number): {
+  success: boolean
+  limit: number
+  remaining: number
+  reset: number
+} {
+  const open = process.env.NODE_ENV !== 'production'
+  return { success: open, limit, remaining: open ? limit : 0, reset: Date.now() }
+}
+
+/**
  * Check rate limit for a given identifier (IP address or user ID).
- * Returns { success: true } when Redis is not configured so that
- * local development is not blocked.
+ * Fails closed in production when Redis is not configured.
  */
 export async function checkRateLimit(identifier: string): Promise<{
   success: boolean
@@ -60,7 +74,7 @@ export async function checkRateLimit(identifier: string): Promise<{
 }> {
   const limiter = getRatelimit()
   if (!limiter) {
-    return { success: true, limit: 30, remaining: 30, reset: Date.now() }
+    return rateLimitFallback(30)
   }
   return limiter.limit(identifier)
 }
@@ -78,7 +92,7 @@ export async function checkTightRateLimit(identifier: string): Promise<{
 }> {
   const limiter = getTightRatelimit()
   if (!limiter) {
-    return { success: true, limit: 5, remaining: 5, reset: Date.now() }
+    return rateLimitFallback(5)
   }
   return limiter.limit(identifier)
 }
@@ -109,7 +123,7 @@ export async function checkDailyAiLimit(userId: string): Promise<{
 }> {
   const limiter = getDailyAiLimit()
   if (!limiter) {
-    return { success: true, limit: 5, remaining: 5, reset: Date.now() }
+    return rateLimitFallback(5)
   }
   return limiter.limit(userId)
 }
@@ -140,7 +154,7 @@ export async function checkDailyAiGeneralLimit(userId: string): Promise<{
 }> {
   const limiter = getDailyAiGeneralLimit()
   if (!limiter) {
-    return { success: true, limit: 10, remaining: 10, reset: Date.now() }
+    return rateLimitFallback(10)
   }
   return limiter.limit(userId)
 }
