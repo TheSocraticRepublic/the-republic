@@ -5,6 +5,8 @@ next: "First real investigation end-to-end on production (Voyage key provisionin
 testing: null
 pinned: true
 shipped:
+  - date: 2026-06-18
+    item: "Foundations — the Republic's five foundational papers published as public immersive HTML longreads at /foundations (Examined Institution, Participatory Universe, Convergent Methods, New Republic, Mixed Constitution), each transcribed verbatim from the corpus and fidelity-checked, bylined with the ToastedandTripping pseudonym; /foundations index with the Open Cave / The Republic / Plato lineage preface (mirrors the (public)/archive patterns); self-hosted Cormorant Garamond / Crimson Pro / Space Mono (no external font calls, no CSP change); middleware allows /foundations (index + static papers) without auth; entry links in the landing footer and dashboard sidebar"
   - date: 2026-06-11
     item: "First Light — AI model upgraded ahead of June 15 retirement (Gadfly drift-gated 3 runs, 59/60 Socratic compliance), Voyage AI semantic search (embedding client with graceful-off, ingest wiring with deadline budget, user-scoped pgvector retrieval injected into briefings, backfill + falsifiable verification scripts), shadow detection finally wired (persist-gated trigger on briefing completion, dismissal-aware dedup), consumeStream fix so briefing persistence survives client disconnect, PRIVACY.md Voyage disclosure, 31 new unit tests (612 total), 14 files"
   - date: 2026-05-22
