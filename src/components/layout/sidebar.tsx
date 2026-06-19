@@ -389,7 +389,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
           Testing for environmental issues in BC, Alberta, and Ontario.
         </p>
         <a
-          href="https://ko-fi.com/opencave"
+          href="https://ko-fi.com/toasted40013"
           target="_blank"
           rel="noopener noreferrer"
           className="mt-2 flex items-center gap-1.5 text-[11px] text-text-muted transition-colors hover:text-text-secondary"
