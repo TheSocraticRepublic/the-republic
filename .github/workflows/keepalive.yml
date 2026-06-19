@@ -1,0 +1,23 @@
+name: Keep-alive
+
+# Prevents the free-tier Supabase project from auto-pausing after ~7 idle days
+# (which caused a full production outage on 2026-06-18). /api/health runs a
+# `SELECT 1` against the database, so each ping counts as DB activity and resets
+# the idle timer. Twice weekly keeps gaps to 3-4 days — safely under the ~7-day
+# pause threshold, with margin for a delayed run. A non-200 fails the job, which
+# emails the repo owner: a lightweight uptime signal until real alerting is set up.
+
+on:
+  schedule:
+    - cron: '0 9 * * 1,4' # Mondays and Thursdays, 09:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /api/health (DB-aware)
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 https://opencave.ca/api/health)
+          echo "health endpoint returned: $code"
+          test "$code" = "200"
