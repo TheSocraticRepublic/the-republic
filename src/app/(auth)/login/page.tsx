@@ -203,8 +203,14 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p className="mt-4 text-center text-xs text-white/30">
-          No password. No tracking. Just a code.
+        <p className="mt-4 text-center text-xs text-white/50">
+          No password. No tracking. Just a code.{' '}
+          <a
+            href="/privacy"
+            className="underline underline-offset-2 transition-colors hover:text-white/80"
+          >
+            Privacy
+          </a>
         </p>
       </div>
     </div>

@@ -25,6 +25,13 @@ export function LandingFooter() {
           Foundations
         </Link>
         <span className="mx-2">·</span>
+        <Link
+          href="/privacy"
+          className="underline underline-offset-2 transition-colors hover:text-text-muted"
+        >
+          Privacy
+        </Link>
+        <span className="mx-2">·</span>
         <a
           href="https://ko-fi.com/toasted40013"
           className="underline underline-offset-2 transition-colors hover:text-text-muted"

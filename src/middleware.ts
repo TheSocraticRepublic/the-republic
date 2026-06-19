@@ -24,6 +24,8 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     // Foundations — the philosophical groundwork. Covers the /foundations index
     // page AND the static /foundations/*.html papers served from public/.
     pathname.startsWith('/foundations') ||
+    // Privacy policy — must be readable before any data-collecting action.
+    pathname.startsWith('/privacy') ||
     pathname.startsWith('/api/users/') ||
     pathname.startsWith('/u/') ||
     pathname.startsWith('/_next') ||

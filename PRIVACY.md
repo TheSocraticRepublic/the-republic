@@ -4,6 +4,9 @@ The Republic is a tool for civic accountability. The data it handles belongs to 
 exercising their democratic rights. This document describes exactly what is collected,
 what is deliberately not collected, and what happens to your data.
 
+The user-facing version of this policy is served in-app at `/privacy` (opencave.ca/privacy).
+Keep the two in sync.
+
 ---
 
 ## What The Republic Collects
@@ -87,21 +90,43 @@ pressure to disappear them. The tradeoff is finality — permanence is irreversi
 
 ---
 
+## Third-Party Processors
+
+Open Cave relies on a small number of US-based service providers. Each receives only what it
+needs to do its job:
+
+- **Anthropic (Claude)** — when you run an analysis, the text of your concern, relevant
+  document content, and parliamentary context are sent to Anthropic's API to generate the
+  analysis. This is the most sensitive transfer the tool makes; it occurs only when you invoke
+  an AI feature.
+- **Voyage AI** — when an operator configures `VOYAGE_API_KEY`, document and query text are sent
+  to generate vector embeddings for semantic search. Without the key, no text leaves for
+  embedding.
+- **Resend** — your email address is sent to Resend to deliver your sign-in code.
+- **Sentry** — error monitoring. Request bodies, cookies, auth headers, and your email/IP are
+  stripped from every report before it is sent; session replay is disabled.
+
+## Data Residency
+
+Your data is stored and processed in the **United States** (Supabase PostgreSQL, region
+us-east-2), and the processors above are US-based. Your personal information is therefore
+subject to US law, including lawful-access requests by US authorities. Canadian privacy law
+(PIPEDA) permits cross-border processing, but you have the right to know it occurs. If US
+storage is unacceptable for your threat model, do not submit sensitive material.
+
 ## Account Deletion
 
-When you delete your account:
+You can delete your account from your profile. When you do:
 
-- Your user record is deleted
-- All investigations you created are cascade-deleted
-- All documents linked only to your investigations are cascade-deleted
-- Forum posts are made authorless — content is retained for thread continuity, attribution
-  is removed
-- Credential events tied to your account are deleted
-- Archive records you created persist — they exist as public goods and cannot be retracted
-  from IPFS or Arweave once pinned
+- Your user record and profile are deleted
+- Your investigations and the documents linked to them are deleted
+- Your forum posts and threads are deleted
+- Your credential events are deleted
 
-If you have investigations with pending or completed archive records, you should be aware
-that deleting your account will not remove those records from public storage.
+This cascade is permanent and cannot be undone. The one exception: content you submitted for
+public archiving is already pinned to IPFS and/or written to Arweave, which are immutable.
+Deleting your account removes our database pointer to it, but the public archived content
+itself cannot be retracted from those networks.
 
 ---
 
@@ -127,15 +152,21 @@ or indexed by other servers. Apply the same judgment you would to any public pos
 
 ---
 
-## No Tracking, No Analytics, No Third-Party Scripts
+## No Advertising, No Tracking, No Analytics
 
-The Republic loads no third-party JavaScript. There is no Google Analytics, no Meta Pixel,
-no Intercom, no Segment, no Hotjar, no session recording tool, no A/B testing framework.
+The Republic runs no analytics and loads no advertising or tracking scripts — no Google
+Analytics, no Meta Pixel, no Intercom, no Segment, no Hotjar, no session recording, no A/B
+testing framework.
+
+The one third-party script that runs in your browser is Sentry's error-monitoring SDK, used
+to catch crashes. It is not advertising or analytics, and request bodies, cookies, auth
+headers, and your email/IP are stripped from every report before it leaves your browser (see
+Third-Party Processors above). Session replay is disabled.
 
 There are no cookies beyond the session cookie required for authentication. The session
 cookie is `HttpOnly`, `Secure`, and `SameSite=Lax`.
 
-No data is sold or shared with any third party for any commercial purpose.
+No data is sold or shared with any third party for advertising or commercial purposes.
 
 ---
 
@@ -144,4 +175,4 @@ No data is sold or shared with any third party for any commercial purpose.
 Questions about privacy or data handling: open an issue on the public repository or reach
 out through the forum. We will respond.
 
-Last updated: 2026-04-22
+Last updated: 2026-06-19

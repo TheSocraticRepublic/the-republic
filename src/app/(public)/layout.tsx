@@ -38,12 +38,20 @@ export default function PublicLayout({
           <p className="text-xs text-text-faint">
             Open Cave — making institutional power legible
           </p>
-          <Link
-            href="/"
-            className="text-xs text-text-faint hover:text-text-muted transition-colors"
-          >
-            opencave.ca
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/privacy"
+              className="text-xs text-text-faint hover:text-text-muted transition-colors"
+            >
+              Privacy
+            </Link>
+            <Link
+              href="/"
+              className="text-xs text-text-faint hover:text-text-muted transition-colors"
+            >
+              opencave.ca
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

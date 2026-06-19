@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans, Inter, Source_Serif_4 } from 'next/font/google'
-import Script from 'next/script'
 import './globals.css'
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -63,14 +62,6 @@ export default function RootLayout({
       <head />
       <body className="min-h-full bg-surface-0 text-text-primary">
         {children}
-        {process.env.NEXT_PUBLIC_ANALYTICS_SCRIPT_URL && (
-          <Script
-            src={process.env.NEXT_PUBLIC_ANALYTICS_SCRIPT_URL}
-            data-site-id={process.env.NEXT_PUBLIC_ANALYTICS_SITE_ID ?? 'default'}
-            data-endpoint={process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT}
-            strategy="afterInteractive"
-          />
-        )}
       </body>
     </html>
   )
