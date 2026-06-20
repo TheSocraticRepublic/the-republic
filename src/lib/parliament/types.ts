@@ -113,8 +113,10 @@ export interface RepresentPostcodeResponse {
   }
   boundaries_centroid: RepresentBoundary[]
   boundaries_concordance: RepresentBoundary[]
-  representatives_centroid: RepresentRepresentative[]
-  representatives_concordance: RepresentRepresentative[]
+  // Represent omits these keys entirely unless a representative set is queried,
+  // so treat them as optional rather than trusting the API to send them.
+  representatives_centroid?: RepresentRepresentative[]
+  representatives_concordance?: RepresentRepresentative[]
 }
 
 export interface RepresentBoundary {

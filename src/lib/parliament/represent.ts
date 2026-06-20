@@ -21,7 +21,11 @@ export async function lookupPostalCode(
     throw new Error(`Invalid Canadian postal code: ${postalCode}`)
   }
 
-  const url = `${BASE_URL}/postcodes/${normalized}/?sets=federal-electoral-districts&format=json`
+  // Do NOT pass `sets=federal-electoral-districts` — that filters to a *boundary*
+  // set and Represent then returns boundaries with no representatives_* arrays.
+  // With no sets it returns all representatives for the postcode; extractFederalMP
+  // picks the House of Commons member.
+  const url = `${BASE_URL}/postcodes/${normalized}/?format=json`
   const res = await fetch(url, {
     headers: { Accept: 'application/json' },
   })
@@ -41,8 +45,8 @@ export function extractFederalMP(
   response: RepresentPostcodeResponse
 ): RepresentRepresentative | null {
   const allReps = [
-    ...response.representatives_centroid,
-    ...response.representatives_concordance,
+    ...(response.representatives_centroid ?? []),
+    ...(response.representatives_concordance ?? []),
   ]
 
   const federalMp = allReps.find(
