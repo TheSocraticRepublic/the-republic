@@ -9,7 +9,12 @@ let db: ReturnType<typeof drizzle<typeof schema>> | null = null
 export function getDb() {
   if (!db) {
     const client = postgres(env.DATABASE_URL, {
-      max: 20,
+      // Serverless: every warm Lambda holds its own pool, and Supabase's
+      // session-mode pooler caps TOTAL clients (pool_size 15). max:20 per
+      // instance exhausted it — EMAXCONNSESSION took down DB-heavy pages on
+      // 2026-06-19. Keep this small; the real fix is pointing DATABASE_URL at
+      // the :6543 transaction pooler, which multiplexes and releases per-txn.
+      max: 3,
       idle_timeout: 20,
       connect_timeout: 10,
       prepare: false,
