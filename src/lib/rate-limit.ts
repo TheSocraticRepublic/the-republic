@@ -2,8 +2,14 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 
 // Lazy singleton — only instantiated when Upstash env vars are present.
-// Falls back to a no-op in environments where Redis is not configured
-// (e.g. local dev without Upstash credentials).
+// When Redis is not configured the limiter does NOT no-op uniformly: it fails
+// OPEN in development and CLOSED in production (see rateLimitFallback).
+//
+// analytics is OFF on every limiter by design. Upstash's Analytics feature
+// retains per-identifier (IP / account) request telemetry, which would
+// contradict Open Cave's "no analytics / no retained activity records" privacy
+// promise. We keep only the ephemeral, auto-expiring counters needed to enforce
+// the limit — nothing about what a citizen reads, searches, or opens.
 let _ratelimit: Ratelimit | null = null
 let _tightRatelimit: Ratelimit | null = null
 let _prodWarningLogged = false
@@ -24,7 +30,7 @@ function getRatelimit(): Ratelimit | null {
     _ratelimit = new Ratelimit({
       redis: Redis.fromEnv(),
       limiter: Ratelimit.slidingWindow(30, '60 s'),
-      analytics: true,
+      analytics: false,
       prefix: 'republic',
     })
   }
@@ -40,7 +46,7 @@ function getTightRatelimit(): Ratelimit | null {
     _tightRatelimit = new Ratelimit({
       redis: Redis.fromEnv(),
       limiter: Ratelimit.slidingWindow(5, '60 s'),
-      analytics: true,
+      analytics: false,
       prefix: 'republic-tight',
     })
   }
@@ -82,7 +88,8 @@ export async function checkRateLimit(identifier: string): Promise<{
 /**
  * Tight rate limit for low-credential users — 5 requests per 60 seconds.
  * Applied to report submissions when effective weight < 5.
- * Returns { success: true } when Redis is not configured.
+ * Fails closed in production when Redis is not configured (success: false);
+ * fails open in development.
  */
 export async function checkTightRateLimit(identifier: string): Promise<{
   success: boolean
@@ -108,7 +115,7 @@ function getDailyAiLimit(): Ratelimit | null {
     _dailyAiLimit = new Ratelimit({
       redis: Redis.fromEnv(),
       limiter: Ratelimit.fixedWindow(5, '24 h'),
-      analytics: true,
+      analytics: false,
       prefix: 'republic-daily-ai',
     })
   }
@@ -139,7 +146,7 @@ function getDailyAiGeneralLimit(): Ratelimit | null {
     _dailyAiGeneralLimit = new Ratelimit({
       redis: Redis.fromEnv(),
       limiter: Ratelimit.fixedWindow(10, '24 h'),
-      analytics: true,
+      analytics: false,
       prefix: 'republic-daily-ai-general',
     })
   }

@@ -99,6 +99,14 @@ export default function PrivacyPage() {
             auth headers, and your email/IP from every report before it is sent, and session
             replay is disabled.
           </li>
+          <li>
+            <strong className="text-text-primary">Upstash.</strong> A Redis service used only to
+            rate-limit requests and stop abuse and cost-attacks. It receives your IP address (and,
+            for some limits, your account ID) as a rate-limit key plus a short-lived counter —
+            never your content, your searches, or which pages you open. The counters auto-expire
+            within minutes to a day, no usage analytics are collected, and they are used for
+            nothing else.
+          </li>
         </ul>
         <p>
           We do not sell your data or share it with advertisers. We load no advertising or tracking
@@ -113,8 +121,8 @@ export default function PrivacyPage() {
         <p>
           Your account, investigations, documents, posts, and credentials live in a PostgreSQL
           database hosted in the <strong className="text-text-primary">United States</strong>{' '}
-          (Supabase, us-east-2). The processors above (Anthropic, Voyage, Resend, Sentry) are also
-          US-based.
+          (Supabase, us-east-2). The processors above (Anthropic, Voyage, Resend, Sentry, Upstash)
+          are also US-based.
         </p>
         <p>
           This means your personal information is stored and processed in the United States and is

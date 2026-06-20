@@ -105,6 +105,11 @@ needs to do its job:
 - **Resend** — your email address is sent to Resend to deliver your sign-in code.
 - **Sentry** — error monitoring. Request bodies, cookies, auth headers, and your email/IP are
   stripped from every report before it is sent; session replay is disabled.
+- **Upstash** — a Redis service used only to rate-limit requests and block abuse and
+  cost-attacks. It receives your IP address (and, for some limits, your account ID) as a
+  rate-limit key plus a short-lived counter — never your content, searches, or which pages you
+  open. Counters auto-expire within minutes to a day, no usage analytics are collected, and they
+  are used for nothing else.
 
 ## Data Residency
 
@@ -162,6 +167,11 @@ The one third-party script that runs in your browser is Sentry's error-monitorin
 to catch crashes. It is not advertising or analytics, and request bodies, cookies, auth
 headers, and your email/IP are stripped from every report before it leaves your browser (see
 Third-Party Processors above). Session replay is disabled.
+
+The rate-limiting service (Upstash) keeps only ephemeral per-IP and per-account request counters
+for abuse prevention. Its own usage-analytics feature is disabled, so no per-user activity
+telemetry is retained. A `rate_limit_violation` may be logged as a security event (see the
+logging policy above), but the substance of what you read, search, or open is not.
 
 There are no cookies beyond the session cookie required for authentication. The session
 cookie is `HttpOnly`, `Secure`, and `SameSite=Lax`.
