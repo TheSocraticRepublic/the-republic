@@ -36,6 +36,17 @@ import { eq, sql, desc } from 'drizzle-orm'
 import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
 import { MODEL } from '@/lib/ai/model'
 
+// Netlify: @netlify/plugin-nextjs honours Next.js route segment config for
+// function timeouts. The ceiling for Netlify Pro plans is 26 seconds for
+// synchronous (non-streaming) functions, but streaming responses via
+// Next.js Edge/Node streaming can run up to 300 seconds on Pro.
+// We set 300 here (5 minutes) — briefings average ~60s. If your plan has a
+// lower ceiling the function will be killed before onFinish fires; the reaper
+// sweep in the list route handles that case by marking zombies as 'failed'.
+// For plans limited to 26s, the durable fix is to move generation to a
+// background job (POST → 202 → poll); that redesign is out of scope for W4.
+export const maxDuration = 300
+
 // Conservation keywords used for concern detection
 const CONSERVATION_KEYWORDS = [
   'mine',
@@ -150,7 +161,7 @@ export async function POST(request: NextRequest) {
         concernCategory,
         environmentalReviewType:
           concernCategory === 'conservation' ? 'bc_eao' : null,
-        status: 'active',
+        status: 'generating',
       })
       .returning({ id: investigations.id, federalMpId: investigations.federalMpId })
     investigation = inserted
@@ -341,6 +352,30 @@ export async function POST(request: NextRequest) {
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],
     maxOutputTokens: 4096,
+    onError: async ({ error }) => {
+      // Fired when the AI SDK itself encounters a stream error (model error,
+      // network failure, etc.) before onFinish. Persist failed state so the
+      // user sees a retry option instead of a permanent spinner.
+      const reason =
+        error instanceof Error
+          ? error.message.slice(0, 500)
+          : 'Stream error'
+      try {
+        await db
+          .update(investigations)
+          .set({
+            status: 'failed',
+            failureReason: reason,
+            updatedAt: sql`NOW()`,
+          })
+          .where(
+            sql`${investigations.id} = ${investigation.id} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating'`
+          )
+      } catch (dbErr) {
+        console.error('[investigate] onError: failed to persist failed state', investigation.id, dbErr)
+      }
+      console.error('[investigate] stream error for investigation', investigation.id, error)
+    },
     onFinish: async ({ text }) => {
       // --- Stage 2: Async persist after streaming completes ---
       try {
@@ -353,10 +388,11 @@ export async function POST(request: NextRequest) {
             .set({
               briefingText: text,
               briefingCompletedAt: sql`NOW()`,
+              status: 'complete',
               updatedAt: sql`NOW()`,
             })
             .where(
-              sql`${investigations.id} = ${investigation.id} AND ${investigations.briefingCompletedAt} IS NULL`
+              sql`${investigations.id} = ${investigation.id} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating'`
             )
             .returning({ id: investigations.id })
 
@@ -447,8 +483,27 @@ export async function POST(request: NextRequest) {
 
   // Guard against unhandled rejection if the client disconnects before consuming
   // the full stream — AI SDK 6 consumeStream() returns PromiseLike<void>, not a
-  // full Promise, so we wrap it to access .catch().
-  void Promise.resolve(result.consumeStream()).catch(() => {})
+  // full Promise, so we wrap it to access .catch(). If the stream errors here
+  // AND onError/onFinish did not already persist a terminal state, mark failed.
+  void Promise.resolve(result.consumeStream()).catch(async (err) => {
+    const reason =
+      err instanceof Error ? err.message.slice(0, 500) : 'Stream consume error'
+    console.error('[investigate] consumeStream error for investigation', investigation.id, err)
+    try {
+      await db
+        .update(investigations)
+        .set({
+          status: 'failed',
+          failureReason: reason,
+          updatedAt: sql`NOW()`,
+        })
+        .where(
+          sql`${investigations.id} = ${investigation.id} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating'`
+        )
+    } catch (dbErr) {
+      console.error('[investigate] consumeStream catch: failed to persist failed state', investigation.id, dbErr)
+    }
+  })
 
   // Return the stream with the investigation ID in a custom header
   return result.toTextStreamResponse({

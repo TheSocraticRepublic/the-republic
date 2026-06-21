@@ -131,6 +131,10 @@ export const policyAreaEnum = pgEnum('policy_area', [
 export const investigationStatusEnum = pgEnum('investigation_status', [
   'active',
   'archived',
+  'generating',
+  'complete',
+  'failed',
+  'cancelled',
 ])
 
 export const playerTypeEnum = pgEnum('player_type', [
@@ -319,7 +323,10 @@ export const investigations = pgTable(
     campaignOpenedAt: timestamp('campaign_opened_at'),
     concernCategory: text('concern_category'),
     environmentalReviewType: text('environmental_review_type'),
-    status: investigationStatusEnum('status').notNull().default('active'),
+    status: investigationStatusEnum('status').notNull().default('generating'),
+    // failureReason: populated when status transitions to 'failed' or 'cancelled'.
+    // Stores the error message, timeout notice, or cancellation reason for user display.
+    failureReason: text('failure_reason'),
     // preservedAt: timestamp when this investigation was submitted for archiving.
     // Named preservedAt (not archivedAt) to avoid collision with investigationStatusEnum.archived.
     preservedAt: timestamp('preserved_at'),
