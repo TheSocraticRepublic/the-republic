@@ -72,6 +72,7 @@ export function NewActionDialog({
   const [loading, setLoading] = useState(false)
   const [fetchingContext, setFetchingContext] = useState(false)
   const [dupWarning, setDupWarning] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   const router = useRouter()
 
   // Fetch documents, sessions, and jurisdiction-aware public bodies when dialog opens
@@ -157,6 +158,7 @@ export function NewActionDialog({
   const handleCreate = useCallback(async () => {
     if (!description.trim()) return
     setLoading(true)
+    setCreateError(null)
     try {
       const res = await fetch('/api/lever/actions', {
         method: 'POST',
@@ -176,6 +178,7 @@ export function NewActionDialog({
       router.push(`/lever/${data.actionId}`)
     } catch (err) {
       console.error(err)
+      setCreateError('Failed to create action. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -190,6 +193,7 @@ export function NewActionDialog({
       setSelectedSessionId('')
       setDescription('')
       setDupWarning(false)
+      setCreateError(null)
     }
   }, [initialActionType])
 
@@ -226,7 +230,7 @@ export function NewActionDialog({
             >
               New Civic Action
             </Dialog.Title>
-            <Dialog.Close className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary">
+            <Dialog.Close aria-label="Close dialog" className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary">
               <X size={14} strokeWidth={2} />
             </Dialog.Close>
           </div>
@@ -259,11 +263,12 @@ export function NewActionDialog({
             {/* Public body selector — FIPPA only */}
             {actionType === 'fippa_request' && (
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+                <label htmlFor="action-public-body" className="mb-1.5 block text-xs font-medium text-text-secondary">
                   Public body <span className="text-text-faint">({jurisdictionLabel})</span>
                 </label>
                 <div className="relative">
                   <select
+                    id="action-public-body"
                     value={publicBodyName}
                     onChange={(e) => setPublicBodyName(e.target.value)}
                     className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#C85B5B]/40 focus:ring-0"
@@ -362,7 +367,7 @@ export function NewActionDialog({
 
             {/* Description */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+              <label htmlFor="action-description" className="mb-1.5 block text-xs font-medium text-text-secondary">
                 {actionType === 'fippa_request'
                   ? 'What records do you want?'
                   : actionType === 'public_comment'
@@ -370,6 +375,7 @@ export function NewActionDialog({
                   : 'What policy topic?'}
               </label>
               <textarea
+                id="action-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={DESCRIPTION_PLACEHOLDERS[actionType]}
@@ -378,6 +384,11 @@ export function NewActionDialog({
               />
             </div>
           </div>
+
+          {/* Error alert */}
+          {createError && (
+            <p role="alert" className="mt-4 text-xs text-red-400">{createError}</p>
+          )}
 
           {/* Actions */}
           <div className="mt-6 flex justify-end gap-3">

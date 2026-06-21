@@ -44,6 +44,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   const [saving, setSaving] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [pdfExporting, setPdfExporting] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
   const router = useRouter()
   const abortRef = useRef<AbortController | null>(null)
 
@@ -58,6 +59,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   const runGenerate = useCallback(async () => {
     setMode('generating')
     setStreamedContent('')
+    setActionError(null)
 
     abortRef.current?.abort()
     abortRef.current = new AbortController()
@@ -92,6 +94,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         console.error('[action-viewer] Generate failed:', err)
+        setActionError('Generation failed. Please try again.')
         setMode('viewing')
       }
     }
@@ -120,6 +123,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       setStatus(next)
     } catch (err) {
       console.error('[action-viewer] Status update failed:', err)
+      setActionError('Failed to update status. Please try again.')
     } finally {
       setStatusUpdating(false)
     }
@@ -138,6 +142,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       setMode('viewing')
     } catch (err) {
       console.error('[action-viewer] Save failed:', err)
+      setActionError('Failed to save changes. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -343,6 +348,11 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
           </>
         )}
       </div>
+
+      {/* Error alert */}
+      {actionError && (
+        <p role="alert" className="text-xs text-red-400">{actionError}</p>
+      )}
 
       {/* Document display */}
       {mode === 'generating' && (
