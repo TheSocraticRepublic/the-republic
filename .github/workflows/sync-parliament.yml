@@ -12,6 +12,11 @@ on:
         description: 'Limit votes processed (for smoke tests). Leave blank for full sync.'
         required: false
         type: string
+      dry_run:
+        description: 'Dry run — fetch and map data but skip all DB writes. Safe for CI validation.'
+        required: false
+        type: boolean
+        default: false
 
   # Uncomment after a measured backfill run to enable routine syncing.
   # Suggested: weekly on Monday at 05:00 UTC to catch weekend votes.
@@ -42,4 +47,8 @@ jobs:
           if [ -n "${{ github.event.inputs.max_votes }}" ]; then
             MAX_ARG="--max-votes=${{ github.event.inputs.max_votes }}"
           fi
-          npx tsx scripts/sync-parliament-full.ts $MAX_ARG
+          DRY_ARG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            DRY_ARG="--dry-run"
+          fi
+          npx tsx scripts/sync-parliament-full.ts $MAX_ARG $DRY_ARG
