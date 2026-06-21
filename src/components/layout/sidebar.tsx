@@ -386,7 +386,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
           Beta
         </p>
         <p className="mt-1 text-[11px] leading-relaxed text-text-muted">
-          Testing for environmental issues in BC, Alberta, and Ontario.
+          Testing civic issues in BC, Alberta, and Ontario, with an environmental focus.
         </p>
         <a
           href="https://ko-fi.com/toasted40013"
