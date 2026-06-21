@@ -37,7 +37,7 @@
 
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
-import { eq, and, desc, sql } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import {
   federalMps,
   federalBills,
