@@ -15,12 +15,12 @@
  *   DATABASE_URL='postgresql://...' npx tsx scripts/sync-parliament-full.ts --max-votes=5
  *
  * Resume cursor:
- *   Progress is tracked via the parliament_sync_log table. The script reads the
- *   most recent completed 'bg-ballots' row (completedAt IS NOT NULL) and uses its
- *   completedAt as a watermark. Votes with a date before (watermark minus 1 safety
- *   day) are skipped. A crashed run leaves no completedAt, so the cursor ignores it
- *   and the next run re-processes from the same watermark. On the initial backfill
- *   there are no rows, so all votes are processed.
+ *   Ballot-based, not time-based. On startup the script loads the set of vote IDs
+ *   that already have rows in federal_mp_ballots. Votes in that set skip the API
+ *   ballot fetch (the expensive per-vote operation) but still have their vote row
+ *   upserted (status can change). This is immune to wall-clock artifacts (all votes
+ *   in 45-1 are from 2025 — completedAt would always be > all vote dates). On full
+ *   backfill the set is empty and all votes are processed.
  *
  * Idempotency:
  *   federal_bills        → onConflictDoUpdate on (session, number)
