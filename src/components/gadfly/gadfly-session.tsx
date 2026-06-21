@@ -53,6 +53,7 @@ export function GadflySession({
   const [inputValue, setInputValue] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [questionCount, setQuestionCount] = useState(session.questionCount)
   const [insightCount, setInsightCount] = useState(session.insightCount)
 
@@ -70,6 +71,7 @@ export function GadflySession({
     setTurns((prev) => [...prev, citizenTurn])
     setIsStreaming(true)
     setStreamingContent('')
+    setSubmitError(null)
 
     try {
       const res = await fetch('/api/gadfly/turn', {
@@ -81,11 +83,13 @@ export function GadflySession({
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         console.error('[gadfly] Turn failed:', data.error)
+        setSubmitError('Something went wrong. Please try again.')
         setIsStreaming(false)
         return
       }
 
       if (!res.body) {
+        setSubmitError('Something went wrong. Please try again.')
         setIsStreaming(false)
         return
       }
@@ -131,6 +135,7 @@ export function GadflySession({
       }
     } catch (err) {
       console.error('[gadfly] Stream error:', err)
+      setSubmitError('Something went wrong. Please try again.')
       setIsStreaming(false)
       setStreamingContent('')
     }
@@ -204,6 +209,9 @@ export function GadflySession({
 
           {/* Input */}
           <div className="flex-shrink-0 border-t border-border p-4 space-y-3">
+            {submitError && (
+              <p role="alert" className="text-xs text-red-400">{submitError}</p>
+            )}
             {isActive ? (
               <ChatInput
                 value={inputValue}

@@ -132,7 +132,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
         <div className="space-y-4">
           {/* Document selector */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+            <label htmlFor="compare-document" className="mb-1.5 block text-xs font-medium text-text-secondary">
               Linked document <span className="text-text-faint">(optional)</span>
             </label>
             {fetchingDocs ? (
@@ -140,6 +140,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
             ) : (
               <div className="relative">
                 <select
+                  id="compare-document"
                   value={selectedDocId}
                   onChange={(e) => setSelectedDocId(e.target.value)}
                   className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#5BC88A]/40 focus:ring-0"
@@ -163,11 +164,12 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
 
           {/* Policy area */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+            <label htmlFor="compare-policy-area" className="mb-1.5 block text-xs font-medium text-text-secondary">
               Policy area <span className="text-text-faint">(optional)</span>
             </label>
             <div className="relative">
               <select
+                id="compare-policy-area"
                 value={policyArea}
                 onChange={(e) => setPolicyArea(e.target.value)}
                 className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#5BC88A]/40 focus:ring-0"
@@ -189,10 +191,11 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
 
           {/* Description */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+            <label htmlFor="compare-description" className="mb-1.5 block text-xs font-medium text-text-secondary">
               What policy question do you want to compare?
             </label>
             <textarea
+              id="compare-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. How have other BC municipalities handled short-term rental bylaws? What did they actually do, and what happened?"

@@ -26,6 +26,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
   const [mode, setMode] = useState<'socratic' | 'direct'>('socratic')
   const [loading, setLoading] = useState(false)
   const [fetchingDocs, setFetchingDocs] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   const router = useRouter()
 
   // Fetch user documents when dialog opens
@@ -44,6 +45,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
 
   const handleCreate = useCallback(async () => {
     setLoading(true)
+    setCreateError(null)
     try {
       const res = await fetch('/api/gadfly/session', {
         method: 'POST',
@@ -60,6 +62,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
       router.push(`/gadfly/${data.sessionId}`)
     } catch (err) {
       console.error(err)
+      setCreateError('Failed to create inquiry. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -72,6 +75,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
       setSelectedDocId('')
       setTitle('')
       setMode('socratic')
+      setCreateError(null)
     }
   }, [])
 
@@ -105,7 +109,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
             >
               Begin Inquiry
             </Dialog.Title>
-            <Dialog.Close className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary">
+            <Dialog.Close aria-label="Close dialog" className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary">
               <X size={14} strokeWidth={2} />
             </Dialog.Close>
           </div>
@@ -113,7 +117,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
           <div className="space-y-4">
             {/* Document selector */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+              <label htmlFor="session-document" className="mb-1.5 block text-xs font-medium text-text-secondary">
                 Document <span className="text-text-faint">(optional)</span>
               </label>
               {fetchingDocs ? (
@@ -121,6 +125,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
               ) : (
                 <div className="relative">
                   <select
+                    id="session-document"
                     value={selectedDocId}
                     onChange={(e) => setSelectedDocId(e.target.value)}
                     className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#C8A84B]/40 focus:ring-0"
@@ -143,10 +148,11 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
 
             {/* Title */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+              <label htmlFor="session-title" className="mb-1.5 block text-xs font-medium text-text-secondary">
                 Title <span className="text-text-faint">(optional)</span>
               </label>
               <input
+                id="session-title"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -183,6 +189,11 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
               </div>
             </div>
           </div>
+
+          {/* Error alert */}
+          {createError && (
+            <p role="alert" className="mt-4 text-xs text-red-400">{createError}</p>
+          )}
 
           {/* Action */}
           <div className="mt-6 flex justify-end gap-3">

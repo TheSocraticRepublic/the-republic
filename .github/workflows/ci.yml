@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 20  # Matches Netlify build (Node 20); tighten back to 22 once Netlify upgrades
           cache: npm
 
       - name: Install dependencies
