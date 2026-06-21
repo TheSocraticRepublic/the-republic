@@ -6,6 +6,7 @@ import { eq, desc, and, isNull, sql, lt } from 'drizzle-orm'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { InvestigationControls } from '@/components/investigation/investigation-controls'
+import { LocalDate } from '@/components/investigation/local-date'
 
 export const metadata = {
   title: 'Investigations',
@@ -14,15 +15,6 @@ export const metadata = {
 function truncate(text: string, max = 120): string {
   if (text.length <= max) return text
   return text.slice(0, max).trimEnd() + '…'
-}
-
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(date)
 }
 
 type InvestigationStatus = 'generating' | 'complete' | 'failed' | 'cancelled' | 'active' | 'archived'
@@ -221,7 +213,7 @@ export default async function InvestigationsPage() {
                         hasBriefing={!!inv.briefingText}
                       />
                       <span className="text-[10px] text-text-faint">
-                        {formatDate(inv.createdAt)}
+                        <LocalDate iso={inv.createdAt.toISOString()} />
                       </span>
                     </div>
                   </div>

@@ -269,7 +269,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
             updatedAt: sql`NOW()`,
           })
           .where(
-            sql`${investigations.id} = ${investigation.id} AND ${investigations.briefingCompletedAt} IS NULL`
+            sql`${investigations.id} = ${investigation.id} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating'`
           )
       } catch (dbErr) {
         console.error('[investigate/retry] onError: failed to persist failed state', investigation.id, dbErr)
@@ -288,7 +288,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
               updatedAt: sql`NOW()`,
             })
             .where(
-              sql`${investigations.id} = ${investigation.id} AND ${investigations.briefingCompletedAt} IS NULL`
+              sql`${investigations.id} = ${investigation.id} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating'`
             )
             .returning({ id: investigations.id })
 
