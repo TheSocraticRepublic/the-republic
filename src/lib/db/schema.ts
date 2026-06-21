@@ -1396,3 +1396,31 @@ export const investigationVotes = pgTable(
     index('investigation_votes_investigation_idx').on(t.investigationId),
   ]
 )
+
+// --- Feedback Table (Wave 5) ---
+
+export const feedbackTypeEnum = pgEnum('feedback_type', ['bug', 'suggestion'])
+
+export const feedback = pgTable(
+  'feedback',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    // Nullable: captures the user if authenticated; null if the row is submitted
+    // without a valid user context (shouldn't happen given auth gate, but safe).
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    feedbackType: feedbackTypeEnum('feedback_type').notNull(),
+    description: text('description').notNull(),
+    // pageContext: the route pathname the user was on when submitting (nullable).
+    pageContext: text('page_context'),
+    // status: triage state for future admin tooling. Default 'new'.
+    status: text('status').notNull().default('new'),
+    // timestamptz — timezone-aware, consistent with the tz fix applied in W3.
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index('feedback_user_id_idx').on(t.userId),
+    index('feedback_type_idx').on(t.feedbackType),
+    index('feedback_status_idx').on(t.status),
+    index('feedback_created_at_idx').on(t.createdAt),
+  ]
+)
