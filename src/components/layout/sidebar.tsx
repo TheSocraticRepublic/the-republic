@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare, Shield, Vote, Heart, ScrollText } from 'lucide-react'
+import { FeedbackDialog } from '@/components/layout/feedback-dialog'
 import { clsx } from 'clsx'
 import { useState } from 'react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
@@ -397,6 +398,9 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
           <Heart size={11} strokeWidth={1.75} />
           Support this project
         </a>
+        <div className="mt-2">
+          <FeedbackDialog />
+        </div>
       </div>
 
       {/* User / sign out */}
