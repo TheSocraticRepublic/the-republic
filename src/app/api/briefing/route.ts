@@ -7,7 +7,7 @@ import { safeRoute } from '@/lib/api/safe-route'
  *
  * Thin delegate to the investigation endpoint.
  * All briefing generation is now handled by /api/investigate, which
- * creates an investigation record, streams the briefing, and persists the result.
+ * triggers investigation creation and returns 202 (briefing generated async).
  * This route is kept for backward compatibility.
  */
 export const POST = safeRoute(async (request: NextRequest) => {

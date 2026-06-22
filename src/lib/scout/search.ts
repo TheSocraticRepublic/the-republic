@@ -1,4 +1,3 @@
-import 'server-only'
 import { getDb } from '@/lib/db'
 import { scoutSources } from '@/lib/db/schema'
 import { and, eq, gt } from 'drizzle-orm'

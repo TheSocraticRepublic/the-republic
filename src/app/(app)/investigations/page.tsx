@@ -107,7 +107,7 @@ export default async function InvestigationsPage() {
         eq(investigations.userId, userId),
         sql`${investigations.status} = 'generating'`,
         isNull(investigations.briefingCompletedAt),
-        sql`${investigations.generationStartedAt} < NOW() - INTERVAL ${STUCK_GENERATION_INTERVAL}`
+        sql`${investigations.generationStartedAt} < NOW() - (${STUCK_GENERATION_INTERVAL})::interval`
       )
     )
 

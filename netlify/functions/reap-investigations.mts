@@ -34,7 +34,7 @@ export default async function handler(_req: Request, _context: Context): Promise
       and(
         sql`${investigations.status} = 'generating'`,
         isNull(investigations.briefingCompletedAt),
-        sql`${investigations.generationStartedAt} < NOW() - INTERVAL ${STUCK_GENERATION_INTERVAL}`
+        sql`${investigations.generationStartedAt} < NOW() - (${STUCK_GENERATION_INTERVAL})::interval`
       )
     )
 
@@ -61,7 +61,7 @@ export default async function handler(_req: Request, _context: Context): Promise
       and(
         sql`${investigations.status} = 'generating'`,
         isNull(investigations.briefingCompletedAt),
-        sql`${investigations.generationStartedAt} < NOW() - INTERVAL ${STUCK_GENERATION_INTERVAL}`
+        sql`${investigations.generationStartedAt} < NOW() - (${STUCK_GENERATION_INTERVAL})::interval`
       )
     )
     .returning({ id: investigations.id })

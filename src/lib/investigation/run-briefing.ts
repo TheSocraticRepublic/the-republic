@@ -99,6 +99,7 @@ async function analyzeVoteRelevance(
     system: VOTE_RELEVANCE_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
     maxOutputTokens: 2048,
+    abortSignal: AbortSignal.timeout(120_000),
   })
 
   let relevantVotes: Array<{ voteUrl: string; relevanceExplanation: string }>
