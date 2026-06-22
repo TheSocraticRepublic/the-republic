@@ -330,6 +330,10 @@ export const investigations = pgTable(
     // preservedAt: timestamp when this investigation was submitted for archiving.
     // Named preservedAt (not archivedAt) to avoid collision with investigationStatusEnum.archived.
     preservedAt: timestamp('preserved_at'),
+    // generationStartedAt: set when status transitions to 'generating'. Used by the
+    // scheduled reaper and render-time reaper to detect stuck rows. Keyed on this
+    // (not createdAt) so a retried row — with an old createdAt — isn't reaped instantly.
+    generationStartedAt: timestamp('generation_started_at', { withTimezone: true }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
