@@ -17,6 +17,13 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   // Public routes — no auth required
   if (
+    // Netlify-internal function paths (background + scheduled functions) bypass
+    // app auth AND CSRF: they are invoked server-to-server (the briefing trigger)
+    // or by the Netlify scheduler, with no JWT and no Origin header. Each carries
+    // its own protection — generate-briefing verifies INTERNAL_TRIGGER_SECRET
+    // (constant-time) and no-ops unless the row is 'generating'; reap-investigations
+    // is schedule-only. Without this, the CSRF check below 403s every trigger.
+    pathname.startsWith('/.netlify/') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/health') ||
