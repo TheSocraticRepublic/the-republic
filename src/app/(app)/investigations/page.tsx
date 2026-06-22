@@ -2,7 +2,8 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { investigations } from '@/lib/db/schema'
-import { eq, desc, and, isNull, sql, lt } from 'drizzle-orm'
+import { eq, desc, and, isNull, sql } from 'drizzle-orm'
+import { STUCK_GENERATION_INTERVAL } from '@/lib/investigation/constants'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { InvestigationControls } from '@/components/investigation/investigation-controls'
@@ -88,12 +89,12 @@ export default async function InvestigationsPage() {
 
   const db = getDb()
 
-  // Reaper: mark stale 'generating' investigations as failed.
-  // This catches zombies where the serverless function was killed before
-  // onFinish or onError could fire (e.g. Netlify function timeout). Cheap:
-  // one UPDATE that only touches rows with the right status + age combo.
-  // 5-minute threshold: generous enough to avoid false positives on slow
-  // generations; tight enough that users don't wait forever for feedback.
+  // Render-time reaper: mark stale 'generating' investigations as failed.
+  // Belt-and-suspenders alongside the scheduled reap-investigations.mts function.
+  // Keyed on generation_started_at (not createdAt) so retried rows — which have
+  // an old createdAt but a fresh generation_started_at — are not reaped instantly.
+  // Uses the shared STUCK_GENERATION_INTERVAL (12 min) constant so both reapers
+  // always agree on the threshold.
   await db
     .update(investigations)
     .set({
@@ -106,7 +107,7 @@ export default async function InvestigationsPage() {
         eq(investigations.userId, userId),
         sql`${investigations.status} = 'generating'`,
         isNull(investigations.briefingCompletedAt),
-        lt(investigations.createdAt, sql`NOW() - INTERVAL '5 minutes'`)
+        sql`${investigations.generationStartedAt} < NOW() - INTERVAL ${STUCK_GENERATION_INTERVAL}`
       )
     )
 

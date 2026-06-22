@@ -5,6 +5,7 @@ import { investigations, archiveRecords } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { InvestigationPage } from '@/components/investigation/investigation-page'
 import { InvestigationControls } from '@/components/investigation/investigation-controls'
+import { GeneratingPoller } from '@/components/investigation/generating-poller'
 
 export const metadata = {
   title: 'Investigation',
@@ -75,8 +76,9 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
             <p className="text-sm font-medium text-text-primary">Generating your investigation…</p>
             <p className="mt-0.5 text-xs text-text-faint max-w-sm">
               Your briefing is being prepared. This usually takes under a minute.
-              The page will update when it&apos;s ready — or you can refresh manually.
+              The page will update automatically when it&apos;s ready.
             </p>
+            <GeneratingPoller investigationId={id} />
             <div className="mt-2">
               <InvestigationControls id={id} status="generating" />
             </div>
@@ -121,15 +123,17 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
     )
   }
 
-  // --- No briefing yet (edge case: generating but briefingText not yet set, or stale 'active') ---
+  // --- No briefing yet (edge case: stale 'active' row or race between write and read) ---
   if (!investigation.briefingText) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-12">
         <div className="rounded-xl border border-border bg-surface-1 shadow-sm px-6 py-10 text-center">
           <p className="text-sm text-text-secondary">Briefing in progress…</p>
           <p className="mt-1.5 text-xs text-text-faint">
-            Your investigation is being prepared. Refresh in a moment.
+            Your investigation is being prepared. The page will update automatically.
           </p>
+          {/* Poller hard-stop prevents infinite polling on legacy 'active' rows */}
+          <GeneratingPoller investigationId={id} />
           <div className="mt-3">
             <InvestigationControls id={id} status="generating" />
           </div>
