@@ -49,7 +49,7 @@ export function InvestigationControls({ id, status }: InvestigationControlsProps
     setPending('retry')
     setError(null)
     try {
-      // Start the retry stream — we drain it client-side then navigate
+      // Retry returns 202 immediately — generation runs in the background
       const res = await fetch(`/api/investigate/${id}/retry`, { method: 'POST' })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
@@ -57,15 +57,9 @@ export function InvestigationControls({ id, status }: InvestigationControlsProps
         setPending(null)
         return
       }
-      // Drain the stream before navigating (same pattern as concern-form.tsx)
-      if (res.body) {
-        const reader = res.body.getReader()
-        while (true) {
-          const { done } = await reader.read()
-          if (done) break
-        }
-      }
-      router.push(`/investigate/${id}`)
+      // Refresh the page — the server component will re-render with status='generating'
+      // and the GeneratingPoller will start polling
+      router.refresh()
     } catch {
       setError('Network error')
       setPending(null)

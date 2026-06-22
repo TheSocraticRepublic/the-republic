@@ -77,30 +77,21 @@ export function ConcernForm() {
         return
       }
 
-      // Read the investigation ID from the response header before consuming the body
-      const investigationId = res.headers.get('X-Investigation-Id')
+      // Read the investigation ID from the 202 JSON body
+      const data = await res.json().catch(() => null)
+      const investigationId: string | undefined = data?.id
       if (!investigationId) {
-        console.error('[investigate] missing X-Investigation-Id header')
+        console.error('[investigate] missing id in response body')
         setSubmitError('Something went wrong. Please try again.')
         setLoading(false)
         return
       }
 
-      // Drain the stream body (we don't render it here — the [id] page will
-      // show static briefingText once it's persisted by onFinish)
-      if (res.body) {
-        const reader = res.body.getReader()
-        while (true) {
-          const { done } = await reader.read()
-          if (done) break
-        }
-      }
-
-      // Redirect to the investigation page once streaming is complete
+      // Redirect to the investigation page — generation runs in the background
       router.push(`/investigate/${investigationId}`)
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
-        console.error('[investigate] stream error:', err)
+        console.error('[investigate] request error:', err)
         setSubmitError('Something went wrong. Please try again.')
       }
       setLoading(false)
