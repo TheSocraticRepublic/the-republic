@@ -16,7 +16,8 @@
 export const STUCK_GENERATION_THRESHOLD_MINUTES = 12
 
 /**
- * SQL INTERVAL string for use in Drizzle raw SQL expressions:
- *   sql`generation_started_at < NOW() - INTERVAL ${STUCK_GENERATION_INTERVAL}`
+ * SQL interval string for use in Drizzle raw SQL expressions. Cast the bound
+ * value to ::interval — `INTERVAL $1` is rejected by Postgres:
+ *   sql`generation_started_at < NOW() - (${STUCK_GENERATION_INTERVAL})::interval`
  */
 export const STUCK_GENERATION_INTERVAL = `${STUCK_GENERATION_THRESHOLD_MINUTES} minutes`
