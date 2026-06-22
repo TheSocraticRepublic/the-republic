@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickFreshAlerts } from '@/app/api/investigate/route'
+import { pickFreshAlerts } from '@/lib/investigation/run-briefing'
 import type { ShadowAlert } from '@/lib/archive/shadow'
 
 const makeAlert = (topic: string, confidence = 0.8): ShadowAlert => ({
