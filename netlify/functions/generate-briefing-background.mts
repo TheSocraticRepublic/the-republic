@@ -1,11 +1,17 @@
 /**
- * generate-briefing — Netlify Background Function
+ * generate-briefing-background — Netlify Background Function
+ *
+ * The `-background` filename suffix is REQUIRED: it is what makes Netlify
+ * actually execute this as a background function (15-min wall-clock budget,
+ * async). The `config.background` flag alone only registers it (the invocation
+ * 202-acks) but the handler never runs — verified in prod. Do not rename without
+ * also updating the trigger path in src/lib/investigation/trigger-generation.ts.
  *
  * Accepts the briefing generation work from POST /api/investigate and
- * POST /api/investigate/[id]/retry. Runs with a 15-minute budget.
+ * POST /api/investigate/[id]/retry.
  *
  * Caller (trigger-generation.ts) sends:
- *   POST /.netlify/functions/generate-briefing
+ *   POST /.netlify/functions/generate-briefing-background
  *   Headers: x-internal-secret: <INTERNAL_TRIGGER_SECRET>
  *   Body: { investigationId: string }
  *
@@ -13,7 +19,7 @@
  * Result is persisted to DB by runBriefingGeneration.
  */
 
-import type { Config, Context } from '@netlify/functions'
+import type { Context } from '@netlify/functions'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { getDb } from '@/lib/db'
 import { investigations } from '@/lib/db/schema'
@@ -25,10 +31,6 @@ import { runBriefingGeneration } from '@/lib/investigation/run-briefing'
 // setup) or a throw before its internal try (the row pre-load) would otherwise
 // leave the row silently 'generating'. This guarantees a terminal state.
 const BG_WALL_CLOCK_MS = 300_000
-
-export const config: Config = {
-  background: true,
-}
 
 export default async function handler(req: Request, _context: Context): Promise<Response> {
   // --- Auth: constant-time comparison of x-internal-secret ---

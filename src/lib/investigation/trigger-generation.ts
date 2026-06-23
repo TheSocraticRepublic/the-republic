@@ -28,7 +28,11 @@ export async function triggerBriefingGeneration(
     return { ok: false }
   }
 
-  const triggerUrl = `${appUrl}/.netlify/functions/generate-briefing`
+  // NOTE: the file MUST be named `*-background.mts` for Netlify to actually run
+  // it as a background function (15-min budget, async). The `config.background`
+  // flag alone registers it (202 ack) but does NOT execute the handler — verified
+  // the hard way in prod. The invocation path is the filename without extension.
+  const triggerUrl = `${appUrl}/.netlify/functions/generate-briefing-background`
 
   try {
     const res = await fetch(triggerUrl, {
