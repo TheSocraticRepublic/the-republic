@@ -17,8 +17,14 @@ import type { Config, Context } from '@netlify/functions'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { getDb } from '@/lib/db'
 import { investigations } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { runBriefingGeneration } from '@/lib/investigation/run-briefing'
+
+// Wall-clock backstop: runBriefingGeneration aborts the model call at 240s and
+// handles its own errors, but a hang OUTSIDE the model call (a stalled DB query,
+// setup) or a throw before its internal try (the row pre-load) would otherwise
+// leave the row silently 'generating'. This guarantees a terminal state.
+const BG_WALL_CLOCK_MS = 300_000
 
 export const config: Config = {
   background: true,
@@ -85,8 +91,34 @@ export default async function handler(req: Request, _context: Context): Promise<
     return new Response('OK', { status: 200 })
   }
 
-  // --- Run generation ---
-  await runBriefingGeneration({ db, investigationId })
+  // --- Run generation (with wall-clock backstop + terminal-state guarantee) ---
+  try {
+    await Promise.race([
+      runBriefingGeneration({ db, investigationId }),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`bg-fn wall-clock timeout after ${BG_WALL_CLOCK_MS / 1000}s`)),
+          BG_WALL_CLOCK_MS
+        )
+      ),
+    ])
+  } catch (err) {
+    // runBriefingGeneration persists its own failures; this catches anything it
+    // can't (throws before its internal try, or the wall-clock timeout above) so
+    // the row never stays silently 'generating'.
+    const msg = err instanceof Error ? err.message.slice(0, 500) : String(err)
+    console.error('[generate-briefing] generation did not complete:', investigationId, err)
+    try {
+      await db
+        .update(investigations)
+        .set({ status: 'failed', failureReason: `bg-fn: ${msg}`, updatedAt: sql`NOW()` })
+        .where(
+          sql`${investigations.id} = ${investigationId} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating'`
+        )
+    } catch (dbErr) {
+      console.error('[generate-briefing] failed to persist terminal state', investigationId, dbErr)
+    }
+  }
 
   return new Response('OK', { status: 200 })
 }
