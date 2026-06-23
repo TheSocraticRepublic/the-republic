@@ -138,9 +138,9 @@ describe('Briefing prompt', () => {
     expect(BRIEFING_PROMPT_VERSION).toMatch(/^\d+\.\d+\.\d+$/)
   })
 
-  it('backward-compat export BRIEFING_SYSTEM_PROMPT contains core sections', () => {
+  it('backward-compat export BRIEFING_SYSTEM_PROMPT contains core sections (v0.3.0+: Context replaces Your Concern)', () => {
     const requiredSections = [
-      '## Your Concern',
+      '## Context',
       '## What Governs This',
       '## What the Public Record Shows',
       '## Key Players',
@@ -153,10 +153,10 @@ describe('Briefing prompt', () => {
     }
   })
 
-  it('buildBriefingPrompt with no config returns prompt containing core sections', () => {
+  it('buildBriefingPrompt with no config returns prompt containing core sections (v0.3.0+: Context replaces Your Concern)', () => {
     const prompt = buildBriefingPrompt({})
     const requiredSections = [
-      '## Your Concern',
+      '## Context',
       '## What Governs This',
       '## What the Public Record Shows',
       '## Key Players',
