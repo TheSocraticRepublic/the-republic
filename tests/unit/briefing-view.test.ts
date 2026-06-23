@@ -2,7 +2,7 @@
  * Unit tests for briefing-view.tsx pure functions.
  *
  * What IS covered:
- *   - renderInline: bold, italic, link→text-only, stray-# stripping
+ *   - renderInline: bold, italic, link→text-only, nested bold+italic, # ref preservation
  *   - preprocessBlocks: ### sub-headings, --- hr, bold-only (no colon) sub-heading, lists, paragraphs
  *   - extractTitle (via the exported helper tested indirectly via parseSections behavior)
  *
@@ -79,13 +79,28 @@ describe('renderInline', () => {
     expect(types).not.toContain('a')
   })
 
-  it('strips stray # characters that are not heading syntax', () => {
-    // A stray # mid-text (not a heading) should be removed
-    const result = renderInline('See section #4 of the bylaw')
-    // The regex strips single # not preceded/followed by another #
-    // "section #4" → stray # should be stripped, leaving "section 4"
+  it('preserves # in legal/civic references like "s. #4", "issue #1234", "C#"', () => {
+    // Inline # before digits and in identifiers must NOT be stripped —
+    // the block preprocessor handles line-start headings, not inline refs.
+    const cases = [
+      'See s. #4 of the bylaw',
+      'Refer to issue #1234',
+      'Written in C#',
+    ]
+    for (const input of cases) {
+      const result = renderInline(input)
+      const str = typeof result === 'string' ? result : arr2str(result as React.ReactNode[])
+      expect(str).toContain('#')
+    }
+  })
+
+  it('handles nested bold/italic without orphaned asterisks', () => {
+    // "**bold *italic* inside** rest" must not leak literal * or ** into output
+    const result = renderInline('**bold *italic* inside** rest of line')
     const str = typeof result === 'string' ? result : arr2str(result as React.ReactNode[])
-    expect(str).not.toContain('#')
+    expect(str).not.toContain('*')
+    // Surrounding text must be present
+    expect(str).toContain('rest of line')
   })
 
   it('preserves plain text with no special markup', () => {
@@ -140,10 +155,16 @@ describe('preprocessBlocks', () => {
     expect(blocks[0].type).toBe('hr')
   })
 
-  it('does NOT convert --- inside other text to hr', () => {
-    // --- inside a sentence is just text; only a standalone "---" line becomes hr
-    const blocks = preprocessBlocks('Some text\n\nMore text')
-    expect(blocks.every((b: { type: string }) => b.type !== 'hr')).toBe(true)
+  it('does NOT convert --- inside other text to hr, but standalone --- does become hr', () => {
+    // Inline --- (not a standalone paragraph) must NOT become hr
+    const inlineBlocks = preprocessBlocks('Some text with --- inline dashes here')
+    expect(inlineBlocks.every((b: { type: string }) => b.type !== 'hr')).toBe(true)
+    expect(inlineBlocks[0].type).toBe('paragraph')
+
+    // A standalone --- paragraph DOES become hr
+    const hrBlocks = preprocessBlocks('Paragraph before.\n\n---\n\nParagraph after.')
+    const hrBlock = hrBlocks.find((b: { type: string }) => b.type === 'hr')
+    expect(hrBlock).toBeDefined()
   })
 
   it('converts bold-only line (no colon) to subheading', () => {

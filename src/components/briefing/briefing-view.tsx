@@ -145,17 +145,8 @@ function extractTitle(text: string): string | null {
   const h1Match = text.match(/^#\s+([^#\n].+)$/m)
   if (h1Match) return h1Match[1].trim()
 
-  // Backward compat: derive from ## Context or ## Your Concern first paragraph
-  const contextMatch = text.match(/^##\s+(?:Context|Your Concern)\s*\n+([\s\S]+?)(?=^##|\s*$)/m)
-  if (contextMatch) {
-    const firstPara = contextMatch[1].split(/\n{2,}/)[0]?.trim()
-    if (firstPara) {
-      // Return null here — let the ExecutiveCard handle the old concern display
-      // Only return a title if we have a genuine # Title line
-      return null
-    }
-  }
-
+  // Old prompts (## Context / ## Your Concern) do not emit a # Title line.
+  // Let ExecutiveCard handle the concern display — no title to extract.
   return null
 }
 
@@ -212,31 +203,57 @@ function SectionHeader({
   )
 }
 
-// ---- Prose renderer (extended: italic, link→text-only, strip stray #) ----
+// ---- Prose renderer (extended: italic, link→text-only) ----
+// Tokenizes **bold** first, then processes non-bold segments for *italic* and [links](url).
+// This prevents nested bold/italic from producing orphaned asterisks.
+// # characters are NOT stripped here — the block preprocessor handles line-start headings,
+// and legitimate inline refs like "issue #4", "s. #12", "C#" must survive.
 
 export function renderInline(text: string): React.ReactNode {
-  // Strip leading stray # that are not valid markdown headings
-  // (## or ### at line start are handled by the block preprocessor;
-  //  stray # inside inline text e.g. "#hashtag" should be stripped)
-  const cleaned = text.replace(/(?<![#])#{1,2}(?![#\s])/g, '')
+  // Step 1: split on **bold** spans first
+  const boldParts = text.split(/(\*\*[^*]+\*\*)/)
 
-  // Split on bold (**text**), italic (*text*), and markdown links ([text](url))
-  const parts = cleaned.split(/(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)]+\))/)
-  if (parts.length === 1) return cleaned
+  // If no markup at all, return plain string
+  if (boldParts.length === 1 && !text.match(/\*[^*]+\*|\[[^\]]+\]\([^)]+\)/)) return text
 
-  return parts.map((part, i) => {
+  const nodes: React.ReactNode[] = []
+  let keyCounter = 0
+
+  for (const part of boldParts) {
     const boldMatch = part.match(/^\*\*([^*]+)\*\*$/)
-    if (boldMatch) return <strong key={i}>{boldMatch[1]}</strong>
+    if (boldMatch) {
+      nodes.push(<strong key={keyCounter++}>{boldMatch[1]}</strong>)
+      continue
+    }
 
-    const italicMatch = part.match(/^\*([^*]+)\*$/)
-    if (italicMatch) return <em key={i}>{italicMatch[1]}</em>
+    // Step 2: within non-bold segments, tokenize *italic* and [text](url).
+    // Any orphaned ** or * left over from a nested/malformed bold are stripped
+    // as plain strings so they don't leak into the rendered output.
+    const subParts = part.split(/(\*[^*]+\*|\[[^\]]+\]\([^)]+\))/)
+    for (const sub of subParts) {
+      if (sub === '') continue
 
-    // Links render as text-only (no live links in the briefing)
-    const linkMatch = part.match(/^\[([^\]]+)\]\([^)]+\)$/)
-    if (linkMatch) return <span key={i}>{linkMatch[1]}</span>
+      const italicMatch = sub.match(/^\*([^*]+)\*$/)
+      if (italicMatch) {
+        nodes.push(<em key={keyCounter++}>{italicMatch[1]}</em>)
+        continue
+      }
 
-    return part
-  })
+      const linkMatch = sub.match(/^\[([^\]]+)\]\([^)]+\)$/)
+      if (linkMatch) {
+        nodes.push(<span key={keyCounter++}>{linkMatch[1]}</span>)
+        continue
+      }
+
+      // Strip any orphaned ** or * markers left from nested/malformed bold
+      const cleaned = sub.replace(/\*{1,2}/g, '')
+      if (cleaned !== '') nodes.push(cleaned)
+    }
+  }
+
+  // If we ended up with a single plain string, return it directly
+  if (nodes.length === 1 && typeof nodes[0] === 'string') return nodes[0]
+  return nodes
 }
 
 // ---- Gap/insight paragraph detection (for Gadfly-gold callout in Public Record Shows) ----
@@ -249,7 +266,10 @@ function isInsightParagraph(text: string): boolean {
     lower.includes('not publicly') ||
     lower.includes('absent from') ||
     lower.includes('should be there') ||
-    lower.includes('remain unanswerable')
+    lower.includes('remain unanswerable') ||
+    lower.includes('remains unanswerable') ||
+    lower.includes('the absence') ||
+    lower.includes('is absent')
   )
 }
 
@@ -346,13 +366,14 @@ function ProseSection({
   const blocks = preprocessBlocks(content)
   const elements: React.ReactNode[] = []
 
-  // Insert section break rule after every 4th paragraph-type block
+  // Insert section break rule before every 5th/9th/13th paragraph-type block
+  // (matches original i % 4 === 0 timing: divider appears before the 5th paragraph, then every 4)
   let paraCount = 0
 
   blocks.forEach((block, i) => {
     if (block.type === 'paragraph') {
       paraCount++
-      if (paraCount > 1 && paraCount % 4 === 0) {
+      if (paraCount > 1 && paraCount % 4 === 1) {
         elements.push(
           <div
             key={`rule-${i}`}
@@ -372,6 +393,7 @@ function ProseSection({
         elements.push(
           <hr
             key={i}
+            aria-hidden="true"
             style={{
               border: 'none',
               borderTop: `1px solid ${palette.border}`,
@@ -383,7 +405,7 @@ function ProseSection({
 
       case 'subheading':
         elements.push(
-          <div
+          <h4
             key={i}
             style={{
               fontFamily: '"Inter", system-ui, sans-serif',
@@ -397,7 +419,7 @@ function ProseSection({
             }}
           >
             {block.text}
-          </div>
+          </h4>
         )
         break
 
@@ -1880,6 +1902,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               lineHeight: '1.3',
               color: palette.text,
               maxWidth: '60ch',
+              margin: 0,
             }}
           >
             {docTitle}
