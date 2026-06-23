@@ -33,48 +33,12 @@ import { runBriefingGeneration } from '@/lib/investigation/run-briefing'
 const BG_WALL_CLOCK_MS = 300_000
 
 export default async function handler(req: Request, _context: Context): Promise<Response> {
-  // --- DIAGNOSTIC (temporary): prove the handler actually executes ---
-  // Writes a visible marker the instant the handler runs, before any auth/work.
-  // Uses req.clone() so the real body read below still works.
-  try {
-    const dbgDb = getDb()
-    const peek = (await req.clone().json().catch(() => null)) as { investigationId?: unknown } | null
-    const dbgId = peek && typeof peek.investigationId === 'string' ? peek.investigationId : null
-    if (dbgId) {
-      await dbgDb
-        .update(investigations)
-        .set({ failureReason: '__dbg: bg handler entered', updatedAt: sql`NOW()` })
-        .where(sql`${investigations.id} = ${dbgId} AND ${investigations.status} = 'generating'`)
-    }
-  } catch {
-    /* diagnostic only — ignore */
-  }
+  const db = getDb()
 
-  // --- Auth: constant-time comparison of x-internal-secret ---
-  const secret = process.env.INTERNAL_TRIGGER_SECRET
-  if (!secret) {
-    console.error('[generate-briefing] INTERNAL_TRIGGER_SECRET not configured')
-    return new Response('Unauthorized', { status: 401 })
-  }
-
-  const provided = req.headers.get('x-internal-secret') ?? ''
-
-  // Use constant-time comparison to prevent timing attacks.
-  // Both buffers must be the same byte length for timingSafeEqual.
-  // We use HMAC with a fixed key to normalize length.
-  const key = Buffer.from(secret, 'utf8')
-  const expectedHmac = createHmac('sha256', key).update(secret).digest()
-  const providedHmac = createHmac('sha256', key).update(provided).digest()
-
-  if (!timingSafeEqual(expectedHmac, providedHmac)) {
-    console.warn('[generate-briefing] invalid x-internal-secret')
-    return new Response('Unauthorized', { status: 401 })
-  }
-
-  // --- Parse body ---
+  // --- Parse body ONCE (no clone — a double body-read hangs in this runtime) ---
   let investigationId: string
   try {
-    const body = await req.json() as { investigationId?: unknown }
+    const body = (await req.json()) as { investigationId?: unknown }
     if (typeof body.investigationId !== 'string' || !body.investigationId) {
       return new Response('Bad Request: investigationId required', { status: 400 })
     }
@@ -83,15 +47,43 @@ export default async function handler(req: Request, _context: Context): Promise<
     return new Response('Bad Request: invalid JSON', { status: 400 })
   }
 
+  // --- DIAGNOSTIC (temporary): step markers to localize any hang ---
+  const mark = async (s: string) => {
+    try {
+      await db
+        .update(investigations)
+        .set({ failureReason: s, updatedAt: sql`NOW()` })
+        .where(sql`${investigations.id} = ${investigationId} AND ${investigations.status} = 'generating'`)
+    } catch {
+      /* ignore */
+    }
+  }
+  await mark('__dbg: 1 parsed')
+
+  // --- Auth: constant-time comparison of x-internal-secret ---
+  const secret = process.env.INTERNAL_TRIGGER_SECRET
+  if (!secret) {
+    console.error('[generate-briefing] INTERNAL_TRIGGER_SECRET not configured')
+    return new Response('Unauthorized', { status: 401 })
+  }
+  const provided = req.headers.get('x-internal-secret') ?? ''
+  const key = Buffer.from(secret, 'utf8')
+  const expectedHmac = createHmac('sha256', key).update(secret).digest()
+  const providedHmac = createHmac('sha256', key).update(provided).digest()
+  if (!timingSafeEqual(expectedHmac, providedHmac)) {
+    console.warn('[generate-briefing] invalid x-internal-secret')
+    return new Response('Unauthorized', { status: 401 })
+  }
+  await mark('__dbg: 2 secret-ok')
+
   // --- Idempotency guard: only proceed if status='generating' ---
   // This makes Netlify auto-retry and double-submit safe.
-  const db = getDb()
-
   const [row] = await db
     .select({ status: investigations.status })
     .from(investigations)
     .where(eq(investigations.id, investigationId))
     .limit(1)
+  await mark('__dbg: 3 row-loaded')
 
   if (!row) {
     console.warn('[generate-briefing] investigation not found:', investigationId)
@@ -109,6 +101,8 @@ export default async function handler(req: Request, _context: Context): Promise<
     )
     return new Response('OK', { status: 200 })
   }
+
+  await mark('__dbg: 4 calling-generation')
 
   // --- Run generation (with wall-clock backstop + terminal-state guarantee) ---
   try {
