@@ -16,7 +16,9 @@
  *   Body: { investigationId: string }
  *
  * Returns 202 immediately (background — Netlify sends 202 before the handler runs).
- * Result is persisted to DB by runBriefingGeneration.
+ * Result is persisted to DB by runBriefingGeneration. REQUIRES the
+ * INTERNAL_TRIGGER_SECRET env var to be set (functions scope) or every
+ * invocation 401s and the row is left for the reaper.
  */
 
 import type { Context } from '@netlify/functions'
@@ -33,9 +35,23 @@ import { runBriefingGeneration } from '@/lib/investigation/run-briefing'
 const BG_WALL_CLOCK_MS = 300_000
 
 export default async function handler(req: Request, _context: Context): Promise<Response> {
-  const db = getDb()
+  // --- Auth: constant-time comparison of x-internal-secret ---
+  const secret = process.env.INTERNAL_TRIGGER_SECRET
+  if (!secret) {
+    console.error('[generate-briefing] INTERNAL_TRIGGER_SECRET not configured')
+    return new Response('Unauthorized', { status: 401 })
+  }
+  const provided = req.headers.get('x-internal-secret') ?? ''
+  // Constant-time, length-safe comparison: HMAC both sides to fixed-length digests.
+  const key = Buffer.from(secret, 'utf8')
+  const expectedHmac = createHmac('sha256', key).update(secret).digest()
+  const providedHmac = createHmac('sha256', key).update(provided).digest()
+  if (!timingSafeEqual(expectedHmac, providedHmac)) {
+    console.warn('[generate-briefing] invalid x-internal-secret')
+    return new Response('Unauthorized', { status: 401 })
+  }
 
-  // --- Parse body ONCE (no clone — a double body-read hangs in this runtime) ---
+  // --- Parse body ---
   let investigationId: string
   try {
     const body = (await req.json()) as { investigationId?: unknown }
@@ -47,43 +63,15 @@ export default async function handler(req: Request, _context: Context): Promise<
     return new Response('Bad Request: invalid JSON', { status: 400 })
   }
 
-  // --- DIAGNOSTIC (temporary): step markers to localize any hang ---
-  const mark = async (s: string) => {
-    try {
-      await db
-        .update(investigations)
-        .set({ failureReason: s, updatedAt: sql`NOW()` })
-        .where(sql`${investigations.id} = ${investigationId} AND ${investigations.status} = 'generating'`)
-    } catch {
-      /* ignore */
-    }
-  }
-  await mark('__dbg: 1 parsed')
-
-  // --- Auth: constant-time comparison of x-internal-secret ---
-  const secret = process.env.INTERNAL_TRIGGER_SECRET
-  if (!secret) {
-    console.error('[generate-briefing] INTERNAL_TRIGGER_SECRET not configured')
-    return new Response('Unauthorized', { status: 401 })
-  }
-  const provided = req.headers.get('x-internal-secret') ?? ''
-  const key = Buffer.from(secret, 'utf8')
-  const expectedHmac = createHmac('sha256', key).update(secret).digest()
-  const providedHmac = createHmac('sha256', key).update(provided).digest()
-  if (!timingSafeEqual(expectedHmac, providedHmac)) {
-    console.warn('[generate-briefing] invalid x-internal-secret')
-    return new Response('Unauthorized', { status: 401 })
-  }
-  await mark('__dbg: 2 secret-ok')
+  const db = getDb()
 
   // --- Idempotency guard: only proceed if status='generating' ---
-  // This makes Netlify auto-retry and double-submit safe.
+  // Makes Netlify auto-retry and double-submit safe.
   const [row] = await db
     .select({ status: investigations.status })
     .from(investigations)
     .where(eq(investigations.id, investigationId))
     .limit(1)
-  await mark('__dbg: 3 row-loaded')
 
   if (!row) {
     console.warn('[generate-briefing] investigation not found:', investigationId)
@@ -91,18 +79,10 @@ export default async function handler(req: Request, _context: Context): Promise<
   }
 
   if (row.status !== 'generating') {
-    // NO-OP: already completed, failed, cancelled, or in another terminal state.
-    // This is correct: auto-retry on a complete row must not overwrite the briefing.
-    console.log(
-      '[generate-briefing] NO-OP for investigation',
-      investigationId,
-      '— status is',
-      row.status
-    )
+    // NO-OP: already completed, failed, cancelled. Auto-retry must not overwrite.
+    console.log('[generate-briefing] NO-OP for', investigationId, '— status is', row.status)
     return new Response('OK', { status: 200 })
   }
-
-  await mark('__dbg: 4 calling-generation')
 
   // --- Run generation (with wall-clock backstop + terminal-state guarantee) ---
   try {
