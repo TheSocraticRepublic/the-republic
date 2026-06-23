@@ -1016,6 +1016,9 @@ function DocumentCard({
                 fontWeight: 700,
                 lineHeight: '1.4',
                 color: palette.text,
+                textDecoration: 'underline',
+                textDecorationThickness: '1px',
+                textUnderlineOffset: '3px',
                 flex: '1 1 0',
                 minWidth: '0',
               }}
@@ -1084,59 +1087,76 @@ function DocumentCard({
     )
   }
 
-  // Supporting document — compact row style
+  // Supporting document — full card (matches the Key Players spread-out treatment:
+  // distinct card, bold+underlined name, labelled fields, How-to-find divider).
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '12px',
-        padding: '12px 16px',
-        backgroundColor: palette.cardBg,
-        border: `1px solid ${palette.cardBorder}`,
-        borderRadius: '10px',
-      }}
+      className="rounded-xl p-5"
+      style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.cardBorder}` }}
     >
-      <div style={{ flex: '1 1 0', minWidth: '0' }}>
-        {/* Header row — flexWrap for responsive */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            flexWrap: 'wrap',
-            marginBottom: '4px',
-          }}
-        >
-          {docName && (
-            <span
-              style={{
-                fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-                fontSize: '13px',
-                fontWeight: 600,
-                lineHeight: '1.4',
-                color: palette.text,
-              }}
-            >
-              {docName}
-            </span>
-          )}
-          {accessLevel && <AccessBadge level={accessLevel} />}
+      {/* Header row — flexWrap for responsive */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: '8px',
+          flexWrap: 'wrap',
+          marginBottom: docName ? '12px' : '0',
+        }}
+      >
+        {docName && (
+          <span
+            style={{
+              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+              fontSize: '14px',
+              fontWeight: 700,
+              lineHeight: '1.4',
+              color: palette.text,
+              textDecoration: 'underline',
+              textDecorationThickness: '1px',
+              textUnderlineOffset: '3px',
+              flex: '1 1 0',
+              minWidth: '0',
+            }}
+          >
+            {docName}
+          </span>
+        )}
+        {accessLevel && <AccessBadge level={accessLevel} />}
+      </div>
+
+      {mainFields.length > 0 && (
+        <div className="space-y-3">
+          {mainFields.map((field, i) => (
+            <div key={i}>
+              <span
+                className="block font-semibold uppercase tracking-[0.08em]"
+                style={{ fontSize: '10px', color: palette.muted, marginBottom: '4px' }}
+              >
+                {field.label}
+              </span>
+              <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary }}>
+                {renderInline(field.value)}
+              </p>
+            </div>
+          ))}
         </div>
+      )}
 
-        {/* Show only "What it is" / description field for supporting docs */}
-        {mainFields.slice(0, 2).map((field, i) => (
-          <p key={i} style={{ fontSize: '13px', lineHeight: '1.4', color: palette.muted, marginTop: '2px' }}>
-            {renderInline(field.value)}
-          </p>
-        ))}
-
-        {howToFindField && (
-          <p style={{ fontSize: '12px', lineHeight: '1.4', color: palette.faint, marginTop: '4px' }}>
+      {howToFindField && (
+        <div style={{ borderTop: `1px solid ${palette.border}`, marginTop: '16px', paddingTop: '12px' }}>
+          <span
+            className="block font-semibold uppercase tracking-[0.08em]"
+            style={{ fontSize: '10px', color: palette.faint }}
+          >
+            How to find it
+          </span>
+          <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: palette.muted }}>
             {renderInline(howToFindField.value)}
           </p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1152,7 +1172,7 @@ function WhatGovernsSection({ content, palette }: { content: string; palette: Pa
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {blocks.map((block, j) => (
         <DocumentCard key={j} block={block} palette={palette} isPrimary={j === 0} />
       ))}
