@@ -107,7 +107,7 @@ const ARM_COLORS: Record<
   },
 }
 
-// ---- Section parser — DO NOT MODIFY ----
+// ---- Section parser — DO NOT MODIFY (backward-compat: also strips # Title lines before section parsing) ----
 
 function parseSections(text: string): ParsedSection[] {
   const sections: ParsedSection[] = []
@@ -116,6 +116,9 @@ function parseSections(text: string): ParsedSection[] {
   let currentLines: string[] = []
 
   for (const line of lines) {
+    // Skip the # Title line — it is extracted separately by extractTitle()
+    if (line.match(/^#\s+[^#]/)) continue
+
     const match = line.match(/^##\s+(.+)$/)
     if (match) {
       if (currentHeading) {
@@ -135,6 +138,27 @@ function parseSections(text: string): ParsedSection[] {
   return sections
 }
 
+// ---- Title extractor (new prompt emits `# Title`; old prompts used ## Your Concern) ----
+
+function extractTitle(text: string): string | null {
+  // New format: `# Title text`
+  const h1Match = text.match(/^#\s+([^#\n].+)$/m)
+  if (h1Match) return h1Match[1].trim()
+
+  // Backward compat: derive from ## Context or ## Your Concern first paragraph
+  const contextMatch = text.match(/^##\s+(?:Context|Your Concern)\s*\n+([\s\S]+?)(?=^##|\s*$)/m)
+  if (contextMatch) {
+    const firstPara = contextMatch[1].split(/\n{2,}/)[0]?.trim()
+    if (firstPara) {
+      // Return null here — let the ExecutiveCard handle the old concern display
+      // Only return a title if we have a genuine # Title line
+      return null
+    }
+  }
+
+  return null
+}
+
 // ---- Section accent color map ----
 
 function getSectionAccentColor(heading: string): string | null {
@@ -145,6 +169,7 @@ function getSectionAccentColor(heading: string): string | null {
   if (h.includes('what you can do')) return '#C85B5B'  // Lever red
   if (h.includes('other places') || h.includes('jurisdictions')) return '#5BC88A' // Mirror green
   if (h.includes('questions')) return '#C8A84B'        // Gadfly gold
+  if (h.includes('context')) return '#B088C8'          // Scout purple (new Context section)
   // "cannot see" / "limitations" -> no bar
   return null
 }
@@ -187,16 +212,45 @@ function SectionHeader({
   )
 }
 
-// ---- Prose renderer ----
+// ---- Prose renderer (extended: italic, link→text-only, strip stray #) ----
 
-function renderInline(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*[^*]+\*\*)/)
-  if (parts.length === 1) return text
+export function renderInline(text: string): React.ReactNode {
+  // Strip leading stray # that are not valid markdown headings
+  // (## or ### at line start are handled by the block preprocessor;
+  //  stray # inside inline text e.g. "#hashtag" should be stripped)
+  const cleaned = text.replace(/(?<![#])#{1,2}(?![#\s])/g, '')
+
+  // Split on bold (**text**), italic (*text*), and markdown links ([text](url))
+  const parts = cleaned.split(/(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)]+\))/)
+  if (parts.length === 1) return cleaned
+
   return parts.map((part, i) => {
     const boldMatch = part.match(/^\*\*([^*]+)\*\*$/)
     if (boldMatch) return <strong key={i}>{boldMatch[1]}</strong>
+
+    const italicMatch = part.match(/^\*([^*]+)\*$/)
+    if (italicMatch) return <em key={i}>{italicMatch[1]}</em>
+
+    // Links render as text-only (no live links in the briefing)
+    const linkMatch = part.match(/^\[([^\]]+)\]\([^)]+\)$/)
+    if (linkMatch) return <span key={i}>{linkMatch[1]}</span>
+
     return part
   })
+}
+
+// ---- Gap/insight paragraph detection (for Gadfly-gold callout in Public Record Shows) ----
+
+function isInsightParagraph(text: string): boolean {
+  const lower = text.toLowerCase()
+  return (
+    lower.includes('the gap') ||
+    lower.includes('what is absent') ||
+    lower.includes('not publicly') ||
+    lower.includes('absent from') ||
+    lower.includes('should be there') ||
+    lower.includes('remain unanswerable')
+  )
 }
 
 // ---- Evidence citation detection ----
@@ -215,133 +269,253 @@ function isEvidenceParagraph(text: string): boolean {
 function isPullQuote(text: string): boolean {
   const trimmed = text.trim()
   // Starts and ends with quotation marks (straight or curly)
-  if (/^[""“]/.test(trimmed) && /[""”][\.\,\;]?$/.test(trimmed)) return true
+  if (/^["""]/.test(trimmed) && /["""][\.\,\;]?$/.test(trimmed)) return true
   // Contains a full sentence in quotes (at least 30 chars inside quotes)
-  if (/[""“][^""”]{30,}[""”]/.test(trimmed)) return true
+  if (/["""][^"""]{30,}["""]/.test(trimmed)) return true
   return false
 }
 
-function ProseSection({ content, palette, oracleSerif }: { content: string; palette: Palette; oracleSerif?: boolean }) {
-  const paragraphs = content
-    .split(/\n{2,}/)
-    .map((p) => p.trim())
-    .filter(Boolean)
+// ---- Block preprocessor result ----
 
+type BlockElement =
+  | { type: 'paragraph'; text: string }
+  | { type: 'subheading'; text: string }
+  | { type: 'hr' }
+  | { type: 'list'; items: string[] }
+
+// ---- Block preprocessor — handles ###, ---, bold-only lines (no colon) ----
+// Called by ProseSection before paragraph-level rendering.
+
+export function preprocessBlocks(content: string): BlockElement[] {
+  const result: BlockElement[] = []
+
+  // Split into raw paragraphs first (blank-line separated)
+  const rawParagraphs = content.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
+
+  for (const para of rawParagraphs) {
+    // --- separator → hr (only when it's JUST "---" on its own, not inside other text)
+    if (/^---\s*$/.test(para)) {
+      result.push({ type: 'hr' })
+      continue
+    }
+
+    // ### Sub-heading
+    if (para.match(/^###\s+/)) {
+      const text = para.replace(/^###\s+/, '').replace(/\*\*/g, '').trim()
+      result.push({ type: 'subheading', text })
+      continue
+    }
+
+    // Bullet/numbered list paragraph
+    if (para.match(/^[-*]\s+/m) || para.match(/^\d+[.)]\s+/m)) {
+      const lines = para.split('\n').filter((l) => l.trim())
+      const items = lines.map((l) => l.replace(/^[-*]\s+/, '').replace(/^\d+[.)]\s+/, '').trim())
+      result.push({ type: 'list', items })
+      continue
+    }
+
+    // Bold-only line (no colon) → treat as sub-heading
+    // Must be a single line, wrapped entirely in **, no colon inside
+    const boldOnlyMatch = para.match(/^\*\*([^*:]+)\*\*\s*$/)
+    if (boldOnlyMatch && !para.includes('\n')) {
+      result.push({ type: 'subheading', text: boldOnlyMatch[1].trim() })
+      continue
+    }
+
+    result.push({ type: 'paragraph', text: para })
+  }
+
+  return result
+}
+
+function ProseSection({
+  content,
+  palette,
+  oracleSerif,
+  showInsightCallouts,
+}: {
+  content: string
+  palette: Palette
+  oracleSerif?: boolean
+  showInsightCallouts?: boolean
+}) {
   const baseFont = oracleSerif
     ? { fontFamily: '"Source Serif 4", Georgia, serif', fontSize: '16px', lineHeight: '1.75', fontWeight: 400 as const }
     : { fontSize: '16px', lineHeight: '1.7' }
 
+  const blocks = preprocessBlocks(content)
   const elements: React.ReactNode[] = []
 
-  paragraphs.forEach((para, i) => {
-    // Insert section break rule after every 4th paragraph
-    if (i > 0 && i % 4 === 0) {
-      elements.push(
-        <div
-          key={`rule-${i}`}
-          style={{
-            width: '40%',
-            margin: '24px auto',
-            height: '1px',
-            backgroundColor: palette.border,
-          }}
-        />
-      )
+  // Insert section break rule after every 4th paragraph-type block
+  let paraCount = 0
+
+  blocks.forEach((block, i) => {
+    if (block.type === 'paragraph') {
+      paraCount++
+      if (paraCount > 1 && paraCount % 4 === 0) {
+        elements.push(
+          <div
+            key={`rule-${i}`}
+            style={{
+              width: '40%',
+              margin: '24px auto',
+              height: '1px',
+              backgroundColor: palette.border,
+            }}
+          />
+        )
+      }
     }
 
-    // Bullet list paragraph
-    if (para.match(/^[-*]\s+/m)) {
-      const items = para
-        .split('\n')
-        .filter((line) => line.trim())
-        .map((line) => line.replace(/^[-*]\s+/, '').trim())
-      elements.push(
-        <ul key={i} className="space-y-1.5 pl-0">
-          {items.map((item, j) => (
-            <li key={j} className="flex items-start gap-2" style={{ fontSize: '15px', lineHeight: '1.6', color: palette.secondary }}>
-              <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: palette.faint }} />
-              <span>{renderInline(item)}</span>
-            </li>
-          ))}
-        </ul>
-      )
-      return
-    }
+    switch (block.type) {
+      case 'hr':
+        elements.push(
+          <hr
+            key={i}
+            style={{
+              border: 'none',
+              borderTop: `1px solid ${palette.border}`,
+              margin: '24px 0',
+            }}
+          />
+        )
+        break
 
-    // Bold field line (e.g. **Label:** value)
-    const boldFieldMatch = para.match(/^\*\*(.+?):\*\*\s*(.+)$/)
-    if (boldFieldMatch) {
-      elements.push(
-        <div key={i}>
-          <span
-            className="block font-semibold uppercase tracking-wider"
-            style={{ fontSize: '11px', color: palette.muted }}
+      case 'subheading':
+        elements.push(
+          <div
+            key={i}
+            style={{
+              fontFamily: '"Inter", system-ui, sans-serif',
+              fontSize: '11px',
+              fontWeight: 700,
+              textTransform: 'uppercase' as const,
+              letterSpacing: '0.06em',
+              color: palette.muted,
+              marginTop: i === 0 ? '0' : '24px',
+              marginBottom: '4px',
+            }}
           >
-            {boldFieldMatch[1]}
-          </span>
-          <p className="mt-0.5" style={{ ...baseFont, color: palette.body }}>
-            {renderInline(boldFieldMatch[2])}
-          </p>
-        </div>
-      )
-      return
-    }
+            {block.text}
+          </div>
+        )
+        break
 
-    // Pull quote (Oracle sections only)
-    if (oracleSerif && isPullQuote(para)) {
-      elements.push(
-        <blockquote
-          key={i}
-          style={{
-            fontFamily: '"Source Serif 4", Georgia, serif',
-            fontStyle: 'italic',
-            fontSize: '18px',
-            lineHeight: '1.5',
-            color: palette.secondary,
-            paddingLeft: '24px',
-            borderLeft: `2px solid ${palette.pullQuoteBorder}`,
-            margin: '24px 0',
-            maxWidth: '55ch',
-          }}
-        >
-          {renderInline(para)}
-        </blockquote>
-      )
-      return
-    }
+      case 'list': {
+        elements.push(
+          <ul key={i} className="space-y-1.5 pl-0">
+            {block.items.map((item, j) => (
+              <li key={j} className="flex items-start gap-2" style={{ fontSize: '15px', lineHeight: '1.6', color: palette.secondary }}>
+                <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: palette.faint }} />
+                <span>{renderInline(item)}</span>
+              </li>
+            ))}
+          </ul>
+        )
+        break
+      }
 
-    // Evidence callout
-    if (isEvidenceParagraph(para)) {
-      elements.push(
-        <div
-          key={i}
-          style={{
-            borderLeft: `3px solid ${palette.evidenceCalloutBorder}`,
-            backgroundColor: palette.evidenceCalloutBg,
-            padding: '16px',
-            borderRadius: '0 8px 8px 0',
-            margin: '16px 0',
-          }}
-        >
-          <p className="whitespace-pre-wrap" style={{ ...baseFont, color: palette.body, margin: 0 }}>
+      case 'paragraph': {
+        const para = block.text
+
+        // Bold field line (e.g. **Label:** value)
+        const boldFieldMatch = para.match(/^\*\*(.+?):\*\*\s*(.+)$/)
+        if (boldFieldMatch) {
+          elements.push(
+            <div key={i}>
+              <span
+                className="block font-semibold uppercase tracking-wider"
+                style={{ fontSize: '11px', color: palette.muted }}
+              >
+                {boldFieldMatch[1]}
+              </span>
+              <p className="mt-0.5" style={{ ...baseFont, color: palette.body }}>
+                {renderInline(boldFieldMatch[2])}
+              </p>
+            </div>
+          )
+          break
+        }
+
+        // Pull quote (Oracle sections only)
+        if (oracleSerif && isPullQuote(para)) {
+          elements.push(
+            <blockquote
+              key={i}
+              style={{
+                fontFamily: '"Source Serif 4", Georgia, serif',
+                fontStyle: 'italic',
+                fontSize: '18px',
+                lineHeight: '1.5',
+                color: palette.secondary,
+                paddingLeft: '24px',
+                borderLeft: `2px solid ${palette.pullQuoteBorder}`,
+                margin: '24px 0',
+                maxWidth: '55ch',
+              }}
+            >
+              {renderInline(para)}
+            </blockquote>
+          )
+          break
+        }
+
+        // Insight/gap callout (for "Public Record Shows" when showInsightCallouts=true)
+        if (showInsightCallouts && isInsightParagraph(para)) {
+          elements.push(
+            <div
+              key={i}
+              style={{
+                borderLeft: `3px solid rgba(200,168,75,0.4)`,
+                backgroundColor: 'rgba(200,168,75,0.05)',
+                padding: '14px 16px',
+                borderRadius: '0 8px 8px 0',
+                margin: '4px 0',
+              }}
+            >
+              <p className="whitespace-pre-wrap" style={{ ...baseFont, color: palette.body, margin: 0, fontStyle: 'italic' }}>
+                {renderInline(para)}
+              </p>
+            </div>
+          )
+          break
+        }
+
+        // Evidence callout
+        if (isEvidenceParagraph(para)) {
+          elements.push(
+            <div
+              key={i}
+              style={{
+                borderLeft: `3px solid ${palette.evidenceCalloutBorder}`,
+                backgroundColor: palette.evidenceCalloutBg,
+                padding: '16px',
+                borderRadius: '0 8px 8px 0',
+                margin: '16px 0',
+              }}
+            >
+              <p className="whitespace-pre-wrap" style={{ ...baseFont, color: palette.body, margin: 0 }}>
+                {renderInline(para)}
+              </p>
+            </div>
+          )
+          break
+        }
+
+        // Lead paragraph (first paragraph gets larger treatment)
+        const isLead = paraCount === 1
+        const leadFont = isLead
+          ? { fontSize: '17px', lineHeight: '1.75' }
+          : {}
+
+        elements.push(
+          <p key={i} className="whitespace-pre-wrap" style={{ ...baseFont, ...leadFont, color: palette.body }}>
             {renderInline(para)}
           </p>
-        </div>
-      )
-      return
+        )
+        break
+      }
     }
-
-    // Lead paragraph (first paragraph gets larger treatment)
-    const isLead = i === 0
-    const leadFont = isLead
-      ? { fontSize: '17px', lineHeight: '1.75' }
-      : {}
-
-    elements.push(
-      <p key={i} className="whitespace-pre-wrap" style={{ ...baseFont, ...leadFont, color: palette.body }}>
-        {renderInline(para)}
-      </p>
-    )
   })
 
   return (
@@ -410,7 +584,7 @@ function PlayersSection({ content, palette }: { content: string; palette: Palett
   const players = parsePlayers(content)
 
   if (players.length === 0) {
-    return <ProseSection content={content} palette={palette} oracleSerif />
+    return <ProseSection content={content} palette={palette} />
   }
 
   return (
@@ -735,9 +909,19 @@ function AccessBadge({ level }: { level: AccessLevel }) {
   )
 }
 
-// ---- Document card (light surface) ----
+// ---- Document card — two-tier: primary authority + supporting list ----
+// First block rendered by WhatGovernsSection gets isPrimary=true.
+// Touched: previously a single-tier flat card; now split into primary/supporting visual tiers.
 
-function DocumentCard({ block, palette }: { block: string; palette: Palette }) {
+function DocumentCard({
+  block,
+  palette,
+  isPrimary = false,
+}: {
+  block: string
+  palette: Palette
+  isPrimary?: boolean
+}) {
   const fields = parseDocumentFields(block)
 
   let docName = ''
@@ -780,62 +964,176 @@ function DocumentCard({ block, palette }: { block: string; palette: Palette }) {
     )
   }
 
-  return (
-    <div
-      className="rounded-xl p-5"
-      style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.cardBorder}` }}
-    >
-      <div className="mb-4 flex items-start justify-between gap-3">
-        {docName && (
-          <span
-            className="font-semibold"
+  // Primary Authority: warmLift bg, Scout-purple left accent
+  if (isPrimary) {
+    return (
+      <div
+        className="rounded-xl p-5"
+        style={{
+          backgroundColor: palette.warmLift,
+          border: `1px solid ${palette.cardBorder}`,
+          borderLeft: '3px solid rgba(176,136,200,0.5)',
+        }}
+      >
+        {/* Header row — flexWrap for responsive */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: '8px',
+            flexWrap: 'wrap',
+            marginBottom: docName ? '12px' : '0',
+          }}
+        >
+          {docName && (
+            <span
+              style={{
+                fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+                fontSize: '14px',
+                fontWeight: 700,
+                lineHeight: '1.4',
+                color: palette.text,
+                flex: '1 1 0',
+                minWidth: '0',
+              }}
+            >
+              {docName}
+            </span>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
+            <span
+              style={{
+                display: 'inline-block',
+                borderRadius: '9999px',
+                padding: '2px 8px',
+                fontSize: '10px',
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.06em',
+                backgroundColor: 'rgba(176,136,200,0.10)',
+                color: '#B088C8',
+                fontWeight: 600,
+              }}
+            >
+              Primary Authority
+            </span>
+            {accessLevel && <AccessBadge level={accessLevel} />}
+          </div>
+        </div>
+
+        {mainFields.length > 0 && (
+          <div className="space-y-3">
+            {mainFields.map((field, i) => (
+              <div key={i}>
+                <span
+                  className="block font-semibold uppercase tracking-[0.08em]"
+                  style={{ fontSize: '10px', color: palette.muted, marginBottom: '4px' }}
+                >
+                  {field.label}
+                </span>
+                <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary }}>
+                  {renderInline(field.value)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {howToFindField && (
+          <div
             style={{
-              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-              fontSize: '14px',
-              lineHeight: '1.4',
-              color: palette.text,
+              borderTop: `1px solid ${palette.border}`,
+              marginTop: '16px',
+              paddingTop: '12px',
             }}
           >
-            {docName}
-          </span>
+            <span
+              className="block font-semibold uppercase tracking-[0.08em]"
+              style={{ fontSize: '10px', color: palette.faint }}
+            >
+              How to find it
+            </span>
+            <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: palette.muted }}>
+              {renderInline(howToFindField.value)}
+            </p>
+          </div>
         )}
-        {accessLevel && <AccessBadge level={accessLevel} />}
       </div>
+    )
+  }
 
-      {mainFields.length > 0 && (
-        <div className="space-y-3">
-          {mainFields.map((field, i) => (
-            <div key={i}>
-              <span
-                className="block font-semibold uppercase tracking-[0.08em]"
-                style={{ fontSize: '10px', color: palette.muted, marginBottom: '4px' }}
-              >
-                {field.label}
-              </span>
-              <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary }}>
-                {renderInline(field.value)}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {howToFindField && (
+  // Supporting document — compact row style
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '12px',
+        padding: '12px 16px',
+        backgroundColor: palette.cardBg,
+        border: `1px solid ${palette.cardBorder}`,
+        borderRadius: '10px',
+      }}
+    >
+      <div style={{ flex: '1 1 0', minWidth: '0' }}>
+        {/* Header row — flexWrap for responsive */}
         <div
-          className="mt-4 pt-3"
-          style={{ borderTop: `1px solid ${palette.border}`, marginTop: '16px', paddingTop: '12px' }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            flexWrap: 'wrap',
+            marginBottom: '4px',
+          }}
         >
-          <span
-            className="block font-semibold uppercase tracking-[0.08em]"
-            style={{ fontSize: '10px', color: palette.faint }}
-          >
-            How to find it
-          </span>
-          <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: palette.muted }}>
+          {docName && (
+            <span
+              style={{
+                fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+                fontSize: '13px',
+                fontWeight: 600,
+                lineHeight: '1.4',
+                color: palette.text,
+              }}
+            >
+              {docName}
+            </span>
+          )}
+          {accessLevel && <AccessBadge level={accessLevel} />}
+        </div>
+
+        {/* Show only "What it is" / description field for supporting docs */}
+        {mainFields.slice(0, 2).map((field, i) => (
+          <p key={i} style={{ fontSize: '13px', lineHeight: '1.4', color: palette.muted, marginTop: '2px' }}>
+            {renderInline(field.value)}
+          </p>
+        ))}
+
+        {howToFindField && (
+          <p style={{ fontSize: '12px', lineHeight: '1.4', color: palette.faint, marginTop: '4px' }}>
             {renderInline(howToFindField.value)}
           </p>
-        </div>
-      )}
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ---- What Governs This section renderer (two-tier) ----
+
+function WhatGovernsSection({ content, palette }: { content: string; palette: Palette }) {
+  const blocks = splitDocumentBlocks(content)
+  const hasCards = blocks.some((b) => parseDocumentFields(b).length > 0)
+
+  if (!hasCards) {
+    return <ProseSection content={content} palette={palette} />
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {blocks.map((block, j) => (
+        <DocumentCard key={j} block={block} palette={palette} isPrimary={j === 0} />
+      ))}
     </div>
   )
 }
@@ -1047,7 +1345,7 @@ function QuestionsSection({ content, palette }: { content: string; palette: Pale
 
   return (
     <div>
-      {/* Introductory line */}
+      {/* Introductory line — Source Serif 4 is appropriate here (rhetorical frame) */}
       <p
         style={{
           fontFamily: '"Source Serif 4", Georgia, serif',
@@ -1093,7 +1391,7 @@ function QuestionsSection({ content, palette }: { content: string; palette: Pale
 
 // ---- Limitations section renderer ----
 
-function LimitationsSection({ content, palette }: { content: string; palette: Palette }) {
+function LimitationsSection({ content, palette, darkMode }: { content: string; palette: Palette; darkMode?: boolean }) {
   return (
     <div
       style={{
@@ -1105,7 +1403,8 @@ function LimitationsSection({ content, palette }: { content: string; palette: Pa
       <div
         role="note"
         style={{
-          backgroundColor: 'rgba(120,113,108,0.04)',
+          // Use cardBg on dark mode (warmLift is invisible on dark)
+          backgroundColor: darkMode ? palette.cardBg : 'rgba(120,113,108,0.04)',
           border: `1px solid ${palette.cardBorder}`,
           borderLeft: `3px solid ${palette.faint}`,
           borderRadius: '0 8px 8px 0',
@@ -1172,24 +1471,16 @@ function InlineGadflyAction({ onOpenGadfly, palette }: { onOpenGadfly?: () => vo
   )
 }
 
-// ---- Executive card (always first) ----
+// ---- Executive card (nav + action hub — concern text removed per spec 3.3) ----
 
 function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuestions, palette }: { sections: ParsedSection[]; onOpenCampaign?: () => void; onOpenGadfly?: () => void; onScrollToQuestions?: () => void; palette: Palette }) {
-  const concernSection = sections.find((s) => s.heading.toLowerCase().includes('your concern'))
-  const concernText = concernSection?.content
-    ? concernSection.content
-        .split(/\n{2,}/)[0]
-        ?.replace(/^[-*]\s+/, '')
-        .replace(/\*\*/g, '')
-        .trim()
-    : null
-
-  // Key findings: all section headings except concern and limitations
+  // Key findings: all section headings except concern, context, and limitations
   const findingHeadings = sections
     .map((s) => s.heading)
     .filter(
       (h) =>
         !h.toLowerCase().includes('your concern') &&
+        !h.toLowerCase().includes('context') &&
         !h.toLowerCase().includes('cannot see') &&
         !h.toLowerCase().includes('limitations')
     )
@@ -1224,7 +1515,7 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuest
   if (hasGadfly) chips.push({ label: 'Questions Worth Asking', arm: 'gadfly', ...(onScrollToQuestions ? { onClick: onScrollToQuestions } : { href: '#questions-section' }) })
   if (hasOracle) chips.push({ label: 'Analyse Documents', arm: 'oracle', href: '/oracle' })
 
-  if (!concernText && findingHeadings.length === 0) return null
+  if (findingHeadings.length === 0 && chips.length === 0) return null
 
   return (
     <div
@@ -1233,37 +1524,15 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuest
         borderBottom: `2px solid ${palette.border}`,
         backgroundColor: palette.warmLift,
         borderRadius: '12px',
-        padding: '24px 24px 32px 24px',
+        // spec 3.3: padding 20/24/24/24
+        padding: '20px 24px 24px 24px',
       }}
     >
-      {concernText && (
-        <>
-          <div
-            className="font-semibold uppercase tracking-[0.1em]"
-            style={{ fontSize: '11px', color: palette.muted, marginBottom: '8px' }}
-          >
-            Your Concern
-          </div>
-          <p style={{
-            fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-            fontSize: '24px',
-            fontWeight: 700,
-            lineHeight: '1.3',
-            color: palette.text,
-            maxWidth: '60ch',
-            marginBottom: '16px',
-          }}>
-            {concernText}
-          </p>
-          <div style={{ height: '1px', backgroundColor: palette.border, marginBottom: '16px' }} />
-        </>
-      )}
-
       {findingHeadings.length > 0 && (
         <>
           <div
             className="font-semibold uppercase tracking-[0.1em]"
-            style={{ fontSize: '11px', color: palette.muted, marginTop: '24px', marginBottom: '12px' }}
+            style={{ fontSize: '11px', color: palette.muted, marginBottom: '12px' }}
           >
             Key Areas
           </div>
@@ -1272,7 +1541,8 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuest
               <li key={i} className="flex items-start gap-2.5" style={{ fontSize: '14px', lineHeight: '1.5', color: palette.body }}>
                 <span
                   className="flex-shrink-0 rounded-full"
-                  style={{ width: '6px', height: '6px', backgroundColor: '#C85B5B', marginTop: '6px' }}
+                  // spec 3.3: dot → palette.faint (not Lever red)
+                  style={{ width: '6px', height: '6px', backgroundColor: palette.faint, marginTop: '6px' }}
                 />
                 {heading}
               </li>
@@ -1284,7 +1554,7 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuest
       {chips.length > 0 && (
         <div
           className="flex flex-wrap gap-2"
-          style={{ marginTop: '20px' }}
+          style={{ marginTop: findingHeadings.length > 0 ? '20px' : '0' }}
         >
           {chips.map((chip) => {
             const arm = ARM_COLORS[chip.arm]
@@ -1493,6 +1763,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, palette }: { onOpenCampaign?: 
 
 export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, onOpenLens, onOpenCampaign, onOpenGadfly, onScrollToQuestions }: BriefingViewProps) {
   const sections = useMemo(() => parseSections(text), [text])
+  const docTitle = useMemo(() => extractTitle(text), [text])
   const hasSections = sections.length > 0
   const palette = darkMode ? DARK_PALETTE : LIGHT_PALETTE
 
@@ -1586,6 +1857,36 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         </button>
       )}
 
+      {/* Document title — rendered from # Title (new prompt) */}
+      {docTitle && (
+        <div style={{ marginBottom: '28px' }}>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              textTransform: 'uppercase' as const,
+              letterSpacing: '0.1em',
+              color: palette.muted,
+              marginBottom: '8px',
+            }}
+          >
+            Investigation
+          </div>
+          <h1
+            style={{
+              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+              fontSize: '22px',
+              fontWeight: 700,
+              lineHeight: '1.3',
+              color: palette.text,
+              maxWidth: '60ch',
+            }}
+          >
+            {docTitle}
+          </h1>
+        </div>
+      )}
+
       {/* Executive card — always first when we have sections */}
       {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} onScrollToQuestions={onScrollToQuestions} palette={palette} />}
 
@@ -1594,42 +1895,25 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         const isFirst = i === 0
         const showDivider = !isFirst
 
-        // --- Your Concern ---
-        if (headingLower.includes('your concern')) {
+        // --- Context (new prompt) or Your Concern (old prompt, backward compat) ---
+        // Both render as lead prose without a card box.
+        if (headingLower.includes('context') || headingLower.includes('your concern')) {
           return (
             <div key={i}>
               {showDivider && <SectionDivider palette={palette} />}
-              <SectionHeader heading="Your Concern" palette={palette} />
-              <div
-                className="rounded-xl p-5"
-                style={{
-                  backgroundColor: 'rgba(176,136,200,0.06)',
-                  border: '1px solid rgba(176,136,200,0.18)',
-                }}
-              >
-                <ProseSection content={section.content} palette={palette} />
-              </div>
+              <SectionHeader heading={section.heading} palette={palette} />
+              <ProseSection content={section.content} palette={palette} />
             </div>
           )
         }
 
         // --- What Governs This (document discovery) ---
         if (headingLower.includes('what governs') || headingLower.includes('governs this')) {
-          const blocks = splitDocumentBlocks(section.content)
-          const hasCards = blocks.some((b) => parseDocumentFields(b).length > 0)
           return (
             <div key={i}>
               {showDivider && <SectionDivider palette={palette} />}
               <SectionHeader heading="What Governs This" palette={palette} />
-              {hasCards ? (
-                <div className="space-y-4">
-                  {blocks.map((block, j) => (
-                    <DocumentCard key={j} block={block} palette={palette} />
-                  ))}
-                </div>
-              ) : (
-                <ProseSection content={section.content} palette={palette} oracleSerif />
-              )}
+              <WhatGovernsSection content={section.content} palette={palette} />
             </div>
           )
         }
@@ -1645,13 +1929,14 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
           )
         }
 
-        // --- What the Public Record Shows (analysis) ---
+        // --- What the Public Record Shows (analysis, Inter only — spec 3.1) ---
         if (headingLower.includes('public record') || headingLower.includes('record shows')) {
           return (
             <div key={i}>
               {showDivider && <SectionDivider palette={palette} />}
               <SectionHeader heading="What the Public Record Shows" palette={palette} />
-              <ProseSection content={section.content} palette={palette} oracleSerif />
+              {/* oracleSerif=false per spec 3.1 — analytical journalism reads cleaner in Inter */}
+              <ProseSection content={section.content} palette={palette} showInsightCallouts />
               <InlineGadflyAction onOpenGadfly={onOpenGadfly} palette={palette} />
             </div>
           )
@@ -1686,10 +1971,11 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               key={i}
               id="questions-section"
               style={{
-                backgroundColor: palette.warmLift,
+                // spec 3.4: bg → cardBg (warmLift is invisible on dark)
+                backgroundColor: palette.cardBg,
                 borderRadius: '12px',
                 padding: '24px',
-                marginTop: '16px',
+                // spec 3.2: remove rogue marginTop:16px
               }}
             >
               {showDivider && <SectionDivider palette={palette} />}
@@ -1704,7 +1990,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
           return (
             <div key={i}>
               {showDivider && <SectionDivider palette={palette} />}
-              <LimitationsSection content={section.content} palette={palette} />
+              <LimitationsSection content={section.content} palette={palette} darkMode={darkMode} />
             </div>
           )
         }
