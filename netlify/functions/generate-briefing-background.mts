@@ -33,6 +33,23 @@ import { runBriefingGeneration } from '@/lib/investigation/run-briefing'
 const BG_WALL_CLOCK_MS = 300_000
 
 export default async function handler(req: Request, _context: Context): Promise<Response> {
+  // --- DIAGNOSTIC (temporary): prove the handler actually executes ---
+  // Writes a visible marker the instant the handler runs, before any auth/work.
+  // Uses req.clone() so the real body read below still works.
+  try {
+    const dbgDb = getDb()
+    const peek = (await req.clone().json().catch(() => null)) as { investigationId?: unknown } | null
+    const dbgId = peek && typeof peek.investigationId === 'string' ? peek.investigationId : null
+    if (dbgId) {
+      await dbgDb
+        .update(investigations)
+        .set({ failureReason: '__dbg: bg handler entered', updatedAt: sql`NOW()` })
+        .where(sql`${investigations.id} = ${dbgId} AND ${investigations.status} = 'generating'`)
+    }
+  } catch {
+    /* diagnostic only — ignore */
+  }
+
   // --- Auth: constant-time comparison of x-internal-secret ---
   const secret = process.env.INTERNAL_TRIGGER_SECRET
   if (!secret) {
