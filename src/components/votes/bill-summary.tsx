@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
+import { SectionedMarkdown } from '@/components/ui/markdown-prose'
 
 interface BillSummaryProps {
   billId: string
@@ -100,12 +101,7 @@ export function BillSummary({ billId, existingSummary }: BillSummaryProps) {
         )}
       </div>
 
-      <div
-        className="prose prose-sm max-w-none whitespace-pre-wrap"
-        style={{ color: '#292524', fontSize: '15px', lineHeight: '1.7' }}
-      >
-        {summary}
-      </div>
+      <SectionedMarkdown text={summary} isStreaming={isStreaming} />
     </div>
   )
 }
