@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
+import { MarkdownProse } from '@/components/ui/markdown-prose'
 
 interface VoteExplanationProps {
   voteId: string
@@ -86,12 +87,7 @@ export function VoteExplanation({ voteId, existingExplanation }: VoteExplanation
         )}
       </div>
 
-      <div
-        className="whitespace-pre-wrap"
-        style={{ color: '#292524', fontSize: '15px', lineHeight: '1.7' }}
-      >
-        {explanation}
-      </div>
+      <MarkdownProse content={explanation} />
 
       {error && (
         <p className="mt-2 text-xs text-red-400">Failed to generate explanation.</p>

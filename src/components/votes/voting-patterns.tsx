@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
+import { SectionedMarkdown } from '@/components/ui/markdown-prose'
 
 interface VotingPatternsProps {
   mpId: string
@@ -99,12 +100,7 @@ export function VotingPatterns({ mpId }: VotingPatternsProps) {
         )}
       </div>
 
-      <div
-        className="whitespace-pre-wrap"
-        style={{ color: '#292524', fontSize: '15px', lineHeight: '1.7' }}
-      >
-        {analysis}
-      </div>
+      <SectionedMarkdown text={analysis} isStreaming={isStreaming} />
     </div>
   )
 }
