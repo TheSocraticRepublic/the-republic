@@ -137,7 +137,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <p className="text-xs text-red-400">{error}</p>
+                <p role="alert" className="text-xs text-red-400">{error}</p>
               )}
 
               <button
@@ -175,7 +175,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <p className="text-xs text-red-400">{error}</p>
+                <p role="alert" className="text-xs text-red-400">{error}</p>
               )}
 
               <button

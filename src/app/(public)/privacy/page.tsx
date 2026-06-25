@@ -99,6 +99,10 @@ export default function PrivacyPage() {
             auth headers, and your email/IP from every report before it is sent, and session
             replay is disabled.
           </li>
+          <li>
+            <strong className="text-text-primary">Upstash (Redis).</strong> Rate limiting to
+            protect against abuse. US-based.
+          </li>
         </ul>
         <p>
           We do not sell your data or share it with advertisers. We load no advertising or tracking
@@ -113,7 +117,7 @@ export default function PrivacyPage() {
         <p>
           Your account, investigations, documents, posts, and credentials live in a PostgreSQL
           database hosted in the <strong className="text-text-primary">United States</strong>{' '}
-          (Supabase, us-east-2). The processors above (Anthropic, Voyage, Resend, Sentry) are also
+          (Supabase, us-east-2). The processors above (Anthropic, Voyage, Resend, Sentry, Upstash) are also
           US-based.
         </p>
         <p>

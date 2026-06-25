@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
-import { forumThreads, userProfiles } from '@/lib/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { forumThreads, userProfiles, investigations } from '@/lib/db/schema'
+import { eq, desc, and } from 'drizzle-orm'
 import { safeRoute } from '@/lib/api/safe-route'
 
 interface RouteContext {
@@ -28,6 +28,18 @@ export const GET = safeRoute(async (request: NextRequest, { params }: RouteConte
 
   const { id: investigationId } = await params
   const db = getDb()
+
+  const [investigation] = await db
+    .select({ id: investigations.id })
+    .from(investigations)
+    .where(and(eq(investigations.id, investigationId), eq(investigations.userId, userId)))
+    .limit(1)
+
+  if (!investigation) {
+    return new Response(JSON.stringify({ error: 'Not found' }), {
+      status: 404, headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
   const threads = await db
     .select({

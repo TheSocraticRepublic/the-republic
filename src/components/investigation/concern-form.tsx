@@ -23,6 +23,7 @@ export function ConcernForm() {
   const [postalCode, setPostalCode] = useState('')
   const [concern, setConcern] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const abortRef = useRef<AbortController | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -47,6 +48,8 @@ export function ConcernForm() {
 
   const handleStartInvestigation = useCallback(async () => {
     if (!concern.trim() || loading) return
+
+    setError('')
 
     if (abortRef.current) {
       abortRef.current.abort()
@@ -97,6 +100,7 @@ export function ConcernForm() {
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
         console.error('[investigate] stream error:', err)
+        setError('Something went wrong. Please try again.')
       }
       setLoading(false)
     }
@@ -149,7 +153,7 @@ export function ConcernForm() {
 
       {/* Jurisdiction selector */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-text-muted">
+        <label htmlFor="jurisdiction" className="mb-1.5 block text-xs font-medium text-text-muted">
           Jurisdiction <span className="text-text-faint">(optional — helps with document discovery)</span>
         </label>
         {fetchingJurisdictions ? (
@@ -157,6 +161,7 @@ export function ConcernForm() {
         ) : (
           <div className="relative">
             <select
+              id="jurisdiction"
               value={selectedJurisdictionId}
               onChange={(e) => setSelectedJurisdictionId(e.target.value)}
               className="w-full appearance-none rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-secondary outline-none focus:border-border-strong focus:ring-0"
@@ -198,6 +203,8 @@ export function ConcernForm() {
           autoComplete="postal-code"
         />
       </div>
+
+      {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 pt-1">

@@ -58,8 +58,9 @@ export function ReportForm({ targetType, targetId, onSubmitted, onCancel }: Repo
       onSubmit={handleSubmit}
       className="mt-2 rounded-lg border border-border bg-surface-1 shadow-sm p-3 space-y-2"
     >
-      <p className="text-xs font-medium text-text-secondary">Report this {targetType}</p>
+      <label htmlFor="reportReason" className="text-xs font-medium text-text-secondary">Report this {targetType}</label>
       <select
+        id="reportReason"
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         className="w-full rounded-md px-2 py-1.5 text-xs text-text-primary bg-surface-3 border border-border-strong focus:outline-none focus:border-border-strong transition-colors"
