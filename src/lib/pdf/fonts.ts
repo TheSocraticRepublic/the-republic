@@ -7,19 +7,23 @@ import { Font } from '@react-pdf/renderer'
 const GOOGLE_FONTS_BASE = 'https://github.com/google/fonts/raw/main'
 
 Font.register({
-  family: 'Plus Jakarta Sans',
+  family: 'Instrument Sans',
   fonts: [
     {
-      src: `${GOOGLE_FONTS_BASE}/ofl/plusjakartasans/static/PlusJakartaSans-SemiBold.ttf`,
+      src: `${GOOGLE_FONTS_BASE}/ofl/instrumentsans/static/InstrumentSans-Regular.ttf`,
+      fontWeight: 400,
+    },
+    {
+      src: `${GOOGLE_FONTS_BASE}/ofl/instrumentsans/static/InstrumentSans-Medium.ttf`,
+      fontWeight: 500,
+    },
+    {
+      src: `${GOOGLE_FONTS_BASE}/ofl/instrumentsans/static/InstrumentSans-SemiBold.ttf`,
       fontWeight: 600,
     },
     {
-      src: `${GOOGLE_FONTS_BASE}/ofl/plusjakartasans/static/PlusJakartaSans-Bold.ttf`,
+      src: `${GOOGLE_FONTS_BASE}/ofl/instrumentsans/static/InstrumentSans-Bold.ttf`,
       fontWeight: 700,
-    },
-    {
-      src: `${GOOGLE_FONTS_BASE}/ofl/plusjakartasans/static/PlusJakartaSans-ExtraBold.ttf`,
-      fontWeight: 800,
     },
   ],
 })

@@ -1,4 +1,4 @@
-const DISPLAY_FONT = '"Plus Jakarta Sans", system-ui, sans-serif'
+const DISPLAY_FONT = 'var(--font-display)'
 
 export const metadata = {
   title: 'Privacy',
@@ -11,7 +11,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <section className="mt-9">
       <h2
         className="text-base font-semibold tracking-tight text-text-primary"
-        style={{ fontFamily: DISPLAY_FONT }}
       >
         {title}
       </h2>
@@ -28,7 +27,6 @@ export default function PrivacyPage() {
       <header className="mb-8">
         <h1
           className="text-xl font-bold tracking-tight text-text-primary"
-          style={{ fontFamily: DISPLAY_FONT }}
         >
           Privacy Policy
         </h1>

@@ -81,7 +81,6 @@ export function DocumentCard({
         <div className="flex-1 min-w-0">
           <h3
             className="truncate text-sm font-semibold leading-snug text-text-primary"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {title}
           </h3>

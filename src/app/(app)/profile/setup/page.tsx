@@ -118,7 +118,6 @@ function ProfileSetupForm() {
         <div className="mb-8 text-center">
           <h1
             className="mb-1 text-xl font-bold text-text-primary"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {isEdit ? 'Edit Profile' : 'Choose your identity'}
           </h1>

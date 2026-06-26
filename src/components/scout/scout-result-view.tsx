@@ -168,7 +168,6 @@ function DocumentCard({ block }: { block: string }) {
         {docName ? (
           <span
             className="text-sm font-semibold text-text-primary"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {docName}
           </span>
@@ -257,7 +256,6 @@ function FippaCard({ block }: { block: string }) {
         {docName && (
           <span
             className="text-sm font-semibold text-text-primary"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {docName}
           </span>

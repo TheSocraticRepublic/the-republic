@@ -43,7 +43,6 @@ export function CredentialBreakdown({ summary }: CredentialBreakdownProps) {
       <div className="mb-5">
         <p
           className="text-3xl font-bold text-text-primary"
-          style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         >
           {effectiveTotal}
         </p>

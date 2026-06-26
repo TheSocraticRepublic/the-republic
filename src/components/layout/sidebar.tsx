@@ -72,8 +72,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
       <div className="px-5 py-6">
         <Link href="/" className="block" onClick={onNavigate}>
           <span
-            className="text-base font-bold tracking-tight text-text-primary"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
+            className="text-xl font-bold tracking-tight text-text-primary"
           >
             Open Cave
           </span>

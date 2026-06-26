@@ -22,7 +22,6 @@ export default function ScoutPage() {
         <div>
           <h1
             className="text-xl font-bold tracking-tight text-text-primary"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             Scout
           </h1>

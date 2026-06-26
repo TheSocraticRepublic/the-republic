@@ -74,7 +74,6 @@ function NewThreadForm() {
       <div className="mb-8">
         <h1
           className="text-xl font-bold tracking-tight text-text-primary"
-          style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         >
           New Thread
         </h1>

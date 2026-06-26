@@ -93,7 +93,6 @@ function SectionShell({
           className="text-sm font-semibold tracking-wide"
           style={{
             color: '#89B4C8',
-            fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
           }}
         >
           {heading}

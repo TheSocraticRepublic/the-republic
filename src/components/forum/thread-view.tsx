@@ -208,7 +208,6 @@ export function ThreadView({
         <div className="flex items-start justify-between gap-4">
           <h1
             className="text-xl font-bold tracking-tight text-text-primary mb-3"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {thread.title}
           </h1>
