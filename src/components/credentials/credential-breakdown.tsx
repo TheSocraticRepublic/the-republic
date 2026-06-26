@@ -13,16 +13,16 @@ const TYPE_COLORS: Record<CredentialType, string> = {
   // Forum/scout cluster
   forum_contribution: '#B088C8',
   // Review/gadfly cluster
-  peer_review: '#C8A84B',
+  peer_review: 'var(--accent-gadfly)',
   // Action/lever cluster
-  foi_filed: '#C85B5B',
-  foi_response_shared: '#C85B5B',
-  campaign_used: '#C85B5B',
+  foi_filed: 'var(--accent-lever)',
+  foi_response_shared: 'var(--accent-lever)',
+  campaign_used: 'var(--accent-lever)',
   // Contribution/mirror cluster
-  jurisdiction_contributed: '#5BC88A',
-  code_contributed: '#5BC88A',
-  bug_report: '#5BC88A',
-  translation: '#5BC88A',
+  jurisdiction_contributed: 'var(--accent-mirror)',
+  code_contributed: 'var(--accent-mirror)',
+  bug_report: 'var(--accent-mirror)',
+  translation: 'var(--accent-mirror)',
 }
 
 export function CredentialBreakdown({ summary }: CredentialBreakdownProps) {

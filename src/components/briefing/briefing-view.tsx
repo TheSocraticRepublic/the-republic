@@ -81,29 +81,29 @@ const ARM_COLORS: Record<
   { color: string; bg: string; border: string }
 > = {
   scout: {
-    color: '#B088C8',
-    bg: 'rgba(176,136,200,0.06)',
-    border: 'rgba(176,136,200,0.18)',
+    color: 'var(--accent-scout)',
+    bg: 'color-mix(in srgb, var(--accent-scout) 6%, transparent)',
+    border: 'color-mix(in srgb, var(--accent-scout) 18%, transparent)',
   },
   oracle: {
-    color: '#89B4C8',
-    bg: 'rgba(137,180,200,0.06)',
-    border: 'rgba(137,180,200,0.18)',
+    color: 'var(--accent-oracle)',
+    bg: 'color-mix(in srgb, var(--accent-oracle) 6%, transparent)',
+    border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
   },
   lever: {
-    color: '#C85B5B',
-    bg: 'rgba(200,91,91,0.06)',
-    border: 'rgba(200,91,91,0.18)',
+    color: 'var(--accent-lever)',
+    bg: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)',
+    border: 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
   },
   mirror: {
-    color: '#5BC88A',
-    bg: 'rgba(91,200,138,0.06)',
-    border: 'rgba(91,200,138,0.18)',
+    color: 'var(--accent-mirror)',
+    bg: 'color-mix(in srgb, var(--accent-mirror) 6%, transparent)',
+    border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
   },
   gadfly: {
-    color: '#C8A84B',
-    bg: 'rgba(200,168,75,0.06)',
-    border: 'rgba(200,168,75,0.18)',
+    color: 'var(--accent-gadfly)',
+    bg: 'color-mix(in srgb, var(--accent-gadfly) 6%, transparent)',
+    border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
   },
 }
 
@@ -154,13 +154,13 @@ function extractTitle(text: string): string | null {
 
 function getSectionAccentColor(heading: string): string | null {
   const h = heading.toLowerCase()
-  if (h.includes('what governs')) return '#B088C8'     // Scout purple
-  if (h.includes('public record')) return '#89B4C8'    // Oracle teal
-  if (h.includes('key players')) return '#89B4C8'      // Oracle teal
-  if (h.includes('what you can do')) return '#C85B5B'  // Lever red
-  if (h.includes('other places') || h.includes('jurisdictions')) return '#5BC88A' // Mirror green
-  if (h.includes('questions')) return '#C8A84B'        // Gadfly gold
-  if (h.includes('context')) return '#B088C8'          // Scout purple (new Context section)
+  if (h.includes('what governs')) return 'var(--accent-scout)'
+  if (h.includes('public record')) return 'var(--accent-oracle)'
+  if (h.includes('key players')) return 'var(--accent-oracle)'
+  if (h.includes('what you can do')) return 'var(--accent-lever)'
+  if (h.includes('other places') || h.includes('jurisdictions')) return 'var(--accent-mirror)'
+  if (h.includes('questions')) return 'var(--accent-gadfly)'
+  if (h.includes('context')) return 'var(--accent-scout)'
   // "cannot see" / "limitations" -> no bar
   return null
 }
@@ -360,8 +360,8 @@ function ProseSection({
   showInsightCallouts?: boolean
 }) {
   const baseFont = oracleSerif
-    ? { fontFamily: '"Source Serif 4", Georgia, serif', fontSize: '16px', lineHeight: '1.75', fontWeight: 400 as const }
-    : { fontSize: '16px', lineHeight: '1.7' }
+    ? { fontFamily: 'var(--font-serif)', fontSize: '16px', lineHeight: '1.75', fontWeight: 400 as const }
+    : { fontFamily: 'var(--font-serif)', fontSize: '16px', lineHeight: '1.7' }
 
   const blocks = preprocessBlocks(content)
   const elements: React.ReactNode[] = []
@@ -768,7 +768,7 @@ function ComparisonSection({ content, palette }: { content: string; palette: Pal
           style={{
             backgroundColor: palette.cardBg,
             border: `1px solid ${palette.cardBorder}`,
-            borderLeft: '2px solid #5BC88A',
+            borderLeft: '2px solid var(--accent-mirror)',
             borderRadius: '12px',
             padding: '16px 20px',
           }}
@@ -898,21 +898,21 @@ function detectAccess(text: string): AccessLevel | null {
 
 const ACCESS_STYLES: Record<AccessLevel, { bg: string; border: string; color: string; label: string }> = {
   public: {
-    bg: 'rgba(91,200,138,0.06)',
-    border: 'rgba(91,200,138,0.18)',
-    color: '#5BC88A',
+    bg: 'color-mix(in srgb, var(--accent-mirror) 6%, transparent)',
+    border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
+    color: 'var(--accent-mirror)',
     label: 'Public',
   },
   fippa: {
-    bg: 'rgba(200,168,75,0.06)',
-    border: 'rgba(200,168,75,0.18)',
-    color: '#C8A84B',
+    bg: 'color-mix(in srgb, var(--accent-gadfly) 6%, transparent)',
+    border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
+    color: 'var(--accent-gadfly)',
     label: 'FIPPA Required',
   },
   council: {
-    bg: 'rgba(137,180,200,0.06)',
-    border: 'rgba(137,180,200,0.18)',
-    color: '#89B4C8',
+    bg: 'color-mix(in srgb, var(--accent-oracle) 6%, transparent)',
+    border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
+    color: 'var(--accent-oracle)',
     label: 'Council Record',
   },
 }
@@ -1250,20 +1250,20 @@ function FippaLetterCard({ letter, palette }: { letter: string; palette: Palette
       style={{
         backgroundColor: palette.white,
         border: `1px solid ${palette.border}`,
-        borderTop: '2px solid #C85B5B',
+        borderTop: '2px solid var(--accent-lever)',
       }}
     >
       {/* Header bar */}
       <div
         className="flex items-center justify-between px-5 py-3"
         style={{
-          backgroundColor: 'rgba(200,91,91,0.05)',
-          borderBottom: '1px solid rgba(200,91,91,0.12)',
+          backgroundColor: 'color-mix(in srgb, var(--accent-lever) 5%, transparent)',
+          borderBottom: '1px solid color-mix(in srgb, var(--accent-lever) 12%, transparent)',
         }}
       >
         <span
           className="font-bold uppercase tracking-[0.1em]"
-          style={{ fontSize: '11px', lineHeight: '1', color: '#C85B5B' }}
+          style={{ fontSize: '11px', lineHeight: '1', color: 'var(--accent-lever)' }}
         >
           FIPPA Request — Ready to File
         </span>
@@ -1275,8 +1275,8 @@ function FippaLetterCard({ letter, palette }: { letter: string; palette: Palette
             style={{
               fontSize: '11px',
               lineHeight: '1',
-              backgroundColor: 'rgba(200,91,91,0.06)',
-              border: '1px solid rgba(200,91,91,0.15)',
+              backgroundColor: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--accent-lever) 15%, transparent)',
               color: palette.muted,
             }}
           >
@@ -1290,11 +1290,11 @@ function FippaLetterCard({ letter, palette }: { letter: string; palette: Palette
             style={{
               fontSize: '11px',
               lineHeight: '1',
-              backgroundColor: copied ? 'rgba(91,200,138,0.10)' : 'rgba(200,91,91,0.06)',
+              backgroundColor: copied ? 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)' : 'color-mix(in srgb, var(--accent-lever) 6%, transparent)',
               border: copied
-                ? '1px solid rgba(91,200,138,0.25)'
-                : '1px solid rgba(200,91,91,0.15)',
-              color: copied ? '#5BC88A' : palette.muted,
+                ? '1px solid color-mix(in srgb, var(--accent-mirror) 25%, transparent)'
+                : '1px solid color-mix(in srgb, var(--accent-lever) 15%, transparent)',
+              color: copied ? 'var(--accent-mirror)' : palette.muted,
             }}
           >
             {copied ? (
@@ -1407,9 +1407,9 @@ function QuestionsSection({ content, palette }: { content: string; palette: Pale
                 height: '28px',
                 fontSize: '12px',
                 lineHeight: '1',
-                backgroundColor: 'rgba(200,168,75,0.10)',
-                border: '1px solid rgba(200,168,75,0.25)',
-                color: '#C8A84B',
+                backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
+                color: 'var(--accent-gadfly)',
                 marginTop: '1px',
               }}
             >
@@ -1473,9 +1473,9 @@ function InlineGadflyAction({ onOpenGadfly, palette }: { onOpenGadfly?: () => vo
     padding: '7px 14px',
     fontSize: '12px',
     lineHeight: '1' as const,
-    backgroundColor: 'rgba(200,168,75,0.08)',
-    border: '1px solid rgba(200,168,75,0.20)',
-    color: '#C8A84B',
+    backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 8%, transparent)',
+    border: '1px solid color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
+    color: 'var(--accent-gadfly)',
   }
 
   return (
@@ -1567,27 +1567,7 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuest
         padding: '20px 24px 24px 24px',
       }}
     >
-      {concernText && (
-        <>
-          <div
-            className="font-semibold uppercase tracking-[0.1em]"
-            style={{ fontSize: '11px', color: palette.muted, marginBottom: '8px' }}
-          >
-            Your Concern
-          </div>
-          <p style={{
-            fontSize: '24px',
-            fontWeight: 700,
-            lineHeight: '1.3',
-            color: palette.text,
-            maxWidth: '60ch',
-            marginBottom: '16px',
-          }}>
-            {concernText}
-          </p>
-          <div style={{ height: '1px', backgroundColor: palette.border, marginBottom: '16px' }} />
-        </>
-      )}
+
 
       {findingHeadings.length > 0 && (
         <>
@@ -1602,7 +1582,6 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuest
               <li key={i} className="flex items-start gap-2.5" style={{ fontSize: '14px', lineHeight: '1.5', color: palette.body }}>
                 <span
                   className="flex-shrink-0 rounded-full"
-                  // spec 3.3: dot → palette.faint (not Lever red)
                   style={{ width: '6px', height: '6px', backgroundColor: palette.faint, marginTop: '6px' }}
                 />
                 {heading}
@@ -1683,8 +1662,8 @@ const EXPERT_LINKS = [
     tagline: 'Find what they filed. Find what they didn\'t.',
     href: '/scout',
     icon: Compass,
-    color: '#B088C8',
-    border: 'rgba(176,136,200,0.18)',
+    color: 'var(--accent-scout)',
+    border: 'color-mix(in srgb, var(--accent-scout) 18%, transparent)',
   },
   {
     arm: 'Oracle',
@@ -1692,8 +1671,8 @@ const EXPERT_LINKS = [
     tagline: 'Read what the document says. Then read what it doesn\'t.',
     href: '/oracle',
     icon: Eye,
-    color: '#89B4C8',
-    border: 'rgba(137,180,200,0.18)',
+    color: 'var(--accent-oracle)',
+    border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
   },
   {
     arm: 'Gadfly',
@@ -1701,8 +1680,8 @@ const EXPERT_LINKS = [
     tagline: 'The question nobody asked.',
     href: '/gadfly',
     icon: MessageCircleQuestion,
-    color: '#C8A84B',
-    border: 'rgba(200,168,75,0.18)',
+    color: 'var(--accent-gadfly)',
+    border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
   },
   {
     arm: 'Lever',
@@ -1710,8 +1689,8 @@ const EXPERT_LINKS = [
     tagline: 'Your concern. Their paperwork.',
     href: '/lever',
     icon: FileText,
-    color: '#C85B5B',
-    border: 'rgba(200,91,91,0.18)',
+    color: 'var(--accent-lever)',
+    border: 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
   },
   {
     arm: 'Mirror',
@@ -1719,8 +1698,8 @@ const EXPERT_LINKS = [
     tagline: 'Someone else already solved this.',
     href: '/mirror',
     icon: GitCompareArrows,
-    color: '#5BC88A',
-    border: 'rgba(91,200,138,0.18)',
+    color: 'var(--accent-mirror)',
+    border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
   },
 ]
 
@@ -1747,7 +1726,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, palette }: { onOpenCampaign?: 
           const cardStyle = {
             padding: '12px 14px',
             minHeight: '44px',
-            background: `linear-gradient(to bottom, ${link.color}08, ${link.color}10)`,
+            background: `linear-gradient(to bottom, color-mix(in srgb, ${link.color} 3%, transparent), color-mix(in srgb, ${link.color} 6%, transparent))`,
             border: `1px solid ${link.border}`,
           }
           const cardContent = (
@@ -1757,7 +1736,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, palette }: { onOpenCampaign?: 
                 style={{
                   width: '32px',
                   height: '32px',
-                  backgroundColor: `${link.color}1A`,
+                  backgroundColor: `color-mix(in srgb, ${link.color} 10%, transparent)`,
                 }}
               >
                 <Icon size={14} strokeWidth={1.75} style={{ color: link.color }} />
@@ -2009,7 +1988,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
           return (
             <div key={i}>
               {showDivider && <SectionDivider palette={palette} />}
-              <SectionHeader heading="What You Can Do" color="#C85B5B" palette={palette} />
+              <SectionHeader heading="What You Can Do" color="var(--accent-lever)" palette={palette} />
               <CivicActionsSection content={section.content} palette={palette} />
             </div>
           )
@@ -2041,7 +2020,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               }}
             >
               {showDivider && <SectionDivider palette={palette} />}
-              <SectionHeader heading="Questions Worth Asking" color="#C8A84B" palette={palette} />
+              <SectionHeader heading="Questions Worth Asking" color="var(--accent-gadfly)" palette={palette} />
               <QuestionsSection content={section.content} palette={palette} />
             </div>
           )

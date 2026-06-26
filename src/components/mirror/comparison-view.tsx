@@ -56,9 +56,9 @@ function TransferabilityBadge({ level }: { level: 'high' | 'medium' | 'low' | nu
   if (!level) return null
 
   const styles: Record<string, { bg: string; border: string; color: string }> = {
-    high: { bg: 'rgba(91, 200, 138, 0.1)', border: 'rgba(91, 200, 138, 0.3)', color: '#5BC88A' },
-    medium: { bg: 'rgba(200, 168, 75, 0.1)', border: 'rgba(200, 168, 75, 0.3)', color: '#C8A84B' },
-    low: { bg: 'rgba(200, 91, 91, 0.1)', border: 'rgba(200, 91, 91, 0.3)', color: '#C85B5B' },
+    high: { bg: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)', border: 'color-mix(in srgb, var(--accent-mirror) 30%, transparent)', color: 'var(--accent-mirror)' },
+    medium: { bg: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)', border: 'color-mix(in srgb, var(--accent-gadfly) 30%, transparent)', color: 'var(--accent-gadfly)' },
+    low: { bg: 'color-mix(in srgb, var(--accent-lever) 10%, transparent)', border: 'color-mix(in srgb, var(--accent-lever) 30%, transparent)', color: 'var(--accent-lever)' },
   }
 
   const s = styles[level]
@@ -210,7 +210,7 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
     return (
       <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
         <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">{text}</p>
-        <span className="mt-1 inline-block h-4 w-1 animate-pulse bg-[#5BC88A]/60" />
+        <span className="mt-1 inline-block h-4 w-1 animate-pulse bg-[var(--accent-mirror)]/60" />
       </div>
     )
   }
@@ -267,8 +267,8 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
               <div
                 className="rounded-xl p-5 backdrop-blur-md"
                 style={{
-                  backgroundColor: 'rgba(91, 200, 138, 0.05)',
-                  border: '1px solid rgba(91, 200, 138, 0.30)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 5%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--accent-mirror) 30%, transparent)',
                 }}
               >
                 <ProseSection content={section.content} />
@@ -289,7 +289,7 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
       })}
 
       {isStreaming && (
-        <span className="inline-block h-4 w-1 animate-pulse bg-[#5BC88A]/60" />
+        <span className="inline-block h-4 w-1 animate-pulse bg-[var(--accent-mirror)]/60" />
       )}
     </div>
   )

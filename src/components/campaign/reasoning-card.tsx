@@ -9,12 +9,12 @@ import type { CampaignMaterial } from '@/lib/campaign/schemas'
 
 const LIGHT_RC = {
   border: '#e0ddd9',
-  headerBg: 'rgba(200, 91, 91, 0.05)',
-  headerBorder: 'rgba(200, 91, 91, 0.12)',
+  headerBg: 'color-mix(in srgb, var(--accent-lever) 5%, transparent)',
+  headerBorder: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)',
   titleColor: '#292524',
   specBg: '#faf9f7',
   specBorder: 'rgba(0,0,0,0.06)',
-  reasoningBg: 'rgba(200, 91, 91, 0.06)',
+  reasoningBg: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)',
   textColor: '#44403c',
   mutedColor: '#78716c',
   faintColor: '#a8a29e',
@@ -27,12 +27,12 @@ const LIGHT_RC = {
 
 const DARK_RC = {
   border: 'rgba(255,255,255,0.1)',
-  headerBg: 'rgba(200, 91, 91, 0.08)',
-  headerBorder: 'rgba(200, 91, 91, 0.18)',
+  headerBg: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
+  headerBorder: 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
   titleColor: '#f4f4f5',
   specBg: '#18181b',
   specBorder: 'rgba(255,255,255,0.06)',
-  reasoningBg: 'rgba(200, 91, 91, 0.10)',
+  reasoningBg: 'color-mix(in srgb, var(--accent-lever) 10%, transparent)',
   textColor: '#d4d4d8',
   mutedColor: '#a1a1aa',
   faintColor: '#71717a',
@@ -77,9 +77,9 @@ function InfographicView({ spec }: { spec: Record<string, unknown> }) {
             onClick={() => setTab(t)}
             className="rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors"
             style={{
-              backgroundColor: tab === t ? 'rgba(200,91,91,0.1)' : 'transparent',
-              color: tab === t ? '#C85B5B' : '#a8a29e',
-              border: tab === t ? '1px solid rgba(200,91,91,0.2)' : '1px solid transparent',
+              backgroundColor: tab === t ? 'color-mix(in srgb, var(--accent-lever) 10%, transparent)' : 'transparent',
+              color: tab === t ? 'var(--accent-lever)' : '#a8a29e',
+              border: tab === t ? '1px solid color-mix(in srgb, var(--accent-lever) 20%, transparent)' : '1px solid transparent',
             }}
           >
             {t === 'data' ? 'Data' : 'Preview'}
@@ -94,14 +94,14 @@ function InfographicView({ spec }: { spec: Record<string, unknown> }) {
               key={i}
               className="flex items-start justify-between gap-4 rounded-lg px-3 py-2.5"
               style={{
-                backgroundColor: dp.emphasis ? 'rgba(200, 91, 91, 0.07)' : 'rgba(0,0,0,0.04)',
-                border: dp.emphasis ? '1px solid rgba(200,91,91,0.18)' : '1px solid transparent',
+                backgroundColor: dp.emphasis ? 'color-mix(in srgb, var(--accent-lever) 7%, transparent)' : 'rgba(0,0,0,0.04)',
+                border: dp.emphasis ? '1px solid color-mix(in srgb, var(--accent-lever) 18%, transparent)' : '1px solid transparent',
               }}
             >
               <span className="text-sm" style={{ color: '#44403c' }}>{dp.label}</span>
               <span
                 className="text-sm font-semibold flex-shrink-0"
-                style={{ color: dp.emphasis ? '#C85B5B' : '#292524' }}
+                style={{ color: dp.emphasis ? 'var(--accent-lever)' : '#292524' }}
               >
                 {String(dp.value)}
               </span>
@@ -191,7 +191,7 @@ function TalkingPointsSummaryView({ spec }: { spec: Record<string, unknown> }) {
         >
           <span
             className="mt-0.5 flex-shrink-0 text-xs font-semibold tabular-nums"
-            style={{ color: '#C85B5B' }}
+            style={{ color: 'var(--accent-lever)' }}
           >
             {i + 1}
           </span>
@@ -228,7 +228,7 @@ function TimelineView({ spec }: { spec: Record<string, unknown> }) {
               className="h-2 w-2 rounded-full flex-shrink-0"
               style={{
                 backgroundColor: item.kind === 'deadline' && (item as typeof deadlines[0]).critical
-                  ? '#C85B5B'
+                  ? 'var(--accent-lever)'
                   : item.kind === 'deadline'
                   ? '#a8a29e'
                   : '#78716c',
@@ -261,9 +261,9 @@ function ComparisonView({ spec }: { spec: Record<string, unknown> }) {
       {!!subject && (
         <div
           className="rounded-lg px-3 py-2.5"
-          style={{ backgroundColor: 'rgba(200,91,91,0.06)', border: '1px solid rgba(200,91,91,0.15)' }}
+          style={{ backgroundColor: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--accent-lever) 15%, transparent)' }}
         >
-          <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: '#C85B5B' }}>
+          <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--accent-lever)' }}>
             Current — {subject.jurisdiction}
           </p>
           <p className="text-sm" style={{ color: '#292524' }}>{subject.policy}</p>
@@ -489,7 +489,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
         <div>
           <p
             className="text-[10px] font-semibold uppercase tracking-widest"
-            style={{ color: '#C85B5B' }}
+            style={{ color: 'var(--accent-lever)' }}
           >
             {label}
           </p>
@@ -513,9 +513,9 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
             onClick={handleDownload}
             className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
             style={{
-              backgroundColor: 'rgba(200, 91, 91, 0.08)',
-              color: '#C85B5B',
-              border: '1px solid rgba(200,91,91,0.2)',
+              backgroundColor: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
+              color: 'var(--accent-lever)',
+              border: '1px solid color-mix(in srgb, var(--accent-lever) 20%, transparent)',
             }}
           >
             Download JSON
@@ -524,9 +524,9 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
             onClick={handleDownloadMarkdown}
             className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
             style={{
-              backgroundColor: 'rgba(200, 91, 91, 0.08)',
-              color: '#C85B5B',
-              border: '1px solid rgba(200,91,91,0.2)',
+              backgroundColor: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
+              color: 'var(--accent-lever)',
+              border: '1px solid color-mix(in srgb, var(--accent-lever) 20%, transparent)',
             }}
           >
             Download Markdown
@@ -536,9 +536,9 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
               onClick={handlePrint}
               className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
               style={{
-                backgroundColor: 'rgba(200, 91, 91, 0.08)',
-                color: '#C85B5B',
-                border: '1px solid rgba(200,91,91,0.2)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
+                color: 'var(--accent-lever)',
+                border: '1px solid color-mix(in srgb, var(--accent-lever) 20%, transparent)',
               }}
             >
               Print
@@ -551,9 +551,9 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
               disabled={pdfExporting}
               className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
               style={{
-                backgroundColor: pdfExporting ? 'rgba(200, 91, 91, 0.04)' : 'rgba(200, 91, 91, 0.08)',
-                color: '#C85B5B',
-                border: '1px solid rgba(200,91,91,0.2)',
+                backgroundColor: pdfExporting ? 'color-mix(in srgb, var(--accent-lever) 4%, transparent)' : 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
+                color: 'var(--accent-lever)',
+                border: '1px solid color-mix(in srgb, var(--accent-lever) 20%, transparent)',
                 opacity: pdfExporting ? 0.6 : 1,
               }}
             >

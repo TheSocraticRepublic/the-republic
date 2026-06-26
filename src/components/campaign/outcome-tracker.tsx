@@ -149,7 +149,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
       <div className="space-y-1">
         <p
           className="text-[10px] font-semibold uppercase tracking-widest"
-          style={{ color: '#C85B5B' }}
+          style={{ color: 'var(--accent-lever)' }}
         >
           How is it going?
         </p>
@@ -267,9 +267,9 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
         <div
           className="rounded-lg px-4 py-3 text-xs flex items-center gap-2"
           style={{
-            backgroundColor: 'rgba(91, 200, 138, 0.08)',
-            border: '1px solid rgba(91, 200, 138, 0.18)',
-            color: '#5BC88A',
+            backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
+            color: 'var(--accent-mirror)',
           }}
         >
           <Check size={12} />
@@ -288,7 +288,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
           <div className="h-px w-full" style={{ backgroundColor: 'var(--border)' }} />
           <p
             className="text-[10px] font-semibold uppercase tracking-widest"
-            style={{ color: 'rgba(200,91,91,0.6)' }}
+            style={{ color: 'color-mix(in srgb, var(--accent-lever) 60%, transparent)' }}
           >
             Recorded Outcomes
           </p>
@@ -324,7 +324,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
                           size={10}
                           className={
                             n <= o.satisfaction!
-                              ? 'fill-[#C85B5B] text-[#C85B5B]'
+                              ? 'fill-[var(--accent-lever)] text-[var(--accent-lever)]'
                               : 'text-text-faint'
                           }
                         />
@@ -370,8 +370,8 @@ function OutcomeForm({
     <div
       className="rounded-xl border px-4 py-4 space-y-3 mt-2"
       style={{
-        borderColor: 'rgba(200,91,91,0.15)',
-        backgroundColor: 'rgba(200,91,91,0.03)',
+        borderColor: 'color-mix(in srgb, var(--accent-lever) 15%, transparent)',
+        backgroundColor: 'color-mix(in srgb, var(--accent-lever) 3%, transparent)',
       }}
     >
       {/* Description */}
@@ -384,7 +384,7 @@ function OutcomeForm({
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder="Describe the outcome..."
           rows={3}
-          className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm text-text-primary placeholder-neutral-600 focus:outline-none focus:border-[#C85B5B]/40 resize-none"
+          className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm text-text-primary placeholder-neutral-600 focus:outline-none focus:border-[var(--accent-lever)]/40 resize-none"
           style={{ borderColor: 'var(--border-strong)' }}
         />
       </div>
@@ -398,7 +398,7 @@ function OutcomeForm({
           type="date"
           value={outcomeDate}
           onChange={(e) => onOutcomeDateChange(e.target.value)}
-          className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-[#C85B5B]/40 [color-scheme:light]"
+          className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-[var(--accent-lever)]/40 [color-scheme:light]"
           style={{ borderColor: 'var(--border-strong)' }}
         />
       </div>
@@ -420,7 +420,7 @@ function OutcomeForm({
                 size={16}
                 className={
                   n <= satisfaction
-                    ? 'fill-[#C85B5B] text-[#C85B5B]'
+                    ? 'fill-[var(--accent-lever)] text-[var(--accent-lever)]'
                     : 'text-text-faint hover:text-text-muted'
                 }
               />
@@ -434,9 +434,9 @@ function OutcomeForm({
         <div
           className="rounded-lg px-3 py-2 text-xs"
           style={{
-            backgroundColor: 'rgba(200, 91, 91, 0.08)',
-            border: '1px solid rgba(200, 91, 91, 0.18)',
-            color: '#C85B5B',
+            backgroundColor: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent-lever) 18%, transparent)',
+            color: 'var(--accent-lever)',
           }}
         >
           {error}
@@ -457,9 +457,9 @@ function OutcomeForm({
           disabled={!description.trim() || submitting}
           className="rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-150 disabled:opacity-40"
           style={{
-            color: '#C85B5B',
-            backgroundColor: 'rgba(200,91,91,0.10)',
-            border: '1px solid rgba(200,91,91,0.25)',
+            color: 'var(--accent-lever)',
+            backgroundColor: 'color-mix(in srgb, var(--accent-lever) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent-lever) 25%, transparent)',
           }}
           type="button"
         >
@@ -491,7 +491,7 @@ function OutcomeButton({
   return (
     <button
       onClick={onClick}
-      className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
+      className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-lever)]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
       style={{
         backgroundColor: active
           ? 'var(--surface-3)'

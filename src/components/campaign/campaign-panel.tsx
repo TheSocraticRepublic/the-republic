@@ -145,7 +145,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
       style={{
         backgroundColor: palette.bg,
         border: `1px solid ${palette.border}`,
-        borderTop: '2px solid #C85B5B',
+        borderTop: '2px solid var(--accent-lever)',
         padding: 'clamp(24px, 4vw, 32px)',
       }}
     >
@@ -157,7 +157,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
           fontWeight: 600,
           textTransform: 'uppercase',
           letterSpacing: '0.12em',
-          color: '#C85B5B',
+          color: 'var(--accent-lever)',
           margin: 0,
         }}
       >
@@ -178,7 +178,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                 style={{
                   backgroundColor: palette.cardBg,
                   border: `1px solid ${palette.border}`,
-                  borderTop: '2px solid #C85B5B',
+                  borderTop: '2px solid var(--accent-lever)',
                   borderRadius: '12px',
                   padding: '20px',
                 }}
@@ -195,7 +195,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                   {existing && !isGenerating && (
                     <span
                       className="flex-shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest"
-                      style={{ backgroundColor: 'rgba(200,91,91,0.12)', color: '#C85B5B' }}
+                      style={{ backgroundColor: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)', color: 'var(--accent-lever)' }}
                     >
                       Done
                     </span>
@@ -208,10 +208,10 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                     className="rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-100"
                     style={{
                       backgroundColor: existing
-                        ? 'rgba(200, 91, 91, 0.08)'
-                        : 'rgba(200, 91, 91, 0.12)',
-                      color: '#C85B5B',
-                      border: '1px solid rgba(200, 91, 91, 0.2)',
+                        ? 'color-mix(in srgb, var(--accent-lever) 8%, transparent)'
+                        : 'color-mix(in srgb, var(--accent-lever) 12%, transparent)',
+                      color: 'var(--accent-lever)',
+                      border: '1px solid color-mix(in srgb, var(--accent-lever) 20%, transparent)',
                     }}
                   >
                     {existing ? 'Regenerate' : 'Generate'}
@@ -248,9 +248,9 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                 onClick={() => setActiveMaterialType(type)}
                 className="rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-100"
                 style={{
-                  backgroundColor: 'rgba(200, 91, 91, 0.08)',
-                  color: '#C85B5B',
-                  border: '1px solid rgba(200, 91, 91, 0.2)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
+                  color: 'var(--accent-lever)',
+                  border: '1px solid color-mix(in srgb, var(--accent-lever) 20%, transparent)',
                 }}
               >
                 {MATERIAL_TYPE_LABELS[type]}
@@ -271,7 +271,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
               {
                 label: 'File as FIPPA request',
                 href: `/lever?investigationId=${investigationId}&actionType=fippa_request`,
-                color: '#C85B5B',
+                color: 'var(--accent-lever)',
                 icon: FileText,
               },
             ]}
@@ -291,8 +291,8 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                     style={{
                       backgroundColor:
                         action.status === 'filed' ? '#89B4C8'
-                          : action.status === 'final' ? '#5BC88A'
-                          : '#C8A84B',
+                          : action.status === 'final' ? 'var(--accent-mirror)'
+                          : 'var(--accent-gadfly)',
                     }}
                   />
                   <span className="text-xs truncate flex-1" style={{ color: palette.secondary }}>
@@ -303,8 +303,8 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                     style={{
                       color:
                         action.status === 'filed' ? '#89B4C8'
-                          : action.status === 'final' ? '#5BC88A'
-                          : '#C8A84B',
+                          : action.status === 'final' ? 'var(--accent-mirror)'
+                          : 'var(--accent-gadfly)',
                     }}
                   >
                     {action.status}

@@ -47,7 +47,7 @@ export function PreserveButton({ investigationId }: PreserveButtonProps) {
         {loading ? 'Preserving…' : 'Preserve to Archive'}
       </button>
       {error && (
-        <span className="text-[#c85b5b] text-sm">{error}</span>
+        <span className="text-[var(--accent-lever)] text-sm">{error}</span>
       )}
     </div>
   )

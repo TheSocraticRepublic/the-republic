@@ -1,6 +1,6 @@
 // Deterministic avatar badge — colored circle with first letter + display name text
 
-const COLORS = ['#B088C8', '#89B4C8', '#C8A84B', '#C85B5B', '#5BC88A']
+const COLORS = ['var(--accent-scout)', 'var(--accent-oracle)', 'var(--accent-gadfly)', 'var(--accent-lever)', 'var(--accent-mirror)']
 
 function hashDisplayName(name: string): number {
   return name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)

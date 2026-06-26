@@ -63,7 +63,7 @@ export function BallotList({ voteId }: BallotListProps) {
               onClick={() => setSortBy(s)}
               className="text-[10px] px-2 py-1 rounded transition-colors"
               style={{
-                color: sortBy === s ? '#D4764E' : '#525252',
+                color: sortBy === s ? 'var(--accent-votes)' : '#525252',
                 backgroundColor:
                   sortBy === s ? 'rgba(212,118,78,0.10)' : 'transparent',
               }}

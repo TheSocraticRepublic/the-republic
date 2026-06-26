@@ -69,7 +69,7 @@ export function ChatInput({ onSubmit, disabled = false, value, onChange }: ChatI
         className={clsx(
           'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-all duration-150',
           canSubmit
-            ? 'bg-[#C8A84B]/20 text-[#C8A84B] hover:bg-[#C8A84B]/30'
+            ? 'bg-[var(--accent-gadfly)]/20 text-[var(--accent-gadfly)] hover:bg-[var(--accent-gadfly)]/30'
             : 'bg-surface-1 text-text-faint cursor-not-allowed'
         )}
         aria-label="Send message"

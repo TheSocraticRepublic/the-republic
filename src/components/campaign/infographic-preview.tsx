@@ -123,7 +123,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
           {exporting === 'svg' ? 'Exporting...' : 'Download SVG'}
         </button>
         {exportError && (
-          <span className="text-xs" style={{ color: '#C85B5B' }}>
+          <span className="text-xs" style={{ color: 'var(--accent-lever)' }}>
             {exportError}
           </span>
         )}
@@ -141,14 +141,14 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
         }}
       >
         {/* Title block */}
-        <div style={{ marginBottom: '24px', borderBottom: '2px solid #C85B5B', paddingBottom: '16px' }}>
+        <div style={{ marginBottom: '24px', borderBottom: '2px solid var(--accent-lever)', paddingBottom: '16px' }}>
           <p
             style={{
               fontSize: '10px',
               fontWeight: 700,
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
-              color: '#C85B5B',
+              color: 'var(--accent-lever)',
               marginBottom: '6px',
             }}
           >
@@ -190,8 +190,8 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {spec.dataPoints.map((dp, i) => {
                 const barPct = toBarWidth(dp.value, max)
-                const accent = dp.emphasis ? '#C85B5B' : '#78716c'
-                const barBg = dp.emphasis ? 'rgba(200,91,91,0.15)' : 'rgba(0,0,0,0.06)'
+                const accent = dp.emphasis ? 'var(--accent-lever)' : '#78716c'
+                const barBg = dp.emphasis ? 'color-mix(in srgb, var(--accent-lever) 15%, transparent)' : 'rgba(0,0,0,0.06)'
                 return (
                   <div key={i}>
                     <div
@@ -262,13 +262,13 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
               <div
                 style={{
                   flex: 1,
-                  backgroundColor: 'rgba(200,91,91,0.07)',
-                  border: '1px solid rgba(200,91,91,0.2)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-lever) 7%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--accent-lever) 20%, transparent)',
                   borderRadius: '10px',
                   padding: '12px 14px',
                 }}
               >
-                <p style={{ fontSize: '10px', fontWeight: 700, color: '#C85B5B', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-lever)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Before
                 </p>
                 <p style={{ fontSize: '12px', color: '#44403c', lineHeight: 1.45 }}>{spec.comparison.before}</p>
@@ -276,13 +276,13 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
               <div
                 style={{
                   flex: 1,
-                  backgroundColor: 'rgba(91,200,138,0.07)',
-                  border: '1px solid rgba(91,200,138,0.2)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 7%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--accent-mirror) 20%, transparent)',
                   borderRadius: '10px',
                   padding: '12px 14px',
                 }}
               >
-                <p style={{ fontSize: '10px', fontWeight: 700, color: '#5bc88a', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-mirror)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   After
                 </p>
                 <p style={{ fontSize: '12px', color: '#44403c', lineHeight: 1.45 }}>{spec.comparison.after}</p>
@@ -321,7 +321,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
                         width: '8px',
                         height: '8px',
                         borderRadius: '50%',
-                        backgroundColor: '#C85B5B',
+                        backgroundColor: 'var(--accent-lever)',
                         marginTop: '4px',
                         flexShrink: 0,
                       }}
@@ -343,13 +343,13 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
         {/* Call to action */}
         <div
           style={{
-            backgroundColor: 'rgba(200,91,91,0.06)',
-            border: '1px solid rgba(200,91,91,0.18)',
+            backgroundColor: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent-lever) 18%, transparent)',
             borderRadius: '10px',
             padding: '14px 16px',
           }}
         >
-          <p style={{ fontSize: '10px', fontWeight: 700, color: '#C85B5B', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-lever)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
             Call to Action
           </p>
           <p style={{ fontSize: '13px', fontWeight: 600, color: '#292524', lineHeight: 1.4 }}>

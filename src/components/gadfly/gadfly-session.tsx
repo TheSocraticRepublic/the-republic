@@ -169,11 +169,11 @@ export function GadflySession({
             <span
               className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border"
               style={{
-                borderColor: 'rgba(200, 168, 75, 0.2)',
-                backgroundColor: 'rgba(200, 168, 75, 0.07)',
+                borderColor: 'color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 7%, transparent)',
               }}
             >
-              <MessageCircleQuestion size={13} strokeWidth={1.75} style={{ color: '#C8A84B' }} />
+              <MessageCircleQuestion size={13} strokeWidth={1.75} style={{ color: 'var(--accent-gadfly)' }} />
             </span>
             <h1
               className="truncate text-sm font-semibold text-text-primary"
@@ -186,8 +186,8 @@ export function GadflySession({
           <span
             className="ml-4 flex-shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
             style={{
-              color: '#C8A84B',
-              backgroundColor: 'rgba(200, 168, 75, 0.1)',
+              color: 'var(--accent-gadfly)',
+              backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',
             }}
           >
             {session.mode}
@@ -231,7 +231,7 @@ export function GadflySession({
                   {
                     label: 'Take action',
                     href: leverUrl,
-                    color: '#C85B5B',
+                    color: 'var(--accent-lever)',
                     icon: FileText,
                   },
                 ]}

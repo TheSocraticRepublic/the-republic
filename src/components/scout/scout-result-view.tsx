@@ -57,15 +57,15 @@ function detectAccess(text: string): AccessLevel | null {
 function AccessBadge({ level }: { level: AccessLevel }) {
   const styles: Record<AccessLevel, { bg: string; border: string; color: string; label: string }> = {
     public: {
-      bg: 'rgba(91, 200, 138, 0.1)',
-      border: 'rgba(91, 200, 138, 0.3)',
-      color: '#5BC88A',
+      bg: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)',
+      border: 'color-mix(in srgb, var(--accent-mirror) 30%, transparent)',
+      color: 'var(--accent-mirror)',
       label: 'Public',
     },
     fippa: {
-      bg: 'rgba(200, 168, 75, 0.1)',
-      border: 'rgba(200, 168, 75, 0.3)',
-      color: '#C8A84B',
+      bg: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',
+      border: 'color-mix(in srgb, var(--accent-gadfly) 30%, transparent)',
+      color: 'var(--accent-gadfly)',
       label: 'FIPPA Required',
     },
     council: {
@@ -248,8 +248,8 @@ function FippaCard({ block }: { block: string }) {
     <div
       className="rounded-xl p-5 backdrop-blur-md"
       style={{
-        backgroundColor: 'rgba(200, 168, 75, 0.05)',
-        border: '1px solid rgba(200, 168, 75, 0.25)',
+        backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 5%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
       }}
     >
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -341,27 +341,27 @@ function NextStepsSection({ content }: { content: string }) {
       description: 'Generate a ready-to-file request for non-public documents',
       href: '/lever?actionType=fippa_request',
       icon: FileText,
-      color: '#C85B5B',
-      bg: 'rgba(200, 91, 91, 0.08)',
-      border: 'rgba(200, 91, 91, 0.20)',
+      color: 'var(--accent-lever)',
+      bg: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
+      border: 'color-mix(in srgb, var(--accent-lever) 20%, transparent)',
     },
     {
       label: 'Explore this issue',
       description: 'Work through the implications via Socratic inquiry',
       href: '/gadfly',
       icon: MessageCircleQuestion,
-      color: '#C8A84B',
-      bg: 'rgba(200, 168, 75, 0.08)',
-      border: 'rgba(200, 168, 75, 0.20)',
+      color: 'var(--accent-gadfly)',
+      bg: 'color-mix(in srgb, var(--accent-gadfly) 8%, transparent)',
+      border: 'color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
     },
     {
       label: 'Compare jurisdictions',
       description: 'See how other municipalities have handled this issue',
       href: '/mirror',
       icon: GitCompare,
-      color: '#5BC88A',
-      bg: 'rgba(91, 200, 138, 0.08)',
-      border: 'rgba(91, 200, 138, 0.20)',
+      color: 'var(--accent-mirror)',
+      bg: 'color-mix(in srgb, var(--accent-mirror) 8%, transparent)',
+      border: 'color-mix(in srgb, var(--accent-mirror) 20%, transparent)',
     },
   ]
 
@@ -484,7 +484,7 @@ export function ScoutResultView({ text, isStreaming }: ScoutResultViewProps) {
             <div key={i}>
               <h3
                 className="mb-3 text-xs font-semibold uppercase tracking-widest"
-                style={{ color: 'rgba(200, 168, 75, 0.7)' }}
+                style={{ color: 'color-mix(in srgb, var(--accent-gadfly) 70%, transparent)' }}
               >
                 Documents You Cannot Easily Get
               </h3>

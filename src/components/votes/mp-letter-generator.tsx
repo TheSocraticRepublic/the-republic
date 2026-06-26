@@ -99,7 +99,7 @@ export function MpLetterGenerator({
         onClick={() => setShowForm(true)}
         className="rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-150"
         style={{
-          color: '#D4764E',
+          color: 'var(--accent-votes)',
           backgroundColor: 'rgba(212,118,78,0.10)',
           border: '1px solid rgba(212,118,78,0.20)',
         }}
@@ -140,7 +140,7 @@ export function MpLetterGenerator({
           disabled={!concern.trim() || isStreaming}
           className="rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-150 disabled:opacity-40"
           style={{
-            color: '#D4764E',
+            color: 'var(--accent-votes)',
             backgroundColor: 'rgba(212,118,78,0.10)',
             border: '1px solid rgba(212,118,78,0.20)',
           }}

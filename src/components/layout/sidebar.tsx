@@ -198,7 +198,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             <Vote
               size={14}
               strokeWidth={1.75}
-              style={votesActive ? { color: '#D4764E' } : undefined}
+              style={votesActive ? { color: 'var(--accent-votes)' } : undefined}
               className={clsx(
                 !votesActive && 'text-text-muted group-hover:text-text-secondary'
               )}
@@ -211,7 +211,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
           {votesActive && (
             <span
               className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: '#D4764E' }}
+              style={{ backgroundColor: 'var(--accent-votes)' }}
             />
           )}
         </Link>

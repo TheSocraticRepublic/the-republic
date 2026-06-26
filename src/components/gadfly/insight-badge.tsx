@@ -7,9 +7,9 @@ export function InsightBadge({ insight }: InsightBadgeProps) {
     <div
       className="mt-2 inline-flex items-start gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] leading-relaxed"
       style={{
-        borderColor: 'rgba(200, 168, 75, 0.25)',
-        backgroundColor: 'rgba(200, 168, 75, 0.08)',
-        color: '#C8A84B',
+        borderColor: 'color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
+        backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 8%, transparent)',
+        color: 'var(--accent-gadfly)',
       }}
     >
       <span className="mt-px flex-shrink-0 text-[10px] font-semibold uppercase tracking-widest opacity-60">
