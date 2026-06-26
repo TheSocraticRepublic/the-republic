@@ -98,11 +98,11 @@ export default function LoginPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <h1
-            className="mb-1 text-2xl font-bold text-white"
+            className="mb-1 text-3xl font-bold text-white font-display"
           >
             Open Cave
           </h1>
-          <p className="text-xs font-medium uppercase tracking-widest text-white/40">
+          <p className="text-sm font-serif italic text-white/50">
             A Republic for the examined institution
           </p>
           <p className="mt-4 text-sm text-white/60">
@@ -169,7 +169,7 @@ export default function LoginPage() {
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                   onKeyDown={(e) => e.key === 'Enter' && code.length === 8 && handleVerifyCode()}
                   placeholder="00000000"
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.3em] text-white placeholder-white/25 outline-none transition-colors focus:border-white/20 focus:bg-white/10"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.25em] text-white placeholder-white/25 outline-none transition-colors focus:border-white/20 focus:bg-white/10"
                 />
               </div>
 
@@ -202,7 +202,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p className="mt-4 text-center text-xs text-white/50">
+        <p className="mt-4 text-center text-xs font-serif italic text-white/50">
           No password. No tracking. Just a code.{' '}
           <a
             href="/privacy"
