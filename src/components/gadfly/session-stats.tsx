@@ -20,9 +20,9 @@ interface SessionStatsProps {
 
 const QUESTION_TYPE_COLORS: Record<string, string> = {
   clarifying: '#89B4C8',
-  probing: '#C8A84B',
-  challenging: '#C85B5B',
-  connecting: '#5BC88A',
+  probing: 'var(--accent-gadfly)',
+  challenging: 'var(--accent-lever)',
+  connecting: 'var(--accent-mirror)',
   action: '#a78bfa',
 }
 
@@ -71,7 +71,7 @@ export function SessionStats({
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-widest text-text-faint">Insights</p>
-              <p className="mt-1 text-xl font-bold" style={{ color: '#C8A84B' }}>
+              <p className="mt-1 text-xl font-bold" style={{ color: 'var(--accent-gadfly)' }}>
                 {insightCount}
               </p>
             </div>
@@ -86,7 +86,7 @@ export function SessionStats({
                       height: `${8 + i * 3}px`,
                       backgroundColor:
                         i < complexityLevel
-                          ? '#C8A84B'
+                          ? 'var(--accent-gadfly)'
                           : 'var(--surface-3)',
                     }}
                   />
@@ -114,7 +114,7 @@ export function SessionStats({
                           className="h-full rounded-full"
                           style={{
                             width: `${pct}%`,
-                            backgroundColor: QUESTION_TYPE_COLORS[type] ?? '#C8A84B',
+                            backgroundColor: QUESTION_TYPE_COLORS[type] ?? 'var(--accent-gadfly)',
                           }}
                         />
                       </div>

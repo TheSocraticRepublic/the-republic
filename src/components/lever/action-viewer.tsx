@@ -24,8 +24,8 @@ const STATUS_FLOW: Record<string, 'draft' | 'final' | 'filed'> = {
 }
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  draft: { label: 'Draft', color: '#C8A84B', bg: 'rgba(200, 168, 75, 0.1)', border: 'rgba(200, 168, 75, 0.25)' },
-  final: { label: 'Final', color: '#5BC88A', bg: 'rgba(91, 200, 138, 0.1)', border: 'rgba(91, 200, 138, 0.25)' },
+  draft: { label: 'Draft', color: 'var(--accent-gadfly)', bg: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)', border: 'color-mix(in srgb, var(--accent-gadfly) 25%, transparent)' },
+  final: { label: 'Final', color: 'var(--accent-mirror)', bg: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)', border: 'color-mix(in srgb, var(--accent-mirror) 25%, transparent)' },
   filed: { label: 'Filed', color: '#89B4C8', bg: 'rgba(137, 180, 200, 0.1)', border: 'rgba(137, 180, 200, 0.25)' },
 }
 
@@ -238,9 +238,9 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
                   statusUpdating ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80'
                 )}
                 style={{
-                  backgroundColor: 'rgba(91, 200, 138, 0.1)',
-                  color: '#5BC88A',
-                  border: '1px solid rgba(91, 200, 138, 0.2)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)',
+                  color: 'var(--accent-mirror)',
+                  border: '1px solid color-mix(in srgb, var(--accent-mirror) 20%, transparent)',
                 }}
               >
                 <Check size={12} strokeWidth={2} />
@@ -274,7 +274,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
                 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
                 exporting || !content
                   ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
-                  : 'text-[#C85B5B] border border-[rgba(200,91,91,0.25)] hover:bg-[rgba(200,91,91,0.08)]'
+                  : 'text-[var(--accent-lever)] border border-[color-mix(in_srgb,var(--accent-lever)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--accent-lever)_8%,transparent)]'
               )}
             >
               <Download size={12} strokeWidth={2} />
@@ -289,7 +289,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
                 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
                 !content
                   ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
-                  : 'text-[#C85B5B] border border-[rgba(200,91,91,0.25)] hover:bg-[rgba(200,91,91,0.08)]'
+                  : 'text-[var(--accent-lever)] border border-[color-mix(in_srgb,var(--accent-lever)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--accent-lever)_8%,transparent)]'
               )}
             >
               <Printer size={12} strokeWidth={2} />
@@ -305,7 +305,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
                   'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
                   pdfExporting || !content
                     ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
-                    : 'text-[#C85B5B] border border-[rgba(200,91,91,0.25)] hover:bg-[rgba(200,91,91,0.08)]'
+                    : 'text-[var(--accent-lever)] border border-[color-mix(in_srgb,var(--accent-lever)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--accent-lever)_8%,transparent)]'
                 )}
               >
                 <FileText size={12} strokeWidth={2} />
@@ -325,9 +325,9 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
                 saving ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80'
               )}
               style={{
-                backgroundColor: 'rgba(91, 200, 138, 0.1)',
-                color: '#5BC88A',
-                border: '1px solid rgba(91, 200, 138, 0.2)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)',
+                color: 'var(--accent-mirror)',
+                border: '1px solid color-mix(in srgb, var(--accent-mirror) 20%, transparent)',
               }}
             >
               <Check size={12} strokeWidth={2} />
@@ -352,7 +352,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
         >
           {/* Generating indicator */}
           <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[11px] text-text-muted">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#C85B5B] animate-pulse" />
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent-lever)] animate-pulse" />
             Generating
           </div>
 
@@ -362,7 +362,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
               style={{ fontFamily: '"SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace' }}
             >
               {streamedContent}
-              <span className="inline-block h-4 w-0.5 bg-[#C85B5B] ml-0.5 animate-pulse" />
+              <span className="inline-block h-4 w-0.5 bg-[var(--accent-lever)] ml-0.5 animate-pulse" />
             </pre>
           ) : (
             <div className="flex items-center justify-center h-48">

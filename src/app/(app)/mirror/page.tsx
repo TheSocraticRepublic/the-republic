@@ -19,11 +19,11 @@ export default async function MirrorPage({ searchParams }: MirrorPageProps) {
         <span
           className="flex h-10 w-10 items-center justify-center rounded-xl border"
           style={{
-            borderColor: 'rgba(91, 200, 138, 0.25)',
-            backgroundColor: 'rgba(91, 200, 138, 0.08)',
+            borderColor: 'color-mix(in srgb, var(--accent-mirror) 25%, transparent)',
+            backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 8%, transparent)',
           }}
         >
-          <GitCompare size={18} strokeWidth={1.75} style={{ color: '#5BC88A' }} />
+          <GitCompare size={18} strokeWidth={1.75} style={{ color: 'var(--accent-mirror)' }} />
         </span>
         <div>
           <h1

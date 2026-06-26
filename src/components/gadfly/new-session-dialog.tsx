@@ -85,9 +85,9 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
         <button
           className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150"
           style={{
-            backgroundColor: 'rgba(200, 168, 75, 0.15)',
-            color: '#C8A84B',
-            border: '1px solid rgba(200, 168, 75, 0.25)',
+            backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 15%, transparent)',
+            color: 'var(--accent-gadfly)',
+            border: '1px solid color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
           }}
         >
           <Plus size={14} strokeWidth={2} />
@@ -126,7 +126,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
                   <select
                     value={selectedDocId}
                     onChange={(e) => setSelectedDocId(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#C8A84B]/40 focus:ring-0"
+                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-gadfly)]/40 focus:ring-0"
                   >
                     <option value="">No document — open inquiry</option>
                     {documents.map((doc) => (
@@ -158,7 +158,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
                     ? 'Auto-generated from document title'
                     : 'New Inquiry'
                 }
-                className="w-full rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[#C8A84B]/40"
+                className="w-full rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-gadfly)]/40"
               />
             </div>
 
@@ -173,7 +173,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
                     className={clsx(
                       'rounded-lg border px-3 py-2.5 text-sm font-medium transition-all duration-150',
                       mode === m
-                        ? 'border-[#C8A84B]/40 bg-[#C8A84B]/10 text-[#C8A84B]'
+                        ? 'border-[var(--accent-gadfly)]/40 bg-[var(--accent-gadfly)]/10 text-[var(--accent-gadfly)]'
                         : 'border-border bg-surface-1 text-text-muted hover:border-border-strong hover:text-text-secondary'
                     )}
                   >
@@ -203,9 +203,9 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
                   : 'hover:opacity-90',
               )}
               style={{
-                backgroundColor: 'rgba(200, 168, 75, 0.2)',
-                color: '#C8A84B',
-                border: '1px solid rgba(200, 168, 75, 0.3)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
+                color: 'var(--accent-gadfly)',
+                border: '1px solid color-mix(in srgb, var(--accent-gadfly) 30%, transparent)',
               }}
             >
               {loading ? 'Creating...' : 'Begin Inquiry'}

@@ -44,11 +44,11 @@ export default async function GadflyPage({ searchParams }: GadflyPageProps) {
           <span
             className="flex h-10 w-10 items-center justify-center rounded-xl border"
             style={{
-              borderColor: 'rgba(200, 168, 75, 0.25)',
-              backgroundColor: 'rgba(200, 168, 75, 0.08)',
+              borderColor: 'color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
+              backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 8%, transparent)',
             }}
           >
-            <MessageCircleQuestion size={18} strokeWidth={1.75} style={{ color: '#C8A84B' }} />
+            <MessageCircleQuestion size={18} strokeWidth={1.75} style={{ color: 'var(--accent-gadfly)' }} />
           </span>
           <div>
             <h1

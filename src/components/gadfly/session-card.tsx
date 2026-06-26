@@ -15,14 +15,14 @@ interface SessionCardProps {
 }
 
 const MODE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  socratic: { label: 'Socratic', color: '#C8A84B', bg: 'rgba(200, 168, 75, 0.12)' },
+  socratic: { label: 'Socratic', color: 'var(--accent-gadfly)', bg: 'color-mix(in srgb, var(--accent-gadfly) 12%, transparent)' },
   direct: { label: 'Direct', color: '#89B4C8', bg: 'rgba(137, 180, 200, 0.12)' },
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  active: { label: 'Active', color: '#5BC88A', bg: 'rgba(91, 200, 138, 0.12)' },
+  active: { label: 'Active', color: 'var(--accent-mirror)', bg: 'color-mix(in srgb, var(--accent-mirror) 12%, transparent)' },
   completed: { label: 'Completed', color: '#a3a3a3', bg: 'rgba(163, 163, 163, 0.12)' },
-  abandoned: { label: 'Abandoned', color: '#C85B5B', bg: 'rgba(200, 91, 91, 0.12)' },
+  abandoned: { label: 'Abandoned', color: 'var(--accent-lever)', bg: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)' },
 }
 
 function formatDate(value: Date | string): string {
@@ -53,11 +53,11 @@ export function SessionCard({
         <span
           className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border"
           style={{
-            borderColor: 'rgba(200, 168, 75, 0.2)',
-            backgroundColor: 'rgba(200, 168, 75, 0.07)',
+            borderColor: 'color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
+            backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 7%, transparent)',
           }}
         >
-          <MessageCircleQuestion size={14} strokeWidth={1.75} style={{ color: '#C8A84B' }} />
+          <MessageCircleQuestion size={14} strokeWidth={1.75} style={{ color: 'var(--accent-gadfly)' }} />
         </span>
 
         {/* Main content */}
@@ -88,7 +88,7 @@ export function SessionCard({
           <div className="mt-2.5 flex items-center gap-4 text-[11px] text-text-muted">
             <span>{questionCount} {questionCount === 1 ? 'question' : 'questions'}</span>
             {insightCount > 0 && (
-              <span style={{ color: '#C8A84B' }}>
+              <span style={{ color: 'var(--accent-gadfly)' }}>
                 {insightCount} {insightCount === 1 ? 'insight' : 'insights'}
               </span>
             )}

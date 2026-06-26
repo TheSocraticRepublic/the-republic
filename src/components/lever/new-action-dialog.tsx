@@ -206,9 +206,9 @@ export function NewActionDialog({
         <button
           className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150"
           style={{
-            backgroundColor: 'rgba(200, 91, 91, 0.15)',
-            color: '#C85B5B',
-            border: '1px solid rgba(200, 91, 91, 0.25)',
+            backgroundColor: 'color-mix(in srgb, var(--accent-lever) 15%, transparent)',
+            color: 'var(--accent-lever)',
+            border: '1px solid color-mix(in srgb, var(--accent-lever) 25%, transparent)',
           }}
         >
           <Plus size={14} strokeWidth={2} />
@@ -248,7 +248,7 @@ export function NewActionDialog({
                     className={clsx(
                       'rounded-lg border px-2 py-2.5 text-xs font-medium transition-all duration-150 text-left',
                       actionType === t.value
-                        ? 'border-[#C85B5B]/40 bg-[#C85B5B]/10 text-[#C85B5B]'
+                        ? 'border-[var(--accent-lever)]/40 bg-[var(--accent-lever)]/10 text-[var(--accent-lever)]'
                         : 'border-border bg-surface-1 text-text-muted hover:border-border-strong hover:text-text-secondary'
                     )}
                   >
@@ -269,7 +269,7 @@ export function NewActionDialog({
                   <select
                     value={publicBodyName}
                     onChange={(e) => setPublicBodyName(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#C85B5B]/40 focus:ring-0"
+                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0"
                   >
                     <option value="">Select a public body...</option>
                     {publicBodies.map((pb) => (
@@ -292,12 +292,12 @@ export function NewActionDialog({
               <div
                 className="flex items-start gap-2.5 rounded-lg border px-3 py-2.5"
                 style={{
-                  backgroundColor: 'rgba(200, 168, 75, 0.06)',
-                  borderColor: 'rgba(200, 168, 75, 0.2)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 6%, transparent)',
+                  borderColor: 'color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
                 }}
               >
-                <AlertTriangle size={13} strokeWidth={2} className="mt-0.5 flex-shrink-0" style={{ color: '#C8A84B' }} />
-                <p className="text-xs leading-relaxed" style={{ color: '#C8A84B' }}>
+                <AlertTriangle size={13} strokeWidth={2} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--accent-gadfly)' }} />
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--accent-gadfly)' }}>
                   You already have a FIPPA request for this investigation. Continue anyway?
                 </p>
               </div>
@@ -315,7 +315,7 @@ export function NewActionDialog({
                   <select
                     value={selectedDocId}
                     onChange={(e) => setSelectedDocId(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#C85B5B]/40 focus:ring-0"
+                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0"
                   >
                     <option value="">No document</option>
                     {documents.map((doc) => (
@@ -345,7 +345,7 @@ export function NewActionDialog({
                   <select
                     value={selectedSessionId}
                     onChange={(e) => setSelectedSessionId(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#C85B5B]/40 focus:ring-0"
+                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0"
                   >
                     <option value="">No inquiry</option>
                     {sessions.map((s) => (
@@ -377,7 +377,7 @@ export function NewActionDialog({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={DESCRIPTION_PLACEHOLDERS[actionType]}
                 rows={4}
-                className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[#C85B5B]/40"
+                className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-lever)]/40"
               />
             </div>
           </div>
@@ -398,9 +398,9 @@ export function NewActionDialog({
                   : 'hover:opacity-90'
               )}
               style={{
-                backgroundColor: 'rgba(200, 91, 91, 0.2)',
-                color: '#C85B5B',
-                border: '1px solid rgba(200, 91, 91, 0.3)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-lever) 20%, transparent)',
+                color: 'var(--accent-lever)',
+                border: '1px solid color-mix(in srgb, var(--accent-lever) 30%, transparent)',
               }}
             >
               {loading ? 'Creating...' : 'Generate'}

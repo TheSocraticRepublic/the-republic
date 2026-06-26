@@ -232,7 +232,7 @@ export function LensPanel({
       style={{
         backgroundColor: palette.bg,
         border: `1px solid ${palette.border}`,
-        borderTop: '2px solid #C8A84B',
+        borderTop: '2px solid var(--accent-gadfly)',
         padding: 'clamp(24px, 4vw, 32px)',
       }}
     >
@@ -244,7 +244,7 @@ export function LensPanel({
           fontWeight: 600,
           textTransform: 'uppercase',
           letterSpacing: '0.12em',
-          color: '#C8A84B',
+          color: 'var(--accent-gadfly)',
           margin: 0,
         }}
       >

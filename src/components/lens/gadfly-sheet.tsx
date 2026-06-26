@@ -160,9 +160,9 @@ export function GadflySheet({
               <span
                 className="flex h-7 w-7 items-center justify-center rounded-lg text-xs"
                 style={{
-                  backgroundColor: 'rgba(200,168,75,0.08)',
-                  border: '1px solid rgba(200,168,75,0.18)',
-                  color: '#C8A84B',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 8%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
+                  color: 'var(--accent-gadfly)',
                 }}
               >
                 ?
@@ -217,7 +217,7 @@ export function GadflySheet({
                 <div className="flex flex-col items-center gap-3">
                   <span
                     className="h-2 w-2 rounded-full animate-pulse"
-                    style={{ backgroundColor: '#C8A84B' }}
+                    style={{ backgroundColor: 'var(--accent-gadfly)' }}
                   />
                   <p className="text-xs text-text-faint">
                     {isCreating ? 'Starting inquiry' : 'Loading session'}

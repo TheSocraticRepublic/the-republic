@@ -86,7 +86,7 @@ export function PostalCodeForm() {
         disabled={loading || postalCode.replace(/\s/g, '').length < 6}
         className="w-full rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150 disabled:opacity-40"
         style={{
-          color: '#D4764E',
+          color: 'var(--accent-votes)',
           backgroundColor: 'rgba(212,118,78,0.10)',
           border: '1px solid rgba(212,118,78,0.25)',
         }}
