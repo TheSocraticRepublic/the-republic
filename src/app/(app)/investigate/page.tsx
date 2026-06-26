@@ -96,6 +96,14 @@ export default async function InvestigatePage() {
               </p>
             </div>
 
+            {/* Epigraph — above the form */}
+            <p
+              className="mb-8 text-lg italic text-text-faint"
+              style={{ fontFamily: 'var(--font-serif)' }}
+            >
+              Every investigation begins with a question you didn&apos;t know how to ask.
+            </p>
+
             <ConcernForm />
           </div>
 
@@ -136,13 +144,6 @@ export default async function InvestigatePage() {
           )}
         </div>
 
-        {/* Contextual anchor — full width, outside the grid */}
-        <p
-          className="mt-16 text-center text-sm italic text-text-faint"
-          style={{ fontFamily: 'var(--font-serif)' }}
-        >
-          Every investigation begins with a question you didn&apos;t know how to ask.
-        </p>
       </div>
     </div>
   )
