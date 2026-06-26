@@ -375,11 +375,9 @@ export async function POST(request: NextRequest) {
             // Guard the registration itself: if after() throws (e.g. outside
             // request scope), log and continue — never rethrow into the tx.
             try { after(async () => {
-              console.log('[shadows] fired investigation=', investigation.id)
               try {
                 const detected = await detectShadows(investigation.id, db)
                 if (detected.length === 0) {
-                  console.log('[shadows] investigation=', investigation.id, 'inserted=0 skipped=0')
                   return
                 }
 
@@ -404,12 +402,6 @@ export async function POST(request: NextRequest) {
                     }))
                   )
                 }
-
-                console.log(
-                  '[shadows] investigation=', investigation.id,
-                  'inserted=', fresh.length,
-                  'skipped=', detected.length - fresh.length
-                )
               } catch (shadowErr) {
                 console.error('[shadows] detection failed for investigation', investigation.id, shadowErr)
               }

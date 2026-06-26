@@ -34,6 +34,7 @@ export function DiscoveryForm() {
   const [policyArea, setPolicyArea] = useState('')
   const [concern, setConcern] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [streamedText, setStreamedText] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [hasResult, setHasResult] = useState(false)
@@ -57,6 +58,8 @@ export function DiscoveryForm() {
 
   const handleDiscover = useCallback(async () => {
     if (!concern.trim() || loading) return
+
+    setError('')
 
     // Cancel any in-progress request
     if (abortRef.current) {
@@ -111,6 +114,7 @@ export function DiscoveryForm() {
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
         console.error('[scout] stream error:', err)
+        setError('Something went wrong. Please try again.')
       }
     } finally {
       setIsStreaming(false)
@@ -152,7 +156,7 @@ export function DiscoveryForm() {
 
           {/* Jurisdiction selector */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+            <label htmlFor="scout-jurisdiction" className="mb-1.5 block text-xs font-medium text-text-secondary">
               Jurisdiction <span className="text-text-faint">(optional)</span>
             </label>
             {fetchingJurisdictions ? (
@@ -160,6 +164,7 @@ export function DiscoveryForm() {
             ) : (
               <div className="relative">
                 <select
+                  id="scout-jurisdiction"
                   value={selectedJurisdictionId}
                   onChange={(e) => setSelectedJurisdictionId(e.target.value)}
                   className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#B088C8]/40 focus:ring-0"
@@ -184,11 +189,12 @@ export function DiscoveryForm() {
 
           {/* Policy area */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+            <label htmlFor="scout-policy-area" className="mb-1.5 block text-xs font-medium text-text-secondary">
               Policy area <span className="text-text-faint">(optional)</span>
             </label>
             <div className="relative">
               <select
+                id="scout-policy-area"
                 value={policyArea}
                 onChange={(e) => setPolicyArea(e.target.value)}
                 className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#B088C8]/40 focus:ring-0"
@@ -207,6 +213,8 @@ export function DiscoveryForm() {
               />
             </div>
           </div>
+
+          {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
 
           {/* Submit / Cancel */}
           <div className="flex items-center justify-end gap-3">

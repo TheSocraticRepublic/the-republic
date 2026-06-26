@@ -72,6 +72,7 @@ export function NewActionDialog({
   const [loading, setLoading] = useState(false)
   const [fetchingContext, setFetchingContext] = useState(false)
   const [dupWarning, setDupWarning] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
 
   // Fetch documents, sessions, and jurisdiction-aware public bodies when dialog opens
@@ -156,6 +157,7 @@ export function NewActionDialog({
 
   const handleCreate = useCallback(async () => {
     if (!description.trim()) return
+    setError('')
     setLoading(true)
     try {
       const res = await fetch('/api/lever/actions', {
@@ -176,6 +178,7 @@ export function NewActionDialog({
       router.push(`/lever/${data.actionId}`)
     } catch (err) {
       console.error(err)
+      setError('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -190,6 +193,7 @@ export function NewActionDialog({
       setSelectedSessionId('')
       setDescription('')
       setDupWarning(false)
+      setError('')
     }
   }, [initialActionType])
 
@@ -226,7 +230,7 @@ export function NewActionDialog({
             >
               New Civic Action
             </Dialog.Title>
-            <Dialog.Close className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary">
+            <Dialog.Close aria-label="Close dialog" className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary">
               <X size={14} strokeWidth={2} />
             </Dialog.Close>
           </div>
@@ -380,6 +384,7 @@ export function NewActionDialog({
           </div>
 
           {/* Actions */}
+          {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
           <div className="mt-6 flex justify-end gap-3">
             <Dialog.Close className="rounded-lg px-4 py-2 text-sm text-text-muted transition-colors hover:text-text-secondary">
               Cancel
