@@ -1,6 +1,7 @@
 'use client'
 
 import { clsx } from 'clsx'
+import type React from 'react'
 
 interface AnalysisViewProps {
   content: string
@@ -52,7 +53,7 @@ function parsePowerMap(content: string): Array<{ label: string; text: string }> 
 
 /**
  * Parse a section with quoted text (Key Findings).
- * Returns paragraphs, with quoted text identified.
+ * Returns items with quoted text identified.
  */
 function parseKeyFindings(content: string): Array<{ text: string; hasQuote: boolean }> {
   return content
@@ -62,7 +63,7 @@ function parseKeyFindings(content: string): Array<{ text: string; hasQuote: bool
       const trimmed = line.replace(/^[-*]\s+/, '').trim()
       return {
         text: trimmed,
-        hasQuote: trimmed.includes('"') || trimmed.includes('\u201c'),
+        hasQuote: trimmed.includes('"') || trimmed.includes('“'),
       }
     })
 }
@@ -79,35 +80,12 @@ function parseBullets(content: string): string[] {
 
 // ---
 
-function SectionShell({
-  heading,
-  children,
-}: {
-  heading: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="rounded-xl border border-border bg-surface-1 shadow-sm">
-      <div className="border-b border-border px-5 py-3.5">
-        <h3
-          className="text-sm font-semibold tracking-wide"
-          style={{
-            color: '#89B4C8',
-          }}
-        >
-          {heading}
-        </h3>
-      </div>
-      <div className="px-5 py-4">{children}</div>
-    </section>
-  )
-}
-
 function PlainSummary({ content }: { content: string }) {
   return (
-    <SectionShell heading="Plain Language Summary">
-      <p className="text-sm leading-relaxed text-text-secondary">{content}</p>
-    </SectionShell>
+    <section>
+      <h3 className="section-heading">Plain Language Summary</h3>
+      <p className="font-serif text-sm leading-relaxed text-text-secondary">{content}</p>
+    </section>
   )
 }
 
@@ -115,39 +93,53 @@ function KeyFindingsSection({ content }: { content: string }) {
   const findings = parseKeyFindings(content)
   if (!findings.length) {
     return (
-      <SectionShell heading="Key Findings">
-        <p className="text-sm text-text-secondary">{content}</p>
-      </SectionShell>
+      <section>
+        <h3 className="section-heading">Key Findings</h3>
+        <p className="font-serif text-sm text-text-secondary">{content}</p>
+      </section>
     )
   }
 
   return (
-    <SectionShell heading="Key Findings">
-      <ul className="space-y-3">
+    <section>
+      <h3 className="section-heading">Key Findings</h3>
+      <ol className="space-y-3">
         {findings.map((f, i) => (
-          <li
-            key={i}
-            className={clsx(
-              'rounded-lg px-4 py-3 text-sm leading-relaxed',
-              f.hasQuote
-                ? 'border-l-2 border-[#89B4C8]/40 bg-surface-1 text-text-primary'
-                : 'text-text-secondary'
-            )}
-          >
-            {f.text}
+          <li key={i} className="flex items-start gap-3">
+            <span className="font-mono text-xs text-text-muted flex-shrink-0 pt-0.5 w-4 text-right tabular-nums">
+              {i + 1}
+            </span>
+            <p
+              className={clsx(
+                'font-serif text-sm leading-relaxed',
+                f.hasQuote
+                  ? 'border-l-2 pl-3 text-text-primary'
+                  : 'text-text-secondary'
+              )}
+              style={
+                f.hasQuote
+                  ? { borderColor: 'color-mix(in srgb, var(--accent-oracle) 40%, transparent)' }
+                  : undefined
+              }
+            >
+              {f.text}
+            </p>
           </li>
         ))}
-      </ul>
-    </SectionShell>
+      </ol>
+    </section>
   )
 }
 
-const POWER_MAP_COLORS: Record<string, string> = {
-  Beneficiaries: 'text-emerald-400',
-  'Affected Parties': 'text-yellow-400',
-  'Decision Makers': 'text-[#89B4C8]',
-  'Funding Flows': 'text-violet-400',
-  'Oversight Gaps': 'text-red-400',
+const POWER_MAP_ENTRIES: Record<
+  string,
+  { textClass?: string; textStyle?: React.CSSProperties; borderColor: string }
+> = {
+  Beneficiaries:      { textClass: 'text-emerald-400', borderColor: 'rgb(52, 211, 153)' },
+  'Affected Parties': { textClass: 'text-yellow-400',  borderColor: 'rgb(250, 204, 21)' },
+  'Decision Makers':  { textStyle: { color: 'var(--accent-oracle)' }, borderColor: 'var(--accent-oracle)' },
+  'Funding Flows':    { textClass: 'text-violet-400',  borderColor: 'rgb(167, 139, 250)' },
+  'Oversight Gaps':   { textClass: 'text-red-400',     borderColor: 'rgb(248, 113, 113)' },
 }
 
 function PowerMapSection({ content }: { content: string }) {
@@ -155,33 +147,42 @@ function PowerMapSection({ content }: { content: string }) {
 
   if (!entries.length) {
     return (
-      <SectionShell heading="Power Map">
-        <p className="text-sm text-text-secondary whitespace-pre-line">{content}</p>
-      </SectionShell>
+      <section>
+        <h3 className="section-heading">Power Map</h3>
+        <p className="font-serif text-sm text-text-secondary whitespace-pre-line">{content}</p>
+      </section>
     )
   }
 
   return (
-    <SectionShell heading="Power Map">
+    <section>
+      <h3 className="section-heading">Power Map</h3>
       <div className="grid gap-3 sm:grid-cols-2">
         {entries.map((entry) => {
-          const labelColor = POWER_MAP_COLORS[entry.label] ?? 'text-text-secondary'
+          const tokens = POWER_MAP_ENTRIES[entry.label]
+          const borderColor = tokens?.borderColor ?? 'var(--border-strong)'
+          const textClass = tokens?.textClass ?? 'text-text-muted'
+          const textStyle = tokens?.textStyle
           return (
             <div
               key={entry.label}
-              className="rounded-lg border border-border bg-surface-1 px-4 py-3"
+              className="border-l-4 py-2 pl-4"
+              style={{ borderColor }}
             >
-              <p className={clsx('mb-1.5 text-[11px] font-semibold uppercase tracking-widest', labelColor)}>
+              <p
+                className={clsx('mb-1 text-[11px] font-semibold uppercase tracking-wider', textClass)}
+                style={textStyle}
+              >
                 {entry.label}
               </p>
-              <p className="text-sm leading-relaxed text-text-secondary">
+              <p className="font-serif text-sm leading-relaxed text-text-secondary">
                 {entry.text || <span className="italic text-text-muted">Not identified</span>}
               </p>
             </div>
           )
         })}
       </div>
-    </SectionShell>
+    </section>
   )
 }
 
@@ -189,23 +190,24 @@ function BulletSection({ heading, content }: { heading: string; content: string 
   const bullets = parseBullets(content)
 
   return (
-    <SectionShell heading={heading}>
+    <section>
+      <h3 className="section-heading">{heading}</h3>
       {bullets.length > 0 ? (
         <ul className="space-y-2">
           {bullets.map((bullet, i) => (
-            <li key={i} className="flex items-start gap-2.5 text-sm text-text-secondary leading-relaxed">
+            <li key={i} className="flex items-start gap-2.5 font-serif text-sm text-text-secondary leading-relaxed">
               <span
-                className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full"
-                style={{ backgroundColor: '#89B4C8', opacity: 0.7 }}
+                className="mt-2 h-2 w-2 flex-shrink-0 rounded-full"
+                style={{ backgroundColor: 'var(--accent-oracle)', opacity: 0.7 }}
               />
               {bullet}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-text-secondary whitespace-pre-line">{content}</p>
+        <p className="font-serif text-sm text-text-secondary whitespace-pre-line">{content}</p>
       )}
-    </SectionShell>
+    </section>
   )
 }
 
@@ -213,28 +215,29 @@ function QuestionsSection({ content }: { content: string }) {
   const questions = parseBullets(content)
 
   return (
-    <SectionShell heading="Questions to Ask">
+    <section>
+      <h3 className="section-heading">Questions to Ask</h3>
       {questions.length > 0 ? (
         <ol className="space-y-2.5">
           {questions.map((q, i) => (
             <li key={i} className="flex items-start gap-3">
               <span
-                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-[11px] font-bold"
+                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded font-mono text-[11px] font-bold"
                 style={{
-                  backgroundColor: 'rgba(137, 180, 200, 0.12)',
-                  color: '#89B4C8',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-oracle) 12%, transparent)',
+                  color: 'var(--accent-oracle)',
                 }}
               >
                 {i + 1}
               </span>
-              <p className="text-sm leading-relaxed text-text-secondary">{q}</p>
+              <p className="font-serif text-sm leading-relaxed text-text-secondary">{q}</p>
             </li>
           ))}
         </ol>
       ) : (
-        <p className="text-sm text-text-secondary whitespace-pre-line">{content}</p>
+        <p className="font-serif text-sm text-text-secondary whitespace-pre-line">{content}</p>
       )}
-    </SectionShell>
+    </section>
   )
 }
 
@@ -245,7 +248,7 @@ function StreamingFallback({ content }: { content: string }) {
       <div className="flex items-center gap-2 mb-3">
         <span
           className="h-1.5 w-1.5 rounded-full animate-pulse"
-          style={{ backgroundColor: '#89B4C8' }}
+          style={{ backgroundColor: 'var(--accent-oracle)' }}
         />
         <span className="text-xs text-text-muted tracking-wide">Analyzing...</span>
       </div>
@@ -281,7 +284,7 @@ export function AnalysisView({ content, isStreaming = false }: AnalysisViewProps
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       {sections.map((section) => {
         const renderer = SECTION_RENDERERS[section.heading]
         if (renderer) {
@@ -297,10 +300,10 @@ export function AnalysisView({ content, isStreaming = false }: AnalysisViewProps
         )
       })}
       {isStreaming && (
-        <div className="flex items-center gap-2 px-1">
+        <div className="flex items-center gap-2 px-1 pt-4">
           <span
             className="h-1.5 w-1.5 rounded-full animate-pulse"
-            style={{ backgroundColor: '#89B4C8' }}
+            style={{ backgroundColor: 'var(--accent-oracle)' }}
           />
           <span className="text-xs text-text-muted">Oracle is thinking...</span>
         </div>

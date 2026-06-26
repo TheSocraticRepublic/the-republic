@@ -224,11 +224,7 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
         if (headingLower.includes('issue summary')) {
           return (
             <div key={i}>
-              <h3
-                className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted"
-              >
-                Issue Summary
-              </h3>
+              <h3 className="section-heading">Issue Summary</h3>
               <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
                 <ProseSection content={section.content} />
               </div>
@@ -241,11 +237,7 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
           const blocks = splitAlternativeBlocks(section.content)
           return (
             <div key={i}>
-              <h3
-                className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted"
-              >
-                Alternatives Found
-              </h3>
+              <h3 className="section-heading">Alternatives Found</h3>
               <div className="space-y-4">
                 {blocks.map((block, j) => (
                   <AlternativeCard key={j} block={block} />
@@ -259,11 +251,7 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
         if (headingLower.includes('pattern')) {
           return (
             <div key={i}>
-              <h3
-                className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted"
-              >
-                Pattern Analysis
-              </h3>
+              <h3 className="section-heading">Pattern Analysis</h3>
               <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
                 <ProseSection content={section.content} />
               </div>
@@ -275,12 +263,7 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
         if (headingLower.includes('argument')) {
           return (
             <div key={i}>
-              <h3
-                className="mb-3 text-xs font-semibold uppercase tracking-widest"
-                style={{ color: 'rgba(91, 200, 138, 0.7)' }}
-              >
-                The Argument from Existence
-              </h3>
+              <h3 className="section-heading">The Argument from Existence</h3>
               <div
                 className="rounded-xl p-5 backdrop-blur-md"
                 style={{
@@ -297,11 +280,7 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
         // --- Fallback for any other sections ---
         return (
           <div key={i}>
-            <h3
-              className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted"
-            >
-              {section.heading}
-            </h3>
+            <h3 className="section-heading">{section.heading}</h3>
             <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
               <ProseSection content={section.content} />
             </div>

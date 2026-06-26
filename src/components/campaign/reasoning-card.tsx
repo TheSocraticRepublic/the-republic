@@ -593,9 +593,9 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
               onClick={() => setShowClaudeHint((v) => !v)}
               className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
               style={{
-                backgroundColor: 'rgba(137,180,200,0.1)',
-                color: '#89b4c8',
-                border: '1px solid rgba(137,180,200,0.25)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-oracle) 10%, transparent)',
+                color: 'var(--accent-oracle)',
+                border: '1px solid color-mix(in srgb, var(--accent-oracle) 25%, transparent)',
               }}
               aria-label="Open in Claude — show instructions"
             >
@@ -609,12 +609,12 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
                   border: `1px solid ${rc.popoverBorder}`,
                 }}
               >
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: '#89b4c8' }}>
+                <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--accent-oracle)' }}>
                   Render in Claude Artifacts
                 </p>
                 <ol className="space-y-1.5 text-xs leading-relaxed" style={{ color: rc.textColor }}>
                   <li>1. Click <strong>Copy JSON</strong> above to copy your spec</li>
-                  <li>2. Open <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#89b4c8' }}>claude.ai</a> in a new tab</li>
+                  <li>2. Open <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--accent-oracle)' }}>claude.ai</a> in a new tab</li>
                   <li>3. Use the prompt template from <code className="rounded px-1 py-0.5 text-[10px]" style={{ backgroundColor: 'rgba(0,0,0,0.06)', color: '#292524' }}>docs/claude-artifacts-template.md</code></li>
                   <li>4. Paste the template prompt, then your JSON at the end</li>
                 </ol>
@@ -641,12 +641,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
             borderColor: rc.specBorder,
           }}
         >
-          <p
-            className="mb-4 text-[10px] font-semibold uppercase tracking-widest"
-            style={{ color: rc.faintColor }}
-          >
-            Generated Spec
-          </p>
+          <p className="section-heading">Generated Spec</p>
           <SpecView materialType={materialType} spec={spec} />
         </div>
 
@@ -655,12 +650,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
           className="h-full px-6 py-6 min-h-[180px]"
           style={{ backgroundColor: rc.reasoningBg }}
         >
-          <p
-            className="mb-4 text-[10px] font-semibold uppercase tracking-widest"
-            style={{ color: '#C85B5B' }}
-          >
-            Why This Framing
-          </p>
+          <p className="section-heading">Why This Framing</p>
           <p
             className="text-sm leading-relaxed whitespace-pre-wrap"
             style={{ color: rc.textColor }}

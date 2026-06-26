@@ -193,15 +193,10 @@ export function SectionedMarkdown({
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       {sections.map((section, i) => (
         <div key={i}>
-          <p
-            className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em]"
-            style={{ color: accentColor }}
-          >
-            {section.heading}
-          </p>
+          <h3 className="section-heading">{section.heading}</h3>
           <MarkdownProse content={section.content} textColor={textColor} />
         </div>
       ))}
