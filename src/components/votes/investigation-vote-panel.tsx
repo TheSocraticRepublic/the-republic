@@ -68,7 +68,7 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
         <div className="h-px flex-1" style={{ backgroundColor: 'var(--surface-3)' }} />
         <span
           className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-          style={{ color: '#D4764E' }}
+          style={{ color: 'var(--accent-votes)' }}
         >
           Your MP&apos;s Record
         </span>
@@ -159,7 +159,7 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
               onClick={() => setShowLetterWriter(true)}
               className="rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-150"
               style={{
-                color: '#D4764E',
+                color: 'var(--accent-votes)',
                 backgroundColor: 'rgba(212,118,78,0.10)',
                 border: '1px solid rgba(212,118,78,0.20)',
               }}

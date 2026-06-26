@@ -133,13 +133,13 @@ export default async function OracleDocumentPage({ params }: PageProps) {
                 {
                   label: 'Ask about this',
                   href: `/gadfly?documentId=${doc.id}&title=${encodeURIComponent(doc.title)}`,
-                  color: '#C8A84B',
+                  color: 'var(--accent-gadfly)',
                   icon: MessageCircleQuestion,
                 },
                 {
                   label: 'Compare with other jurisdictions',
                   href: `/mirror?documentId=${doc.id}`,
-                  color: '#5BC88A',
+                  color: 'var(--accent-mirror)',
                   icon: GitCompare,
                 },
               ]}

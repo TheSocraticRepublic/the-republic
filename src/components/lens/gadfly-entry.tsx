@@ -26,17 +26,17 @@ export function GadflyEntry({
     <div
       className="rounded-xl p-6"
       style={{
-        borderLeft: '2px solid #C8A84B',
-        backgroundColor: darkMode ? 'rgba(200,168,75,0.06)' : 'rgba(200,168,75,0.04)',
-        border: '1px solid rgba(200,168,75,0.12)',
+        borderLeft: '2px solid var(--accent-gadfly)',
+        backgroundColor: darkMode ? 'color-mix(in srgb, var(--accent-gadfly) 6%, transparent)' : 'color-mix(in srgb, var(--accent-gadfly) 4%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--accent-gadfly) 12%, transparent)',
         borderLeftWidth: '2px',
-        borderLeftColor: '#C8A84B',
+        borderLeftColor: 'var(--accent-gadfly)',
       }}
     >
       {/* Label */}
       <p
         className="mb-4 text-[10px] font-semibold uppercase tracking-[0.12em]"
-        style={{ color: '#C8A84B' }}
+        style={{ color: 'var(--accent-gadfly)' }}
       >
         A question worth sitting with
       </p>
@@ -58,23 +58,23 @@ export function GadflyEntry({
         className="group inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-150"
         style={{
           backgroundColor: 'transparent',
-          color: '#C8A84B',
+          color: 'var(--accent-gadfly)',
           opacity: 0.8,
-          border: '1px solid rgba(200,168,75,0.25)',
+          border: '1px solid color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
         }}
         onMouseEnter={(e) => {
           const el = e.currentTarget
-          el.style.backgroundColor = 'rgba(200,168,75,0.10)'
-          el.style.color = '#C8A84B'
+          el.style.backgroundColor = 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)'
+          el.style.color = 'var(--accent-gadfly)'
           el.style.opacity = '1'
-          el.style.borderColor = 'rgba(200,168,75,0.4)'
+          el.style.borderColor = 'color-mix(in srgb, var(--accent-gadfly) 40%, transparent)'
         }}
         onMouseLeave={(e) => {
           const el = e.currentTarget
           el.style.backgroundColor = 'transparent'
-          el.style.color = '#C8A84B'
+          el.style.color = 'var(--accent-gadfly)'
           el.style.opacity = '0.8'
-          el.style.borderColor = 'rgba(200,168,75,0.25)'
+          el.style.borderColor = 'color-mix(in srgb, var(--accent-gadfly) 25%, transparent)'
         }}
       >
         Continue this inquiry

@@ -249,9 +249,9 @@ export function IssueTimeline({ investigationId, events, onEventAdded, darkMode 
               disabled={submitting || !formTitle.trim() || !formDate}
               className="rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors disabled:opacity-40"
               style={{
-                color: '#C8A84B',
-                backgroundColor: 'rgba(200,168,75,0.10)',
-                border: '1px solid rgba(200,168,75,0.20)',
+                color: 'var(--accent-gadfly)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
               }}
             >
               {submitting ? 'Adding...' : 'Add'}

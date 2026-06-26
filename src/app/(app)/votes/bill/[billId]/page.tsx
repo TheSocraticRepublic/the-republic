@@ -67,14 +67,14 @@ export default async function BillDetailPage({ params }: PageProps) {
         style={{
           borderColor: 'var(--border)',
           borderLeftWidth: '3px',
-          borderLeftColor: '#D4764E',
+          borderLeftColor: 'var(--accent-votes)',
           backgroundColor: 'var(--surface-1)',
         }}
       >
         <div className="flex items-center gap-2 mb-3">
           <span
             className="text-sm font-bold"
-            style={{ color: '#D4764E' }}
+            style={{ color: 'var(--accent-votes)' }}
           >
             {bill.number}
           </span>
@@ -140,7 +140,7 @@ export default async function BillDetailPage({ params }: PageProps) {
             />
             <span
               className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-              style={{ color: '#D4764E' }}
+              style={{ color: 'var(--accent-votes)' }}
             >
               Recorded Votes
             </span>

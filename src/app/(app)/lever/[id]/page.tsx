@@ -68,11 +68,11 @@ export default async function LeverActionPage({ params }: PageProps) {
         <span
           className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border"
           style={{
-            borderColor: 'rgba(200, 91, 91, 0.25)',
-            backgroundColor: 'rgba(200, 91, 91, 0.08)',
+            borderColor: 'color-mix(in srgb, var(--accent-lever) 25%, transparent)',
+            backgroundColor: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
           }}
         >
-          <FileText size={18} strokeWidth={1.75} style={{ color: '#C85B5B' }} />
+          <FileText size={18} strokeWidth={1.75} style={{ color: 'var(--accent-lever)' }} />
         </span>
         <div className="flex-1 min-w-0">
           <h1

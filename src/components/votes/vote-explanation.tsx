@@ -57,7 +57,7 @@ export function VoteExplanation({ voteId, existingExplanation }: VoteExplanation
         onClick={generateExplanation}
         className="rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-150"
         style={{
-          color: '#D4764E',
+          color: 'var(--accent-votes)',
           backgroundColor: 'rgba(212,118,78,0.10)',
           border: '1px solid rgba(212,118,78,0.20)',
         }}

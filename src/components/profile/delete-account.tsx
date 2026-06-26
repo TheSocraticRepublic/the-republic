@@ -30,7 +30,7 @@ export function DeleteAccount() {
   }
 
   return (
-    <div className="mt-10 rounded-xl border border-[#C85B5B]/30 bg-[#C85B5B]/5 p-6">
+    <div className="mt-10 rounded-xl border border-[var(--accent-lever)]/30 bg-[var(--accent-lever)]/5 p-6">
       <h2
         className="text-base font-semibold tracking-tight text-text-primary"
       >
@@ -46,7 +46,7 @@ export function DeleteAccount() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="mt-4 rounded-lg border border-[#C85B5B]/50 px-3 py-1.5 text-xs font-medium text-[#E08585] transition-colors hover:bg-[#C85B5B]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/60"
+          className="mt-4 rounded-lg border border-[var(--accent-lever)]/50 px-3 py-1.5 text-xs font-medium text-[#E08585] transition-colors hover:bg-[var(--accent-lever)]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-lever)]/60"
         >
           Delete account
         </button>
@@ -61,7 +61,7 @@ export function DeleteAccount() {
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             autoComplete="off"
-            className="w-full max-w-xs rounded-lg border border-border bg-surface-1 px-3 py-1.5 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/60"
+            className="w-full max-w-xs rounded-lg border border-border bg-surface-1 px-3 py-1.5 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-lever)]/60"
           />
           {error && (
             <p role="alert" className="text-xs text-[#E08585]">
@@ -73,7 +73,7 @@ export function DeleteAccount() {
               type="button"
               onClick={handleDelete}
               disabled={!canDelete}
-              className="rounded-lg bg-[#C85B5B] px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/60"
+              className="rounded-lg bg-[var(--accent-lever)] px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-lever)]/60"
             >
               {busy ? 'Deleting…' : 'Permanently delete'}
             </button>

@@ -15,7 +15,7 @@ interface ActionCardProps {
 }
 
 const TYPE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  fippa_request: { label: 'FIPPA Request', color: '#C85B5B', bg: 'rgba(200, 91, 91, 0.12)' },
+  fippa_request: { label: 'FIPPA Request', color: 'var(--accent-lever)', bg: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)' },
   public_comment: { label: 'Public Comment', color: '#C87B3A', bg: 'rgba(200, 123, 58, 0.12)' },
   policy_brief: { label: 'Policy Brief', color: '#89B4C8', bg: 'rgba(137, 180, 200, 0.12)' },
   legal_template: { label: 'Legal Template', color: '#a3a3a3', bg: 'rgba(163, 163, 163, 0.12)' },
@@ -26,8 +26,8 @@ const TYPE_STYLES: Record<string, { label: string; color: string; bg: string }> 
 }
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  draft: { label: 'Draft', color: '#C8A84B', bg: 'rgba(200, 168, 75, 0.12)' },
-  final: { label: 'Final', color: '#5BC88A', bg: 'rgba(91, 200, 138, 0.12)' },
+  draft: { label: 'Draft', color: 'var(--accent-gadfly)', bg: 'color-mix(in srgb, var(--accent-gadfly) 12%, transparent)' },
+  final: { label: 'Final', color: 'var(--accent-mirror)', bg: 'color-mix(in srgb, var(--accent-mirror) 12%, transparent)' },
   filed: { label: 'Filed', color: '#89B4C8', bg: 'rgba(137, 180, 200, 0.12)' },
 }
 
@@ -50,11 +50,11 @@ export function ActionCard({ id, title, actionType, status, createdAt }: ActionC
         <span
           className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border"
           style={{
-            borderColor: 'rgba(200, 91, 91, 0.2)',
-            backgroundColor: 'rgba(200, 91, 91, 0.07)',
+            borderColor: 'color-mix(in srgb, var(--accent-lever) 20%, transparent)',
+            backgroundColor: 'color-mix(in srgb, var(--accent-lever) 7%, transparent)',
           }}
         >
-          <FileText size={14} strokeWidth={1.75} style={{ color: '#C85B5B' }} />
+          <FileText size={14} strokeWidth={1.75} style={{ color: 'var(--accent-lever)' }} />
         </span>
 
         {/* Main content */}

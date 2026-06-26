@@ -110,8 +110,8 @@ export default async function InvestigationsPage() {
                       className="rounded-full px-2 py-0.5 text-[10px] font-medium"
                       style={
                         inv.briefingText
-                          ? { backgroundColor: 'rgba(91, 200, 138, 0.10)', color: '#5BC88A' }
-                          : { backgroundColor: 'rgba(200, 168, 75, 0.10)', color: '#C8A84B' }
+                          ? { backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)', color: 'var(--accent-mirror)' }
+                          : { backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)', color: 'var(--accent-gadfly)' }
                       }
                     >
                       {inv.briefingText ? 'Complete' : 'In progress'}

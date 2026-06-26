@@ -73,15 +73,15 @@ export function MediaSpecGenerator({
     <div
       className="rounded-xl border p-5 space-y-5"
       style={{
-        backgroundColor: 'rgba(200, 91, 91, 0.04)',
-        borderColor: 'rgba(200, 91, 91, 0.18)',
+        backgroundColor: 'color-mix(in srgb, var(--accent-lever) 4%, transparent)',
+        borderColor: 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
       }}
     >
       {/* Type label */}
       <div className="space-y-0.5">
         <p
           className="text-[10px] font-semibold uppercase tracking-widest"
-          style={{ color: '#C85B5B' }}
+          style={{ color: 'var(--accent-lever)' }}
         >
           Generate
         </p>
@@ -98,14 +98,14 @@ export function MediaSpecGenerator({
             <button
               key={a}
               onClick={() => setAudience(a)}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
+              className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-lever)]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
               style={{
                 backgroundColor: audience === a
-                  ? 'rgba(200, 91, 91, 0.18)'
+                  ? 'color-mix(in srgb, var(--accent-lever) 18%, transparent)'
                   : 'var(--surface-1)',
-                color: audience === a ? '#C85B5B' : 'var(--text-muted)',
+                color: audience === a ? 'var(--accent-lever)' : 'var(--text-muted)',
                 border: audience === a
-                  ? '1px solid rgba(200, 91, 91, 0.35)'
+                  ? '1px solid color-mix(in srgb, var(--accent-lever) 35%, transparent)'
                   : '1px solid var(--border)',
               }}
             >
@@ -117,12 +117,12 @@ export function MediaSpecGenerator({
 
       {/* Error message */}
       {error && (
-        <div className="rounded-lg px-4 py-3 space-y-2" style={{ backgroundColor: 'rgba(200,91,91,0.08)', border: '1px solid rgba(200,91,91,0.2)' }}>
-          <p className="text-xs" style={{ color: '#C85B5B' }}>{error}</p>
+        <div className="rounded-lg px-4 py-3 space-y-2" style={{ backgroundColor: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--accent-lever) 20%, transparent)' }}>
+          <p className="text-xs" style={{ color: 'var(--accent-lever)' }}>{error}</p>
           <button
             onClick={handleGenerate}
-            className="text-xs underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
-            style={{ color: '#C85B5B' }}
+            className="text-xs underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-lever)]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
+            style={{ color: 'var(--accent-lever)' }}
           >
             Try again
           </button>
@@ -134,11 +134,11 @@ export function MediaSpecGenerator({
         <button
           onClick={handleGenerate}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
+          className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-lever)]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
           style={{
-            backgroundColor: loading ? 'rgba(200,91,91,0.12)' : 'rgba(200, 91, 91, 0.18)',
-            color: '#C85B5B',
-            border: '1px solid rgba(200, 91, 91, 0.3)',
+            backgroundColor: loading ? 'color-mix(in srgb, var(--accent-lever) 12%, transparent)' : 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
+            color: 'var(--accent-lever)',
+            border: '1px solid color-mix(in srgb, var(--accent-lever) 30%, transparent)',
             opacity: loading ? 0.7 : 1,
             cursor: loading ? 'not-allowed' : 'pointer',
           }}
@@ -157,7 +157,7 @@ export function MediaSpecGenerator({
         <button
           onClick={onCancel}
           disabled={loading}
-          className="text-sm text-text-faint hover:text-text-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85B5B]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
+          className="text-sm text-text-faint hover:text-text-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-lever)]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface-0"
         >
           Cancel
         </button>

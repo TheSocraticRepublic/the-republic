@@ -111,7 +111,7 @@ export function ReportCard({
               className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded"
               style={{
                 backgroundColor: 'rgba(200, 160, 75, 0.15)',
-                color: '#C8A84B',
+                color: 'var(--accent-gadfly)',
                 border: '1px solid rgba(200, 160, 75, 0.25)',
               }}
             >
@@ -171,9 +171,9 @@ export function ReportCard({
                 disabled={loading}
                 className="text-xs px-3 py-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: 'rgba(200, 91, 91, 0.12)',
-                  color: '#C85B5B',
-                  border: '1px solid rgba(200, 91, 91, 0.25)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)',
+                  color: 'var(--accent-lever)',
+                  border: '1px solid color-mix(in srgb, var(--accent-lever) 25%, transparent)',
                 }}
               >
                 Hide post
@@ -183,9 +183,9 @@ export function ReportCard({
                 disabled={loading}
                 className="text-xs px-3 py-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: 'rgba(91, 200, 138, 0.10)',
-                  color: '#5BC88A',
-                  border: '1px solid rgba(91, 200, 138, 0.22)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)',
+                  color: 'var(--accent-mirror)',
+                  border: '1px solid color-mix(in srgb, var(--accent-mirror) 22%, transparent)',
                 }}
               >
                 Unhide post
@@ -199,9 +199,9 @@ export function ReportCard({
                 disabled={loading}
                 className="text-xs px-3 py-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: 'rgba(200, 91, 91, 0.12)',
-                  color: '#C85B5B',
-                  border: '1px solid rgba(200, 91, 91, 0.25)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)',
+                  color: 'var(--accent-lever)',
+                  border: '1px solid color-mix(in srgb, var(--accent-lever) 25%, transparent)',
                 }}
               >
                 Lock thread
@@ -211,9 +211,9 @@ export function ReportCard({
                 disabled={loading}
                 className="text-xs px-3 py-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: 'rgba(91, 200, 138, 0.10)',
-                  color: '#5BC88A',
-                  border: '1px solid rgba(91, 200, 138, 0.22)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)',
+                  color: 'var(--accent-mirror)',
+                  border: '1px solid color-mix(in srgb, var(--accent-mirror) 22%, transparent)',
                 }}
               >
                 Unlock thread

@@ -23,6 +23,7 @@
   --color-gadfly: var(--accent-gadfly);
   --color-lever: var(--accent-lever);
   --color-mirror: var(--accent-mirror);
+  --color-votes: var(--accent-votes);
 
   /* Content island — light surface for briefing document */
   --color-island-bg: #fafaf9;
@@ -65,6 +66,7 @@
   --accent-gadfly: #B45309;
   --accent-lever: #DC2626;
   --accent-mirror: #059669;
+  --accent-votes: #D4764E;
 
   color-scheme: light;
 }
@@ -89,6 +91,7 @@
   --accent-gadfly: #C8A84B;
   --accent-lever: #C85B5B;
   --accent-mirror: #5BC88A;
+  --accent-votes: #D4764E;
 
   color-scheme: dark;
 }
@@ -113,6 +116,7 @@
   --accent-gadfly: #C8A84B;
   --accent-lever: #C85B5B;
   --accent-mirror: #5BC88A;
+  --accent-votes: #D4764E;
 
   color-scheme: dark;
 }
