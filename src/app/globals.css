@@ -224,6 +224,44 @@ body {
   50% { opacity: 0.035; }
 }
 
+/* Investigation page — vertical thread connecting sections */
+.investigation-thread {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.investigation-thread::before {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  top: 2rem;
+  bottom: 2rem;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--border-strong) 5%,
+    var(--border-strong) 95%,
+    transparent
+  );
+}
+
+.investigation-thread > section {
+  position: relative;
+}
+
+.investigation-thread > section::before {
+  content: '';
+  position: absolute;
+  left: calc(-2rem + 0.5rem - 3px);
+  top: 1.5rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+}
+
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .content-island,
