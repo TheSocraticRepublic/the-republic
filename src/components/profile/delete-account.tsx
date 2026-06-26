@@ -33,7 +33,6 @@ export function DeleteAccount() {
     <div className="mt-10 rounded-xl border border-[#C85B5B]/30 bg-[#C85B5B]/5 p-6">
       <h2
         className="text-base font-semibold tracking-tight text-text-primary"
-        style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
       >
         Delete account
       </h2>

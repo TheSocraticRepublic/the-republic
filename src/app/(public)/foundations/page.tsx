@@ -6,8 +6,6 @@ export const metadata = {
     'The philosophical groundwork that conceived Open Cave — five papers, one argument in five movements.',
 }
 
-const DISPLAY_FONT = '"Plus Jakarta Sans", system-ui, sans-serif'
-
 interface Paper {
   numeral: string
   title: string
@@ -66,7 +64,6 @@ export default function FoundationsPage() {
       <div className="mb-8">
         <h1
           className="text-xl font-bold tracking-tight text-text-primary"
-          style={{ fontFamily: DISPLAY_FONT }}
         >
           The Groundwork
         </h1>
@@ -109,7 +106,7 @@ export default function FoundationsPage() {
               {/* Roman numeral */}
               <span
                 className="flex-shrink-0 pt-0.5 text-lg font-semibold tabular-nums"
-                style={{ fontFamily: DISPLAY_FONT, color: 'var(--accent-gadfly)' }}
+                style={{ color: 'var(--accent-gadfly)' }}
               >
                 {paper.numeral}
               </span>
@@ -118,7 +115,6 @@ export default function FoundationsPage() {
               <div className="min-w-0 flex-1">
                 <h2
                   className="text-base font-semibold tracking-tight text-text-primary"
-                  style={{ fontFamily: DISPLAY_FONT }}
                 >
                   {paper.title}
                 </h2>

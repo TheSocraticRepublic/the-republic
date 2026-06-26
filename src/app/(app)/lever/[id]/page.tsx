@@ -77,7 +77,6 @@ export default async function LeverActionPage({ params }: PageProps) {
         <div className="flex-1 min-w-0">
           <h1
             className="text-lg font-bold tracking-tight text-text-primary leading-snug"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {action.title}
           </h1>

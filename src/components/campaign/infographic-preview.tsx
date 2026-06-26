@@ -136,7 +136,6 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
           backgroundColor: '#fafaf9',
           borderRadius: '16px',
           padding: '32px',
-          fontFamily: '"Plus Jakarta Sans", "Inter", system-ui, sans-serif',
           maxWidth: '600px',
           border: '1px solid #e7e5e4',
         }}

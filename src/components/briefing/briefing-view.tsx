@@ -432,7 +432,6 @@ function PlayersSection({ content, palette }: { content: string; palette: Palett
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <span
                 style={{
-                  fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
                   fontSize: '14px',
                   fontWeight: 600,
                   color: palette.text,
@@ -581,7 +580,6 @@ function ComparisonSection({ content, palette }: { content: string; palette: Pal
           {/* Jurisdiction name */}
           <span
             style={{
-              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
               fontSize: '14px',
               fontWeight: 600,
               color: palette.text,
@@ -790,7 +788,6 @@ function DocumentCard({ block, palette }: { block: string; palette: Palette }) {
           <span
             className="font-semibold"
             style={{
-              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
               fontSize: '14px',
               lineHeight: '1.4',
               color: palette.text,
@@ -1245,8 +1242,7 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuest
             Your Concern
           </div>
           <p style={{
-            fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-            fontSize: '24px',
+                        fontSize: '24px',
             fontWeight: 700,
             lineHeight: '1.3',
             color: palette.text,

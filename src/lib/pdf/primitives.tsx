@@ -140,7 +140,7 @@ const findingStyles = StyleSheet.create({
     paddingLeft: 0,
   },
   number: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: 11,
     color: colors.accent,
@@ -282,7 +282,7 @@ const tableStyles = StyleSheet.create({
     borderBottomColor: colors.text,
   },
   headerCell: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: typeScale.bodySmall,
     padding: space.md,
@@ -322,7 +322,7 @@ const tableStyles = StyleSheet.create({
     borderBottomColor: colors.borderFaint,
   },
   groupHeaderText: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: 8.5,
     letterSpacing: 0.85,
@@ -509,8 +509,8 @@ const highlightStyles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   number: {
-    fontFamily: 'Plus Jakarta Sans',
-    fontWeight: 800,
+    fontFamily: 'Instrument Sans',
+    fontWeight: 700,
     fontSize: 42,
     color: colors.accent,
     lineHeight: 1,
@@ -552,7 +552,7 @@ const quoteStyles = StyleSheet.create({
     marginVertical: space.xxl,
   },
   text: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 600,
     fontSize: typeScale.sectionHeading,
     lineHeight: 1.45,

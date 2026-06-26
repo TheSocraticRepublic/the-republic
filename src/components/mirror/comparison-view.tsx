@@ -127,7 +127,6 @@ function AlternativeCard({ block }: { block: string }) {
         <div className="mb-3 flex items-center justify-between gap-2">
           <span
             className="text-sm font-semibold text-text-primary"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {jurisdictionName}
           </span>

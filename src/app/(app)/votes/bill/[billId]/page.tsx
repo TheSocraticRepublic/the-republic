@@ -88,7 +88,6 @@ export default async function BillDetailPage({ params }: PageProps) {
 
         <h1
           className="text-base font-semibold text-text-primary leading-relaxed mb-4"
-          style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         >
           {bill.titleEn}
         </h1>

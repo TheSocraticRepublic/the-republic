@@ -1,19 +1,25 @@
 import type { Metadata } from 'next'
-import { Plus_Jakarta_Sans, Inter, Source_Serif_4 } from 'next/font/google'
+import { Fraunces, Instrument_Sans, Geist_Mono, Source_Serif_4 } from 'next/font/google'
 import './globals.css'
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const fraunces = Fraunces({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
+  axes: ['SOFT', 'WONK'],
   display: 'swap',
-  variable: '--font-plus-jakarta',
+  variable: '--font-fraunces',
 })
 
-const inter = Inter({
+const instrumentSans = Instrument_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
-  variable: '--font-inter',
+  variable: '--font-instrument-sans',
+})
+
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-geist-mono',
 })
 
 const sourceSerif4 = Source_Serif_4({
@@ -58,7 +64,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`dark h-full antialiased ${plusJakartaSans.variable} ${inter.variable} ${sourceSerif4.variable}`}>
+    <html lang="en" className={`dark h-full antialiased ${fraunces.variable} ${instrumentSans.variable} ${geistMono.variable} ${sourceSerif4.variable}`}>
       <head />
       <body className="min-h-full bg-surface-0 text-text-primary">
         {children}

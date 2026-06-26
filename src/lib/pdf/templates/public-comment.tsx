@@ -23,15 +23,15 @@ const styles = StyleSheet.create({
 
   // Docket reference
   docketLabel: {
-    fontFamily: 'Plus Jakarta Sans',
-    fontWeight: 800,
+    fontFamily: 'Instrument Sans',
+    fontWeight: 700,
     fontSize: typeScale.small,
     letterSpacing: 0.72,
     color: colors.muted,
     marginBottom: 4,
   },
   docketId: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: 16,
     color: colors.text,
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
 
   // Section reference headers
   sectionRef: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: typeScale.subHeading,
     color: colors.text,
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     position: 'absolute' as const,
     left: 0,
     top: 0,
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: typeScale.subHeading,
     color: colors.muted,
@@ -94,8 +94,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(200, 91, 91, 0.04)',
   },
   recsHeader: {
-    fontFamily: 'Plus Jakarta Sans',
-    fontWeight: 800,
+    fontFamily: 'Instrument Sans',
+    fontWeight: 700,
     fontSize: typeScale.subHeading,
     letterSpacing: 1.1,
     color: colors.accent,
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   recNumber: {
     position: 'absolute' as const,
     left: 0,
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     color: colors.accent,
     fontSize: typeScale.subHeading,
@@ -154,8 +154,8 @@ const styles = StyleSheet.create({
     color: colors.footerText,
   },
   footerWordmark: {
-    fontFamily: 'Plus Jakarta Sans',
-    fontWeight: 800,
+    fontFamily: 'Instrument Sans',
+    fontWeight: 700,
     fontSize: 7,
     letterSpacing: 1.05,
     color: colors.borderFaint,

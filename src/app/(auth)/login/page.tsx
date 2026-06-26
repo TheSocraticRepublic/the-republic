@@ -99,7 +99,6 @@ export default function LoginPage() {
         <div className="mb-8 text-center">
           <h1
             className="mb-1 text-2xl font-bold text-white"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             Open Cave
           </h1>

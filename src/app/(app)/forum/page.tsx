@@ -93,7 +93,6 @@ export default async function ForumPage({
         <div>
           <h1
             className="text-xl font-bold tracking-tight text-text-primary"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             Forum
             {total > 0 && (

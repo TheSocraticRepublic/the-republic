@@ -64,7 +64,6 @@ export function SessionCard({
         <div className="flex-1 min-w-0">
           <p
             className="truncate text-sm font-medium text-text-primary leading-snug"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             {title}
           </p>

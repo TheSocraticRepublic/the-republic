@@ -169,7 +169,6 @@ export function GadflySheet({
               </span>
               <Dialog.Title
                 className="text-sm font-semibold text-text-primary"
-                style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
               >
                 Socratic Inquiry
               </Dialog.Title>

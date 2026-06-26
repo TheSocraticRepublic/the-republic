@@ -34,9 +34,9 @@
   --color-island-card-border: #e0ddd9;
 
   /* Typography — font families injected by next/font via CSS variables */
-  --font-display: var(--font-plus-jakarta, "Plus Jakarta Sans"), system-ui, sans-serif;
-  --font-body: var(--font-inter, "Inter"), system-ui, sans-serif;
-  --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --font-display: var(--font-fraunces), "Palatino Linotype", Georgia, serif;
+  --font-body: var(--font-instrument-sans), "Trebuchet MS", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono, var(--font-jetbrains-mono)), "SF Mono", "JetBrains Mono", ui-monospace, monospace;
   --font-serif: var(--font-source-serif, "Source Serif 4"), "Georgia", serif;
 
   /* Shadows (warm-tinted, layered) */
@@ -122,6 +122,7 @@ body {
   background-color: var(--surface-0);
   color: var(--text-primary);
   font-family: var(--font-body);
+  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100%;
@@ -200,6 +201,16 @@ body {
 [data-scroll-fade].in-view {
   opacity: 1;
   transform: translateY(0);
+}
+
+.section-heading {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-strong);
+  margin-bottom: 0.75rem;
 }
 
 @keyframes scroll-hint {

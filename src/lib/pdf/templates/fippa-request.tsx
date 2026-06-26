@@ -94,8 +94,8 @@ const styles = StyleSheet.create({
   footerWordmark: {
     marginTop: 80,
     textAlign: 'center' as const,
-    fontFamily: 'Plus Jakarta Sans',
-    fontWeight: 800,
+    fontFamily: 'Instrument Sans',
+    fontWeight: 700,
     fontSize: 7,
     letterSpacing: 1.4,
     color: colors.border,

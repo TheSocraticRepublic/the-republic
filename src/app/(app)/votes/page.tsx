@@ -12,7 +12,6 @@ export default function VoteTrackerPage() {
       <div className="mb-12">
         <h1
           className="mb-3 text-3xl font-bold tracking-tight text-text-primary"
-          style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         >
           Who represents you?
         </h1>
