@@ -45,7 +45,6 @@ export default async function OraclePage() {
         <div>
           <h1
             className="text-xl font-bold tracking-tight text-text-primary"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             Oracle
           </h1>

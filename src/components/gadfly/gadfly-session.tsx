@@ -177,7 +177,6 @@ export function GadflySession({
             </span>
             <h1
               className="truncate text-sm font-semibold text-text-primary"
-              style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
             >
               {session.title}
             </h1>

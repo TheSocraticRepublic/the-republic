@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   title: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: 20,
     lineHeight: 1.25,
@@ -42,21 +42,21 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.text,
   },
   headerCell: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: typeScale.bodySmall,
     padding: space.md,
     color: colors.text,
   },
   headerCellDimension: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 600,
     fontSize: typeScale.small,
     padding: space.md,
     color: colors.muted,
   },
   headerCellSubject: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: typeScale.bodySmall,
     padding: space.md,
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   argumentHeader: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: typeScale.subHeading,
     color: colors.text,

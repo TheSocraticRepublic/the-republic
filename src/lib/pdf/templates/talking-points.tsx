@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start' as const,
   },
   headerContext: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: 13,
     color: colors.text,
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   theAskLabel: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 800,
     fontSize: typeScale.bodySmall,
     letterSpacing: 1.2,
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   theAskText: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: typeScale.sectionHeading,
     lineHeight: 1.35,
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
 
   // Section headers
   sectionHeader: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: typeScale.bodySmall,
     letterSpacing: 0.6,
@@ -84,14 +84,14 @@ const styles = StyleSheet.create({
     position: 'absolute' as const,
     left: 0,
     top: -1,
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 800,
     fontSize: 18,
     color: colors.accent,
     lineHeight: 1,
   },
   pointClaim: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 600,
     fontSize: 12,
     lineHeight: 1.35,
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   pushbackColHeader: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: typeScale.small,
     letterSpacing: 0.54,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     borderTopStyle: 'dashed' as const,
   },
   notesLabel: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 600,
     fontSize: typeScale.footnote,
     letterSpacing: 0.64,

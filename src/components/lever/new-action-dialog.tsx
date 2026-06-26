@@ -226,7 +226,6 @@ export function NewActionDialog({
           <div className="mb-5 flex items-center justify-between">
             <Dialog.Title
               className="text-base font-semibold text-text-primary"
-              style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
             >
               New Civic Action
             </Dialog.Title>

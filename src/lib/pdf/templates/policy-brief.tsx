@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.45,
   },
   briefTitle: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: typeScale.title,
     lineHeight: 1.2,
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     marginBottom: 36,
   },
   execLabel: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: 8.5,
     letterSpacing: 1.02,
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   sidebarNumber: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 800,
     fontSize: 36,
     lineHeight: 1,
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
 
   // Sub-heading
   subHeading: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 600,
     fontSize: typeScale.subHeading,
     color: colors.textSecondary,
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     marginVertical: 28,
   },
   recsLabel: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 800,
     fontSize: typeScale.small,
     letterSpacing: 1.26,
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     position: 'absolute' as const,
     left: 0,
     top: 8,
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: 12,
     color: colors.accent,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   implHeaderCell: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 600,
     fontSize: typeScale.small,
     letterSpacing: 0.45,
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     alignItems: 'center' as const,
   },
   footerBrand: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 800,
     fontSize: typeScale.footnote,
     letterSpacing: 1.2,

@@ -73,7 +73,6 @@ export default async function OracleDocumentPage({ params }: PageProps) {
           <div className="flex-1 min-w-0">
             <h1
               className="text-xl font-bold leading-snug tracking-tight text-text-primary"
-              style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
             >
               {doc.title}
             </h1>

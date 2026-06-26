@@ -47,7 +47,6 @@ export function OracleAnalysisPanel({
             className="text-sm font-semibold"
             style={{
               color: '#89B4C8',
-              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
             }}
           >
             Oracle Analysis

@@ -628,8 +628,7 @@ function PlayersSection({ content, palette }: { content: string; palette: Palett
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <span
                 style={{
-                  fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-                  fontSize: '14px',
+                                    fontSize: '14px',
                   fontWeight: 600,
                   color: palette.text,
                 }}
@@ -777,8 +776,7 @@ function ComparisonSection({ content, palette }: { content: string; palette: Pal
           {/* Jurisdiction name */}
           <span
             style={{
-              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-              fontSize: '14px',
+                            fontSize: '14px',
               fontWeight: 600,
               color: palette.text,
               display: 'block',
@@ -1108,7 +1106,6 @@ function DocumentCard({
         {docName && (
           <span
             style={{
-              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
               fontSize: '14px',
               fontWeight: 700,
               lineHeight: '1.4',
@@ -1570,6 +1567,28 @@ function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuest
         padding: '20px 24px 24px 24px',
       }}
     >
+      {concernText && (
+        <>
+          <div
+            className="font-semibold uppercase tracking-[0.1em]"
+            style={{ fontSize: '11px', color: palette.muted, marginBottom: '8px' }}
+          >
+            Your Concern
+          </div>
+          <p style={{
+            fontSize: '24px',
+            fontWeight: 700,
+            lineHeight: '1.3',
+            color: palette.text,
+            maxWidth: '60ch',
+            marginBottom: '16px',
+          }}>
+            {concernText}
+          </p>
+          <div style={{ height: '1px', backgroundColor: palette.border, marginBottom: '16px' }} />
+        </>
+      )}
+
       {findingHeadings.length > 0 && (
         <>
           <div

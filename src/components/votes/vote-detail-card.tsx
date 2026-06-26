@@ -33,7 +33,6 @@ export function VoteDetailCard({
 
       <p
         className="text-base font-semibold text-text-primary leading-relaxed mb-4"
-        style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
       >
         {descriptionEn}
       </p>

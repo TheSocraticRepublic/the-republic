@@ -16,7 +16,7 @@ export default async function ModerationPage() {
       <div className="mx-auto max-w-2xl px-6 py-12">
         <h1
           className="text-xl font-bold tracking-tight text-text-primary mb-3"
-          style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
+
         >
           Moderation Queue
         </h1>
@@ -42,7 +42,7 @@ export default async function ModerationPage() {
       <div className="mb-8">
         <h1
           className="text-xl font-bold tracking-tight text-text-primary mb-1"
-          style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
+
         >
           Moderation Queue
         </h1>

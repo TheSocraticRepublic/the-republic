@@ -14,7 +14,7 @@ import type { FactSheetSpec } from '@/lib/campaign/schemas'
 
 const styles = StyleSheet.create({
   headline: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: 23,
     lineHeight: 1.2,
@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
     maxWidth: '90%',
   },
   sectionHeader: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: typeScale.subHeading,
     letterSpacing: 0.44,
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   playerHeaderText: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 600,
     fontSize: typeScale.small,
     color: colors.muted,

@@ -111,7 +111,7 @@ export const shared = StyleSheet.create({
 
   // Wordmark
   wordmark: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 800,
     fontSize: type.wordmark,
     letterSpacing: 1.8, // ~0.2em at 9pt
@@ -120,7 +120,7 @@ export const shared = StyleSheet.create({
   },
 
   wordmarkSubtle: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 800,
     fontSize: type.wordmark,
     letterSpacing: 1.8,
@@ -130,7 +130,7 @@ export const shared = StyleSheet.create({
 
   // Section heading with bottom border
   sectionHeading: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: type.sectionHeading,
     color: colors.text,
@@ -143,7 +143,7 @@ export const shared = StyleSheet.create({
 
   // Smaller section header (uppercase, muted)
   sectionLabel: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 700,
     fontSize: type.subHeading,
     letterSpacing: 0.44, // ~0.04em at 11pt
@@ -176,7 +176,7 @@ export const shared = StyleSheet.create({
   },
 
   footerWordmark: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 800,
     fontSize: 7,
     letterSpacing: 1.05,
@@ -192,7 +192,7 @@ export const shared = StyleSheet.create({
   },
 
   sourcesHeader: {
-    fontFamily: 'Plus Jakarta Sans',
+    fontFamily: 'Instrument Sans',
     fontWeight: 600,
     fontSize: type.footnote,
     letterSpacing: 0.64, // ~0.08em

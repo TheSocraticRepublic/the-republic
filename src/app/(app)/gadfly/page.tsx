@@ -53,7 +53,6 @@ export default async function GadflyPage({ searchParams }: GadflyPageProps) {
           <div>
             <h1
               className="text-xl font-bold tracking-tight text-text-primary"
-              style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
             >
               Gadfly
             </h1>

@@ -350,7 +350,7 @@ function printPage(opts: {
 <title>${esc(opts.title)} -- Open Cave</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -394,7 +394,7 @@ function printPage(opts: {
     border-bottom: 2px solid #C85B5B;
   }
   .wordmark {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Instrument Sans', sans-serif;
     font-weight: 700;
     font-size: 10px;
     letter-spacing: 0.2em;
@@ -403,7 +403,7 @@ function printPage(opts: {
     margin-bottom: 1rem;
   }
   .doc-label {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Instrument Sans', sans-serif;
     font-weight: 600;
     font-size: 10px;
     letter-spacing: 0.15em;
@@ -412,7 +412,7 @@ function printPage(opts: {
     margin-bottom: 0.25rem;
   }
   .doc-title {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Instrument Sans', sans-serif;
     font-weight: 700;
     font-size: 24px;
     line-height: 1.3;
@@ -427,7 +427,7 @@ function printPage(opts: {
   /* Sections */
   .section { margin-bottom: 2rem; }
   .section-label {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Instrument Sans', sans-serif;
     font-weight: 600;
     font-size: 10px;
     letter-spacing: 0.15em;
@@ -457,7 +457,7 @@ function printPage(opts: {
   .cell-label { display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #78716c; margin-bottom: 0.25rem; }
 
   /* Headline (fact sheet) */
-  .headline { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: 16px; margin-bottom: 1.5rem; color: #1c1917; }
+  .headline { font-family: 'Instrument Sans', sans-serif; font-weight: 600; font-size: 16px; margin-bottom: 1.5rem; color: #1c1917; }
 
   /* Findings */
   .finding { display: flex; gap: 0.75rem; margin-bottom: 1rem; }

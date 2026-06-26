@@ -30,7 +30,6 @@ export function AppShell({ children, userEmail, displayName, effectiveWeight }: 
         <Link href="/">
           <span
             className="text-base font-bold tracking-tight text-text-primary"
-            style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
           >
             Open Cave
           </span>

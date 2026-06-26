@@ -36,7 +36,6 @@ export default function RecentVotesPage() {
       <div className="mb-8">
         <h1
           className="mb-2 text-xl font-bold tracking-tight text-text-primary"
-          style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
         >
           Recent Votes
         </h1>

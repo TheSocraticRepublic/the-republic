@@ -105,7 +105,6 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
           <div className="min-w-0 flex-1">
             <h1
               className="text-lg font-bold tracking-tight text-text-primary leading-snug"
-              style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}
             >
               {archive.concern}
             </h1>
