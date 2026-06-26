@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { clsx } from 'clsx'
 import { InsightBadge } from './insight-badge'
 
 interface Turn {
@@ -45,31 +44,37 @@ function GadflyMessage({
   isStreaming?: boolean
 }) {
   return (
-    <div className="flex flex-col items-start max-w-[80%]">
-      <div
-        className="rounded-xl rounded-tl-sm border px-4 py-3"
-        style={{
-          borderColor: 'rgba(200, 168, 75, 0.2)',
-          backgroundColor: 'rgba(200, 168, 75, 0.05)',
-          borderLeftWidth: '2px',
-          borderLeftColor: '#C8A84B',
-        }}
-      >
-        <p className="text-sm leading-relaxed text-text-primary whitespace-pre-wrap">
-          {content}
-          {isStreaming && (
-            <span
-              className="ml-0.5 inline-block h-3.5 w-0.5 align-middle animate-pulse"
-              style={{ backgroundColor: '#C8A84B' }}
-            />
-          )}
-        </p>
-      </div>
+    <div
+      className="relative w-full"
+      style={{
+        paddingLeft: '1rem',
+        borderLeft: '3px solid var(--accent-gadfly)',
+      }}
+    >
       {questionType && QUESTION_TYPE_LABELS[questionType] && (
-        <span className="mt-1 text-[10px] text-text-faint uppercase tracking-widest px-1">
+        <span
+          className="absolute right-0 top-0 text-[10px] uppercase tracking-widest"
+          style={{
+            fontFamily: 'var(--font-body)',
+            color: 'var(--accent-gadfly)',
+            opacity: 0.5,
+          }}
+        >
           {QUESTION_TYPE_LABELS[questionType]}
         </span>
       )}
+      <p
+        className="text-sm leading-relaxed text-text-primary whitespace-pre-wrap italic"
+        style={{ fontFamily: 'var(--font-serif)' }}
+      >
+        {content}
+        {isStreaming && (
+          <span
+            className="ml-0.5 inline-block h-3.5 w-0.5 align-middle animate-pulse"
+            style={{ backgroundColor: 'var(--accent-gadfly)' }}
+          />
+        )}
+      </p>
       {insights?.map((ins) => (
         <InsightBadge key={ins.id} insight={ins.insight} />
       ))}
@@ -79,16 +84,16 @@ function GadflyMessage({
 
 function CitizenMessage({ content }: { content: string }) {
   return (
-    <div className="flex justify-end">
-      <div
-        className="max-w-[80%] rounded-xl rounded-tr-sm border px-4 py-3"
-        style={{
-          borderColor: 'var(--border)',
-          backgroundColor: 'var(--surface-3)',
-        }}
+    <div
+      className="w-full rounded-lg px-4 py-2"
+      style={{ backgroundColor: 'color-mix(in srgb, var(--surface-2) 50%, transparent)' }}
+    >
+      <p
+        className="text-sm leading-relaxed text-text-primary whitespace-pre-wrap"
+        style={{ fontFamily: 'var(--font-serif)' }}
       >
-        <p className="text-sm leading-relaxed text-text-primary whitespace-pre-wrap">{content}</p>
-      </div>
+        {content}
+      </p>
     </div>
   )
 }

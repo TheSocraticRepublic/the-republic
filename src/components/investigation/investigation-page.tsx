@@ -68,7 +68,7 @@ export function InvestigationPage({
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 space-y-10">
+    <div className="investigation-thread mx-auto max-w-3xl px-6 py-12 space-y-10">
       {/* Briefing content */}
       <section>
         <BriefingView
@@ -114,13 +114,15 @@ export function InvestigationPage({
       )}
 
       {/* 6. Civic Context strip — votes, discussion, reviews, archive */}
-      <CivicContextStrip
-        investigationId={id}
-        isAuthor={isAuthor}
-        archiveStatus={archiveStatus}
-        expanded={civicExpanded}
-        onExpand={setCivicExpanded}
-      />
+      <section>
+        <CivicContextStrip
+          investigationId={id}
+          isAuthor={isAuthor}
+          archiveStatus={archiveStatus}
+          expanded={civicExpanded}
+          onExpand={setCivicExpanded}
+        />
+      </section>
 
       {/* 7. Gadfly slide-over dialog */}
       <GadflySheet
