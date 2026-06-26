@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     marginTop: 80,
     textAlign: 'center' as const,
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: 7,
     letterSpacing: 1.4,
     color: colors.border,

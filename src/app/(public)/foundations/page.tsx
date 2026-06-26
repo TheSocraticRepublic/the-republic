@@ -6,8 +6,6 @@ export const metadata = {
     'The philosophical groundwork that conceived Open Cave — five papers, one argument in five movements.',
 }
 
-const DISPLAY_FONT = 'var(--font-display)'
-
 interface Paper {
   numeral: string
   title: string

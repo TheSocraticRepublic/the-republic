@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   },
   sidebarNumber: {
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: 36,
     lineHeight: 1,
     color: colors.accent,
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   recsLabel: {
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: typeScale.small,
     letterSpacing: 1.26,
     color: colors.accent,
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   },
   footerBrand: {
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: typeScale.footnote,
     letterSpacing: 1.2,
     color: colors.borderFaint,

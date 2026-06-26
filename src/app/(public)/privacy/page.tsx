@@ -1,5 +1,3 @@
-const DISPLAY_FONT = 'var(--font-display)'
-
 export const metadata = {
   title: 'Privacy',
   description:

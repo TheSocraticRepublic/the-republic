@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
   // Docket reference
   docketLabel: {
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: typeScale.small,
     letterSpacing: 0.72,
     color: colors.muted,
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   },
   recsHeader: {
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: typeScale.subHeading,
     letterSpacing: 1.1,
     color: colors.accent,
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   },
   footerWordmark: {
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: 7,
     letterSpacing: 1.05,
     color: colors.borderFaint,

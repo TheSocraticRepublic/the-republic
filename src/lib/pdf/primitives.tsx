@@ -510,7 +510,7 @@ const highlightStyles = StyleSheet.create({
   },
   number: {
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: 42,
     color: colors.accent,
     lineHeight: 1,
