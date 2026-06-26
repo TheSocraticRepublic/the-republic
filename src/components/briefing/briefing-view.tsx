@@ -628,7 +628,7 @@ function PlayersSection({ content, palette }: { content: string; palette: Palett
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <span
                 style={{
-                                    fontSize: '14px',
+                  fontSize: '14px',
                   fontWeight: 600,
                   color: palette.text,
                 }}
@@ -776,7 +776,7 @@ function ComparisonSection({ content, palette }: { content: string; palette: Pal
           {/* Jurisdiction name */}
           <span
             style={{
-                            fontSize: '14px',
+              fontSize: '14px',
               fontWeight: 600,
               color: palette.text,
               display: 'block',

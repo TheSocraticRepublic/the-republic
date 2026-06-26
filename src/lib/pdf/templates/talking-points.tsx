@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   },
   theAskLabel: {
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: typeScale.bodySmall,
     letterSpacing: 1.2,
     color: colors.accent,
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: -1,
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: 18,
     color: colors.accent,
     lineHeight: 1,

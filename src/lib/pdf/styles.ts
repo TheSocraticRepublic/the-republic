@@ -112,7 +112,7 @@ export const shared = StyleSheet.create({
   // Wordmark
   wordmark: {
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: type.wordmark,
     letterSpacing: 1.8, // ~0.2em at 9pt
     color: colors.wordmark,
@@ -121,7 +121,7 @@ export const shared = StyleSheet.create({
 
   wordmarkSubtle: {
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: type.wordmark,
     letterSpacing: 1.8,
     color: colors.wordmark,
@@ -177,7 +177,7 @@ export const shared = StyleSheet.create({
 
   footerWordmark: {
     fontFamily: 'Instrument Sans',
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: 7,
     letterSpacing: 1.05,
     color: colors.borderFaint,
