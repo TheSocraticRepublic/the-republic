@@ -32,7 +32,7 @@ export default async function VoteDetailPage({ params }: PageProps) {
   const partyVoteData = parsePartyVotes(vote.partyVotes)
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10 space-y-10">
+    <div data-arm="votes" className="mx-auto max-w-2xl px-6 py-10 space-y-10">
       <VoteDetailCard
         date={vote.date}
         descriptionEn={vote.descriptionEn}

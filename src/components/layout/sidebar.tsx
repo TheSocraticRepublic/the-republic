@@ -183,9 +183,10 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
           className={clsx(
             `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
             votesActive
-              ? 'bg-surface-3 text-text-primary'
+              ? 'text-text-primary'
               : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
           )}
+          style={votesActive ? { backgroundColor: 'color-mix(in srgb, var(--accent-votes) 8%, transparent)' } : undefined}
         >
           <span
             className={clsx(
@@ -323,9 +324,10 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
                       className={clsx(
                         `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
                         isActive
-                          ? 'bg-surface-3 text-text-primary'
+                          ? 'text-text-primary'
                           : 'text-text-muted hover:bg-surface-3 hover:text-text-secondary'
                       )}
+                      style={isActive ? { backgroundColor: `color-mix(in srgb, var(--accent-${arm.name.toLowerCase()}) 8%, transparent)` } : undefined}
                     >
                       <span
                         className={clsx(

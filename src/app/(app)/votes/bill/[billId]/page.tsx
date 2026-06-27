@@ -60,7 +60,7 @@ export default async function BillDetailPage({ params }: PageProps) {
     .orderBy(desc(federalVotes.date))
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10 space-y-10">
+    <div data-arm="votes" className="mx-auto max-w-2xl px-6 py-10 space-y-10">
       {/* Bill header */}
       <div
         className="rounded-xl border px-6 py-6"

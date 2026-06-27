@@ -3,8 +3,9 @@ import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { FileText, ArrowLeft, ExternalLink } from 'lucide-react'
+import { ArrowLeft, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
+import { ArmHeader } from '@/components/layout/arm-header'
 import { ActionViewer } from '@/components/lever/action-viewer'
 
 export const metadata = {
@@ -42,7 +43,7 @@ export default async function LeverActionPage({ params }: PageProps) {
   const typeLabel = ACTION_TYPE_LABELS[action.actionType] ?? action.actionType
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
+    <div data-arm="lever" className="mx-auto max-w-2xl px-6 py-10">
       {/* Back nav */}
       <div className="mb-6 flex items-center gap-4">
         <Link
@@ -64,25 +65,7 @@ export default async function LeverActionPage({ params }: PageProps) {
       </div>
 
       {/* Header */}
-      <div className="mb-8 flex items-start gap-3">
-        <span
-          className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border"
-          style={{
-            borderColor: 'color-mix(in srgb, var(--accent-lever) 25%, transparent)',
-            backgroundColor: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
-          }}
-        >
-          <FileText size={18} strokeWidth={1.75} style={{ color: 'var(--accent-lever)' }} />
-        </span>
-        <div className="flex-1 min-w-0">
-          <h1
-            className="text-lg font-bold tracking-tight text-text-primary leading-snug"
-          >
-            {action.title}
-          </h1>
-          <p className="mt-0.5 text-xs text-text-muted">{typeLabel}</p>
-        </div>
-      </div>
+      <ArmHeader arm="lever" title={action.title} subtitle={typeLabel} />
 
       {/* Viewer */}
       <ActionViewer
