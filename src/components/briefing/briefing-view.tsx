@@ -1187,7 +1187,8 @@ function splitDocumentBlocks(content: string): string[] {
   for (const line of lines) {
     const isBlockStart =
       line.match(/^###\s+/) ||
-      (line.match(/^\*\*.+\*\*$/) && !line.match(/^[-*]\s+\*\*/))
+      (line.match(/^\*\*.+\*\*$/) && !line.match(/^[-*]\s+\*\*/)) ||
+      line.match(/^[-*]\s+\*\*Document name:\*\*/i)
 
     if (isBlockStart && currentBlock.length > 0) {
       blocks.push(currentBlock.join('\n').trim())

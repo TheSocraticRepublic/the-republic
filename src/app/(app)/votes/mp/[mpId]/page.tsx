@@ -31,7 +31,7 @@ export default async function MpProfilePage({ params }: PageProps) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10 space-y-10">
+    <div data-arm="votes" className="mx-auto max-w-2xl px-6 py-10 space-y-10">
       {/* MP Profile */}
       <MpProfileCard
         name={mp.name}

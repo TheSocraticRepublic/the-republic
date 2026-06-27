@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { getDb } from '@/lib/db'
 import { documents } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
-import { Eye } from 'lucide-react'
+import { ArmHeader } from '@/components/layout/arm-header'
 import { UploadZone } from '@/components/oracle/upload-zone'
 import { DocumentCard } from '@/components/oracle/document-card'
 
@@ -30,27 +30,8 @@ export default async function OraclePage() {
     .orderBy(desc(documents.createdAt))
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
-      {/* Header */}
-      <div className="mb-10 flex items-center gap-3">
-        <span
-          className="flex h-10 w-10 items-center justify-center rounded-xl border"
-          style={{
-            borderColor: 'rgba(137, 180, 200, 0.25)',
-            backgroundColor: 'rgba(137, 180, 200, 0.08)',
-          }}
-        >
-          <Eye size={18} strokeWidth={1.75} style={{ color: '#89B4C8' }} />
-        </span>
-        <div>
-          <h1
-            className="text-xl font-bold tracking-tight text-text-primary"
-          >
-            Oracle
-          </h1>
-          <p className="text-xs text-text-muted">Civic document analysis</p>
-        </div>
-      </div>
+    <div data-arm="oracle" className="mx-auto max-w-2xl px-6 py-10">
+      <ArmHeader arm="oracle" title="Oracle" subtitle="Document analysis" />
 
       {/* Upload */}
       <section className="mb-10">

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ArmHeader } from '@/components/layout/arm-header'
 import { PostalCodeForm } from '@/components/votes/postal-code-form'
 import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
@@ -8,13 +9,9 @@ export const metadata = {
 
 export default function VoteTrackerPage() {
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12">
-      <div className="mb-12">
-        <h1
-          className="mb-3 text-3xl font-bold tracking-tight text-text-primary"
-        >
-          Who represents you?
-        </h1>
+    <div data-arm="votes" className="mx-auto max-w-2xl px-6 py-10">
+      <ArmHeader arm="votes" title="Vote Tracker" subtitle="Parliamentary voting records" />
+      <div className="mb-8">
         <p className="text-base leading-relaxed text-text-secondary">
           Enter your postal code to find your Member of Parliament and see how they vote on the issues that matter to you.
         </p>

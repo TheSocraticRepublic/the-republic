@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
-import { FileText } from 'lucide-react'
+import { ArmHeader } from '@/components/layout/arm-header'
 import { ActionCard } from '@/components/lever/action-card'
 import { NewActionDialog } from '@/components/lever/new-action-dialog'
 
@@ -43,36 +43,20 @@ export default async function LeverPage({ searchParams }: LeverPageProps) {
     .orderBy(desc(leverActions.createdAt))
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
-      {/* Header */}
-      <div className="mb-10 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span
-            className="flex h-10 w-10 items-center justify-center rounded-xl border"
-            style={{
-              borderColor: 'color-mix(in srgb, var(--accent-lever) 25%, transparent)',
-              backgroundColor: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
-            }}
-          >
-            <FileText size={18} strokeWidth={1.75} style={{ color: 'var(--accent-lever)' }} />
-          </span>
-          <div>
-            <h1
-              className="text-xl font-bold tracking-tight text-text-primary"
-            >
-              Lever
-            </h1>
-            <p className="text-xs text-text-muted">Civic action documents</p>
-          </div>
-        </div>
-
-        <NewActionDialog
-          initialDocumentId={initialDocumentId}
-          initialSessionId={initialSessionId}
-          initialInvestigationId={initialInvestigationId}
-          initialActionType={initialActionType}
-        />
-      </div>
+    <div data-arm="lever" className="mx-auto max-w-2xl px-6 py-10">
+      <ArmHeader
+        arm="lever"
+        title="Lever"
+        subtitle="Civic action documents"
+        action={
+          <NewActionDialog
+            initialDocumentId={initialDocumentId}
+            initialSessionId={initialSessionId}
+            initialInvestigationId={initialInvestigationId}
+            initialActionType={initialActionType}
+          />
+        }
+      />
 
       {/* Action list */}
       <section>
@@ -87,9 +71,8 @@ export default async function LeverPage({ searchParams }: LeverPageProps) {
 
         {actions.length === 0 ? (
           <div className="rounded-xl border border-border bg-surface-1 px-6 py-10 text-center">
-            <p className="text-sm text-text-muted">No actions yet.</p>
-            <p className="mt-1 text-xs text-text-faint">
-              Generate a FIPPA request, public comment, or policy brief to begin.
+            <p className="font-serif italic text-sm text-text-muted">
+              No civic actions yet. Knowledge without action is incomplete.
             </p>
           </div>
         ) : (

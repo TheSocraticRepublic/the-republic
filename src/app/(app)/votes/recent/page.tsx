@@ -32,7 +32,7 @@ export default function RecentVotesPage() {
   }, [page])
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
+    <div data-arm="votes" className="mx-auto max-w-2xl px-6 py-10">
       <div className="mb-8">
         <h1
           className="mb-2 text-xl font-bold tracking-tight text-text-primary"
