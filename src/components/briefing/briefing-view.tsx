@@ -570,7 +570,7 @@ function getRoleColor(role: string): string {
 function parsePlayers(content: string): PlayerData[] {
   const players: PlayerData[] = []
 
-  const lines = content.split('\n').map((l) => l.replace(/^\s*[-*]\s+/, '').trim()).filter(Boolean)
+  const lines = content.split('\n').map((l) => l.replace(/^\s*[-*]\s+/, '').trim()).filter((l) => l && !/^-{2,}$/.test(l))
 
   const fieldLabels = /^(?:\*\*)?(?:role|why they matter|track record|what they do|how they relate)(?:\*\*)?[:\s]/i
 
