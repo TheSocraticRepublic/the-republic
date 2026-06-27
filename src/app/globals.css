@@ -207,10 +207,23 @@ body {
   transform: translateY(0);
 }
 
+/* Arm environment tints */
+[data-arm="scout"] { --arm-tint: var(--accent-scout); }
+[data-arm="oracle"] { --arm-tint: var(--accent-oracle); }
+[data-arm="gadfly"] { --arm-tint: var(--accent-gadfly); }
+[data-arm="lever"] { --arm-tint: var(--accent-lever); }
+[data-arm="mirror"] { --arm-tint: var(--accent-mirror); }
+[data-arm="votes"] { --arm-tint: var(--accent-votes); }
+
+[data-arm] {
+  background: color-mix(in srgb, var(--surface-0) 96%, var(--arm-tint) 4%);
+  min-height: 100vh;
+}
+
 .section-heading {
-  font-family: var(--font-serif);
+  font-family: var(--font-body);
   font-size: 1rem;
-  font-weight: 400;
+  font-weight: 600;
   color: var(--text-secondary);
   padding-top: 1.25rem;
   border-top: 1px solid var(--border-strong);

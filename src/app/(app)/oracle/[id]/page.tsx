@@ -48,7 +48,7 @@ export default async function OracleDocumentPage({ params }: PageProps) {
     .limit(1)
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
+    <div data-arm="oracle" className="mx-auto max-w-2xl px-6 py-10">
       {/* Back + header */}
       <div className="mb-8">
         <Link
