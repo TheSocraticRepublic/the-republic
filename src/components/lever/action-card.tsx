@@ -17,7 +17,7 @@ interface ActionCardProps {
 const TYPE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
   fippa_request: { label: 'FIPPA Request', color: 'var(--accent-lever)', bg: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)' },
   public_comment: { label: 'Public Comment', color: '#C87B3A', bg: 'rgba(200, 123, 58, 0.12)' },
-  policy_brief: { label: 'Policy Brief', color: '#89B4C8', bg: 'rgba(137, 180, 200, 0.12)' },
+  policy_brief: { label: 'Policy Brief', color: 'var(--accent-oracle)', bg: 'color-mix(in srgb, var(--accent-oracle) 12%, transparent)' },
   legal_template: { label: 'Legal Template', color: '#a3a3a3', bg: 'rgba(163, 163, 163, 0.12)' },
   // Campaign-layer action types — muted teal to signal distinct layer
   media_spec: { label: 'Media Specification', color: '#5BBCB4', bg: 'rgba(91, 188, 180, 0.12)' },
@@ -28,7 +28,7 @@ const TYPE_STYLES: Record<string, { label: string; color: string; bg: string }> 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
   draft: { label: 'Draft', color: 'var(--accent-gadfly)', bg: 'color-mix(in srgb, var(--accent-gadfly) 12%, transparent)' },
   final: { label: 'Final', color: 'var(--accent-mirror)', bg: 'color-mix(in srgb, var(--accent-mirror) 12%, transparent)' },
-  filed: { label: 'Filed', color: '#89B4C8', bg: 'rgba(137, 180, 200, 0.12)' },
+  filed: { label: 'Filed', color: 'var(--accent-oracle)', bg: 'color-mix(in srgb, var(--accent-oracle) 12%, transparent)' },
 }
 
 function formatDate(value: Date | string): string {

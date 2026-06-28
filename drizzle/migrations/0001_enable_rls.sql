@@ -1,5 +1,8 @@
 -- Migration: Enable Row Level Security on all tables
 -- Created: 2026-05-18
+-- Updated: 2026-06-27 — added DROP POLICY IF EXISTS before each CREATE POLICY for idempotency.
+--   ALTER TABLE ENABLE/FORCE RLS and GRANT are already idempotent in PostgreSQL.
+--   CREATE POLICY has no IF NOT EXISTS; DROP IF EXISTS makes re-runs safe for DR.
 -- WARNING: Do NOT run this migration without review. Apply manually.
 --
 -- Strategy:
@@ -161,82 +164,134 @@ GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
 -- ============================================================================
 
 -- investigations
+DROP POLICY IF EXISTS "investigations_select_own" ON investigations;
 CREATE POLICY "investigations_select_own" ON investigations FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "investigations_insert_own" ON investigations;
 CREATE POLICY "investigations_insert_own" ON investigations FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "investigations_update_own" ON investigations;
 CREATE POLICY "investigations_update_own" ON investigations FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "investigations_delete_own" ON investigations;
 CREATE POLICY "investigations_delete_own" ON investigations FOR DELETE USING (user_id = auth.uid());
 
 -- documents
+DROP POLICY IF EXISTS "documents_select_own" ON documents;
 CREATE POLICY "documents_select_own" ON documents FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "documents_insert_own" ON documents;
 CREATE POLICY "documents_insert_own" ON documents FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "documents_update_own" ON documents;
 CREATE POLICY "documents_update_own" ON documents FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "documents_delete_own" ON documents;
 CREATE POLICY "documents_delete_own" ON documents FOR DELETE USING (user_id = auth.uid());
 
 -- gadfly_sessions
+DROP POLICY IF EXISTS "gadfly_sessions_select_own" ON gadfly_sessions;
 CREATE POLICY "gadfly_sessions_select_own" ON gadfly_sessions FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "gadfly_sessions_insert_own" ON gadfly_sessions;
 CREATE POLICY "gadfly_sessions_insert_own" ON gadfly_sessions FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "gadfly_sessions_update_own" ON gadfly_sessions;
 CREATE POLICY "gadfly_sessions_update_own" ON gadfly_sessions FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "gadfly_sessions_delete_own" ON gadfly_sessions;
 CREATE POLICY "gadfly_sessions_delete_own" ON gadfly_sessions FOR DELETE USING (user_id = auth.uid());
 
 -- lever_actions
+DROP POLICY IF EXISTS "lever_actions_select_own" ON lever_actions;
 CREATE POLICY "lever_actions_select_own" ON lever_actions FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "lever_actions_insert_own" ON lever_actions;
 CREATE POLICY "lever_actions_insert_own" ON lever_actions FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "lever_actions_update_own" ON lever_actions;
 CREATE POLICY "lever_actions_update_own" ON lever_actions FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "lever_actions_delete_own" ON lever_actions;
 CREATE POLICY "lever_actions_delete_own" ON lever_actions FOR DELETE USING (user_id = auth.uid());
 
 -- campaign_materials
+DROP POLICY IF EXISTS "campaign_materials_select_own" ON campaign_materials;
 CREATE POLICY "campaign_materials_select_own" ON campaign_materials FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "campaign_materials_insert_own" ON campaign_materials;
 CREATE POLICY "campaign_materials_insert_own" ON campaign_materials FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "campaign_materials_update_own" ON campaign_materials;
 CREATE POLICY "campaign_materials_update_own" ON campaign_materials FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "campaign_materials_delete_own" ON campaign_materials;
 CREATE POLICY "campaign_materials_delete_own" ON campaign_materials FOR DELETE USING (user_id = auth.uid());
 
 -- regulatory_processes
+DROP POLICY IF EXISTS "regulatory_processes_select_own" ON regulatory_processes;
 CREATE POLICY "regulatory_processes_select_own" ON regulatory_processes FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "regulatory_processes_insert_own" ON regulatory_processes;
 CREATE POLICY "regulatory_processes_insert_own" ON regulatory_processes FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "regulatory_processes_update_own" ON regulatory_processes;
 CREATE POLICY "regulatory_processes_update_own" ON regulatory_processes FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "regulatory_processes_delete_own" ON regulatory_processes;
 CREATE POLICY "regulatory_processes_delete_own" ON regulatory_processes FOR DELETE USING (user_id = auth.uid());
 
 -- issue_tracking
+DROP POLICY IF EXISTS "issue_tracking_select_own" ON issue_tracking;
 CREATE POLICY "issue_tracking_select_own" ON issue_tracking FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "issue_tracking_insert_own" ON issue_tracking;
 CREATE POLICY "issue_tracking_insert_own" ON issue_tracking FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "issue_tracking_update_own" ON issue_tracking;
 CREATE POLICY "issue_tracking_update_own" ON issue_tracking FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "issue_tracking_delete_own" ON issue_tracking;
 CREATE POLICY "issue_tracking_delete_own" ON issue_tracking FOR DELETE USING (user_id = auth.uid());
 
 -- investigation_outcomes
+DROP POLICY IF EXISTS "investigation_outcomes_select_own" ON investigation_outcomes;
 CREATE POLICY "investigation_outcomes_select_own" ON investigation_outcomes FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "investigation_outcomes_insert_own" ON investigation_outcomes;
 CREATE POLICY "investigation_outcomes_insert_own" ON investigation_outcomes FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "investigation_outcomes_update_own" ON investigation_outcomes;
 CREATE POLICY "investigation_outcomes_update_own" ON investigation_outcomes FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "investigation_outcomes_delete_own" ON investigation_outcomes;
 CREATE POLICY "investigation_outcomes_delete_own" ON investigation_outcomes FOR DELETE USING (user_id = auth.uid());
 
 -- user_profiles (user_id is the owner, but profiles are publicly readable)
+DROP POLICY IF EXISTS "user_profiles_select_all" ON user_profiles;
 CREATE POLICY "user_profiles_select_all" ON user_profiles FOR SELECT USING (true);
+DROP POLICY IF EXISTS "user_profiles_insert_own" ON user_profiles;
 CREATE POLICY "user_profiles_insert_own" ON user_profiles FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "user_profiles_update_own" ON user_profiles;
 CREATE POLICY "user_profiles_update_own" ON user_profiles FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "user_profiles_delete_own" ON user_profiles;
 CREATE POLICY "user_profiles_delete_own" ON user_profiles FOR DELETE USING (user_id = auth.uid());
 
 -- actor_keys — SECURITY CRITICAL: private key material must never be readable via anon key
 -- Only the key owner can read their own keys; public_key_pem exposed via AP endpoints using service_role
+DROP POLICY IF EXISTS "actor_keys_select_own" ON actor_keys;
 CREATE POLICY "actor_keys_select_own" ON actor_keys FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "actor_keys_insert_own" ON actor_keys;
 CREATE POLICY "actor_keys_insert_own" ON actor_keys FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "actor_keys_update_own" ON actor_keys;
 CREATE POLICY "actor_keys_update_own" ON actor_keys FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "actor_keys_delete_own" ON actor_keys;
 CREATE POLICY "actor_keys_delete_own" ON actor_keys FOR DELETE USING (user_id = auth.uid());
 
 -- remote_followers
+DROP POLICY IF EXISTS "remote_followers_select_own" ON remote_followers;
 CREATE POLICY "remote_followers_select_own" ON remote_followers FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "remote_followers_insert_own" ON remote_followers;
 CREATE POLICY "remote_followers_insert_own" ON remote_followers FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "remote_followers_update_own" ON remote_followers;
 CREATE POLICY "remote_followers_update_own" ON remote_followers FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "remote_followers_delete_own" ON remote_followers;
 CREATE POLICY "remote_followers_delete_own" ON remote_followers FOR DELETE USING (user_id = auth.uid());
 
 -- credential_events
+DROP POLICY IF EXISTS "credential_events_select_own" ON credential_events;
 CREATE POLICY "credential_events_select_own" ON credential_events FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "credential_events_insert_own" ON credential_events;
 CREATE POLICY "credential_events_insert_own" ON credential_events FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "credential_events_update_own" ON credential_events;
 CREATE POLICY "credential_events_update_own" ON credential_events FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "credential_events_delete_own" ON credential_events;
 CREATE POLICY "credential_events_delete_own" ON credential_events FOR DELETE USING (user_id = auth.uid());
 
 -- archive_records
+DROP POLICY IF EXISTS "archive_records_select_own" ON archive_records;
 CREATE POLICY "archive_records_select_own" ON archive_records FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "archive_records_insert_own" ON archive_records;
 CREATE POLICY "archive_records_insert_own" ON archive_records FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "archive_records_update_own" ON archive_records;
 CREATE POLICY "archive_records_update_own" ON archive_records FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "archive_records_delete_own" ON archive_records;
 CREATE POLICY "archive_records_delete_own" ON archive_records FOR DELETE USING (user_id = auth.uid());
 
 -- ============================================================================
@@ -244,38 +299,57 @@ CREATE POLICY "archive_records_delete_own" ON archive_records FOR DELETE USING (
 -- ============================================================================
 
 -- forum_threads (publicly readable, author-owned for writes)
+DROP POLICY IF EXISTS "forum_threads_select_all" ON forum_threads;
 CREATE POLICY "forum_threads_select_all" ON forum_threads FOR SELECT USING (true);
+DROP POLICY IF EXISTS "forum_threads_insert_own" ON forum_threads;
 CREATE POLICY "forum_threads_insert_own" ON forum_threads FOR INSERT WITH CHECK (author_id = auth.uid());
+DROP POLICY IF EXISTS "forum_threads_update_own" ON forum_threads;
 CREATE POLICY "forum_threads_update_own" ON forum_threads FOR UPDATE USING (author_id = auth.uid());
+DROP POLICY IF EXISTS "forum_threads_delete_own" ON forum_threads;
 CREATE POLICY "forum_threads_delete_own" ON forum_threads FOR DELETE USING (author_id = auth.uid());
 
 -- forum_posts (publicly readable, author-owned for writes)
+DROP POLICY IF EXISTS "forum_posts_select_all" ON forum_posts;
 CREATE POLICY "forum_posts_select_all" ON forum_posts FOR SELECT USING (true);
+DROP POLICY IF EXISTS "forum_posts_insert_own" ON forum_posts;
 CREATE POLICY "forum_posts_insert_own" ON forum_posts FOR INSERT WITH CHECK (author_id = auth.uid());
+DROP POLICY IF EXISTS "forum_posts_update_own" ON forum_posts;
 CREATE POLICY "forum_posts_update_own" ON forum_posts FOR UPDATE USING (author_id = auth.uid());
+DROP POLICY IF EXISTS "forum_posts_delete_own" ON forum_posts;
 CREATE POLICY "forum_posts_delete_own" ON forum_posts FOR DELETE USING (author_id = auth.uid());
 
 -- peer_reviews (readable by investigation owner + reviewer; writable by reviewer)
+DROP POLICY IF EXISTS "peer_reviews_select_own" ON peer_reviews;
 CREATE POLICY "peer_reviews_select_own" ON peer_reviews FOR SELECT
   USING (reviewer_id = auth.uid() OR EXISTS (SELECT 1 FROM investigations WHERE investigations.id = peer_reviews.investigation_id AND investigations.user_id = auth.uid()));
+DROP POLICY IF EXISTS "peer_reviews_insert_own" ON peer_reviews;
 CREATE POLICY "peer_reviews_insert_own" ON peer_reviews FOR INSERT WITH CHECK (reviewer_id = auth.uid());
+DROP POLICY IF EXISTS "peer_reviews_update_own" ON peer_reviews;
 CREATE POLICY "peer_reviews_update_own" ON peer_reviews FOR UPDATE USING (reviewer_id = auth.uid());
+DROP POLICY IF EXISTS "peer_reviews_delete_own" ON peer_reviews;
 CREATE POLICY "peer_reviews_delete_own" ON peer_reviews FOR DELETE USING (reviewer_id = auth.uid());
 
 -- content_reports (reporter can see their own reports)
+DROP POLICY IF EXISTS "content_reports_select_own" ON content_reports;
 CREATE POLICY "content_reports_select_own" ON content_reports FOR SELECT USING (reporter_id = auth.uid());
+DROP POLICY IF EXISTS "content_reports_insert_own" ON content_reports;
 CREATE POLICY "content_reports_insert_own" ON content_reports FOR INSERT WITH CHECK (reporter_id = auth.uid());
 
 -- moderation_actions (admin-only via service_role; no anon/authenticated access)
 -- No policies = deny all for non-service_role
 
 -- governance_proposals (publicly readable, author-owned for writes)
+DROP POLICY IF EXISTS "governance_proposals_select_all" ON governance_proposals;
 CREATE POLICY "governance_proposals_select_all" ON governance_proposals FOR SELECT USING (true);
+DROP POLICY IF EXISTS "governance_proposals_insert_own" ON governance_proposals;
 CREATE POLICY "governance_proposals_insert_own" ON governance_proposals FOR INSERT WITH CHECK (author_id = auth.uid());
+DROP POLICY IF EXISTS "governance_proposals_update_own" ON governance_proposals;
 CREATE POLICY "governance_proposals_update_own" ON governance_proposals FOR UPDATE USING (author_id = auth.uid());
 
 -- governance_votes (voter can see and cast their own votes)
+DROP POLICY IF EXISTS "governance_votes_select_own" ON governance_votes;
 CREATE POLICY "governance_votes_select_own" ON governance_votes FOR SELECT USING (voter_id = auth.uid());
+DROP POLICY IF EXISTS "governance_votes_insert_own" ON governance_votes;
 CREATE POLICY "governance_votes_insert_own" ON governance_votes FOR INSERT WITH CHECK (voter_id = auth.uid());
 
 -- ============================================================================
@@ -286,6 +360,7 @@ CREATE POLICY "governance_votes_insert_own" ON governance_votes FOR INSERT WITH 
 -- No policies = deny all for non-service_role
 
 -- users — users can read their own row
+DROP POLICY IF EXISTS "users_select_own" ON users;
 CREATE POLICY "users_select_own" ON users FOR SELECT USING (id = auth.uid());
 
 -- ============================================================================
@@ -295,63 +370,83 @@ CREATE POLICY "users_select_own" ON users FOR SELECT USING (id = auth.uid());
 -- ============================================================================
 
 -- document_chunks (owned via documents.user_id)
+DROP POLICY IF EXISTS "document_chunks_select_via_parent" ON document_chunks;
 CREATE POLICY "document_chunks_select_via_parent" ON document_chunks FOR SELECT
   USING (EXISTS (SELECT 1 FROM documents WHERE documents.id = document_chunks.document_id AND documents.user_id = auth.uid()));
+DROP POLICY IF EXISTS "document_chunks_insert_via_parent" ON document_chunks;
 CREATE POLICY "document_chunks_insert_via_parent" ON document_chunks FOR INSERT
   WITH CHECK (EXISTS (SELECT 1 FROM documents WHERE documents.id = document_chunks.document_id AND documents.user_id = auth.uid()));
+DROP POLICY IF EXISTS "document_chunks_delete_via_parent" ON document_chunks;
 CREATE POLICY "document_chunks_delete_via_parent" ON document_chunks FOR DELETE
   USING (EXISTS (SELECT 1 FROM documents WHERE documents.id = document_chunks.document_id AND documents.user_id = auth.uid()));
 
 -- analyses (owned via documents.user_id)
+DROP POLICY IF EXISTS "analyses_select_via_parent" ON analyses;
 CREATE POLICY "analyses_select_via_parent" ON analyses FOR SELECT
   USING (EXISTS (SELECT 1 FROM documents WHERE documents.id = analyses.document_id AND documents.user_id = auth.uid()));
+DROP POLICY IF EXISTS "analyses_insert_via_parent" ON analyses;
 CREATE POLICY "analyses_insert_via_parent" ON analyses FOR INSERT
   WITH CHECK (EXISTS (SELECT 1 FROM documents WHERE documents.id = analyses.document_id AND documents.user_id = auth.uid()));
 
 -- cross_references (owned via documents.user_id on source doc)
+DROP POLICY IF EXISTS "cross_references_select_via_parent" ON cross_references;
 CREATE POLICY "cross_references_select_via_parent" ON cross_references FOR SELECT
   USING (EXISTS (SELECT 1 FROM documents WHERE documents.id = cross_references.source_doc_id AND documents.user_id = auth.uid()));
 
 -- gadfly_turns (owned via gadfly_sessions.user_id)
+DROP POLICY IF EXISTS "gadfly_turns_select_via_parent" ON gadfly_turns;
 CREATE POLICY "gadfly_turns_select_via_parent" ON gadfly_turns FOR SELECT
   USING (EXISTS (SELECT 1 FROM gadfly_sessions WHERE gadfly_sessions.id = gadfly_turns.session_id AND gadfly_sessions.user_id = auth.uid()));
+DROP POLICY IF EXISTS "gadfly_turns_insert_via_parent" ON gadfly_turns;
 CREATE POLICY "gadfly_turns_insert_via_parent" ON gadfly_turns FOR INSERT
   WITH CHECK (EXISTS (SELECT 1 FROM gadfly_sessions WHERE gadfly_sessions.id = gadfly_turns.session_id AND gadfly_sessions.user_id = auth.uid()));
 
 -- insight_markers (owned via gadfly_sessions.user_id)
+DROP POLICY IF EXISTS "insight_markers_select_via_parent" ON insight_markers;
 CREATE POLICY "insight_markers_select_via_parent" ON insight_markers FOR SELECT
   USING (EXISTS (SELECT 1 FROM gadfly_sessions WHERE gadfly_sessions.id = insight_markers.session_id AND gadfly_sessions.user_id = auth.uid()));
+DROP POLICY IF EXISTS "insight_markers_insert_via_parent" ON insight_markers;
 CREATE POLICY "insight_markers_insert_via_parent" ON insight_markers FOR INSERT
   WITH CHECK (EXISTS (SELECT 1 FROM gadfly_sessions WHERE gadfly_sessions.id = insight_markers.session_id AND gadfly_sessions.user_id = auth.uid()));
 
 -- investigation_players (junction — readable if user owns the investigation)
+DROP POLICY IF EXISTS "investigation_players_select_via_parent" ON investigation_players;
 CREATE POLICY "investigation_players_select_via_parent" ON investigation_players FOR SELECT
   USING (EXISTS (SELECT 1 FROM investigations WHERE investigations.id = investigation_players.investigation_id AND investigations.user_id = auth.uid()));
+DROP POLICY IF EXISTS "investigation_players_insert_via_parent" ON investigation_players;
 CREATE POLICY "investigation_players_insert_via_parent" ON investigation_players FOR INSERT
   WITH CHECK (EXISTS (SELECT 1 FROM investigations WHERE investigations.id = investigation_players.investigation_id AND investigations.user_id = auth.uid()));
+DROP POLICY IF EXISTS "investigation_players_delete_via_parent" ON investigation_players;
 CREATE POLICY "investigation_players_delete_via_parent" ON investigation_players FOR DELETE
   USING (EXISTS (SELECT 1 FROM investigations WHERE investigations.id = investigation_players.investigation_id AND investigations.user_id = auth.uid()));
 
 -- investigation_votes (junction — readable if user owns the investigation)
+DROP POLICY IF EXISTS "investigation_votes_select_via_parent" ON investigation_votes;
 CREATE POLICY "investigation_votes_select_via_parent" ON investigation_votes FOR SELECT
   USING (EXISTS (SELECT 1 FROM investigations WHERE investigations.id = investigation_votes.investigation_id AND investigations.user_id = auth.uid()));
+DROP POLICY IF EXISTS "investigation_votes_insert_via_parent" ON investigation_votes;
 CREATE POLICY "investigation_votes_insert_via_parent" ON investigation_votes FOR INSERT
   WITH CHECK (EXISTS (SELECT 1 FROM investigations WHERE investigations.id = investigation_votes.investigation_id AND investigations.user_id = auth.uid()));
 
 -- document_versions (child of documents)
+DROP POLICY IF EXISTS "document_versions_select_via_parent" ON document_versions;
 CREATE POLICY "document_versions_select_via_parent" ON document_versions FOR SELECT
   USING (EXISTS (SELECT 1 FROM documents WHERE documents.id = document_versions.document_id AND documents.user_id = auth.uid()));
 
 -- archive_access_log (child of archive_records — readable by archive owner)
+DROP POLICY IF EXISTS "archive_access_log_select_via_parent" ON archive_access_log;
 CREATE POLICY "archive_access_log_select_via_parent" ON archive_access_log FOR SELECT
   USING (EXISTS (SELECT 1 FROM archive_records WHERE archive_records.id = archive_access_log.archive_record_id AND archive_records.user_id = auth.uid()));
 -- Insert is open to any authenticated user (privacy-respecting access log, no userId stored)
+DROP POLICY IF EXISTS "archive_access_log_insert_authenticated" ON archive_access_log;
 CREATE POLICY "archive_access_log_insert_authenticated" ON archive_access_log FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL);
 
 -- shadow_alerts (child of investigations)
+DROP POLICY IF EXISTS "shadow_alerts_select_via_parent" ON shadow_alerts;
 CREATE POLICY "shadow_alerts_select_via_parent" ON shadow_alerts FOR SELECT
   USING (EXISTS (SELECT 1 FROM investigations WHERE investigations.id = shadow_alerts.investigation_id AND investigations.user_id = auth.uid()));
+DROP POLICY IF EXISTS "shadow_alerts_update_via_parent" ON shadow_alerts;
 CREATE POLICY "shadow_alerts_update_via_parent" ON shadow_alerts FOR UPDATE
   USING (EXISTS (SELECT 1 FROM investigations WHERE investigations.id = shadow_alerts.investigation_id AND investigations.user_id = auth.uid()));
 
@@ -360,34 +455,46 @@ CREATE POLICY "shadow_alerts_update_via_parent" ON shadow_alerts FOR UPDATE
 -- ============================================================================
 
 -- jurisdictions
+DROP POLICY IF EXISTS "jurisdictions_select_authenticated" ON jurisdictions;
 CREATE POLICY "jurisdictions_select_authenticated" ON jurisdictions FOR SELECT USING (auth.uid() IS NOT NULL);
 
 -- jurisdiction_policies
+DROP POLICY IF EXISTS "jurisdiction_policies_select_authenticated" ON jurisdiction_policies;
 CREATE POLICY "jurisdiction_policies_select_authenticated" ON jurisdiction_policies FOR SELECT USING (auth.uid() IS NOT NULL);
 
 -- policy_outcomes
+DROP POLICY IF EXISTS "policy_outcomes_select_authenticated" ON policy_outcomes;
 CREATE POLICY "policy_outcomes_select_authenticated" ON policy_outcomes FOR SELECT USING (auth.uid() IS NOT NULL);
 
 -- scout_sources
+DROP POLICY IF EXISTS "scout_sources_select_authenticated" ON scout_sources;
 CREATE POLICY "scout_sources_select_authenticated" ON scout_sources FOR SELECT USING (auth.uid() IS NOT NULL);
 
 -- players
+DROP POLICY IF EXISTS "players_select_authenticated" ON players;
 CREATE POLICY "players_select_authenticated" ON players FOR SELECT USING (auth.uid() IS NOT NULL);
 
 -- governance_config
+DROP POLICY IF EXISTS "governance_config_select_authenticated" ON governance_config;
 CREATE POLICY "governance_config_select_authenticated" ON governance_config FOR SELECT USING (auth.uid() IS NOT NULL);
 
 -- postal_code_cache
+DROP POLICY IF EXISTS "postal_code_cache_select_authenticated" ON postal_code_cache;
 CREATE POLICY "postal_code_cache_select_authenticated" ON postal_code_cache FOR SELECT USING (auth.uid() IS NOT NULL);
 
 -- ============================================================================
 -- 8. PARLIAMENT TABLES — read-only for authenticated users (admin-write via service_role)
 -- ============================================================================
 
+DROP POLICY IF EXISTS "federal_mps_select_authenticated" ON federal_mps;
 CREATE POLICY "federal_mps_select_authenticated" ON federal_mps FOR SELECT USING (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "federal_bills_select_authenticated" ON federal_bills;
 CREATE POLICY "federal_bills_select_authenticated" ON federal_bills FOR SELECT USING (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "federal_votes_select_authenticated" ON federal_votes;
 CREATE POLICY "federal_votes_select_authenticated" ON federal_votes FOR SELECT USING (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "federal_mp_ballots_select_authenticated" ON federal_mp_ballots;
 CREATE POLICY "federal_mp_ballots_select_authenticated" ON federal_mp_ballots FOR SELECT USING (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "mp_voting_patterns_select_authenticated" ON mp_voting_patterns;
 CREATE POLICY "mp_voting_patterns_select_authenticated" ON mp_voting_patterns FOR SELECT USING (auth.uid() IS NOT NULL);
 
 -- parliament_sync_log — admin-only (service_role writes sync logs)

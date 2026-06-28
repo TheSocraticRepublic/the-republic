@@ -63,7 +63,7 @@ export function DocumentCard({
     <div
       className={clsx(
         'group flex flex-col gap-4 rounded-xl border border-border bg-surface-1 shadow-sm p-5 backdrop-blur-md transition-all duration-150',
-        status === 'ready' && 'hover:border-[#89B4C8]/30 hover:bg-surface-3 cursor-pointer'
+        status === 'ready' && 'hover:border-[var(--accent-oracle)]/30 hover:bg-surface-3 cursor-pointer'
       )}
     >
       {/* Top row: icon + title */}
@@ -71,11 +71,11 @@ export function DocumentCard({
         <span
           className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border"
           style={{
-            borderColor: 'rgba(137, 180, 200, 0.25)',
-            backgroundColor: 'rgba(137, 180, 200, 0.08)',
+            borderColor: 'color-mix(in srgb, var(--accent-oracle) 25%, transparent)',
+            backgroundColor: 'color-mix(in srgb, var(--accent-oracle) 8%, transparent)',
           }}
         >
-          <FileText size={16} strokeWidth={1.75} style={{ color: '#89B4C8' }} />
+          <FileText size={16} strokeWidth={1.75} style={{ color: 'var(--accent-oracle)' }} />
         </span>
 
         <div className="flex-1 min-w-0">

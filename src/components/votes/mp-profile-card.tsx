@@ -43,7 +43,7 @@ export function MpProfileCard({
             className="h-16 w-16 rounded-full flex-shrink-0 flex items-center justify-center text-xl font-bold"
             style={{
               backgroundColor: 'var(--surface-3)',
-              color: 'var(--text-faint)',
+              color: 'var(--text-muted)',
             }}
           >
             {name.charAt(0)}

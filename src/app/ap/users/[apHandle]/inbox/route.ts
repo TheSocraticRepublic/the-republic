@@ -12,9 +12,7 @@ import { getDb } from '@/lib/db'
 import { userProfiles, remoteFollowers } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
-
-const MAX_REQUEST_AGE_MS = 12 * 60 * 60 * 1000  // 12 hours
-const MAX_FUTURE_SKEW_MS = 60 * 60 * 1000         // 1 hour
+import { validateApDateHeader } from '@/lib/activitypub/date-guard'
 
 interface RouteContext {
   params: Promise<{ apHandle: string }>
@@ -177,33 +175,17 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     })
   }
 
-  // W-1: Date freshness check — prevent replay attacks
-  // Date header is mandatory. ActivityPub servers MUST send it, and we use it
-  // as a signed component in HTTP Signature verification. Requests without it
-  // are rejected — not treated as fresh.
-  const dateHeader = headersObj['date']
-  if (!dateHeader) {
-    return new Response(JSON.stringify({ error: 'Date header required' }), {
-      status: 401,
+  // Date freshness check — prevent replay attacks.
+  // Date header is mandatory: ActivityPub servers MUST send it, and we use it
+  // as a signed component in HTTP Signature verification. Requests without a
+  // valid, in-window Date are rejected — not treated as fresh.
+  // Logic lives in lib/activitypub/date-guard.ts (pure, unit-tested).
+  const dateGuard = validateApDateHeader(headersObj['date'])
+  if (!dateGuard.ok) {
+    return new Response(JSON.stringify({ error: dateGuard.error }), {
+      status: dateGuard.status,
       headers: { 'Content-Type': 'application/json' },
     })
-  }
-  const requestTime = new Date(dateHeader).getTime()
-  if (!isNaN(requestTime)) {
-    const now = Date.now()
-    const age = now - requestTime
-    if (age > MAX_REQUEST_AGE_MS) {
-      return new Response(JSON.stringify({ error: 'Request too old' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
-    if (requestTime - now > MAX_FUTURE_SKEW_MS) {
-      return new Response(JSON.stringify({ error: 'Request timestamp too far in future' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
   }
 
   // Handle activity types

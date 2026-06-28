@@ -37,6 +37,7 @@ export function DiscoveryForm() {
   const [streamedText, setStreamedText] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [hasResult, setHasResult] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   // Fetch jurisdictions on mount (reuse Mirror's endpoint)
@@ -68,6 +69,7 @@ export function DiscoveryForm() {
     setIsStreaming(true)
     setStreamedText('')
     setHasResult(false)
+    setErrorMessage(null)
 
     try {
       const res = await fetch('/api/scout/discover', {
@@ -83,13 +85,14 @@ export function DiscoveryForm() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: 'Request failed' }))
-        console.error('[scout] discover failed:', data.error)
+        setErrorMessage(data.error ?? 'Discovery failed. Please try again.')
         setIsStreaming(false)
         setLoading(false)
         return
       }
 
       if (!res.body) {
+        setErrorMessage('No response received. Please try again.')
         setIsStreaming(false)
         setLoading(false)
         return
@@ -110,7 +113,7 @@ export function DiscoveryForm() {
       setHasResult(true)
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
-        console.error('[scout] stream error:', err)
+        setErrorMessage('An unexpected error occurred. Please try again.')
       }
     } finally {
       setIsStreaming(false)
@@ -207,6 +210,11 @@ export function DiscoveryForm() {
               />
             </div>
           </div>
+
+          {/* Error state */}
+          {errorMessage && (
+            <p role="alert" className="text-xs text-red-400 mt-1">{errorMessage}</p>
+          )}
 
           {/* Submit / Cancel */}
           <div className="flex items-center justify-end gap-3">

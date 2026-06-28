@@ -12,7 +12,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:migrate-custom": "tsx scripts/apply-custom-migrations.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.64",
@@ -40,6 +41,9 @@
     "resend": "^6.12.2",
     "server-only": "^0.0.1",
     "zod": "^4.4.2"
+  },
+  "overrides": {
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@netlify/functions": "^5.3.0",

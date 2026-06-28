@@ -33,7 +33,6 @@ export function SectionBackdrop({
         sizes="100vw"
         className="object-cover"
         style={{ objectPosition: position, opacity }}
-        unoptimized
       />
       {fade !== 'none' && (
         <div

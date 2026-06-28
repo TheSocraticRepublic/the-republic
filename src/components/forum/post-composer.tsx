@@ -61,6 +61,7 @@ export function PostComposer({
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder={placeholder}
+        aria-label={placeholder || 'Post content'}
         rows={parentId ? 3 : 5}
         className="w-full rounded-lg px-3 py-2.5 text-sm text-text-primary bg-surface-1 border border-border-strong placeholder-text-faint resize-none focus:outline-none focus:border-border-strong transition-colors"
       />

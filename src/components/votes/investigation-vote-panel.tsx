@@ -90,7 +90,7 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
           ) : (
             <div
               className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold"
-              style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-faint)' }}
+              style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-muted)' }}
             >
               {mp.name.charAt(0)}
             </div>

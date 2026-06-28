@@ -167,11 +167,12 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
             {/* Mode selector */}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-text-secondary">Mode</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div role="group" aria-label="Inquiry mode" className="grid grid-cols-2 gap-2">
                 {(['socratic', 'direct'] as const).map((m) => (
                   <button
                     key={m}
                     onClick={() => setMode(m)}
+                    aria-pressed={mode === m}
                     className={clsx(
                       'rounded-lg border px-3 py-2.5 text-sm font-medium transition-all duration-150',
                       mode === m

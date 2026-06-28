@@ -69,9 +69,9 @@ function AccessBadge({ level }: { level: AccessLevel }) {
       label: 'FIPPA Required',
     },
     council: {
-      bg: 'rgba(137, 180, 200, 0.1)',
-      border: 'rgba(137, 180, 200, 0.3)',
-      color: '#89B4C8',
+      bg: 'color-mix(in srgb, var(--accent-oracle) 10%, transparent)',
+      border: 'color-mix(in srgb, var(--accent-oracle) 30%, transparent)',
+      color: 'var(--accent-oracle)',
       label: 'Council Record',
     },
   }
@@ -332,9 +332,9 @@ function NextStepsSection({ content }: { content: string }) {
       description: 'Upload a specific document for detailed analysis',
       href: '/oracle',
       icon: Eye,
-      color: '#89B4C8',
-      bg: 'rgba(137, 180, 200, 0.08)',
-      border: 'rgba(137, 180, 200, 0.20)',
+      color: 'var(--accent-oracle)',
+      bg: 'color-mix(in srgb, var(--accent-oracle) 8%, transparent)',
+      border: 'color-mix(in srgb, var(--accent-oracle) 20%, transparent)',
     },
     {
       label: 'File a FIPPA request',
@@ -424,7 +424,7 @@ export function ScoutResultView({ text, isStreaming }: ScoutResultViewProps) {
     return (
       <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
         <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">{text}</p>
-        <span className="mt-1 inline-block h-4 w-1 animate-pulse bg-[#B088C8]/60" />
+        <span className="mt-1 inline-block h-4 w-1 animate-pulse bg-[var(--accent-scout)]/60" />
       </div>
     )
   }
@@ -540,7 +540,7 @@ export function ScoutResultView({ text, isStreaming }: ScoutResultViewProps) {
       })}
 
       {isStreaming && (
-        <span className="inline-block h-4 w-1 animate-pulse bg-[#B088C8]/60" />
+        <span className="inline-block h-4 w-1 animate-pulse bg-[var(--accent-scout)]/60" />
       )}
     </div>
   )

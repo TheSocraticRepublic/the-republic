@@ -41,7 +41,7 @@ export function DataFreshnessBadge() {
   const lastSyncDate = status.lastSync?.completedAt ?? status.lastSync?.startedAt
 
   const isStale = daysSince !== null && daysSince > 7
-  const color = isStale ? '#f59e0b' : '#525252'
+  const color = isStale ? '#f59e0b' : 'var(--text-muted)'
 
   return (
     <div className="flex items-center gap-2 text-[10px]" style={{ color }}>
@@ -58,7 +58,7 @@ export function DataFreshnessBadge() {
         <span>No data synced</span>
       )}
       {status.counts.totalMps > 0 && (
-        <span className="text-neutral-700">
+        <span style={{ color: 'var(--text-muted)' }}>
           {status.counts.totalMps} MPs, {status.counts.totalVotes} votes
         </span>
       )}

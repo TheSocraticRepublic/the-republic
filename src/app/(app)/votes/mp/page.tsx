@@ -73,7 +73,7 @@ export default async function AllMPsPage() {
               ) : (
                 <div
                   className="h-9 w-9 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold"
-                  style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-faint)' }}
+                  style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-muted)' }}
                 >
                   {mp.name.charAt(0)}
                 </div>

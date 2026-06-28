@@ -17,8 +17,9 @@ for authentication. It is never sold, shared with advertisers, or used for marke
 
 **Investigations**
 When you open an investigation, we store the concern you described, the jurisdiction you
-selected, documents you uploaded or linked, and the outputs produced (briefings, lever
-actions, campaign materials). Investigations are linked to your account.
+selected, the postal code you provided (used to look up your federal MP), documents you
+uploaded or linked, and the outputs produced (briefings, lever actions, campaign materials).
+Investigations are linked to your account.
 
 **Forum Posts**
 Posts and threads you create are stored and attributed to your display name. You may delete
@@ -29,6 +30,11 @@ counts, timestamps) is retained for continuity.
 Civic participation earns credential events — a lightweight record of action type, weight,
 and source reference. These aggregate into a credential score used for governance weight.
 No credential record contains surveillance data.
+
+**Feedback**
+When you submit a bug report or suggestion, we store the feedback type, description, and
+the page you were on at submission time. Feedback is linked to your account if you are
+signed in.
 
 **Archive Records**
 When an investigation is submitted for archiving, a bundle is created and pinned to IPFS
@@ -127,6 +133,7 @@ You can delete your account from your profile. When you do:
 - Your investigations and the documents linked to them are deleted
 - Your forum posts and threads are deleted
 - Your credential events are deleted
+- Your feedback submissions are deleted
 
 This cascade is permanent and cannot be undone. The one exception: content you submitted for
 public archiving is already pinned to IPFS and/or written to Arweave, which are immutable.
@@ -180,9 +187,30 @@ No data is sold or shared with any third party for advertising or commercial pur
 
 ---
 
+## Data Retention
+
+The Republic does not operate on a time-based retention schedule. Data is retained
+indefinitely until you delete it or delete your account. Specific postures by type:
+
+- **Investigations, documents, forum posts, credentials:** retained until account deletion
+  or explicit user deletion. Account deletion cascades to all owned rows.
+- **Feedback:** retained until account deletion.
+- **Magic codes (sign-in codes):** expire after a short window (set at issue time) and
+  are also purged from the database when your account is deleted.
+- **Archive records (IPFS/Arweave):** our database pointer is deleted with your account,
+  but content already written to those networks cannot be retracted (see Archive Records above).
+- **Governance records:** retained indefinitely; they form part of the public governance
+  ledger. Vote records are tied to your account ID; deletion of your account removes
+  the account row but vote records may persist with a null voter reference.
+
+A scheduled job to purge expired magic codes and orphaned data is planned but not yet
+implemented. When it ships, this section will be updated.
+
+---
+
 ## Contact
 
 Questions about privacy or data handling: open an issue on the public repository or reach
 out through the forum. We will respond.
 
-Last updated: 2026-06-19
+Last updated: 2026-06-27

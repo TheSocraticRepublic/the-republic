@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useId } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useRouter } from 'next/navigation'
 import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react'
@@ -56,6 +56,9 @@ export function NewActionDialog({
   initialInvestigationId,
   initialActionType,
 }: NewActionDialogProps = {}) {
+  const oracleDocId = useId()
+  const gadflyInquiryId = useId()
+
   const [open, setOpen] = useState(!!(initialDocumentId || initialSessionId || initialInvestigationId))
   const [actionType, setActionType] = useState<ActionType>(
     (initialActionType as ActionType) || 'fippa_request'
@@ -240,11 +243,12 @@ export function NewActionDialog({
               <label className="mb-1.5 block text-xs font-medium text-text-secondary">
                 Document type
               </label>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div role="group" aria-label="Action type" className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {ACTION_TYPES.map((t) => (
                   <button
                     key={t.value}
                     onClick={() => setActionType(t.value)}
+                    aria-pressed={actionType === t.value}
                     className={clsx(
                       'rounded-lg border px-2 py-2.5 text-xs font-medium transition-all duration-150 text-left',
                       actionType === t.value
@@ -306,7 +310,7 @@ export function NewActionDialog({
 
             {/* Oracle document link */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+              <label htmlFor={oracleDocId} className="mb-1.5 block text-xs font-medium text-text-secondary">
                 Oracle document <span className="text-text-faint">(optional)</span>
               </label>
               {fetchingContext ? (
@@ -314,6 +318,7 @@ export function NewActionDialog({
               ) : (
                 <div className="relative">
                   <select
+                    id={oracleDocId}
                     value={selectedDocId}
                     onChange={(e) => setSelectedDocId(e.target.value)}
                     className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0"
@@ -336,7 +341,7 @@ export function NewActionDialog({
 
             {/* Gadfly session link */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+              <label htmlFor={gadflyInquiryId} className="mb-1.5 block text-xs font-medium text-text-secondary">
                 Gadfly inquiry <span className="text-text-faint">(optional)</span>
               </label>
               {fetchingContext ? (
@@ -344,6 +349,7 @@ export function NewActionDialog({
               ) : (
                 <div className="relative">
                   <select
+                    id={gadflyInquiryId}
                     value={selectedSessionId}
                     onChange={(e) => setSelectedSessionId(e.target.value)}
                     className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0"

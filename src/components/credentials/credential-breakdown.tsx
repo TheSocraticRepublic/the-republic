@@ -7,11 +7,11 @@ interface CredentialBreakdownProps {
 // Arm accent colors mapped to type clusters
 const TYPE_COLORS: Record<CredentialType, string> = {
   // Investigation/oracle cluster
-  investigation_completed: '#89B4C8',
-  outcome_tracked: '#89B4C8',
-  investigation_archived: '#89B4C8',
+  investigation_completed: 'var(--accent-oracle)',
+  outcome_tracked: 'var(--accent-oracle)',
+  investigation_archived: 'var(--accent-oracle)',
   // Forum/scout cluster
-  forum_contribution: '#B088C8',
+  forum_contribution: 'var(--accent-scout)',
   // Review/gadfly cluster
   peer_review: 'var(--accent-gadfly)',
   // Action/lever cluster

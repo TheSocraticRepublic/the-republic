@@ -103,12 +103,12 @@ export function ReviewSection({ investigationId, isAuthor }: ReviewSectionProps)
               borderTopColor: 'var(--text-secondary)',
             }}
           />
-          <span className="text-xs text-neutral-500">Refreshing reviews...</span>
+          <span className="text-xs text-text-muted">Refreshing reviews...</span>
         </div>
       )}
 
       {refreshError && !refreshing && (
-        <p className="text-xs text-neutral-500 mb-4">Could not refresh reviews. The page may be out of date.</p>
+        <p className="text-xs text-text-muted mb-4">Could not refresh reviews. The page may be out of date.</p>
       )}
 
       {reviews.length > 0 && (
@@ -130,7 +130,7 @@ export function ReviewSection({ investigationId, isAuthor }: ReviewSectionProps)
       )}
 
       {isAuthor && reviews.length === 0 && (
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-text-muted">
           Reviews from other citizens will appear here
         </p>
       )}
@@ -140,7 +140,7 @@ export function ReviewSection({ investigationId, isAuthor }: ReviewSectionProps)
       )}
 
       {!isAuthor && hasReviewed && (
-        <p className="text-sm text-neutral-500">You have reviewed this investigation</p>
+        <p className="text-sm text-text-muted">You have reviewed this investigation</p>
       )}
     </div>
   )

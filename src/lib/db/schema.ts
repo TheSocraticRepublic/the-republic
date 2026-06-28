@@ -1411,7 +1411,10 @@ export const feedback = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     // Nullable: captures the user if authenticated; null if the row is submitted
     // without a valid user context (shouldn't happen given auth gate, but safe).
-    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    // onDelete: 'cascade' — when a user is deleted their feedback rows are removed.
+    // Column stays nullable for anonymous rows (no user context at submit time).
+    // FK enforced via 0006 migration; the cascade is DB-level, not application-level.
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
     feedbackType: feedbackTypeEnum('feedback_type').notNull(),
     description: text('description').notNull(),
     // pageContext: the route pathname the user was on when submitting (nullable).

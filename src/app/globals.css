@@ -81,7 +81,7 @@
   --text-primary: #f4f4f5;
   --text-secondary: #d4d4d8;
   --text-muted: #a1a1aa;
-  --text-faint: #71717a;
+  --text-faint: #83838c;
 
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.15);
@@ -89,7 +89,7 @@
   --accent-scout: #B088C8;
   --accent-oracle: #89B4C8;
   --accent-gadfly: #C8A84B;
-  --accent-lever: #C85B5B;
+  --accent-lever: #DA6E6E;
   --accent-mirror: #5BC88A;
   --accent-votes: #D4764E;
 
@@ -106,7 +106,7 @@
   --text-primary: #f4f4f5;
   --text-secondary: #d4d4d8;
   --text-muted: #a1a1aa;
-  --text-faint: #71717a;
+  --text-faint: #83838c;
 
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.15);
@@ -114,7 +114,7 @@
   --accent-scout: #B088C8;
   --accent-oracle: #89B4C8;
   --accent-gadfly: #C8A84B;
-  --accent-lever: #C85B5B;
+  --accent-lever: #DA6E6E;
   --accent-mirror: #5BC88A;
   --accent-votes: #D4764E;
 
@@ -153,7 +153,7 @@ body {
 
 /* Focus rings */
 *:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent-oracle) 60%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--accent-oracle) 75%, transparent);
   outline-offset: 2px;
 }
 

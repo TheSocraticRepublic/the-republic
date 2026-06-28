@@ -78,7 +78,7 @@ export function UploadZone() {
       className={clsx(
         'relative flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-all duration-150',
         state === 'dragging'
-          ? 'border-[#89B4C8]/60 bg-[#89B4C8]/[0.06]'
+          ? 'border-[var(--accent-oracle)]/60 bg-[var(--accent-oracle)]/[0.06]'
           : state === 'error'
           ? 'border-red-500/40 bg-red-500/[0.04]'
           : 'border-border bg-surface-1 hover:border-border-strong hover:bg-surface-3'
@@ -96,16 +96,16 @@ export function UploadZone() {
       <span
         className="flex h-12 w-12 items-center justify-center rounded-xl border"
         style={{
-          borderColor: 'rgba(137, 180, 200, 0.25)',
-          backgroundColor: 'rgba(137, 180, 200, 0.08)',
+          borderColor: 'color-mix(in srgb, var(--accent-oracle) 25%, transparent)',
+          backgroundColor: 'color-mix(in srgb, var(--accent-oracle) 8%, transparent)',
         }}
       >
         {isUploading ? (
-          <Loader2 size={22} strokeWidth={1.75} style={{ color: '#89B4C8' }} className="animate-spin" />
+          <Loader2 size={22} strokeWidth={1.75} style={{ color: 'var(--accent-oracle)' }} className="animate-spin" />
         ) : state === 'error' ? (
           <FileText size={22} strokeWidth={1.75} className="text-red-400" />
         ) : (
-          <Upload size={22} strokeWidth={1.75} style={{ color: '#89B4C8' }} />
+          <Upload size={22} strokeWidth={1.75} style={{ color: 'var(--accent-oracle)' }} />
         )}
       </span>
 
@@ -131,7 +131,8 @@ export function UploadZone() {
             <p className="text-sm font-medium text-text-primary">
               Drop a PDF here or{' '}
               <button
-                className="text-[#89B4C8] hover:underline underline-offset-2 transition-colors"
+                className="hover:underline underline-offset-2 transition-colors"
+                style={{ color: 'var(--accent-oracle)' }}
                 onClick={() => inputRef.current?.click()}
               >
                 browse

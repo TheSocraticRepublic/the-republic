@@ -33,12 +33,18 @@ export const DELETE = safeRoute(async (request: NextRequest) => {
     .where(eq(users.id, userId))
     .limit(1)
 
-  await db.delete(users).where(eq(users.id, userId))
+  // Wrap both deletes in a transaction: if the magic_codes purge fails, the
+  // user row is also rolled back (preventing orphaned PII in one direction or
+  // orphaned account in the other). feedback cascades via FK (0006 migration),
+  // so no explicit feedback delete is needed here.
+  await db.transaction(async (tx) => {
+    await tx.delete(users).where(eq(users.id, userId))
 
-  // Delete any remaining magic_code rows for this email (orphaned PII).
-  if (user) {
-    await db.delete(magicCodes).where(eq(magicCodes.email, user.email))
-  }
+    // Delete any remaining magic_code rows for this email (orphaned PII).
+    if (user) {
+      await tx.delete(magicCodes).where(eq(magicCodes.email, user.email))
+    }
+  })
 
   const response = NextResponse.json({ ok: true })
   // Clear the session cookie — the account it pointed to no longer exists.
