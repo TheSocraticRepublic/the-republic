@@ -199,9 +199,10 @@ indefinitely until you delete it or delete your account. Specific postures by ty
   are also purged from the database when your account is deleted.
 - **Archive records (IPFS/Arweave):** our database pointer is deleted with your account,
   but content already written to those networks cannot be retracted (see Archive Records above).
-- **Governance records:** retained indefinitely; they form part of the public governance
-  ledger. Vote records are tied to your account ID; deletion of your account removes
-  the account row but vote records may persist with a null voter reference.
+- **Governance records:** governance proposals and their outcomes form part of the public
+  governance ledger and are retained indefinitely. Your individual votes are tied to your
+  account and are deleted when you delete your account (the vote rows are removed via
+  cascade, not anonymized or left with a null reference).
 
 A scheduled job to purge expired magic codes and orphaned data is planned but not yet
 implemented. When it ships, this section will be updated.

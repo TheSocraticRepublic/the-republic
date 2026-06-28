@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useId } from 'react'
 import { ChevronDown, Compass, Loader2, X } from 'lucide-react'
 import { clsx } from 'clsx'
 import { ScoutResultView } from './scout-result-view'
@@ -38,6 +38,9 @@ export function DiscoveryForm() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [hasResult, setHasResult] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const concernId = useId()
+  const jurisdictionId = useId()
+  const policyAreaId = useId()
   const abortRef = useRef<AbortController | null>(null)
 
   // Fetch jurisdictions on mount (reuse Mirror's endpoint)
@@ -140,10 +143,11 @@ export function DiscoveryForm() {
         <div className="space-y-4">
           {/* Concern textarea — primary input */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+            <label htmlFor={concernId} className="mb-1.5 block text-xs font-medium text-text-secondary">
               What concerns you?
             </label>
             <textarea
+              id={concernId}
               value={concern}
               onChange={(e) => setConcern(e.target.value)}
               placeholder="e.g., A gravel mine expansion near the Mamquam River was approved in 2019 but the conditions haven't been reported on."
@@ -155,7 +159,7 @@ export function DiscoveryForm() {
 
           {/* Jurisdiction selector */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+            <label htmlFor={jurisdictionId} className="mb-1.5 block text-xs font-medium text-text-secondary">
               Jurisdiction <span className="text-text-faint">(optional)</span>
             </label>
             {fetchingJurisdictions ? (
@@ -163,6 +167,7 @@ export function DiscoveryForm() {
             ) : (
               <div className="relative">
                 <select
+                  id={jurisdictionId}
                   value={selectedJurisdictionId}
                   onChange={(e) => setSelectedJurisdictionId(e.target.value)}
                   className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#B088C8]/40 focus:ring-0"
@@ -187,11 +192,12 @@ export function DiscoveryForm() {
 
           {/* Policy area */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+            <label htmlFor={policyAreaId} className="mb-1.5 block text-xs font-medium text-text-secondary">
               Policy area <span className="text-text-faint">(optional)</span>
             </label>
             <div className="relative">
               <select
+                id={policyAreaId}
                 value={policyArea}
                 onChange={(e) => setPolicyArea(e.target.value)}
                 className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#B088C8]/40 focus:ring-0"
