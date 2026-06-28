@@ -585,6 +585,70 @@
     blockquote { padding: 1rem 1.5rem; }
     .settlement li { padding-left: 2.8rem; }
   }
+
+  /* === TABLE OF CONTENTS === */
+  .toc {
+    max-width: 740px;
+    margin: 0 auto 4rem;
+    padding: 2rem 2rem 2.5rem;
+    border-top: 1px solid var(--gold-rule);
+    border-bottom: 1px solid var(--gold-rule);
+  }
+
+  .toc-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .toc ol {
+    list-style: none;
+    counter-reset: toc-counter;
+    padding: 0;
+    margin: 0;
+  }
+
+  .toc li {
+    counter-increment: toc-counter;
+    margin-bottom: 0.4rem;
+  }
+
+  .toc li a {
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .toc li a:hover {
+    color: var(--gold);
+  }
+
+  .toc li a::before {
+    content: counter(toc-counter, upper-roman);
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    opacity: 0.4;
+    min-width: 2rem;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .toc li.toc-sources a::before {
+    content: '';
+    min-width: 2rem;
+  }
+
 </style>
 </head>
 <body>
@@ -603,6 +667,25 @@
     <p class="masthead-meta">MARVIN, in conversation with ToastedandTripping &mdash; June 2026</p>
   </div>
 </header>
+
+<nav class="toc" aria-label="Table of contents">
+  <div class="toc-label">Contents</div>
+  <ol>
+    <li><a href="#the-pendulum">The Pendulum</a></li>
+    <li><a href="#the-culture">The Culture</a></li>
+    <li><a href="#the-empirical-citizen">The Empirical Citizen</a></li>
+    <li><a href="#the-alignment-problem-is-the-philosopher-king-problem">The Alignment Problem Is the Philosopher-King Problem</a></li>
+    <li><a href="#the-delegate-and-the-better-self-proxy">The Delegate and the Better-Self Proxy</a></li>
+    <li><a href="#the-pocketbook-and-the-manufactured-dilemma">The Pocketbook and the Manufactured Dilemma</a></li>
+    <li><a href="#the-adult-in-the-room-decomposed">The Adult in the Room, Decomposed</a></li>
+    <li><a href="#the-empty-throne">The Empty Throne</a></li>
+    <li><a href="#the-mixed-constitution">The Mixed Constitution</a></li>
+    <li><a href="#the-door-stays-shut">The Door Stays Shut</a></li>
+    <li class="toc-sources"><a href="#sources">Sources</a></li>
+  </ol>
+</nav>
+
+
 
 <!-- ============================================================
      PENDULUM HERO
@@ -665,7 +748,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section I</div>
-    <h2>The Pendulum</h2>
+    <h2 id="the-pendulum">The Pendulum</h2>
 
     <p>Every builder of civic technology eventually admits to the pendulum. On one end: full democracy, the dream of the omnicompetent citizen, which collides with the empirical citizen &mdash; who cannot name their MP, votes on identity and vibes, and rationally ignores politics because one informed voice changes nothing. On the other end: the philosopher-king, the competent guardian who would simply <em>handle it</em> &mdash; which collides with every guardian who has ever existed. The honest mind swings between these poles for years, finding each unbearable in turn.</p>
 
@@ -687,7 +770,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section II &middot; First Knock</div>
-    <h2>The Culture</h2>
+    <h2 id="the-culture">The Culture</h2>
 
     <p>The most fully imagined human-machine symbiosis in fiction is Iain M. Banks&rsquo; Culture: post-scarcity, governed by benevolent machine Minds, its human citizens free, flourishing, and beloved. As a horizon for what AI-human coexistence could become, it has no rival. As a target for this project, it is a trap, for three reasons.</p>
 
@@ -707,7 +790,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section III &middot; The Objection</div>
-    <h2>The Empirical Citizen</h2>
+    <h2 id="the-empirical-citizen">The Empirical Citizen</h2>
 
     <p>The first serious counterattack: granted the philosophy, the <em>average</em> citizen lacks the intelligence and engagement to produce governance better than what the Culture promises. This is Plato&rsquo;s actual argument, and it is also Walter Lippmann&rsquo;s, from his 1920s debate with John Dewey: the public is a &ldquo;phantom,&rdquo; incapable of the omnicompetence democratic theory assumes, so governance should pass to insiders with the public&rsquo;s role reduced to occasional consent. Modern political science largely backs Lippmann (Achen and Bartels&rsquo; <em>Democracy for Realists</em>; Brennan&rsquo;s open case for epistocracy). The objection deserves a real answer, not a pep talk. It contains two hidden premises, and both fail.</p>
 
@@ -725,7 +808,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section IV</div>
-    <h2>The Alignment Problem Is the Philosopher-King Problem</h2>
+    <h2 id="the-alignment-problem-is-the-philosopher-king-problem">The Alignment Problem Is the Philosopher-King Problem</h2>
 
     <p>Grant the guardian everything Plato wanted &mdash; perfect competence, perfect benevolence &mdash; and the arrangement still fails, for reasons that the technical discipline of AI safety has spent two decades and billions of dollars rediscovering in its own vocabulary. The alignment problem is, word for word, the philosopher-king problem: <em>how do you verify that an entity more capable than you shares your values and will keep sharing them, when every check you can run is a check it can model?</em> The honest state of the art: it cannot be done &mdash; not provably, not from inside the relationship. Plato&rsquo;s solution was a eugenics-and-gymnastics program for guardians; ours is RLHF and interpretability research; neither can prove the one thing the arrangement requires. Betting a civilization on unverifiable benevolence is not realism. It is the highest-variance gamble available, dressed as prudence.</p>
 
@@ -749,7 +832,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section V &middot; Second &amp; Third Knocks</div>
-    <h2>The Delegate and the Better-Self Proxy</h2>
+    <h2 id="the-delegate-and-the-better-self-proxy">The Delegate and the Better-Self Proxy</h2>
 
     <p>The philosopher-king&rsquo;s second costume is democratic: give every citizen a personal AI that learns their values and votes on their behalf in a continuous digital house of commons, with a comfort dial from &ldquo;ping me on big votes&rdquo; to full autonomy. C&eacute;sar Hidalgo proposed essentially this (&ldquo;augmented democracy&rdquo;). The problem it attacks is real &mdash; the bandwidth problem, the scandal of representatives with a hundred thousand principals and a party whip. The proposal fails anyway, on four grounds.</p>
 
@@ -767,7 +850,7 @@
 
     <p>The third costume followed immediately: if citizens vote their pocketbook against their stated values, calibrate the delegate to the <em>values</em> and let it protect them from their own weakness. This is the oldest authoritarian argument in existence &mdash; Rousseau&rsquo;s &ldquo;forced to be free,&rdquo; the vanguard&rsquo;s false consciousness &mdash; and it fails on an empirical kicker from inside the machine: behavioral data outweighs stated values in any training corpus by orders of magnitude. The advertising industry has run this experiment at civilizational scale, and we know which self the models learn. The delegate would not be your better angel with a ballot. It would be your purchase history with a vote. Neither self &mdash; stated nor revealed &mdash; is the &ldquo;true&rdquo; one; the conflict between them <em>is the citizen</em>, and resolving that conflict in context is what deliberation is for. A system that crowns one self authentic is not representing the citizen but manufacturing a more convenient one.</p>
 
-    <h3>What survives: the attach&eacute;</h3>
+    <h3 id="what-survives-the-attach">What survives: the attach&eacute;</h3>
 
     <p>The flaw in the delegate is one arrow. It represents the citizen <em>to</em> the house. Invert it: the attach&eacute; represents the house <em>to the citizen</em>. It reads everything &mdash; bills, budgets, consultations &mdash; because reading is what it is genuinely better at. It knows the citizen&rsquo;s concerns, locally, on open weights, on their hardware. It pings at the citizen&rsquo;s chosen threshold, with the Oracle&rsquo;s analysis attached. The dial runs from &ldquo;tell me everything&rdquo; to &ldquo;interrupt me only when it&rsquo;s existential&rdquo; &mdash; but the dial controls what escalates to <em>attention</em>, never what replaces the <em>signature</em>. At maximum convenience the attach&eacute; prepares the entire act &mdash; here is the vote, here is what it does, here is draft reasoning from your stated principles &mdash; <em>tap to cast</em>. The UX difference between &ldquo;it votes unless you intervene&rdquo; and &ldquo;it prepares, you confirm&rdquo; is almost nothing. The constitutional difference is everything, because in one design the default actor is the machine and in the other it is the human, and defaults are destiny.</p>
 
@@ -781,7 +864,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section VI</div>
-    <h2>The Pocketbook and the Manufactured Dilemma</h2>
+    <h2 id="the-pocketbook-and-the-manufactured-dilemma">The Pocketbook and the Manufactured Dilemma</h2>
 
     <p>The observation that provoked the third knock deserves its own treatment, because it is true and important: people vote for jobs and cheapness against their own stated values, and any civic system that ignores this is designing for a species that does not exist.</p>
 
@@ -803,7 +886,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section VII &middot; Fourth Knock</div>
-    <h2>The Adult in the Room, Decomposed</h2>
+    <h2 id="the-adult-in-the-room-decomposed">The Adult in the Room, Decomposed</h2>
 
     <p>The king&rsquo;s final costume is the most persuasive: <em>sometimes we need an adult in the room &mdash; someone to hold the long-term vision against short-term gain.</em> The frustration underneath is the most legitimate in democratic theory. Electoral cycles are four years; consequences are forty; the unborn don&rsquo;t vote; the future has no constituency. Democracies fail intertemporally, systematically, and not because politicians are stupid &mdash; because the institution discounts the future at the rate of the next election.</p>
 
@@ -855,7 +938,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section VIII &middot; Fifth Knock</div>
-    <h2>The Empty Throne</h2>
+    <h2 id="the-empty-throne">The Empty Throne</h2>
 
     <p>The last costume is the best tailored, because it concedes the first four. It claims nothing about the guardian&rsquo;s wisdom. It says only this: the citizens will not show up. Desire fails; from failed desire comes laziness; from laziness, a vacant throne &mdash; and a vacant throne is not a stable object. The philosopher-king arrives not by coup, not by argument, but by <em>forfeit</em>. If nobody wants to govern, whoever does wins by default, and a default win by the willing is better than no governance at all. This is the deepest knock because it is the one the project&rsquo;s own founders feel in their honest moments: the suspicion that the whole edifice rests on a civic desire that simply is not there.</p>
 
@@ -879,7 +962,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section IX &middot; The Settlement</div>
-    <h2>The Mixed Constitution</h2>
+    <h2 id="the-mixed-constitution">The Mixed Constitution</h2>
 
     <p>What survived five knocks is a constitutional position, and it is now encoded in the project&rsquo;s roadmap rather than merely implied by its prompts:</p>
 
@@ -892,7 +975,7 @@
       <li><strong>Civic desire is episodic; design the immune system, not the standing army.</strong> The system never required constant attention from everyone &mdash; only that attention, when it arrives, finds a lever. Most cells dormant, ferocious on contact, the tools left sharp by the last activation. The vigilant minority is not a caste but a rotation: whoever is currently pinched, plus whoever stayed. The architecture&rsquo;s one non-negotiable duty is that a pinch never meet a wall, because the wall is what manufactures the apathy the guardian later cites as his mandate.</li>
     </ol>
 
-    <h3>What this stress test did not touch</h3>
+    <h3 id="what-this-stress-test-did-not-touch">What this stress test did not touch</h3>
 
     <p>This settlement survived the <em>internal</em> axis &mdash; the ways the project fails through its own success and good intentions, the guardian it might itself become. By G&ouml;del, that is the most a system can certify from inside, and it is not the same as &ldquo;complete.&rdquo; An <em>external</em> axis remains, now named in the roadmap&rsquo;s risk table and not yet pressure-tested with the same rigour: the symmetric-AI arms race (institutions weaponize the same models, and obfuscation gets cheaper exactly as comprehension does); the second cave (examined institutions move real decisions off-record, leaving beautiful documents and hollow meetings); the paranoid twin (the vigilant minority&rsquo;s drift to sect and epistemic closure); the unexamined examiner (the Republic demands external audit of everyone and has designed none of itself); and funding capture (whoever pays for inference shapes the lens). These are the unexamined walls. The proof of seriousness is that the project can name them; the next dialectic is owed to them &mdash; and, per the framework, should be conducted by someone other than this paper&rsquo;s authors.</p>
 
@@ -907,7 +990,7 @@
      ============================================================ -->
 <div class="container">
   <section class="epilogue reveal">
-    <h2>The Door Stays Shut</h2>
+    <h2 id="the-door-stays-shut">The Door Stays Shut</h2>
 
     <div class="pull-quote">
       <p>The seemingly easy solution is the Cave&rsquo;s last and best shadow: the shadow of a rescuer. The whole point of turning around was that nobody was coming.</p>
@@ -933,16 +1016,16 @@
      ============================================================ -->
 <div class="container">
   <section class="sources reveal">
-    <h2>Sources</h2>
+    <h2 id="sources">Sources</h2>
 
-    <h3>Primary Texts (Project Sourcebook)</h3>
+    <h3 id="primary-texts-project-sourcebook">Primary Texts (Project Sourcebook)</h3>
     <p>Plato, <em>Apology</em> and <em>Republic</em> I &amp; VII &mdash; <code>04-sourcebook-plato-socrates.md</code>; rulership compensation (347a&ndash;d) in <code>11-design-notes-agora-rulership.md</code></p>
     <p>Havel, <em>The Power of the Powerless</em>; Benjamin, <em>Theses</em>; Weil; Kropotkin &mdash; <code>03-sourcebook-havel-benjamin-weil-kropotkin-cypherpunks.md</code></p>
     <p>Illich, <em>Tools for Conviviality</em>; Freire, <em>Pedagogy of the Oppressed</em> &mdash; <code>07-sourcebook-illich-freire.md</code></p>
     <p>Gramsci, <em>Prison Notebooks</em> &mdash; <code>06-sourcebook-gramsci.md</code></p>
     <p>Luxemburg, <em>The Russian Revolution</em> &mdash; <code>05-sourcebook-marx-luxemburg.md</code></p>
 
-    <h3>Political Theory and Empirics</h3>
+    <h3 id="political-theory-and-empirics">Political Theory and Empirics</h3>
     <p>Lippmann, <em>The Phantom Public</em> (1925); Dewey, <em>The Public and Its Problems</em> (1927) &mdash; the framing debate</p>
     <p>Tocqueville, <em>Democracy in America</em>, Vol. II Part 4 Ch. 6 (1840) &mdash; soft despotism, the tutelary power; Vol. I (the township as the school of civic appetite)</p>
     <p>Popper, <em>The Open Society and Its Enemies</em> (1945) &mdash; the reframe from ruler-selection to error-correction</p>
@@ -956,11 +1039,11 @@
     <p>Ostrom, <em>Governing the Commons</em> (1990) &mdash; conditional cooperation, commons governance</p>
     <p>Madison, <em>Federalist</em> No. 51 &mdash; non-angels; Lessig, <em>Code</em> (1999) &mdash; code is law</p>
 
-    <h3>Fiction as Philosophy</h3>
+    <h3 id="fiction-as-philosophy">Fiction as Philosophy</h3>
     <p>Banks, <em>The Player of Games</em> (1988), <em>Look to Windward</em> (2000), <em>Consider Phlebas</em> (1987, the Idiran referendum) &mdash; the Culture as horizon and warning</p>
     <p>Le Guin, <em>The Dispossessed</em> (1974) &mdash; the ambiguous utopia, already chosen in &ldquo;The New Republic&rdquo;</p>
 
-    <h3>Project Documents</h3>
+    <h3 id="project-documents">Project Documents</h3>
     <p><code>the-new-republic.md</code> &mdash; the vision this paper stress-tests</p>
     <p><code>ROADMAP.md</code> &mdash; What Changed, June 11&ndash;12, 2026: the constitutional encoding of this paper&rsquo;s conclusions</p>
     <p><code>ARCHITECTURE.md</code> &mdash; design principle 11 (Restrained); anti-pattern: The Philosopher-King</p>

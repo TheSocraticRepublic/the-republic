@@ -627,6 +627,70 @@
     .pull-quote { margin: 2rem 0; padding: 2rem 1.5rem; }
     blockquote { padding: 1rem 1.5rem; }
   }
+
+  /* === TABLE OF CONTENTS === */
+  .toc {
+    max-width: 740px;
+    margin: 0 auto 4rem;
+    padding: 2rem 2rem 2.5rem;
+    border-top: 1px solid var(--gold-rule);
+    border-bottom: 1px solid var(--gold-rule);
+  }
+
+  .toc-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .toc ol {
+    list-style: none;
+    counter-reset: toc-counter;
+    padding: 0;
+    margin: 0;
+  }
+
+  .toc li {
+    counter-increment: toc-counter;
+    margin-bottom: 0.4rem;
+  }
+
+  .toc li a {
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .toc li a:hover {
+    color: var(--gold);
+  }
+
+  .toc li a::before {
+    content: counter(toc-counter, upper-roman);
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    opacity: 0.4;
+    min-width: 2rem;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .toc li.toc-sources a::before {
+    content: '';
+    min-width: 2rem;
+  }
+
 </style>
 </head>
 <body>
@@ -724,7 +788,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section I</div>
-    <h2>The Testimony of the Founders</h2>
+    <h2 id="the-testimony-of-the-founders">The Testimony of the Founders</h2>
 
     <p>The most important evidence for this paper is not philosophical argument. It is historical fact. The physicists who discovered quantum mechanics told us, in their own words, that ancient traditions had described what they were finding. We chose not to listen.</p>
 
@@ -879,11 +943,11 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section II</div>
-    <h2>The Other Traditions</h2>
+    <h2 id="the-other-traditions">The Other Traditions</h2>
 
     <p>The Buddhist-quantum and Vedantic-quantum parallels are the best documented because the physicists themselves acknowledged them. But the convergence is wider.</p>
 
-    <h3>Aboriginal Australian Dreaming</h3>
+    <h3 id="aboriginal-australian-dreaming">Aboriginal Australian Dreaming</h3>
 
     <p>Aboriginal Australian ontology &mdash; the oldest continuous knowledge system on Earth, spanning at least 65,000 years &mdash; holds that reality is not a collection of inert objects but an ongoing participatory creative process. The Dreaming is not a past era. It is the continuous creative ground of reality. The land is not passive scenery. It is an active participant. Reality is maintained through participation &mdash; through singing, walking, ceremony, attention.</p>
 
@@ -893,7 +957,7 @@
 
     <p>The Euahlayi people&rsquo;s astronomical knowledge shows documented parallels with Einstein&rsquo;s spacetime theory. This is not because they &ldquo;anticipated&rdquo; Einstein. It is because they observed the same sky for sixty-five thousand years with sustained, rigorous, multi-generational attention &mdash; and what they described is structurally compatible with what Einstein derived mathematically.</p>
 
-    <h3>West African Ubuntu and Non-Separability</h3>
+    <h3 id="west-african-ubuntu-and-non-separability">West African Ubuntu and Non-Separability</h3>
 
     <p>Ubuntu &mdash; &ldquo;I am because we are&rdquo; &mdash; is an ontological claim, not merely an ethical one. Personhood is constituted through relationship. An isolated individual is not a diminished person &mdash; they are not a person at all. Being is relational. The community is primary; the individual is an abstraction.</p>
 
@@ -901,7 +965,7 @@
 
     <p>The Yoruba concept of <em>as&#803;e</em> &mdash; the divine life-force that flows through all things and empowers creation &mdash; describes a reality where agency is distributed, relational, and participatory. Observation, intention, and speech have causal power in shaping reality. This is the observer effect described not as a laboratory phenomenon but as a lived experience of participatory reality.</p>
 
-    <h3>Confucius and the Participatory Power of Language</h3>
+    <h3 id="confucius-and-the-participatory-power-of-language">Confucius and the Participatory Power of Language</h3>
 
     <p>Confucius&rsquo;s <em>zhengming</em> &mdash; the Rectification of Names &mdash; argues that when language is decoupled from reality, social order collapses: &ldquo;If names be not correct, language is not in accordance with the truth of things. If language be not in accordance with the truth of things, affairs cannot be carried on to success.&rdquo;</p>
 
@@ -917,7 +981,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section III</div>
-    <h2>How Did They Know?</h2>
+    <h2 id="how-did-they-know">How Did They Know?</h2>
 
     <p>This is the question that matters. Not &ldquo;are the parallels real?&rdquo; &mdash; the physicists themselves confirmed they are. But: how did traditions without particle accelerators, without wave equations, without Bell test experiments arrive at descriptions of reality that are structurally compatible with the most precisely verified theory in the history of science?</p>
   </section>
@@ -953,6 +1017,21 @@
   </div>
 </div>
 
+
+
+<nav class="toc" aria-label="Table of contents">
+  <div class="toc-label">Contents</div>
+  <ol>
+    <li><a href="#the-testimony-of-the-founders">The Testimony of the Founders</a></li>
+    <li><a href="#the-other-traditions">The Other Traditions</a></li>
+    <li><a href="#how-did-they-know">How Did They Know?</a></li>
+    <li><a href="#what-this-means-for-epistemology">What This Means for Epistemology</a></li>
+    <li><a href="#the-convergence-as-foundation">The Convergence as Foundation</a></li>
+    <li><a href="#epilogue-the-simplest-explanation">Epilogue: The Simplest Explanation</a></li>
+    <li class="toc-sources"><a href="#sources">Sources</a></li>
+  </ol>
+</nav>
+
 <div class="container">
   <section class="section" style="padding-top: 0;">
 
@@ -973,7 +1052,7 @@
 
     <p>This suggests something that Western epistemology has been reluctant to admit: <strong>attention itself is an instrument of knowledge.</strong> Not attention as casual noticing. Attention as Weil describes it &mdash; sustained, empty, receptive, rigorous. This kind of attention, practiced over years and decades, detects structural features of reality. The fact that it detects the same features as particle accelerators is not a coincidence. It is a convergence of methods investigating the same territory.</p>
 
-    <h3>Why the Convergence Is Evidence</h3>
+    <h3 id="why-the-convergence-is-evidence">Why the Convergence Is Evidence</h3>
 
     <p>The standard objection: &ldquo;These are metaphorical parallels, not real ones. Ancient traditions didn&rsquo;t have the math.&rdquo;</p>
 
@@ -995,21 +1074,21 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section IV</div>
-    <h2>What This Means for Epistemology</h2>
+    <h2 id="what-this-means-for-epistemology">What This Means for Epistemology</h2>
 
-    <h3>The Monopoly Claim Is False</h3>
+    <h3 id="the-monopoly-claim-is-false">The Monopoly Claim Is False</h3>
 
     <p>Western scientific epistemology claims &mdash; sometimes explicitly, more often implicitly &mdash; that the scientific method is the only reliable way to know things about reality. All other methods &mdash; contemplation, revelation, tradition, phenomenological inquiry &mdash; are either reducible to science or unreliable.</p>
 
     <p>The ancient-quantum convergence challenges this claim empirically. Traditions using non-scientific methods arrived at structural descriptions of reality that science later confirmed. This does not mean all non-scientific knowledge claims are valid. It means the monopoly claim is false. There are multiple epistemological methods capable of detecting structural features of reality, and the scientific method is one among several &mdash; the most powerful for certain questions, but not the only game in town.</p>
 
-    <h3>Attention Is an Instrument</h3>
+    <h3 id="attention-is-an-instrument">Attention Is an Instrument</h3>
 
     <p>If contemplative traditions can detect the same structural features of reality as particle physics, then attention itself &mdash; disciplined, sustained, empty attention as Weil describes it &mdash; is an instrument of knowledge. It is not a lesser instrument. It is a different instrument. It measures different aspects of the same territory. The particle accelerator tells you about the quantum field from the outside. Contemplation tells you about the quantum field from the inside &mdash; because, as Schr&ouml;dinger insisted, &ldquo;subject and object are only one, and no barrier exists between them.&rdquo;</p>
 
     <p>An epistemology adequate to the evidence would recognize both methods as legitimate and complementary &mdash; not in the vague, hand-waving sense of &ldquo;all ways of knowing are valid,&rdquo; but in the precise Bohrian sense of complementarity: each reveals aspects of reality that the other cannot access, and both are necessary for a complete description.</p>
 
-    <h3>The Colonial Dimension</h3>
+    <h3 id="the-colonial-dimension">The Colonial Dimension</h3>
 
     <p>The epistemological monopoly claim is not politically innocent. It was deployed to justify the destruction of indigenous knowledge systems worldwide. If only Western science produces real knowledge, then the knowledge encoded in Aboriginal songlines, in Vedic hymns, in Yoruba Ifa divination, in N&amacr;g&amacr;rjuna&rsquo;s dialectic &mdash; all of it is mere superstition, available for erasure without loss.</p>
 
@@ -1017,7 +1096,7 @@
 
     <p>This is not an argument for cultural relativism. N&amacr;g&amacr;rjuna&rsquo;s dialectic is rigorous or it is not. Aboriginal astronomical knowledge is accurate or it is not. The claim is not that all traditions are equally valid because all cultures are equally worthy. The claim is that specific traditions, using specific methods with specific rigor, arrived at specific descriptions that can be evaluated against the findings of physics &mdash; and that the evaluation is favorable.</p>
 
-    <h3>What We Lost</h3>
+    <h3 id="what-we-lost">What We Lost</h3>
 
     <p>Landauer&rsquo;s principle: information loss is physically irreversible. The knowledge systems destroyed by colonialism represent permanent information loss. The epistemological traditions refined over millennia &mdash; the contemplative methods, the dialectical practices, the multi-generational observational frameworks &mdash; cannot be reconstructed from their fragments any more than a burned library can be reassembled from its ashes.</p>
 
@@ -1035,7 +1114,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Section V</div>
-    <h2>The Convergence as Foundation</h2>
+    <h2 id="the-convergence-as-foundation">The Convergence as Foundation</h2>
 
     <p>This paper has argued three things:</p>
 
@@ -1071,7 +1150,7 @@
      ============================================================ -->
 <div class="container">
   <section class="epilogue reveal">
-    <h2>Epilogue: The Simplest Explanation</h2>
+    <h2 id="epilogue-the-simplest-explanation">Epilogue: The Simplest Explanation</h2>
 
     <p>When Bohr chose the yin-yang, he was not being diplomatic to Chinese culture. When Schr&ouml;dinger cited the Upanishads, he was not being fashionably exotic. When Heisenberg credited Plato, he was not being nostalgic for his youth. When Rovelli reads N&amacr;g&amacr;rjuna, he is not performing interdisciplinary virtue.</p>
 
@@ -1090,9 +1169,9 @@
      ============================================================ -->
 <div class="container">
   <section class="sources reveal">
-    <h2>Sources</h2>
+    <h2 id="sources">Sources</h2>
 
-    <h3>Physics Primary</h3>
+    <h3 id="physics-primary">Physics Primary</h3>
     <p>Bell, J.S. &ldquo;On the Einstein Podolsky Rosen Paradox&rdquo; (1964).</p>
     <p>Bohm, D. <em>Wholeness and the Implicate Order</em> (1980). Routledge.</p>
     <p>Heisenberg, W. <em>Physics and Philosophy</em> (1958). Harper.</p>
@@ -1101,18 +1180,18 @@
     <p>Schr&ouml;dinger, E. <em>What is Life?</em> and <em>Mind and Matter</em> (1944/1958).</p>
     <p>Wheeler, J.A. &ldquo;Information, Physics, Quantum: The Search for Links&rdquo; (1989).</p>
 
-    <h3>Bridge Texts</h3>
+    <h3 id="bridge-texts">Bridge Texts</h3>
     <p>Bohm, D. and Krishnamurti, J. <em>The Ending of Time</em> (1985).</p>
     <p>Capra, F. <em>The Tao of Physics</em> (1975).</p>
     <p>Jung, C.G. and Pauli, W. <em>The Interpretation of Nature and the Psyche</em> (1952).</p>
 
-    <h3>Ancient Traditions</h3>
+    <h3 id="ancient-traditions">Ancient Traditions</h3>
     <p>N&amacr;g&amacr;rjuna. <em>M&umacr;lamadhyamakak&amacr;rik&amacr;</em>. Translated by Jay Garfield (1995).</p>
     <p><em>The Principal Upanishads</em>. Translated by S. Radhakrishnan (1953).</p>
     <p>Lao Tzu. <em>Tao Te Ching</em>.</p>
     <p>Heraclitus. Fragments. Translated by Brooks Haxton (2001).</p>
 
-    <h3>Scholarship</h3>
+    <h3 id="scholarship">Scholarship</h3>
     <p>Barad, K. <em>Meeting the Universe Halfway</em> (2007). Duke University Press.</p>
     <p>Garfield, J. &ldquo;Dependent Arising and the Emptiness of Emptiness.&rdquo;</p>
     <p>PMC. &ldquo;Schr&ouml;dinger&rsquo;s Doctrine of Identity: Role of Advaita Vedanta&rdquo; (2025).</p>

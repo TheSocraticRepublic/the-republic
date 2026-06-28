@@ -499,6 +499,70 @@
     blockquote { padding: 1rem 1.5rem; }
     .settlement li { padding-left: 2.8rem; }
   }
+
+  /* === TABLE OF CONTENTS === */
+  .toc {
+    max-width: 740px;
+    margin: 0 auto 4rem;
+    padding: 2rem 2rem 2.5rem;
+    border-top: 1px solid var(--gold-rule);
+    border-bottom: 1px solid var(--gold-rule);
+  }
+
+  .toc-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .toc ol {
+    list-style: none;
+    counter-reset: toc-counter;
+    padding: 0;
+    margin: 0;
+  }
+
+  .toc li {
+    counter-increment: toc-counter;
+    margin-bottom: 0.4rem;
+  }
+
+  .toc li a {
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .toc li a:hover {
+    color: var(--gold);
+  }
+
+  .toc li a::before {
+    content: counter(toc-counter, upper-roman);
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    opacity: 0.4;
+    min-width: 2rem;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .toc li.toc-sources a::before {
+    content: '';
+    min-width: 2rem;
+  }
+
 </style>
 </head>
 <body>
@@ -519,6 +583,35 @@
   </div>
 </header>
 
+<nav class="toc" aria-label="Table of contents">
+  <div class="toc-label">Contents</div>
+  <ol>
+    <li><a href="#socrates-and-the-dangerous-question">Socrates and the Dangerous Question</a></li>
+    <li><a href="#thrasymachus-and-the-honest-cynic">Thrasymachus and the Honest Cynic</a></li>
+    <li><a href="#the-cave">The Cave</a></li>
+    <li><a href="#marx-and-the-discovery-of-alienation">Marx and the Discovery of Alienation</a></li>
+    <li><a href="#gramscis-invisible-empire">Gramsci&rsquo;s Invisible Empire</a></li>
+    <li><a href="#havels-greengrocer">Havel&rsquo;s Greengrocer</a></li>
+    <li><a href="#illich-and-the-trap-of-the-helpful-tool">Illich and the Trap of the Helpful Tool</a></li>
+    <li><a href="#freire-and-the-shape-of-liberation">Freire and the Shape of Liberation</a></li>
+    <li><a href="#weil-and-the-quality-of-seeing">Weil and the Quality of Seeing</a></li>
+    <li><a href="#benjamin-and-the-wreckage">Benjamin and the Wreckage</a></li>
+    <li><a href="#why-liberation-fails">Why Liberation Fails</a></li>
+    <li><a href="#che-and-the-self-critical-revolution">Che and the Self-Critical Revolution</a></li>
+    <li><a href="#what-changes">What Changes</a></li>
+    <li><a href="#the-newtonian-hangover">The Newtonian Hangover</a></li>
+    <li><a href="#what-physics-proved-and-philosophy-ignored">What Physics Proved and Philosophy Ignored</a></li>
+    <li><a href="#the-post-newtonian-republic">The Post-Newtonian Republic</a></li>
+    <li><a href="#what-it-looks-like">What It Looks Like</a></li>
+    <li><a href="#the-design-principles-in-full">The Design Principles &mdash; In Full</a></li>
+    <li><a href="#the-obligation">The Obligation</a></li>
+    <li><a href="#the-republic">The Republic</a></li>
+    <li class="toc-sources"><a href="#sources">Sources</a></li>
+  </ol>
+</nav>
+
+
+
 <!-- ============================================================
      ABSTRACT (Prologue: The Knot)
      ============================================================ -->
@@ -537,7 +630,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part One &middot; The Question That Won&rsquo;t Die</div>
-    <h2>Socrates and the Dangerous Question</h2>
+    <h2 id="socrates-and-the-dangerous-question">Socrates and the Dangerous Question</h2>
 
     <p>In 399 BCE, the city of Athens executed a seventy-year-old stonemason&rsquo;s son for asking questions.</p>
 
@@ -565,7 +658,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part One &middot; The Question That Won&rsquo;t Die</div>
-    <h2>Thrasymachus and the Honest Cynic</h2>
+    <h2 id="thrasymachus-and-the-honest-cynic">Thrasymachus and the Honest Cynic</h2>
 
     <p>Before Socrates built his ideal city in the Republic, he had to defeat an argument that most people, if they are honest, find more convincing than anything Socrates says in response.</p>
 
@@ -585,7 +678,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part One &middot; The Question That Won&rsquo;t Die</div>
-    <h2>The Cave</h2>
+    <h2 id="the-cave">The Cave</h2>
 
     <p>Plato&rsquo;s Allegory of the Cave, in Book VII of the Republic, is the most famous passage in Western philosophy, and the most misunderstood.</p>
 
@@ -609,7 +702,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Two &middot; The Invisible Architecture</div>
-    <h2>Marx and the Discovery of Alienation</h2>
+    <h2 id="marx-and-the-discovery-of-alienation">Marx and the Discovery of Alienation</h2>
 
     <p>In 1844, a twenty-six-year-old German philosopher sitting in a Paris apartment wrote something that would take the world a century and a half to fully understand &mdash; and that most people still misunderstand today.</p>
 
@@ -643,7 +736,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Two &middot; The Invisible Architecture</div>
-    <h2>Gramsci&rsquo;s Invisible Empire</h2>
+    <h2 id="gramscis-invisible-empire">Gramsci&rsquo;s Invisible Empire</h2>
 
     <p>Antonio Gramsci, writing from a fascist prison cell between 1929 and 1935, asked the question Marx left unanswered: if capitalism is so obviously exploitative, why do people consent to it?</p>
 
@@ -669,7 +762,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Two &middot; The Invisible Architecture</div>
-    <h2>Havel&rsquo;s Greengrocer</h2>
+    <h2 id="havels-greengrocer">Havel&rsquo;s Greengrocer</h2>
 
     <p>Forty years after Gramsci, living under a different totalitarianism, V&aacute;clav Havel described the same mechanism with a parable so precise it reads like code.</p>
 
@@ -691,7 +784,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Two &middot; The Invisible Architecture</div>
-    <h2>Illich and the Trap of the Helpful Tool</h2>
+    <h2 id="illich-and-the-trap-of-the-helpful-tool">Illich and the Trap of the Helpful Tool</h2>
 
     <p>Ivan Illich, writing in the 1970s, identified something none of his predecessors had seen &mdash; a failure mode that does not require malice, corruption, or even inequality. He discovered that <strong>institutions systematically disable the capacities they claim to develop</strong>, and that they do this as a natural consequence of growth, not as a deliberate strategy.</p>
 
@@ -715,7 +808,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Two &middot; The Invisible Architecture</div>
-    <h2>Freire and the Shape of Liberation</h2>
+    <h2 id="freire-and-the-shape-of-liberation">Freire and the Shape of Liberation</h2>
 
     <p>Paulo Freire gave the mechanism of internalized oppression its most precise educational expression.</p>
 
@@ -739,7 +832,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Two &middot; The Invisible Architecture</div>
-    <h2>Weil and the Quality of Seeing</h2>
+    <h2 id="weil-and-the-quality-of-seeing">Weil and the Quality of Seeing</h2>
 
     <p>Simone Weil adds a dimension that the political thinkers miss: the <em>quality of attention</em> itself as a moral and political act.</p>
 
@@ -761,7 +854,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Two &middot; The Invisible Architecture</div>
-    <h2>Benjamin and the Wreckage</h2>
+    <h2 id="benjamin-and-the-wreckage">Benjamin and the Wreckage</h2>
 
     <p>Walter Benjamin, writing his final text in 1940 as he fled the Nazis &mdash; he would die at the Spanish border shortly after &mdash; left behind nine pages that contain more concentrated political philosophy than most thinkers produce in a lifetime.</p>
 
@@ -785,7 +878,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Three &middot; The Captured Revolution</div>
-    <h2>Why Liberation Fails</h2>
+    <h2 id="why-liberation-fails">Why Liberation Fails</h2>
 
     <p>The pattern is consistent enough to constitute a law: every serious attempt to realize the philosophers&rsquo; aspiration has been captured by the same mechanism. The tools of liberation become tools of control.</p>
 
@@ -819,7 +912,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Three &middot; The Captured Revolution</div>
-    <h2>Che and the Self-Critical Revolution</h2>
+    <h2 id="che-and-the-self-critical-revolution">Che and the Self-Critical Revolution</h2>
 
     <p>Ernesto Guevara occupies a unique position in this history because he embodied both the aspiration and the failure mode &mdash; and had the intellectual honesty to see both.</p>
 
@@ -847,7 +940,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Four &middot; The New Fire</div>
-    <h2>What Changes</h2>
+    <h2 id="what-changes">What Changes</h2>
 
     <p>The philosophical convergence is ancient. The diagnostic framework is robust. The failure mode is well-documented. What has changed is not the aspiration or the diagnosis. What has changed is the available means.</p>
 
@@ -881,7 +974,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Five &middot; The Clockwork Delusion</div>
-    <h2>The Newtonian Hangover</h2>
+    <h2 id="the-newtonian-hangover">The Newtonian Hangover</h2>
 
     <p>There is a deeper problem that neither the philosophers nor the technologists have fully reckoned with. The institutional frameworks we are trying to examine &mdash; and the philosophical frameworks we are using to examine them &mdash; share a hidden foundation: <strong>Newtonian metaphysics.</strong></p>
 
@@ -899,7 +992,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Five &middot; The Clockwork Delusion</div>
-    <h2>What Physics Proved and Philosophy Ignored</h2>
+    <h2 id="what-physics-proved-and-philosophy-ignored">What Physics Proved and Philosophy Ignored</h2>
 
     <p><strong>The observer participates in creating reality.</strong></p>
 
@@ -973,7 +1066,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Five &middot; The Clockwork Delusion</div>
-    <h2>The Post-Newtonian Republic</h2>
+    <h2 id="the-post-newtonian-republic">The Post-Newtonian Republic</h2>
 
     <p>The philosophical tradition we traced in Parts One through Three operated on Newtonian assumptions &mdash; even as it brilliantly diagnosed the problems those assumptions create. The technologies described in Part Four break three institutional monopolies. But the physics described in this Part goes deeper: it reveals that the institutional frameworks themselves are built on a false model of reality.</p>
 
@@ -1036,7 +1129,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Six &middot; The Examined Institution</div>
-    <h2>What It Looks Like</h2>
+    <h2 id="what-it-looks-like">What It Looks Like</h2>
 
     <p>An examined institution is not a perfect institution. Plato taught that the Form of the Good &mdash; justice, truth, beauty &mdash; exists as a regulative ideal, not an achievable state. You steer by it. You do not arrive. &ldquo;In the world of knowledge the idea of good appears last of all, and is seen only with an effort.&rdquo;</p>
 
@@ -1056,7 +1149,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Six &middot; The Examined Institution</div>
-    <h2>The Design Principles &mdash; In Full</h2>
+    <h2 id="the-design-principles-in-full">The Design Principles &mdash; In Full</h2>
 
     <p>From twenty-five centuries of converging thought, three simultaneous technological capabilities, and one hundred years of physics, ten principles emerge. Each is grounded in the specific texts and arguments of the thinkers whose work constitutes the foundation.</p>
 
@@ -1081,7 +1174,7 @@
 <div class="container">
   <section class="section reveal">
     <div class="section-number">Part Seven &middot; What Remains</div>
-    <h2>The Obligation</h2>
+    <h2 id="the-obligation">The Obligation</h2>
 
     <p>Walter Benjamin wrote of a &ldquo;weak messianic power&rdquo; that belongs to every generation &mdash; an obligation to the past, to &ldquo;awaken the dead and to piece together what has been smashed.&rdquo; This is not nostalgia. It is the recognition that the aspiration we have traced &mdash; flourishing, freedom, genuine participation &mdash; is not new. It belongs to the people who fought for it before us and could not achieve it, because they did not have the tools.</p>
 
@@ -1106,7 +1199,7 @@
      ============================================================ -->
 <div class="container">
   <section class="epilogue reveal">
-    <h2>The Republic</h2>
+    <h2 id="the-republic">The Republic</h2>
 
     <p>Plato called his investigation into justice <em>The Republic</em> &mdash; <em>Politeia</em>, literally &ldquo;the condition of the city.&rdquo; Not an ideal state. Not a blueprint. A question: <em>what would a city look like if it were oriented toward the good?</em></p>
 
@@ -1123,9 +1216,9 @@
      ============================================================ -->
 <div class="container">
   <section class="sources reveal">
-    <h2>Sources</h2>
+    <h2 id="sources">Sources</h2>
 
-    <h3>Primary Texts Read in Full</h3>
+    <h3 id="primary-texts-read-in-full">Primary Texts Read in Full</h3>
     <p>Che Guevara, E. &ldquo;Socialism and Man in Cuba&rdquo; (1965). marxists.org.</p>
     <p>Che Guevara, E. Speech to the UN General Assembly, December 11, 1964. marxists.org.</p>
     <p>Che Guevara, E. Speech at the Afro-Asian Conference in Algeria, February 24, 1965. marxists.org.</p>
@@ -1143,7 +1236,7 @@
     <p>Plato. <em>Republic</em>, Books I and VII. Translated by Benjamin Jowett.</p>
     <p>Weil, S. &ldquo;Reflections on the Right Use of School Studies with a View to the Love of God&rdquo; (1942).</p>
 
-    <h3>Physics and Mathematics</h3>
+    <h3 id="physics-and-mathematics">Physics and Mathematics</h3>
     <p>Bell, J.S. &ldquo;On the Einstein Podolsky Rosen Paradox&rdquo; (1964). Physics 1(3): 195&ndash;200.</p>
     <p>Godel, K. &ldquo;On Formally Undecidable Propositions of Principia Mathematica and Related Systems&rdquo; (1931).</p>
     <p>Heisenberg, W. &ldquo;The Physical Content of Quantum Kinematics and Mechanics&rdquo; (1927).</p>
@@ -1156,7 +1249,7 @@
     <p>Capra, F. and Luisi, P.L. <em>The Systems View of Life: A Unifying Vision</em> (2014). Cambridge UP.</p>
     <p>Whitehead, A.N. <em>Process and Reality</em> (1929). Macmillan.</p>
 
-    <h3>Secondary Sources</h3>
+    <h3 id="secondary-sources">Secondary Sources</h3>
     <p>Anderson, J.L. <em>Che Guevara: A Revolutionary Life</em> (1997). Grove Atlantic.</p>
     <p>Benjamin, W. &ldquo;On the Concept of History&rdquo; (1940). marxists.org.</p>
     <p>Bookchin, M. <em>The Ecology of Freedom</em> (1982).</p>
