@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         >
           Privacy Policy
         </h1>
-        <p className="mt-0.5 text-xs text-text-muted">Last updated 2026-06-19</p>
+        <p className="mt-0.5 text-xs text-text-muted">Last updated 2026-06-28</p>
       </header>
 
       <p className="text-sm leading-relaxed text-text-secondary">
@@ -53,6 +53,11 @@ export default function PrivacyPage() {
           <strong className="text-text-primary">Forum posts &amp; credentials.</strong> Posts you
           create (attributed to your display name) and a lightweight record of civic actions
           (type, weight, source) that aggregates into a credential score. No surveillance data.
+        </p>
+        <p>
+          <strong className="text-text-primary">Feedback.</strong> When you submit a bug report or
+          suggestion, we store the feedback type, description, and the page you were on at submission
+          time. Feedback is linked to your account if you are signed in.
         </p>
         <p>
           <strong className="text-text-primary">Archive records.</strong> If you submit an
@@ -140,13 +145,37 @@ export default function PrivacyPage() {
         <p>
           You can delete your account from your profile. When you do, your account and everything
           tied to it is permanently removed — your investigations, documents, forum posts and
-          threads, and credential records. This cannot be undone.
+          threads, credential records, and feedback submissions. This cannot be undone.
         </p>
         <p>
           Archive records you created <strong className="text-text-primary">persist</strong> — once
           pinned to IPFS or written to Arweave they exist as public goods and cannot be retracted.
           Deleting your account will not remove them.
         </p>
+      </Section>
+
+      <Section title="Data retention">
+        <p>
+          Open Cave does not operate on a time-based retention schedule. Data is retained
+          indefinitely until you delete it or delete your account. Posture by type:
+        </p>
+        <ul className="ml-4 list-disc space-y-2 marker:text-text-faint">
+          <li>
+            <strong className="text-text-primary">Investigations, documents, posts, credentials,
+            feedback:</strong> retained until account deletion or explicit user deletion.
+            Account deletion cascades to all owned rows.
+          </li>
+          <li>
+            <strong className="text-text-primary">Sign-in codes (magic codes):</strong> expire
+            after ten minutes (set at issue time). Expired codes are also purged automatically
+            by a scheduled job.
+          </li>
+          <li>
+            <strong className="text-text-primary">Archive records (IPFS / Arweave):</strong> our
+            database pointer is deleted with your account, but content already written to those
+            networks cannot be retracted (see Account deletion above).
+          </li>
+        </ul>
       </Section>
 
       <Section title="ActivityPub federation">

@@ -13,9 +13,9 @@ export const colors = {
   border: '#e7e5e4',
   borderLight: '#f5f5f4',
   borderFaint: '#d6d3d1',
-  accent: '#C85B5B',       // Lever red
-  accentBg: 'rgba(200, 91, 91, 0.06)',
-  accentBgSubtle: 'rgba(200, 91, 91, 0.04)',
+  accent: '#DC2626',       // Lever red (matches Tailwind red-600 light-mode token)
+  accentBg: 'rgba(220, 38, 38, 0.06)',
+  accentBgSubtle: 'rgba(220, 38, 38, 0.04)',
   mirror: '#5BC88A',       // Mirror green
   mirrorBg: 'rgba(91, 200, 138, 0.08)',
   oracle: '#89B4C8',       // Oracle blue
@@ -23,7 +23,7 @@ export const colors = {
   footerText: '#a8a29e',
   wordmark: '#d6d3d1',
   // Darker accent tones for text on light backgrounds
-  accentDark: '#b04a4a',
+  accentDark: '#b91c1c',  // Tailwind red-700 — darker variant for text on light backgrounds
 } as const
 
 // -------------------------------------------------------------------

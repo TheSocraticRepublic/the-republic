@@ -121,6 +121,14 @@ async function main() {
       // PG instance or tested locally with a stock PG 14 image.
       const needsAutocommit = /ALTER\s+TYPE\s+\S+\s+ADD\s+VALUE/i.test(sqlContent)
 
+      // IMPORTANT: Migrations that run in the autocommit path (needsAutocommit = true)
+      // MUST use IF NOT EXISTS / DROP ... IF EXISTS guards on ALL DDL statements.
+      // The autocommit path does not wrap DDL in a transaction, so a partial failure
+      // leaves the database in an intermediate state. IF NOT EXISTS guards ensure the
+      // migration can be safely re-run to completion after a failure.
+      // This also applies to migrations applied via MCP (which bypass the tracking
+      // table entirely): make every DDL statement idempotent, not just the autocommit ones.
+
       console.log(`  APPLY  ${filename}${needsAutocommit ? ' (autocommit — ALTER TYPE ADD VALUE)' : ''}`)
 
       try {

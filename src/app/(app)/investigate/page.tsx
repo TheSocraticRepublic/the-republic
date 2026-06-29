@@ -59,7 +59,6 @@ export default async function InvestigatePage() {
           sizes="100vw"
           className="object-cover"
           style={{ opacity: 0.06, objectPosition: 'center 60%' }}
-          unoptimized
         />
         <div
           className="absolute inset-0"

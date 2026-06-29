@@ -7,10 +7,11 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, asc } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const MAX_CONTENT_CHARS = 100_000
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function handler(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
   })
 
   return result.toTextStreamResponse()
-}
+})
 
 /**
  * Extract a markdown section by heading name.

@@ -11,5 +11,6 @@ import { safeRoute } from '@/lib/api/safe-route'
  * This route is kept for backward compatibility.
  */
 export const POST = safeRoute(async (request: NextRequest) => {
-  return investigatePost(request)
+  // investigatePost is a RouteHandler (safeRoute-wrapped); context is unused by investigate.
+  return investigatePost(request, { params: Promise.resolve({}) })
 })

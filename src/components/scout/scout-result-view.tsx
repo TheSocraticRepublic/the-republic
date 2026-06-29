@@ -444,8 +444,8 @@ export function ScoutResultView({ text, isStreaming }: ScoutResultViewProps) {
               <div
                 className="rounded-xl p-5 backdrop-blur-md"
                 style={{
-                  backgroundColor: 'rgba(176, 136, 200, 0.05)',
-                  border: '1px solid rgba(176, 136, 200, 0.15)',
+                  backgroundColor: 'color-mix(in srgb, var(--accent-scout) 5%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--accent-scout) 15%, transparent)',
                 }}
               >
                 <ProseSection content={section.content} />
@@ -517,7 +517,7 @@ export function ScoutResultView({ text, isStreaming }: ScoutResultViewProps) {
             <div key={i}>
               <h3
                 className="mb-3 text-xs font-semibold uppercase tracking-widest"
-                style={{ color: 'rgba(176, 136, 200, 0.7)' }}
+                style={{ color: 'color-mix(in srgb, var(--accent-scout) 70%, transparent)' }}
               >
                 Next Steps
               </h3>

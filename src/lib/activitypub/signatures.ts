@@ -121,6 +121,17 @@ export async function verifyHttpSignature(opts: {
 
     const { headers: signedHeaders, signature } = params
 
+    // Require 'date' to be in the signed header set.
+    // A remote can omit 'date' from the signed set while still sending a valid
+    // Date header — in that case the isNaN freshness guard in validateApDateHeader()
+    // would pass but the date is not cryptographically bound to the signature,
+    // leaving a replay window. Rejecting here closes that bypass.
+    // Mastodon and all major AP implementations always sign 'date'.
+    if (!signedHeaders.includes('date')) {
+      console.warn('[ap/verify] rejected: "date" not in signed-header set')
+      return false
+    }
+
     const parsed = new URL(url)
     const requestTarget = `${method.toLowerCase()} ${parsed.pathname}${parsed.search}`
 

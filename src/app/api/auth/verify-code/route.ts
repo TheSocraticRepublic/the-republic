@@ -6,12 +6,13 @@ import { signJWT } from '@/lib/auth/jwt'
 import { eq } from 'drizzle-orm'
 import { AUTH_COOKIE } from '@/lib/auth/middleware'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/api/ip'
 
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 // 7 days in seconds
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
+    const ip = getClientIp(request)
     const { success } = await checkRateLimit(`verify-code:${ip}`)
     if (!success) {
       return NextResponse.json(

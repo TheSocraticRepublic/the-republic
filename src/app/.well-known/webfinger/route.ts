@@ -5,6 +5,7 @@ import { getDb } from '@/lib/db'
 import { userProfiles } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/api/ip'
 
 export async function GET(request: NextRequest) {
   if (!isFederationConfigured()) {
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
+  const ip = getClientIp(request)
   const { success } = await checkRateLimit(`webfinger:${ip}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {

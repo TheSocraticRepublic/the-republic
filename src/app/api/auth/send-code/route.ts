@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendMagicCode } from '@/lib/auth/magic-code'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/api/ip'
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
+    const ip = getClientIp(request)
     const { success } = await checkRateLimit(`send-code:${ip}`)
 
     if (!success) {

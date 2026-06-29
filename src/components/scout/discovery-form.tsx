@@ -152,7 +152,7 @@ export function DiscoveryForm() {
               onChange={(e) => setConcern(e.target.value)}
               placeholder="e.g., A gravel mine expansion near the Mamquam River was approved in 2019 but the conditions haven't been reported on."
               rows={5}
-              className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[#B088C8]/40"
+              className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-scout)]/40"
               disabled={loading}
             />
           </div>
@@ -170,7 +170,7 @@ export function DiscoveryForm() {
                   id={jurisdictionId}
                   value={selectedJurisdictionId}
                   onChange={(e) => setSelectedJurisdictionId(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#B088C8]/40 focus:ring-0"
+                  className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-scout)]/40 focus:ring-0"
                   disabled={loading}
                 >
                   <option value="">Any jurisdiction</option>
@@ -200,7 +200,7 @@ export function DiscoveryForm() {
                 id={policyAreaId}
                 value={policyArea}
                 onChange={(e) => setPolicyArea(e.target.value)}
-                className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[#B088C8]/40 focus:ring-0"
+                className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-scout)]/40 focus:ring-0"
                 disabled={loading}
               >
                 {POLICY_AREAS.map((area) => (
@@ -243,9 +243,9 @@ export function DiscoveryForm() {
                   : 'cursor-not-allowed opacity-40'
               )}
               style={{
-                backgroundColor: 'rgba(176, 136, 200, 0.15)',
-                color: '#B088C8',
-                border: '1px solid rgba(176, 136, 200, 0.30)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-scout) 15%, transparent)',
+                color: 'var(--accent-scout)',
+                border: '1px solid color-mix(in srgb, var(--accent-scout) 30%, transparent)',
               }}
             >
               {loading ? (

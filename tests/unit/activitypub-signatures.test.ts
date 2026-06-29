@@ -167,4 +167,51 @@ describe('signRequest + verifyHttpSignature', () => {
 
     expect(valid).toBe(false)
   }, 30000)
+
+  it('rejects when "date" is not in the signed-header set', async () => {
+    // A remote could send a valid signature that covers only (request-target) and host,
+    // omitting 'date' from the signed set. The date freshness guard (isNaN check) would
+    // still pass because a Date header IS present — just not cryptographically bound.
+    // This test verifies that verifyHttpSignature now explicitly requires 'date' in the set.
+    const pair = await generateActorKeyPair()
+
+    const url = 'https://mastodon.social/inbox'
+    const keyId = 'https://republic.example.com/ap/users/alice#main-key'
+
+    // Build a signature that intentionally omits 'date' from the signed-header set
+    const { importPKCS8 } = await import('jose')
+    const privateKey = await importPKCS8(pair.privateKeyPem, 'RS256')
+    const parsed = new URL(url)
+    const requestTarget = `post ${parsed.pathname}${parsed.search}`
+
+    // Sign only (request-target) and host — no 'date'
+    const signingString = `(request-target): ${requestTarget}\nhost: ${parsed.host}`
+    const encoder = new TextEncoder()
+    const sigBuffer = await crypto.subtle.sign(
+      { name: 'RSASSA-PKCS1-v1_5' },
+      privateKey as CryptoKey,
+      encoder.encode(signingString)
+    )
+    const sigBase64 = btoa(String.fromCharCode(...new Uint8Array(sigBuffer)))
+
+    const signatureHeader = [
+      `keyId="${keyId}"`,
+      `algorithm="rsa-sha256"`,
+      `headers="(request-target) host"`,
+      `signature="${sigBase64}"`,
+    ].join(',')
+
+    const valid = await verifyHttpSignature({
+      method: 'POST',
+      url,
+      headers: {
+        host: parsed.host,
+        date: new Date().toUTCString(), // Date header is present but NOT in signed set
+        signature: signatureHeader,
+      },
+      publicKeyPem: pair.publicKeyPem,
+    })
+
+    expect(valid).toBe(false)
+  }, 30000)
 })

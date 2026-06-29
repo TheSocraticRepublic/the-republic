@@ -11,13 +11,14 @@ import {
   type CredentialSummary,
 } from '@/lib/credentials'
 import { safeRoute } from '@/lib/api/safe-route'
+import { getClientIp } from '@/lib/api/ip'
 
 export const GET = safeRoute(async (
   request: NextRequest,
   { params }
 ) => {
   // Rate limit by IP — public endpoint
-  const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
+  const ip = getClientIp(request)
   const { success } = await checkRateLimit(`users-credentials:${ip}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {

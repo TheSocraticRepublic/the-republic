@@ -8,7 +8,7 @@ import {
   federalMps,
   federalMpBallots,
 } from '@/lib/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 import { safeRoute } from '@/lib/api/safe-route'
 
 export const GET = safeRoute(async (
@@ -82,26 +82,29 @@ export const GET = safeRoute(async (
     .innerJoin(federalVotes, eq(investigationVotes.voteId, federalVotes.id))
     .where(eq(investigationVotes.investigationId, id))
 
-  // Get MP ballots for these votes
-  const votesWithBallots = await Promise.all(
-    relevantVotes.map(async (rv) => {
-      let ballot: string | null = null
-      if (investigation.federalMpId) {
-        const [b] = await db
-          .select({ ballot: federalMpBallots.ballot })
-          .from(federalMpBallots)
-          .where(
-            and(
-              eq(federalMpBallots.voteId, rv.voteId),
-              eq(federalMpBallots.mpId, investigation.federalMpId)
-            )
-          )
-          .limit(1)
-        ballot = b?.ballot ?? null
-      }
-      return { ...rv, mpBallot: ballot }
-    })
-  )
+  // Batch-fetch all MP ballots for these votes in a single query.
+  // The composite (voteId, mpId) unique index makes this fast and dedup-safe.
+  // Preserves the same per-vote output shape: mpBallot is null when no ballot
+  // exists (no federalMpId, or MP did not vote on that bill).
+  let ballotMap = new Map<string, string>()
+  if (investigation.federalMpId && relevantVotes.length > 0) {
+    const voteIds = relevantVotes.map((rv) => rv.voteId)
+    const ballotRows = await db
+      .select({ voteId: federalMpBallots.voteId, ballot: federalMpBallots.ballot })
+      .from(federalMpBallots)
+      .where(
+        and(
+          inArray(federalMpBallots.voteId, voteIds),
+          eq(federalMpBallots.mpId, investigation.federalMpId)
+        )
+      )
+    ballotMap = new Map(ballotRows.map((b) => [b.voteId, b.ballot]))
+  }
+
+  const votesWithBallots = relevantVotes.map((rv) => ({
+    ...rv,
+    mpBallot: ballotMap.get(rv.voteId) ?? null,
+  }))
 
   return new Response(
     JSON.stringify({ mp, votes: votesWithBallots, concern: investigation.concern }),

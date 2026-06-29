@@ -135,3 +135,48 @@ executing on a fresh CI or DR environment, run a full install:
 ```bash
 npm install   # or: npm ci  (without --omit=dev)
 ```
+
+## Deploy rollback
+
+If a production deploy introduces a regression, roll back as follows:
+
+### 1. Identify the last good SHA
+
+In the Netlify dashboard: **Deploys → [the prior successful deploy] → Options → Publish deploy**.
+This redeploys from the previously built artifact without a new git push.
+
+Alternatively, identify the git SHA of the prior release and push it as a new commit to `main`.
+
+### 2. Snapshot environment variables before any change
+
+Before modifying or rotating secrets, export the current env state:
+```
+Netlify dashboard → Site settings → Environment variables → Export
+```
+Keep the snapshot for the duration of the rollback window. If a deploy included an env change
+that must also be reverted, re-enter the prior values before the rollback deploy finishes.
+
+### 3. Database migration rollback
+
+Application code and database schema must stay in sync. Each migration file in
+`drizzle/migrations/` includes inline rollback SQL in a comment at the top of the file.
+
+**Current migrations with inline rollback:**
+- `0006_feedback_rls_and_cascade.sql` — rollback SQL at top of file
+- `0007_check_constraints.sql` — rollback SQL at top of file (DROP CONSTRAINT IF EXISTS)
+
+To run a rollback migration:
+```bash
+# Use the direct endpoint, not the pooler
+NODE_ENV=production DATABASE_URL=<direct-url> psql "$DATABASE_URL" -f <rollback.sql>
+```
+
+Rollbacks to schema structure (table drops, column removals) are irreversible and must be
+planned separately. None of the current migrations require structural rollback.
+
+### 4. Verify
+
+After rollback, confirm:
+- The Netlify deploy shows the prior SHA in the deploy details
+- The app responds to `/` and a key authenticated route
+- No new error spikes in Sentry

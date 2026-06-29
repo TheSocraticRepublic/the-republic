@@ -276,7 +276,7 @@ function printPage(opts: {
     font-size: 12px;
     font-weight: 500;
     padding: 8px 16px;
-    background: #C85B5B;
+    background: #DC2626;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -289,7 +289,7 @@ function printPage(opts: {
   .header {
     margin-bottom: 2.5rem;
     padding-bottom: 1.5rem;
-    border-bottom: 2px solid #C85B5B;
+    border-bottom: 2px solid #DC2626;
   }
   .wordmark {
     font-family: 'Instrument Sans', sans-serif;
@@ -297,7 +297,7 @@ function printPage(opts: {
     font-size: 10px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: #C85B5B;
+    color: #DC2626;
     margin-bottom: 1rem;
   }
   .doc-label {
@@ -306,7 +306,7 @@ function printPage(opts: {
     font-size: 10px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: #C85B5B;
+    color: #DC2626;
     margin-bottom: 0.25rem;
   }
   .doc-title {
@@ -337,7 +337,7 @@ function printPage(opts: {
   .submission-to { font-weight: 500; margin-bottom: 0.25rem; }
   .submission-date { font-size: 13px; color: #78716c; margin-bottom: 2rem; }
   .submission-body p { margin-bottom: 1rem; }
-  .para-number { font-weight: 500; color: #C85B5B; margin-right: 0.5rem; }
+  .para-number { font-weight: 500; color: #DC2626; margin-right: 0.5rem; }
 
   /* Policy brief */
   .policy-brief p { margin-bottom: 0.75rem; }
@@ -347,11 +347,11 @@ function printPage(opts: {
     font-size: 10px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: #C85B5B;
+    color: #DC2626;
     margin-top: 2rem;
     margin-bottom: 0.75rem;
     padding-bottom: 0.25rem;
-    border-bottom: 1px solid rgba(200, 91, 91, 0.2);
+    border-bottom: 1px solid rgba(220, 38, 38, 0.2);
   }
 
   /* Footer */
@@ -370,7 +370,7 @@ function printPage(opts: {
     .print-btn { display: none; }
     .page { max-width: none; }
     .letter, .formal-submission, .policy-brief { page-break-inside: avoid; }
-    .header { border-bottom-color: #C85B5B; }
+    .header { border-bottom-color: #DC2626; }
     @page { margin: 1in; }
   }
 </style>

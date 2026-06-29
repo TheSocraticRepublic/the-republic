@@ -5,13 +5,14 @@ import { eq, sum, sql } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { computeEffectiveWeight, computeDecayMultiplier } from '@/lib/credentials'
 import { safeRoute } from '@/lib/api/safe-route'
+import { getClientIp } from '@/lib/api/ip'
 
 export const GET = safeRoute(async (
   request: NextRequest,
   { params }
 ) => {
   // Rate limit by IP — unauthenticated public endpoint
-  const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
+  const ip = getClientIp(request)
   const { success } = await checkRateLimit(`users-profile:${ip}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {

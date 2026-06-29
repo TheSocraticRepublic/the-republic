@@ -18,7 +18,6 @@
  */
 
 import { useRef, useState } from 'react'
-import { toPng, toSvg } from 'html-to-image'
 
 const EXPORT_ERROR_MSG = 'Export failed — try using Copy JSON instead'
 
@@ -66,6 +65,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
     if (!nodeRef.current || exporting) return
     setExporting('png')
     try {
+      const { toPng } = await import('html-to-image')
       const dataUrl = await toPng(nodeRef.current, { cacheBust: true, pixelRatio: 2 })
       const a = document.createElement('a')
       a.href = dataUrl
@@ -82,6 +82,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
     if (!nodeRef.current || exporting) return
     setExporting('svg')
     try {
+      const { toSvg } = await import('html-to-image')
       const dataUrl = await toSvg(nodeRef.current, { cacheBust: true })
       const a = document.createElement('a')
       a.href = dataUrl

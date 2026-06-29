@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { checkTightRateLimit, checkDailyAiLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 import { getDb } from '@/lib/db'
 import { investigations } from '@/lib/db/schema'
 import {
@@ -49,7 +50,7 @@ function detectConcernCategory(concern: string): string | null {
   return null
 }
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function handler(request: NextRequest) {
   // Auth check
   const userId = request.headers.get('x-user-id')
   if (!userId) {
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
     status: 202,
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})
 
 // ---------------------------------------------------------------------------
 // Postal code → MP resolution (unchanged from previous implementation)

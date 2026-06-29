@@ -6,6 +6,7 @@ import { parsePDF } from '@/lib/documents/parser'
 import { chunkDocument } from '@/lib/documents/chunker'
 import { generateEmbeddings } from '@/lib/ai/embeddings'
 import { eq } from 'drizzle-orm'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
@@ -17,7 +18,7 @@ function titleFromFilename(filename: string): string {
     .trim()
 }
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function handler(request: NextRequest) {
   // Auth: middleware injects x-user-id for protected routes
   const userId = request.headers.get('x-user-id')
   if (!userId) {
@@ -165,4 +166,4 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: 'Failed to parse document' }, { status: 500 })
   }
-}
+})

@@ -85,21 +85,26 @@ export async function POST(
       .from(federalVotes)
       .where(inArray(federalVotes.id, body.voteIds))
 
-    const votesWithBallots = await Promise.all(
-      votes.map(async (v) => {
-        const [ballot] = await db
-          .select({ ballot: federalMpBallots.ballot })
+    // Batch-fetch all ballots for this MP across all voteIds in a single query.
+    // The composite (voteId, mpId) unique index makes this fast and dedup-safe.
+    const voteIds = votes.map((v) => v.id)
+    const ballotRows = voteIds.length > 0
+      ? await db
+          .select({ voteId: federalMpBallots.voteId, ballot: federalMpBallots.ballot })
           .from(federalMpBallots)
           .where(
             and(
-              eq(federalMpBallots.voteId, v.id),
+              inArray(federalMpBallots.voteId, voteIds),
               eq(federalMpBallots.mpId, mpId)
             )
           )
-          .limit(1)
-        return { ...v, mpBallot: ballot?.ballot ?? 'unknown' }
-      })
-    )
+      : []
+    const ballotMap = new Map(ballotRows.map((b) => [b.voteId, b.ballot]))
+
+    const votesWithBallots = votes.map((v) => ({
+      ...v,
+      mpBallot: ballotMap.get(v.id) ?? 'unknown',
+    }))
 
     if (votesWithBallots.length > 0) {
       voteContext = `\n\nRELEVANT VOTES:\n${votesWithBallots
