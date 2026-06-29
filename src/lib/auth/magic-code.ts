@@ -47,16 +47,11 @@ export async function sendMagicCode(email: string): Promise<void> {
 
     if (existing.length > 0) return null
 
-    const expiryCutoff = new Date(Date.now() - CODE_TTL_MINUTES * 60_000)
-    await tx
-      .delete(magicCodes)
-      .where(
-        and(
-          eq(magicCodes.email, normalized),
-          lt(magicCodes.expiresAt, expiryCutoff)
-        )
-      )
-
+    // Rate-limit count MUST run before the expired-code purge below. Codes are
+    // counted by createdAt within the last hour, regardless of expiry; if we
+    // purged expired rows first, codes created 20–60 min ago (already past their
+    // 10-min TTL) would be deleted before counting, shrinking the effective
+    // window to ~20 min and allowing ~15 codes/hour instead of MAX_CODES_PER_HOUR.
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
     const recentCodes = await tx
       .select({ count: sql<number>`count(*)` })
@@ -71,6 +66,17 @@ export async function sendMagicCode(email: string): Promise<void> {
     if (recentCodes[0].count >= MAX_CODES_PER_HOUR) {
       throw new Error('Too many codes requested. Try again later.')
     }
+
+    // Housekeeping: purge this email's fully-expired codes (after the count).
+    const expiryCutoff = new Date(Date.now() - CODE_TTL_MINUTES * 60_000)
+    await tx
+      .delete(magicCodes)
+      .where(
+        and(
+          eq(magicCodes.email, normalized),
+          lt(magicCodes.expiresAt, expiryCutoff)
+        )
+      )
 
     await tx
       .update(magicCodes)
@@ -138,10 +144,19 @@ export async function verifyMagicCode(
     return { success: false, error: 'invalid' }
   }
 
-  await db
+  // Atomic redemption: only the first concurrent verify wins. The conditional
+  // UPDATE ... WHERE usedAt IS NULL is atomic at the row level; a second request
+  // racing on the same code updates 0 rows and is rejected. Without this guard a
+  // double-submit (two tabs / replay) could mint two sessions from one code.
+  const redeemed = await db
     .update(magicCodes)
     .set({ usedAt: now })
-    .where(eq(magicCodes.id, activeCode.id))
+    .where(and(eq(magicCodes.id, activeCode.id), isNull(magicCodes.usedAt)))
+    .returning({ id: magicCodes.id })
+
+  if (redeemed.length === 0) {
+    return { success: false, error: 'invalid' }
+  }
 
   return { success: true }
 }

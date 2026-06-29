@@ -204,8 +204,18 @@ indefinitely until you delete it or delete your account. Specific postures by ty
   account and are deleted when you delete your account (the vote rows are removed via
   cascade, not anonymized or left with a null reference).
 
-A scheduled job to purge expired magic codes and orphaned data is planned but not yet
-implemented. When it ships, this section will be updated.
+Expired magic codes are purged automatically by a scheduled job (runs every few minutes;
+removes codes more than a day past expiry). Data tied to a deleted account is removed by
+cascade at deletion time.
+
+---
+
+## Your Rights
+
+You can view the data tied to your account in the app, correct your display name, and
+withdraw consent at any time by deleting your account (which erases your data — see Account
+Deletion above). For a copy of your data or any privacy question, contact us; we respond to
+access requests within 30 days. We require nothing beyond an email to use the tool.
 
 ---
 
@@ -214,4 +224,4 @@ implemented. When it ships, this section will be updated.
 Questions about privacy or data handling: open an issue on the public repository or reach
 out through the forum. We will respond.
 
-Last updated: 2026-06-27
+Last updated: 2026-06-28

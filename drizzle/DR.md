@@ -94,6 +94,7 @@ SELECT count(*) FROM pg_policies WHERE schemaname = 'public';
 | `0004_add_feedback_table.sql` | feedback enum, feedback table, indexes | Yes |
 | `0005_investigation_generation_started.sql` | Add `generation_started_at` column, backfill | Yes |
 | `0006_feedback_rls_and_cascade.sql` | feedback RLS + FK cascade | Yes |
+| `0007_check_constraints.sql` | CHECK: investigation_outcomes.satisfaction (1–5), governance_proposals.quorum_threshold (0–1) | Yes |
 
 All files are **idempotent living scripts** — not immutable history. They can be
 updated (e.g., to add new policies) and re-applied safely. The `_custom_migrations`

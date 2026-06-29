@@ -135,9 +135,10 @@ export default function PrivacyPage() {
 
       <Section title="Your rights">
         <p>
-          You may access the data tied to your account, correct your display name, withdraw consent
-          by deleting your account, and contact us with any privacy question. We do not require any
-          information beyond an email to use the tool.
+          You can view the data tied to your account in the app, correct your display name, withdraw
+          consent by deleting your account, and contact us for a copy of your data or any privacy
+          question (we respond to access requests within 30 days). We do not require any information
+          beyond an email to use the tool.
         </p>
       </Section>
 
