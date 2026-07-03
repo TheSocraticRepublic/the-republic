@@ -1,7 +1,7 @@
 ---
 status: current
-current: "Pre-launch hardening — production grade C (0 FAIL, ~21 WARN) after the 06-28 audit→remediation→backlog-cleanup arc (F→C); remaining = ops (Lee) + deliberately-deferred engineering"
-next: "Production grade C (0 FAIL) on the monitor after the 06-28 audit→remediation→cleanup arc (F→C; all historical FAILs closed). To reach B (≤15 WARN) the remaining work is mostly OPS (Lee/dashboard): switch DATABASE_URL :5432→:6543 transaction pooler (highest value — prior 06-19 outage attached; CA already covers :6543); decide branch protection on main; add DATABASE_URL as a GHA secret + uncomment the sync-parliament cron (voting records self-update); confirm Upstash provisioned + 5 secrets is_secret + Sentry alert routed to a human + Supabase Pro/PITR. DEFERRED engineering tail (each its own focused change, named in the 06-28-cleanup audit): safeRoute sweep of the remaining ~37 routes (4 hottest done), middleware→proxy rename, auth-route test suite, reap-investigations scheduled-fn auth, CSP nonce, actor_keys envelope encryption (before AP federation goes live), PIPEDA data-export endpoint, custom-migration runner Supabase-branch dry-run + _custom_migrations bootstrap, briefing/route double-safeRoute extraction, pre-existing token-drift (briefing-view badge, landing #DC2626). DEFERRED design/scope (Illich-gated — only enter a civic domain when an honest lever exists): env→all-civic classifier + briefing-prompt broadening, legislative/lobbying vertical, geographic expansion. Audit reports: ~/marvin/state/production-audits/the-republic-2026-06-{27,28,28-cleanup}.md."
+current: "Design program (July 2026) — two tracks, seven phases; production grade C (0 FAIL, ~21 WARN) after the 06-28 audit→remediation→backlog-cleanup arc (F→C)"
+next: "Slot 1: D1 The Grammar residual (theme doctrine + route-scoped light proof-spike + remaining primitives) + P1 True North (ops with Lee: :5432→:6543 pooler switch, branch protection, DATABASE_URL GHA secret + sync-parliament cron, Upstash/Sentry/PITR confirms; plus the deferred engineering tail from the 06-28-cleanup audit). Bank D2/D3 phase plans in the same window. Charters: .claude/plans/opencave-design-program.md; audit reports: ~/marvin/state/production-audits/the-republic-2026-06-{27,28,28-cleanup}.md."
 testing: null
 pinned: true
 shipped:
@@ -57,15 +57,67 @@ legible information. Three-layer architecture (approved Apr 2026):
 This is Lee's primary mission project, not a side project. Pinned in the
 sidebar so it always surfaces regardless of activity cadence.
 
-## Major work areas
+**This file is canonical for program and status state.** The reference corpus
+(`~/marvin/content/reference/the-republic/`) holds the narrative/philosophy
+documents (full-phase ROADMAP, ARCHITECTURE v2.1, papers); program sequencing and
+shipped state live here.
 
-- **Governance phases** (Phase 1a–1h, Phase 2a–2f) — forum, peer review,
-  credentials, moderation, jurisdictions, ActivityPub federation, archive
-- **Vote tracker** (planned, not yet active) — legislator accountability via
-  voting records. See `~/.claude/projects/-home-leesalo-marvin/memory/project_republic_vote_tracker.md`
-  for the architecture mapping and prior-art landscape.
-- **Philosophical body** — 4 papers (~25,500 words) at
-  `content/reference/the-republic/`
+## Design Program — July 2026 (active)
+
+Two tracks, seven phases, approved 2026-07-02 and reconciled same day against the
+June 21–28 waves that shipped while planning ran (Examined Record design elevation,
+WARN-backlog cleanup, timeout fix — see shipped log). Full charters (mission,
+scope in/out, verified findings, risks, verification per phase):
+`.claude/plans/opencave-design-program.md` (local, not committed). Each phase gets
+its own critic-gated plan before its relay; design phases carry layout-level specs
+and are verified visually; every phase verification includes the standing
+accessibility item (contrast, keyboard, reduced-motion).
+
+**Theme doctrine:** "dark where you work, light where you read" — dark app chrome,
+light paper reading surfaces, landing journey dark → light. No user theme toggle.
+
+### Design track (serialized)
+
+| Phase | Mission | Size |
+|-------|---------|------|
+| **D1 — The Grammar** | Residual design-system foundation (the Examined Record elevation already shipped fonts, token sweep, ArmHeader): theme doctrine codified, route-scoped light proof-spike (D2's premise — `<html class="dark">` is still hardcoded), remaining primitives (EmptyState, StatusPill, CTA), token-drift stragglers, debris cleanup. | S/M |
+| **D2 — The Ascent** (flagship) | Landing redesign: Cave allegory with the dark→light ascent actually rendering (currently dead code), all-civic copy broadening (horizon Tier 1 rides along), Mirror joins the narrative, five arms told, re-specced for the Fraunces-era type system. | L |
+| **D3 — The Threshold** | In-app wayfinding: arms surfaced from the collapsed "Expert Tools" accordion, Forum enabled (built + audited, behind abuse-readiness gate), Scout/Mirror orientation, cross-arm links everywhere, plain-language pass, recent-activity strip on home. | L |
+| **D4 — The Athenians** | Integrate the drawn-but-never-shipped archetype illustrations (`designs/`) across briefing, arm headers, landing, empty states; favicon/OG. Default variant: cameo set; validate against the new visual language. | S/M |
+| **D5 — The Agora Steps** | Public surface elevation: archive, foundations index, privacy raised to landing standard; unified public chrome; OG/JSON-LD/SEO. | M |
+
+### Production track (interleaves)
+
+| Phase | Mission | Size |
+|-------|---------|------|
+| **P1 — True North** | The C→B push. Ops (Lee/dashboard): :5432→:6543 pooler switch (runbook + rollback first — prior 06-19 outage attached), branch protection, DATABASE_URL GHA secret + sync-parliament cron, Upstash/secrets/Sentry-routing/PITR confirms. Deferred engineering tail (06-28-cleanup audit): safeRoute sweep (~37 routes), middleware→proxy rename, auth-route tests, reap-investigations auth, CSP nonce, actor_keys envelope encryption (before AP federation goes live), PIPEDA export endpoint, migration-runner branch dry-run + `_custom_migrations` bootstrap, briefing double-safeRoute extraction, token-drift stragglers. | S/M |
+| **P2 — First Light in Production** | The first real civic outcome: verify Voyage/semantic retrieval + shadow-trigger on prod, then one real investigation end-to-end: concern → briefing → Gadfly → FOI filed → outcome tracked → credential awarded. | S |
+
+### Sequence
+
+```
+Slot 1:  D1 (Grammar residual)  P1 (True North) starts
+Slot 2:  D2 (Ascent)            P1 completes
+Slot 3:  D3 (Threshold)         P2 (First Light e2e)
+Slot 4:  D4 (Athenians) → D5 (Agora Steps)
+```
+
+Slots are ordinal, not calendar weeks. Plan-banking is mandatory: D2/D3 plans are
+authored and critic-gated during slot 1.
+
+**Decision points reserved for Lee:** Forum enablement timing (D3), illustration
+variant selection (D4), pooler switch window (P1).
+
+## Other work areas
+
+- **Governance phases** (Phase 1a–1h, Phase 2a–2f shipped) — forum, peer review,
+  credentials, moderation, jurisdictions, ActivityPub federation, archive. The
+  Agora (Phase 3) remains community-triggered: 50+ active credentialed users,
+  3+ jurisdiction communities, proven credentials via real civic outcomes.
+- **Docs reconciliation** (rolling) — repo ARCHITECTURE theme/typography sections
+  (D1), reference INDEX missing-file fix, canonical paper version, stale PDF exports.
+- **Philosophical body** — 5 papers, published at /foundations; corpus at
+  `~/marvin/content/reference/the-republic/`
 
 ## Horizon — scope expansion (thesis, June 2026)
 
@@ -77,6 +129,7 @@ Expansion path, in tiers of increasing cost and decreasing safety:
    environmental-only. The env framing is landing copy + two prompts
    (`briefing-system`, `mp-analysis-system`) + the *optional* `assessmentFramework`.
    Opening this up is surfacing + prompt/classifier broadening, not redesign.
+   *(Tier 1 is now scheduled: it rides along with D2 — The Ascent.)*
 2. **More jurisdictions (QC, Maritimes, federal, eventually US) — designed for it.**
    `JurisdictionModule` is a documented plugin (registry + `CONTRIBUTING.md`); the
    type system already names `canada-federal`/`us-federal`; the FOI framework holds
@@ -98,6 +151,9 @@ a new civic domain only when an honest lever for it can be named.
 
 ## Reference
 
-- `state/plans/republic-roadmap-v2.md` — strategic roadmap
-- `state/plans/republic-three-layer-refactor.md` — architectural plan
+- `.claude/plans/opencave-design-program.md` — active program charters (July 2026, local)
+- `~/marvin/state/plans/archive/republic-roadmap-v2.md` — strategic roadmap (Apr 2026)
+- `~/marvin/state/plans/archive/republic-three-layer-refactor.md` — architectural plan
+- `~/marvin/content/reference/the-republic/` — narrative ROADMAP, ARCHITECTURE v2.1, papers
+- `~/marvin/state/production-audits/` — audit reports (latest: the-republic-2026-06-28-cleanup.md)
 - Repo: github.com/TheSocraticRepublic/the-republic
