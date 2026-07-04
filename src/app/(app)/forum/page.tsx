@@ -3,8 +3,9 @@ import { redirect } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { forumThreads, userProfiles, jurisdictions } from '@/lib/db/schema'
 import { eq, desc, and, count, sql } from 'drizzle-orm'
-import Link from 'next/link'
 import { Plus } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
+import { CTAButton } from '@/components/ui/cta-button'
 import { ThreadCard } from '@/components/forum/thread-card'
 import { ThreadFilters } from '@/components/forum/thread-filters'
 import { Pagination } from '@/components/forum/pagination'
@@ -101,18 +102,9 @@ export default async function ForumPage({
           </h1>
           <p className="mt-0.5 text-xs text-text-muted">Community discussions</p>
         </div>
-        <Link
-          href="/forum/new"
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 hover:opacity-90"
-          style={{
-            backgroundColor: 'var(--surface-3)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-strong)',
-          }}
-        >
-          <Plus size={13} strokeWidth={2} />
+        <CTAButton href="/forum/new" icon={Plus}>
           New Thread
-        </Link>
+        </CTAButton>
       </div>
 
       {/* Filters */}
@@ -127,17 +119,10 @@ export default async function ForumPage({
       {/* Thread list */}
       <section>
         {threads.length === 0 ? (
-          <div className="rounded-xl border border-border bg-surface-1 px-6 py-10 text-center">
-            <p className="text-sm text-text-muted">No discussions yet. Be the first to start one.</p>
-            <p className="mt-2">
-              <Link
-                href="/forum/new"
-                className="text-xs text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
-              >
-                Start a discussion
-              </Link>
-            </p>
-          </div>
+          <EmptyState
+            message="No discussions yet. Be the first to start one."
+            action={{ label: 'Start a discussion', href: '/forum/new' }}
+          />
         ) : (
           <div className="space-y-3">
             {threads.map((thread) => (

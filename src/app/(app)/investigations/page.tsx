@@ -6,6 +6,9 @@ import { eq, desc, and, isNull, sql } from 'drizzle-orm'
 import { STUCK_GENERATION_INTERVAL } from '@/lib/investigation/constants'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
+import { StatusPill } from '@/components/ui/status-pill'
+import { CTAButton } from '@/components/ui/cta-button'
 import { InvestigationControls } from '@/components/investigation/investigation-controls'
 import { LocalDate } from '@/components/investigation/local-date'
 
@@ -20,65 +23,62 @@ function truncate(text: string, max = 120): string {
 
 type InvestigationStatus = 'generating' | 'complete' | 'failed' | 'cancelled' | 'active' | 'archived'
 
+// Token-backed status colors. `failed` has no dedicated token — it's mapped
+// to the lever accent (nearest semantic fit: negative/blocked outcome),
+// which is a deliberate, visible change from the prior hardcoded #C85B5B to
+// var(--accent-lever) (#DA6E6E under dark). `active` (legacy, no briefing)
+// reuses the `generating` gold — previously a one-off duplicated hex value,
+// now the same shared gadfly-accent token.
+const STATUS_CONFIG: Record<InvestigationStatus, { label: string; bg: string; color: string }> = {
+  generating: {
+    label: 'Generating…',
+    bg: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',
+    color: 'var(--accent-gadfly)',
+  },
+  complete: {
+    label: 'Complete',
+    bg: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)',
+    color: 'var(--accent-mirror)',
+  },
+  failed: {
+    label: 'Failed',
+    bg: 'color-mix(in srgb, var(--accent-lever) 10%, transparent)',
+    color: 'var(--accent-lever)',
+  },
+  cancelled: {
+    label: 'Cancelled',
+    bg: 'color-mix(in srgb, var(--accent-oracle) 10%, transparent)',
+    color: 'var(--accent-oracle)',
+  },
+  active: {
+    // legacy fallback — no briefing, treat like generating
+    label: 'In progress',
+    bg: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',
+    color: 'var(--accent-gadfly)',
+  },
+  archived: {
+    label: 'Archived',
+    bg: 'color-mix(in srgb, var(--accent-oracle) 10%, transparent)',
+    color: 'var(--accent-oracle)',
+  },
+}
+
 function StatusBadge({ status, hasBriefing }: { status: InvestigationStatus; hasBriefing: boolean }) {
   // Legacy 'active' rows: treat as 'complete' if they have a briefing (pre-migration fallback)
   const resolved: InvestigationStatus =
     status === 'active' && hasBriefing ? 'complete' : status
 
-  const config: Record<InvestigationStatus, { label: string; bg: string; color: string }> = {
-    generating: {
-      label: 'Generating…',
-      bg: 'rgba(200, 168, 75, 0.10)',
-      color: '#C8A84B',
-    },
-    complete: {
-      label: 'Complete',
-      bg: 'rgba(91, 200, 138, 0.10)',
-      color: '#5BC88A',
-    },
-    failed: {
-      label: 'Failed',
-      bg: 'rgba(200, 91, 91, 0.10)',
-      color: '#C85B5B',
-    },
-    cancelled: {
-      label: 'Cancelled',
-      bg: 'rgba(137, 180, 200, 0.10)',
-      color: '#89B4C8',
-    },
-    active: {
-      // legacy fallback — no briefing, treat like failed
-      label: 'In progress',
-      bg: 'rgba(200, 168, 75, 0.10)',
-      color: '#C8A84B',
-    },
-    archived: {
-      label: 'Archived',
-      bg: 'rgba(137, 180, 200, 0.10)',
-      color: '#89B4C8',
-    },
-  }
-
-  const { label, bg, color } = config[resolved]
+  const { label, bg, color } = STATUS_CONFIG[resolved]
 
   return (
-    <span
-      className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-      style={{ backgroundColor: bg, color }}
-      aria-label={`Status: ${label}`}
-    >
-      {resolved === 'generating' ? (
-        <span className="inline-flex items-center gap-1">
-          <span
-            className="inline-block h-1.5 w-1.5 rounded-full bg-current animate-pulse"
-            aria-hidden="true"
-          />
-          {label}
-        </span>
-      ) : (
-        label
-      )}
-    </span>
+    <StatusPill
+      variant="pill"
+      label={label}
+      bg={bg}
+      color={color}
+      pulse={resolved === 'generating'}
+      ariaLabel={`Status: ${label}`}
+    />
   )
 }
 
@@ -144,31 +144,19 @@ export default async function InvestigationsPage() {
             Your civic inquiries
           </p>
         </div>
-        <Link
-          href="/investigate"
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 hover:opacity-90"
-          style={{
-            backgroundColor: 'var(--surface-3)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-strong)',
-          }}
-        >
-          <Search size={13} strokeWidth={2} />
+        <CTAButton href="/investigate" icon={Search}>
           New Investigation
-        </Link>
+        </CTAButton>
       </div>
 
       {/* List */}
       <section aria-label="Your investigations">
         {records.length === 0 ? (
-          <div className="rounded-xl border border-border bg-surface-1 shadow-sm px-6 py-10 text-center">
-            <p className="text-sm text-text-muted">No investigations yet. Start one.</p>
-            <p className="mt-1 text-xs text-text-faint">
-              <Link href="/investigate" className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors">
-                Start your first investigation
-              </Link>
-            </p>
-          </div>
+          <EmptyState
+            className="shadow-sm"
+            message="No investigations yet. Start one."
+            action={{ label: 'Start your first investigation', href: '/investigate' }}
+          />
         ) : (
           <div className="space-y-3">
             {records.map((inv) => {

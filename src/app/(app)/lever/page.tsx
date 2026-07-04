@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { ArmHeader } from '@/components/layout/arm-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ActionCard } from '@/components/lever/action-card'
 import { NewActionDialog } from '@/components/lever/new-action-dialog'
 
@@ -70,11 +71,10 @@ export default async function LeverPage({ searchParams }: LeverPageProps) {
         </h2>
 
         {actions.length === 0 ? (
-          <div className="rounded-xl border border-border bg-surface-1 px-6 py-10 text-center">
-            <p className="font-serif italic text-sm text-text-muted">
-              No civic actions yet. Knowledge without action is incomplete.
-            </p>
-          </div>
+          <EmptyState
+            serif
+            message="No civic actions yet. Knowledge without action is incomplete."
+          />
         ) : (
           <div className="space-y-3">
             {actions.map((action) => (

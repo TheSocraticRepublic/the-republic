@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { FileText } from 'lucide-react'
 import { leverActionTypeEnum } from '@/lib/db/schema'
+import { StatusPill } from '@/components/ui/status-pill'
 
 type LeverActionType = (typeof leverActionTypeEnum.enumValues)[number]
 
@@ -67,18 +68,8 @@ export function ActionCard({ id, title, actionType, status, createdAt }: ActionC
 
           {/* Badges */}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span
-              className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium"
-              style={{ color: typeStyle.color, backgroundColor: typeStyle.bg }}
-            >
-              {typeStyle.label}
-            </span>
-            <span
-              className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium"
-              style={{ color: statusStyle.color, backgroundColor: statusStyle.bg }}
-            >
-              {statusStyle.label}
-            </span>
+            <StatusPill label={typeStyle.label} color={typeStyle.color} bg={typeStyle.bg} />
+            <StatusPill label={statusStyle.label} color={statusStyle.color} bg={statusStyle.bg} />
           </div>
 
           {/* Date */}

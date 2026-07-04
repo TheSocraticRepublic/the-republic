@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db'
 import { gadflySessions } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { ArmHeader } from '@/components/layout/arm-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import { SessionCard } from '@/components/gadfly/session-card'
 import { NewSessionDialog } from '@/components/gadfly/new-session-dialog'
 
@@ -62,11 +63,10 @@ export default async function GadflyPage({ searchParams }: GadflyPageProps) {
         </h2>
 
         {sessions.length === 0 ? (
-          <div className="rounded-xl border border-border bg-surface-1 px-6 py-10 text-center">
-            <p className="font-serif italic text-sm text-text-muted">
-              No inquiries yet. The unexamined assumption is the dangerous one.
-            </p>
-          </div>
+          <EmptyState
+            serif
+            message="No inquiries yet. The unexamined assumption is the dangerous one."
+          />
         ) : (
           <div className="space-y-3">
             {sessions.map((session) => (

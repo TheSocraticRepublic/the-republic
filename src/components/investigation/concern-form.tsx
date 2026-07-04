@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronDown, Loader2, Search, X } from 'lucide-react'
 import { clsx } from 'clsx'
+import { CTAButton } from '@/components/ui/cta-button'
 
 interface Jurisdiction {
   id: string
@@ -213,21 +214,7 @@ export function ConcernForm() {
             Cancel
           </button>
         )}
-        <button
-          onClick={handleStartInvestigation}
-          disabled={!canSubmit}
-          className={clsx(
-            'inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-150',
-            canSubmit
-              ? 'opacity-100 hover:opacity-90'
-              : 'cursor-not-allowed opacity-30'
-          )}
-          style={{
-            backgroundColor: 'var(--surface-3)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-strong)',
-          }}
-        >
+        <CTAButton onClick={handleStartInvestigation} disabled={!canSubmit} size="md">
           {loading ? (
             <>
               <Loader2 size={14} strokeWidth={2} className="animate-spin" />
@@ -239,7 +226,7 @@ export function ConcernForm() {
               Start Investigation
             </>
           )}
-        </button>
+        </CTAButton>
       </div>
     </div>
   )

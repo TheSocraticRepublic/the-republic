@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db'
 import { documents } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { ArmHeader } from '@/components/layout/arm-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import { UploadZone } from '@/components/oracle/upload-zone'
 import { DocumentCard } from '@/components/oracle/document-card'
 
@@ -55,11 +56,7 @@ export default async function OraclePage() {
         </h2>
 
         {docs.length === 0 ? (
-          <div className="rounded-xl border border-border bg-surface-1 px-6 py-10 text-center">
-            <p className="text-sm text-text-muted">
-              No documents yet. Upload a government document to begin.
-            </p>
-          </div>
+          <EmptyState message="No documents yet. Upload a government document to begin." />
         ) : (
           <div className="space-y-3">
             {docs.map((doc) => (
