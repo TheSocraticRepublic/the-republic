@@ -221,6 +221,90 @@
   background: linear-gradient(to bottom, var(--journey-daylight) 0%, var(--journey-paper) 16%, var(--journey-paper) 100%);
 }
 
+/*
+ * The Ascent — movement CONTENT (D2 batch 2). These style the first three
+ * movements' interior elements (the light shaft, the shadow-paper document
+ * treatment, the five-arm thread). They are independent of the `.movement-*`
+ * ground rules above — do not confuse the two when editing either.
+ */
+
+/* M1 · The Cave — hairline light shaft descending from the wordmark block */
+.light-shaft {
+  width: 1px;
+  height: 74px;
+  background: linear-gradient(to bottom, rgba(250, 250, 249, 0.4), rgba(250, 250, 249, 0));
+  animation: shaft-breathe 4s ease-in-out infinite;
+}
+
+@keyframes shaft-breathe {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .light-shaft {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
+/* M2 · The Shadows — the permit fragment as shadow-on-the-wall: visible, not yet readable */
+.shadow-paper {
+  position: relative;
+  background: rgba(250, 250, 249, 0.12);
+  border: 1px solid rgba(250, 250, 249, 0.14);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.shadow-paper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(0.5px);
+  pointer-events: none;
+}
+
+/* M3 · The Turning — five arms as stations on a vertical thread */
+.arm-thread {
+  position: relative;
+}
+
+.arm-thread::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    var(--accent-scout),
+    var(--accent-oracle),
+    var(--accent-gadfly),
+    var(--accent-lever),
+    var(--accent-mirror)
+  );
+  opacity: 0.55;
+  border-radius: 2px;
+}
+
+.arm-station {
+  position: relative;
+}
+
+.arm-station::before {
+  content: '';
+  position: absolute;
+  left: -34px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--acc);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--acc) 60%, transparent);
+}
+
 html,
 body {
   background-color: var(--surface-0);

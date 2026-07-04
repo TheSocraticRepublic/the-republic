@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import { ScrollIndicator } from './scroll-indicator'
 
 export function Hero() {
   return (
@@ -50,7 +49,15 @@ export function Hero() {
         A Republic for the examined institution.
       </p>
 
-      <ScrollIndicator light />
+      {/*
+        The light shaft — the first hint that light is a line you can follow
+        down. Replaces the old scroll-hint bar (D2). Static under
+        prefers-reduced-motion (see .light-shaft in globals.css).
+      */}
+      <div
+        className="light-shaft relative z-10 mx-auto mt-[7vh]"
+        aria-hidden="true"
+      />
     </section>
   )
 }
