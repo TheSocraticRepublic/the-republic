@@ -18,7 +18,13 @@ interface EmptyStateProps {
    *  used by Gadfly/Lever, instead of the plain register used elsewhere. */
   serif?: boolean
   /** Escape hatch for per-site wrapper differences (e.g. investigations'
-   *  shadow-sm) without baking every variant into this component. */
+   *  shadow-sm) without baking every variant into this component.
+   *  ADDITIVE ONLY: appended after the base classes, but Tailwind's generated
+   *  stylesheet order (not source order) decides collisions — passing a
+   *  conflicting utility (a different `px-`/`py-`/`rounded-`/`bg-`) will fight
+   *  the base classes unpredictably. Keep this to non-overlapping additions
+   *  (shadows, margins). If real variants emerge, switch to a merge-aware
+   *  `cn()`/`tailwind-merge` here rather than passing overrides through. */
   className?: string
 }
 
