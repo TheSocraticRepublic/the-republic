@@ -7,7 +7,7 @@ export function ActAction() {
     <section className="relative z-10 px-6 py-32" data-scroll-section="action">
       <SectionBackdrop
         src="/landing/creek-mist.jpg"
-        opacity={0.55}
+        opacity={0.12}
         position="center"
       />
 
