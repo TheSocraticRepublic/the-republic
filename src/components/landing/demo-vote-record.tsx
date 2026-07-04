@@ -1,7 +1,11 @@
 export function DemoVoteRecord() {
   return (
     <div
-      className="mx-auto mt-8 max-w-lg overflow-hidden rounded-xl border border-border-strong bg-surface-1 shadow-sm"
+      className="mx-auto mt-8 max-w-lg overflow-hidden rounded-xl light-scope"
+      style={{
+        background: '#FAFAF9',
+        boxShadow: '0 0 80px rgba(250,250,249,0.18), 0 24px 60px rgba(20,18,14,0.35)',
+      }}
       data-scroll-fade
       aria-label="Example vote record from Open Cave"
     >
@@ -10,7 +14,7 @@ export function DemoVoteRecord() {
           <div>
             <p
               className="text-sm font-semibold text-text-primary"
-              style={{ fontFamily: 'var(--font-display)' }}
+              style={{ fontFamily: 'var(--font-body)' }}
             >
               Mark Strahl
             </p>
@@ -34,7 +38,7 @@ export function DemoVoteRecord() {
             Bill C-49 — Old-Growth Protection and Ecosystem Integrity Act
           </p>
           <p
-            className="mt-2 text-sm leading-relaxed text-text-secondary"
+            className="mt-2 text-sm italic leading-relaxed text-text-secondary"
             style={{ fontFamily: 'var(--font-serif)' }}
           >
             Called for &quot;sustainable forestry practices&quot; in three public town
