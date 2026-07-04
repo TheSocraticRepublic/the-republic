@@ -1,16 +1,13 @@
 import Link from 'next/link'
 import { Search, Compass, Eye, MessageCircleQuestion, FileText, GitCompare } from 'lucide-react'
 
-// D2: all `accent` hex below are pre-authored light-mode landing literals,
-// intentionally NOT tokenized in D1 — dead under the current dark-only landing
-// render; D2 converts them when it adopts `.light-scope`. Do not sweep into
-// `var(--accent-*)`. Canonical note: act-understanding.tsx.
+// Arm-accent tokens — this movement is under .light-scope, so they resolve to the light variants.
 const armLinks = [
-  { name: 'Scout', href: '/scout', icon: Compass, accent: '#9333EA' },
-  { name: 'Oracle', href: '/oracle', icon: Eye, accent: '#0891B2' },
-  { name: 'Gadfly', href: '/gadfly', icon: MessageCircleQuestion, accent: '#B45309' },
-  { name: 'Lever', href: '/lever', icon: FileText, accent: '#DC2626' },
-  { name: 'Mirror', href: '/mirror', icon: GitCompare, accent: '#059669' },
+  { name: 'Scout', href: '/scout', icon: Compass, accent: 'var(--accent-scout)' },
+  { name: 'Oracle', href: '/oracle', icon: Eye, accent: 'var(--accent-oracle)' },
+  { name: 'Gadfly', href: '/gadfly', icon: MessageCircleQuestion, accent: 'var(--accent-gadfly)' },
+  { name: 'Lever', href: '/lever', icon: FileText, accent: 'var(--accent-lever)' },
+  { name: 'Mirror', href: '/mirror', icon: GitCompare, accent: 'var(--accent-mirror)' },
 ]
 
 export function LandingCta() {
@@ -19,7 +16,7 @@ export function LandingCta() {
       <div className="mx-auto max-w-lg" data-scroll-fade>
         <Link
           href="/briefing"
-          className="block rounded-2xl border border-border-strong bg-surface-1 p-8 shadow-md transition-all duration-200 hover:shadow-lg hover:border-text-faint"
+          className="block rounded-2xl p-8 transition-opacity duration-200 hover:opacity-90"
         >
           <div className="mb-4 flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border-strong bg-surface-3">
