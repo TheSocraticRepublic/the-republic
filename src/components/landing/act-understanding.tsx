@@ -1,5 +1,12 @@
 import { TopoPattern } from './topo-pattern'
 
+// D2 (canonical note): every `accent` hex in this file is a pre-authored
+// light-mode landing literal, intentionally NOT tokenized in D1. They are dead
+// under the current dark-only landing render; D2 converts them to
+// `var(--accent-*)` when it adopts `.light-scope` on the redesigned landing.
+// Do NOT sweep these into tokens before then — each would render the wrong
+// (light-mode) value against the dark ground. Sibling files: landing-cta.tsx,
+// topo-pattern.tsx.
 const arms = [
   {
     name: 'Scout',

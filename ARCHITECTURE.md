@@ -246,9 +246,12 @@ No AI-generated legal citations anywhere in the codebase. The Lever is the only 
 Tailwind CSS 4 with CSS custom properties (`src/app/globals.css`). Theme doctrine:
 **dark where you work, light where you read.** The app chrome (nav, panels,
 forms, cards) is dark by default, with no user toggle. Long-form reading
-surfaces get a light "paper" treatment via `.dark-island` (the briefing
-document, legal/FOI text), because sustained reading is more legible on
-light backgrounds even inside a dark app. The landing page is the one
+surfaces (the briefing document, legal/FOI text) get a light "paper"
+treatment from a light palette applied inside the reading component
+(`LIGHT_PALETTE` in `briefing-view.tsx`) plus the `.content-island` grain —
+not a theme class (`.dark-island` is a separate dark overlay, used by the
+Gadfly sheet). Sustained reading is more legible on light backgrounds even
+inside a dark app. The landing page is the one
 surface that travels dark → light as you scroll, via `.light-scope` — it
 opens in the cave (dark) and ends in daylight (light), matching its own
 narrative arc.

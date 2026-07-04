@@ -82,9 +82,13 @@ src/
 ## Design System
 
 - Theme doctrine: dark where you work, light where you read. Dark app chrome by
-  default, no user toggle. Light "paper" reading surfaces via `.dark-island`
-  (briefing, legal/FOI text). The landing page travels dark → light on scroll
-  via `.light-scope`. See `globals.css`'s header comment for the full doctrine.
+  default, no user toggle. Long-form reading surfaces (briefing, legal/FOI text)
+  get a light "paper" treatment from a light palette inside the reading
+  component (`LIGHT_PALETTE` in `briefing-view.tsx`) plus `.content-island`
+  grain — not a theme class. (`.dark-island` is a separate DARK overlay for the
+  Gadfly sheet, not the light-reading mechanism.) The landing page travels
+  dark → light on scroll via `.light-scope`. See `globals.css`'s header comment
+  for the full doctrine.
 - Token mechanism: `@theme inline` in `globals.css` (required — non-inline
   `@theme` resolves at `:root` and can't be overridden by a nested scope).
   Always reference `var(--accent-{arm})` / `bg-{arm}` tokens, never a

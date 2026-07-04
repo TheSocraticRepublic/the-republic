@@ -5,8 +5,12 @@
  *
  * The app chrome (nav, panels, forms, cards) is dark by default — no user
  * toggle. Long-form reading surfaces (the briefing document, legal/FOI
- * text) get a light "paper" treatment via `.dark-island`, because sustained
- * reading is more legible on light backgrounds even inside a dark app. The
+ * text) get a light "paper" treatment — sustained reading is more legible on
+ * light backgrounds even inside a dark app — rendered from a light palette
+ * applied inside the reading component (`LIGHT_PALETTE` in `briefing-view.tsx`)
+ * plus the `.content-island` paper-grain, NOT via a theme class. (Do not
+ * confuse this with `.dark-island` below, which is a DARK focused-attention
+ * overlay used by the Gadfly sheet — not the light-reading mechanism.) The
  * landing page is the one place that travels dark -> light as you scroll,
  * via `.light-scope` (see below) — it opens in the cave (dark) and ends in
  * daylight (light), matching its own narrative arc.

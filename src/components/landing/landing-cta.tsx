@@ -1,12 +1,14 @@
 import Link from 'next/link'
 import { Search, Compass, Eye, MessageCircleQuestion, FileText, GitCompare } from 'lucide-react'
 
+// D2: all `accent` hex below are pre-authored light-mode landing literals,
+// intentionally NOT tokenized in D1 — dead under the current dark-only landing
+// render; D2 converts them when it adopts `.light-scope`. Do not sweep into
+// `var(--accent-*)`. Canonical note: act-understanding.tsx.
 const armLinks = [
   { name: 'Scout', href: '/scout', icon: Compass, accent: '#9333EA' },
   { name: 'Oracle', href: '/oracle', icon: Eye, accent: '#0891B2' },
   { name: 'Gadfly', href: '/gadfly', icon: MessageCircleQuestion, accent: '#B45309' },
-  // D2: pre-authored light-mode lever accent, dead under the current
-  // dark-only landing render — see act-understanding.tsx for the full note.
   { name: 'Lever', href: '/lever', icon: FileText, accent: '#DC2626' },
   { name: 'Mirror', href: '/mirror', icon: GitCompare, accent: '#059669' },
 ]

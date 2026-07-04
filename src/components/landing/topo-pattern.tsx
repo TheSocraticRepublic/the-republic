@@ -1,3 +1,6 @@
+// D2: default is a pre-authored light-mode scout literal (dead under the
+// dark-only landing); D2 tokenizes when it adopts `.light-scope`. Do not sweep.
+// Canonical note: act-understanding.tsx.
 export function TopoPattern({ color = '#9333EA' }: { color?: string }) {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
