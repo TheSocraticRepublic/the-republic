@@ -290,7 +290,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                     className="inline-block h-1.5 w-1.5 rounded-full"
                     style={{
                       backgroundColor:
-                        action.status === 'filed' ? '#89B4C8'
+                        action.status === 'filed' ? 'var(--accent-oracle)'
                           : action.status === 'final' ? 'var(--accent-mirror)'
                           : 'var(--accent-gadfly)',
                     }}
@@ -302,7 +302,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                     className="text-[9px] font-semibold uppercase tracking-wider"
                     style={{
                       color:
-                        action.status === 'filed' ? '#89B4C8'
+                        action.status === 'filed' ? 'var(--accent-oracle)'
                           : action.status === 'final' ? 'var(--accent-mirror)'
                           : 'var(--accent-gadfly)',
                     }}

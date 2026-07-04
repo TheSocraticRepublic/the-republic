@@ -26,7 +26,7 @@ const STATUS_FLOW: Record<string, 'draft' | 'final' | 'filed'> = {
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; border: string }> = {
   draft: { label: 'Draft', color: 'var(--accent-gadfly)', bg: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)', border: 'color-mix(in srgb, var(--accent-gadfly) 25%, transparent)' },
   final: { label: 'Final', color: 'var(--accent-mirror)', bg: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)', border: 'color-mix(in srgb, var(--accent-mirror) 25%, transparent)' },
-  filed: { label: 'Filed', color: '#89B4C8', bg: 'rgba(137, 180, 200, 0.1)', border: 'rgba(137, 180, 200, 0.25)' },
+  filed: { label: 'Filed', color: 'var(--accent-oracle)', bg: 'color-mix(in srgb, var(--accent-oracle) 10%, transparent)', border: 'color-mix(in srgb, var(--accent-oracle) 25%, transparent)' },
 }
 
 const ADVANCE_LABELS: Record<string, string> = {

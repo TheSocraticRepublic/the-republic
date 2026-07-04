@@ -16,7 +16,7 @@ interface SessionCardProps {
 
 const MODE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   socratic: { label: 'Socratic', color: 'var(--accent-gadfly)', bg: 'color-mix(in srgb, var(--accent-gadfly) 12%, transparent)' },
-  direct: { label: 'Direct', color: '#89B4C8', bg: 'rgba(137, 180, 200, 0.12)' },
+  direct: { label: 'Direct', color: 'var(--accent-oracle)', bg: 'color-mix(in srgb, var(--accent-oracle) 12%, transparent)' },
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {

@@ -2,8 +2,6 @@ import Image from 'next/image'
 import { ScrollIndicator } from './scroll-indicator'
 
 export function Hero() {
-  const hasPhoto = true // flip to false for gradient-only fallback
-
   return (
     <section
       className="relative z-0 flex min-h-screen flex-col items-center justify-center text-center"
@@ -11,24 +9,14 @@ export function Hero() {
     >
       {/* Background image with parallax target */}
       <div className="absolute inset-0 z-0 overflow-hidden" data-scroll-hero-image>
-        {hasPhoto ? (
-          <Image
-            src="/landing/cave-ocean.jpg"
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority
-          />
-        ) : (
-          <div
-            className="h-full w-full"
-            style={{
-              background:
-                'linear-gradient(170deg, #2d3b2d 0%, #3d4f3d 30%, #5a6e5a 60%, #8a9b8a 100%)',
-            }}
-          />
-        )}
+        <Image
+          src="/landing/cave-ocean.jpg"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority
+        />
         {/* Dark gradient overlay for text readability */}
         <div
           className="absolute inset-0"

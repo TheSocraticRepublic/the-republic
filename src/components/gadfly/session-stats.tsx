@@ -19,7 +19,7 @@ interface SessionStatsProps {
 }
 
 const QUESTION_TYPE_COLORS: Record<string, string> = {
-  clarifying: '#89B4C8',
+  clarifying: 'var(--accent-oracle)',
   probing: 'var(--accent-gadfly)',
   challenging: 'var(--accent-lever)',
   connecting: 'var(--accent-mirror)',

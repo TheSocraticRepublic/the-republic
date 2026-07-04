@@ -52,8 +52,8 @@ export function ThreadCard({
                   <span
                     className="rounded-full px-2 py-0.5 text-[10px] font-medium"
                     style={{
-                      backgroundColor: 'rgba(137, 180, 200, 0.10)',
-                      color: '#89B4C8',
+                      backgroundColor: 'color-mix(in srgb, var(--accent-oracle) 10%, transparent)',
+                      color: 'var(--accent-oracle)',
                     }}
                   >
                     {jurisdictionName}

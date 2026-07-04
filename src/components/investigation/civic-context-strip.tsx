@@ -48,7 +48,7 @@ interface ReviewSummaryData {
 }
 
 const ACCENTS: Record<Section, string> = {
-  votes: '#89B4C8',
+  votes: 'var(--accent-oracle)',
   discussion: 'var(--accent-gadfly)',
   reviews: 'var(--accent-mirror)',
   archive: '#78716c',

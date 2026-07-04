@@ -1033,8 +1033,8 @@ function DocumentCard({
                 fontSize: '10px',
                 textTransform: 'uppercase' as const,
                 letterSpacing: '0.06em',
-                backgroundColor: 'rgba(176,136,200,0.10)',
-                color: '#B088C8',
+                backgroundColor: 'color-mix(in srgb, var(--accent-scout) 10%, transparent)',
+                color: 'var(--accent-scout)',
                 fontWeight: 600,
               }}
             >

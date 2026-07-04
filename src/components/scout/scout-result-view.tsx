@@ -233,8 +233,8 @@ function FippaCard({ block }: { block: string }) {
       <div
         className="rounded-xl p-5 backdrop-blur-md"
         style={{
-          backgroundColor: 'rgba(200, 168, 75, 0.05)',
-          border: '1px solid rgba(200, 168, 75, 0.25)',
+          backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 5%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
         }}
       >
         <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">

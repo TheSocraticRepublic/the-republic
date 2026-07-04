@@ -42,11 +42,11 @@ export function OracleAnalysisPanel({
       {/* Analyze / Re-analyze button */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Eye size={14} strokeWidth={1.75} style={{ color: '#89B4C8' }} />
+          <Eye size={14} strokeWidth={1.75} style={{ color: 'var(--accent-oracle)' }} />
           <span
             className="text-sm font-semibold"
             style={{
-              color: '#89B4C8',
+              color: 'var(--accent-oracle)',
             }}
           >
             Oracle Analysis
@@ -61,7 +61,7 @@ export function OracleAnalysisPanel({
         <button
           onClick={handleAnalyze}
           disabled={isLoading}
-          className="flex items-center gap-2 rounded-lg border border-border bg-surface-1 px-4 py-2 text-sm text-text-secondary transition-all duration-150 hover:border-[#89B4C8]/30 hover:bg-[#89B4C8]/[0.06] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg border border-border bg-surface-1 px-4 py-2 text-sm text-text-secondary transition-all duration-150 hover:border-[var(--accent-oracle)]/30 hover:bg-[var(--accent-oracle)]/[0.06] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? (
             <>
@@ -100,11 +100,11 @@ export function OracleAnalysisPanel({
           <span
             className="flex h-12 w-12 items-center justify-center rounded-xl border"
             style={{
-              borderColor: 'rgba(137, 180, 200, 0.2)',
-              backgroundColor: 'rgba(137, 180, 200, 0.06)',
+              borderColor: 'color-mix(in srgb, var(--accent-oracle) 20%, transparent)',
+              backgroundColor: 'color-mix(in srgb, var(--accent-oracle) 6%, transparent)',
             }}
           >
-            <Eye size={20} strokeWidth={1.5} style={{ color: '#89B4C8' }} />
+            <Eye size={20} strokeWidth={1.5} style={{ color: 'var(--accent-oracle)' }} />
           </span>
           <div>
             <p className="text-sm font-medium text-text-secondary">Ready for analysis</p>

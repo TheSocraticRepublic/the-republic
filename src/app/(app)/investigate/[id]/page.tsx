@@ -97,7 +97,7 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
           <div className="flex flex-col items-center gap-3 text-center" role="alert">
             <div
               className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: isCancelled ? '#89B4C8' : '#C85B5B' }}
+              style={{ backgroundColor: isCancelled ? 'var(--accent-oracle)' : 'var(--accent-lever)' }}
               aria-hidden="true"
             />
             <p className="text-sm font-medium text-text-primary">

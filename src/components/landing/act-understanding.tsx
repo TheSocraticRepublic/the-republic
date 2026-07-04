@@ -27,6 +27,10 @@ const arms = [
     name: 'Lever',
     question: 'What can you actually do with what you know?',
     body: 'The Lever generates a formal Freedom of Information request to the Ministry of Forests citing the Forest and Range Practices Act. Not an outline. Not a suggestion. A document you can file today. The Vote Tracker shows how your MP voted on old-growth protection. The letter it generates goes to a real person at a real address.',
+    // D2: pre-authored light-mode lever accent (matches :root's --accent-lever);
+    // dead under the current dark-only landing render — apply via .light-scope
+    // in D2, don't convert to var(--accent-lever) (the dark token is #DA6E6E,
+    // wrong for this literal's light-authored intent).
     accent: '#DC2626',
     texture: 'ruled' as const,
   },

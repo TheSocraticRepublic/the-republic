@@ -63,11 +63,11 @@ export default async function OracleDocumentPage({ params }: PageProps) {
           <span
             className="mt-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border"
             style={{
-              borderColor: 'rgba(137, 180, 200, 0.25)',
-              backgroundColor: 'rgba(137, 180, 200, 0.08)',
+              borderColor: 'color-mix(in srgb, var(--accent-oracle) 25%, transparent)',
+              backgroundColor: 'color-mix(in srgb, var(--accent-oracle) 8%, transparent)',
             }}
           >
-            <FileText size={18} strokeWidth={1.75} style={{ color: '#89B4C8' }} />
+            <FileText size={18} strokeWidth={1.75} style={{ color: 'var(--accent-oracle)' }} />
           </span>
 
           <div className="flex-1 min-w-0">
