@@ -47,13 +47,16 @@ export function ActAgency() {
           <p>The trees are the same trees. But you see them differently now.</p>
         </div>
 
+        {/* The page's closing beat — set apart and large per the spec (the one
+            line the whole descent resolves into). */}
         <p
-          className="mt-16 text-center font-bold text-text-primary"
+          className="mx-auto mt-24 max-w-2xl text-center font-bold text-text-primary"
           data-scroll-fade
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(18px, 2.5vw, 24px)',
-            lineHeight: 1.3,
+            fontSize: 'clamp(30px, 4vw, 44px)',
+            lineHeight: 1.2,
+            letterSpacing: '-0.01em',
           }}
         >
           The unexamined institution is not worth enduring.

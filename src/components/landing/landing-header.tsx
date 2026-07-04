@@ -54,7 +54,7 @@ export function LandingHeader() {
         href="/login"
         className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
           overLight
-            ? 'border-stone-900/30 text-stone-900 hover:border-stone-900 hover:text-stone-900'
+            ? 'border-stone-900/30 text-stone-900 hover:border-stone-900 hover:text-stone-900 focus-visible:outline-stone-900'
             : 'border-border-strong text-text-secondary hover:border-text-faint hover:text-text-primary'
         }`}
       >

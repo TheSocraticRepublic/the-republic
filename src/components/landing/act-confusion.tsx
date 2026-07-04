@@ -125,7 +125,7 @@ export function ActConfusion() {
           </div>
         </div>
         <p
-          className="mt-3 text-text-faint"
+          className="mt-3 text-text-muted"
           style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '11px',

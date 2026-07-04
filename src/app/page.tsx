@@ -40,9 +40,9 @@ export default function LandingPage() {
         </div>
         <div className="light-scope movement-return" data-movement="return">
           <LandingCta />
+          <LandingFooter />
         </div>
       </main>
-      <LandingFooter />
     </ScrollOrchestrator>
   )
 }

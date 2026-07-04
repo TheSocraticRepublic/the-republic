@@ -1,16 +1,12 @@
 import { DemoFippaCard } from './demo-fippa-card'
 import { DemoVoteRecord } from './demo-vote-record'
-import { SectionBackdrop } from './section-backdrop'
 
 export function ActAction() {
   return (
     <section className="relative z-10 px-6 py-32" data-scroll-section="action">
-      <SectionBackdrop
-        src="/landing/creek-mist.jpg"
-        opacity={0.12}
-        position="center"
-      />
-
+      {/* No photo backdrop here: its letterbox vignette crushed the fog to
+          near-black right before the M5 light punch. The paper cards ARE the
+          light on this dark ground. */}
       <div className="relative mx-auto max-w-2xl">
         <h2
           className="mb-12 font-bold text-text-primary"

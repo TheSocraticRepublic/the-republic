@@ -5,7 +5,6 @@ import { useReducedMotion } from '@/lib/landing/use-reduced-motion'
 
 export function ScrollOrchestrator({ children }: { children: ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const bgRef = useRef<HTMLDivElement>(null)
   const reducedMotion = useReducedMotion()
 
   useEffect(() => {
@@ -59,39 +58,6 @@ export function ScrollOrchestrator({ children }: { children: ReactNode }) {
                   },
                 })
               }
-
-              // Document fragment parallax
-              const parallaxEl = document.querySelector(
-                '[data-scroll-parallax]'
-              )
-              if (parallaxEl) {
-                gsap.to(parallaxEl, {
-                  y: -80,
-                  ease: 'none',
-                  scrollTrigger: {
-                    trigger: '[data-scroll-section="confusion"]',
-                    start: 'top bottom',
-                    end: 'bottom top',
-                    scrub: true,
-                  },
-                })
-              }
-
-              // Photo strip parallax — subtle 0.85x effect
-              document
-                .querySelectorAll('[data-scroll-parallax-photo]')
-                .forEach((el) => {
-                  gsap.to(el, {
-                    y: -30,
-                    ease: 'none',
-                    scrollTrigger: {
-                      trigger: el,
-                      start: 'top bottom',
-                      end: 'bottom top',
-                      scrub: true,
-                    },
-                  })
-                })
             },
           })
 
@@ -118,11 +84,6 @@ export function ScrollOrchestrator({ children }: { children: ReactNode }) {
 
   return (
     <div ref={containerRef} className="relative">
-      <div
-        ref={bgRef}
-        className="fixed inset-0 -z-10 bg-surface-0 transition-colors duration-500"
-        aria-hidden="true"
-      />
       {children}
     </div>
   )

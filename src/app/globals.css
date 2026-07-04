@@ -198,8 +198,8 @@
 :root {
   --journey-cave: #0B0A09;      /* M1 hero — warm black, never pure #000 */
   --journey-shadow: #2B2724;    /* M2 shadows — umber */
-  --journey-turning: #4A443D;   /* M3 turning — lifting slate-brown */
-  --journey-ascent: #9A9287;    /* M4 ascent — fog (carries no running text) */
+  --journey-turning: #2C2620;   /* M3 turning — dark warm brown; dark enough that every arm-accent label (incl. Lever) clears WCAG AA on it */
+  --journey-ascent: #3A342D;    /* M4 ascent — deep fog; stays DARK so light running text passes AA and the paper cards glow. The light is saved for the M5 punch. */
   --journey-daylight: #EFECE6;  /* M5 light — warm stone */
   --journey-paper: #FAFAF9;     /* M6 return — paper */
 }
@@ -212,10 +212,10 @@
   background: linear-gradient(to bottom, var(--journey-shadow) 0%, var(--journey-turning) 22%, var(--journey-turning) 100%);
 }
 .movement-ascent {
-  background: linear-gradient(to bottom, var(--journey-turning) 0%, #6E675E 42%, var(--journey-ascent) 100%);
+  background: linear-gradient(to bottom, var(--journey-turning) 0%, var(--journey-ascent) 100%);
 }
 .movement-light {
-  background: linear-gradient(to bottom, var(--journey-ascent) 0%, #C9C3B8 12%, var(--journey-daylight) 32%, var(--journey-daylight) 100%);
+  background: linear-gradient(to bottom, var(--journey-ascent) 0%, #C9C3B8 9%, var(--journey-daylight) 18%, var(--journey-daylight) 100%);
 }
 .movement-return {
   background: linear-gradient(to bottom, var(--journey-daylight) 0%, var(--journey-paper) 16%, var(--journey-paper) 100%);
@@ -230,9 +230,14 @@
 
 /* M1 · The Cave — hairline light shaft descending from the wordmark block */
 .light-shaft {
-  width: 1px;
-  height: 74px;
-  background: linear-gradient(to bottom, rgba(250, 250, 249, 0.4), rgba(250, 250, 249, 0));
+  width: 2px;
+  height: 82px;
+  background: linear-gradient(to bottom, rgba(250, 250, 249, 0.85), rgba(250, 250, 249, 0));
+  /* Read as a bloom against the bright cave-mouth rather than a flat line the
+     photo washes out: screen blend + a soft halo give it presence on light. */
+  mix-blend-mode: screen;
+  filter: blur(0.4px);
+  box-shadow: 0 0 10px 1px rgba(250, 250, 249, 0.55);
   animation: shaft-breathe 4s ease-in-out infinite;
 }
 

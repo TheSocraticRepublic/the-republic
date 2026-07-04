@@ -71,7 +71,7 @@ export function ActUnderstanding() {
                   {arm.name}
                 </span>
                 <span
-                  className="text-text-faint"
+                  className="text-text-muted"
                   style={{
                     fontFamily: 'var(--font-mono)',
                     fontSize: '10px',
@@ -108,7 +108,7 @@ export function ActUnderstanding() {
 
               {arm.pullQuote && (
                 <p
-                  className="mt-2.5 italic text-text-muted"
+                  className="mt-2.5 italic text-text-secondary"
                   style={{
                     fontFamily: 'var(--font-serif)',
                     fontSize: '16.5px',

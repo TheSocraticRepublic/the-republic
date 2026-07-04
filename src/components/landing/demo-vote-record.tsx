@@ -26,7 +26,7 @@ export function DemoVoteRecord() {
             className="flex-shrink-0 rounded-md px-2 py-1 text-xs font-semibold"
             style={{
               backgroundColor: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)',
-              color: 'var(--accent-lever)',
+              color: 'color-mix(in srgb, var(--accent-lever) 75%, #000)',
             }}
           >
             Nay
