@@ -5,7 +5,6 @@ export function ActAgency() {
     <section
       className="relative z-10 px-6 py-32"
       data-scroll-section="agency"
-      data-scroll-bg="#FAFAF9"
     >
       <SectionBackdrop
         src="/landing/trail-light.jpg"
@@ -49,7 +48,7 @@ export function ActAgency() {
         </div>
 
         <p
-          className="mt-16 text-center font-bold text-white drop-shadow-md"
+          className="mt-16 text-center font-bold text-text-primary"
           data-scroll-fade
           style={{
             fontFamily: 'var(--font-display)',
