@@ -8,39 +8,28 @@ export function LandingHeader() {
   const [overLight, setOverLight] = useState(false)
 
   useEffect(() => {
-    function onScroll() {
-      setScrolled(window.scrollY > 40)
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  useEffect(() => {
-    const targets = [
-      document.querySelector('[data-movement="light"]'),
-      document.querySelector('[data-movement="return"]'),
-    ].filter((el): el is Element => el !== null)
-
-    if (targets.length === 0) return
-
-    const intersecting = new Set<Element>()
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            intersecting.add(entry.target)
-          } else {
-            intersecting.delete(entry.target)
-          }
-        }
-        setOverLight(intersecting.size > 0)
-      },
-      { rootMargin: '-64px 0px 0px 0px', threshold: 0 }
+    // The header sits ~72px from the top. Flip to the light (ink) variant only
+    // when a light movement actually crosses UNDER that line — not merely when
+    // it first peeks in at the bottom of the viewport (which would put an ink
+    // header over the still-dark fog).
+    const HEADER_LINE = 72
+    const lightMovements = Array.from(
+      document.querySelectorAll('[data-movement="light"], [data-movement="return"]')
     )
 
-    targets.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
+    function onScroll() {
+      setScrolled(window.scrollY > 40)
+      setOverLight(
+        lightMovements.some((el) => {
+          const r = el.getBoundingClientRect()
+          return r.top <= HEADER_LINE && r.bottom > HEADER_LINE
+        })
+      )
+    }
+
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   return (
