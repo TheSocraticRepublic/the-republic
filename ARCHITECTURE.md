@@ -243,11 +243,49 @@ No AI-generated legal citations anywhere in the codebase. The Lever is the only 
 
 ## Design Tokens
 
-Dark mode by default. Tailwind CSS 4 with CSS custom properties.
+Tailwind CSS 4 with CSS custom properties (`src/app/globals.css`). Theme doctrine:
+**dark where you work, light where you read.** The app chrome (nav, panels,
+forms, cards) is dark by default, with no user toggle. Long-form reading
+surfaces get a light "paper" treatment via `.dark-island` (the briefing
+document, legal/FOI text), because sustained reading is more legible on
+light backgrounds even inside a dark app. The landing page is the one
+surface that travels dark → light as you scroll, via `.light-scope` — it
+opens in the cave (dark) and ends in daylight (light), matching its own
+narrative arc.
 
-Cave arm colors are defined as semantic tokens — each arm has a distinct accent used in navigation, headings, and action buttons. These are not decorative; they provide spatial orientation in the investigation workspace.
+The token block uses `@theme inline` (not plain `@theme`), which matters:
+Tailwind v4 resolves non-inline `@theme` variables at `:root`, so a nested
+scope redeclaring the underlying CSS variables can't flip already-resolved
+utility classes (`bg-surface-0`, `text-text-primary`, etc.). `inline` carries
+the `var()` reference into the generated utility itself, so it resolves at
+the point of use — which is what makes `.dark-island` and `.light-scope`
+work as *nested* overrides rather than only affecting inline `style=` usage.
 
-No light mode toggle in the current UI. The briefing view uses a light content island within the dark chrome (document reading surface on paper, not on screen).
+Cave arm colors (`--accent-scout`, `--accent-oracle`, `--accent-gadfly`,
+`--accent-lever`, `--accent-mirror`, `--accent-votes`) are semantic tokens —
+each arm has a distinct accent used in navigation, headings, and action
+buttons. They are not decorative; they provide spatial orientation in the
+investigation workspace. Reference the CSS variable (`var(--accent-oracle)`
+or a Tailwind utility like `bg-oracle`), never a hardcoded hex — the token is
+theme-scope-aware (dark vs. `.light-scope`) and a literal hex is not.
+
+**Typography:** Fraunces (display/headings), Instrument Sans (UI/body),
+Source Serif 4 (editorial and legal/FOI document text), Geist Mono
+(monospace). All loaded via `next/font/google` in `src/app/layout.tsx` as
+CSS variables consumed by the `--font-*` theme tokens. PDF exports
+(`src/lib/pdf/`) register their own font subset independently — Instrument
+Sans, Inter, and Source Serif 4 — since `@react-pdf/renderer` can't consume
+the app's `next/font` variables; PDFs are always light-mode/print-optimized
+regardless of the app's dark chrome.
+
+**Shared primitives** live in `src/components/ui/`: `EmptyState` (icon +
+heading + body + optional CTA), `StatusPill` (token-consuming status/type
+badges, `pill` or `tag` shape), `CTAButton` (the `surface-3` +
+`border-strong` action pill, works as a link or a button), plus
+`CrossArmActions` and `MarkdownProse`/`SectionedMarkdown`. `ArmHeader`
+(`src/components/layout/arm-header.tsx`) is the shared per-arm page header
+(accent bar, title, subtitle, optional action slot) — use it instead of
+hand-rolling arm page headers.
 
 ## Legacy Architecture
 

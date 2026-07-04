@@ -49,7 +49,7 @@ src/
     investigation/   # Concern form, investigation page
     forum/           # Thread list, post composer, moderation
     landing/         # Landing page narrative scenes
-    ui/              # Shared primitives (cross-arm actions)
+    ui/              # Shared primitives (EmptyState, StatusPill, CTAButton, cross-arm actions, markdown prose)
   lib/
     ai/prompts/      # System prompts per arm (THE critical files)
     ai/              # RAG, Voyage embeddings, semantic retrieval, model ID
@@ -81,12 +81,30 @@ src/
 
 ## Design System
 
-- Dark mode always
-- Arm accents: Oracle #89B4C8, Gadfly #C8A84B, Lever #C85B5B, Mirror #5BC88A
+- Theme doctrine: dark where you work, light where you read. Dark app chrome by
+  default, no user toggle. Light "paper" reading surfaces via `.dark-island`
+  (briefing, legal/FOI text). The landing page travels dark → light on scroll
+  via `.light-scope`. See `globals.css`'s header comment for the full doctrine.
+- Token mechanism: `@theme inline` in `globals.css` (required — non-inline
+  `@theme` resolves at `:root` and can't be overridden by a nested scope).
+  Always reference `var(--accent-{arm})` / `bg-{arm}` tokens, never a
+  hardcoded hex — hex bypasses theme scoping entirely.
+- Arm accents (current dark values — see `globals.css` for the source of
+  truth and the `.light-scope` equivalents): Scout `#B088C8`, Oracle
+  `#89B4C8`, Gadfly `#C8A84B`, Lever `#DA6E6E`, Mirror `#5BC88A`, Votes
+  `#D4764E`.
 - Apple-esque: generous whitespace, subtle shadows, rounded corners
-- Typography: Plus Jakarta Sans (display), Inter (body), Source Serif 4 (legal/FOI docs)
-- Component language: bg-black/60 backdrop-blur-md border border-white/10 rounded-xl
-- PDF exports: light mode (#fafaf9 bg), print-optimized, Plus Jakarta Sans + Inter + Source Serif 4
+- Typography: Fraunces (display), Instrument Sans (UI/body), Source Serif 4
+  (editorial and legal/FOI docs), Geist Mono (monospace)
+- Component language: token-based surfaces/borders, e.g. `bg-surface-1
+  border border-border rounded-xl` (or `bg-surface-0/60 backdrop-blur-md` for
+  overlays) — not raw `bg-black`/`border-white` opacity stacks
+- Shared primitives: `src/components/ui/` (EmptyState, StatusPill, CTAButton,
+  CrossArmActions, MarkdownProse) and `src/components/layout/arm-header.tsx`
+  (per-arm page header) — reach for these before hand-rolling
+- PDF exports: light mode (`#fafaf9` bg), print-optimized, Instrument Sans +
+  Inter + Source Serif 4 (registered independently in `src/lib/pdf/fonts.ts`
+  — `@react-pdf/renderer` can't consume the app's `next/font` variables)
 
 ## Critical Rules
 
