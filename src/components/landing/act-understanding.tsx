@@ -1,107 +1,94 @@
-import { TopoPattern } from './topo-pattern'
+import type React from 'react'
 
-// D2 (canonical note): every `accent` hex in this file is a pre-authored
-// light-mode landing literal, intentionally NOT tokenized in D1. They are dead
-// under the current dark-only landing render; D2 converts them to
-// `var(--accent-*)` when it adopts `.light-scope` on the redesigned landing.
-// Do NOT sweep these into tokens before then — each would render the wrong
-// (light-mode) value against the dark ground. Sibling files: landing-cta.tsx,
-// topo-pattern.tsx.
+// Five arms as stations on a vertical thread (D2 batch 2) — the app's own
+// `.investigation-thread` idiom surfacing on the landing page. Accent colors
+// are now `var(--accent-*)` tokens: `<html>` carries `.dark` always, and this
+// movement never opts into `.light-scope`, so these resolve to the dark
+// variant automatically — no `-d` suffix needed. See globals.css `.arm-thread`
+// / `.arm-station`.
 const arms = [
   {
     name: 'Scout',
+    archetype: 'THE PERIPATETIC',
     question: 'What if you knew which documents to look for?',
     body: 'The Scout identifies the documents that govern your issue: the cutting permit, the forest stewardship plan, the watershed assessment, the comparable harvest plans from adjacent tenure holders. All before you have to read a word. You start with a concern, not a document number.',
-    accent: '#9333EA',
-    texture: 'topo' as const,
+    accent: 'var(--accent-scout)',
   },
   {
     name: 'Oracle',
+    archetype: 'THE PYTHIA',
     question: 'What if 186 pages could speak plainly?',
     body: 'The Oracle reads the full forest stewardship plan and shows you what matters: which streams are classified as fish-bearing, what the cumulative cut-block percentage means for the watershed, and why the visual quality assessment doesn\'t mention the trail you walk every week. It is a lens, not an advocate. It shows you where to look.',
-    accent: '#0891B2',
-    texture: 'clean' as const,
+    accent: 'var(--accent-oracle)',
   },
   {
     name: 'Gadfly',
+    archetype: 'SOCRATES',
     question: 'What if you knew what you don\'t know?',
     body: 'The Gadfly never gives you answers. It asks the questions that the document\'s authors hoped no one would think to ask. Each question you pursue builds your capacity to read the next document without the tool.',
     pullQuote: 'That is the point.',
-    accent: '#B45309',
-    texture: 'glow' as const,
+    accent: 'var(--accent-gadfly)',
   },
   {
     name: 'Lever',
+    archetype: 'THE HERALD',
     question: 'What can you actually do with what you know?',
-    body: 'The Lever generates a formal Freedom of Information request to the Ministry of Forests citing the Forest and Range Practices Act. Not an outline. Not a suggestion. A document you can file today. The Vote Tracker shows how your MP voted on old-growth protection. The letter it generates goes to a real person at a real address.',
-    // D2: pre-authored light-mode lever accent (matches :root's --accent-lever);
-    // dead under the current dark-only landing render — apply via .light-scope
-    // in D2, don't convert to var(--accent-lever) (the dark token is #DA6E6E,
-    // wrong for this literal's light-authored intent).
-    accent: '#DC2626',
-    texture: 'ruled' as const,
+    body: 'The Lever generates a formal Freedom of Information request citing the correct statute. Not an outline. Not a suggestion. A document you can file today — addressed to a real person at a real address.',
+    accent: 'var(--accent-lever)',
+  },
+  {
+    name: 'Mirror',
+    archetype: 'THE TRAVELLER',
+    question: 'What if someone already solved this?',
+    body: 'The Traveller returns with how other jurisdictions handled the same fight — real places, real outcomes, cited.',
+    accent: 'var(--accent-mirror)',
   },
 ]
 
 export function ActUnderstanding() {
   return (
     <section className="relative z-10 px-6 py-24" data-scroll-section="understanding">
-      <div className="mx-auto max-w-2xl space-y-32">
-        {arms.map((arm) => (
-          <div
-            key={arm.name}
-            className="relative overflow-hidden rounded-2xl px-8 py-12 transition-colors duration-500"
-            style={{
-              backgroundColor:
-                arm.texture === 'clean'
-                  ? 'var(--surface-1)'
-                  : `${arm.accent}08`,
-              borderLeft: `2px solid ${arm.accent}30`,
-              boxShadow:
-                arm.texture === 'clean' ? 'var(--shadow-sm)' : 'none',
-            }}
-            data-scroll-fade
-            data-scroll-color={arm.name.toLowerCase()}
-          >
-            {/* Texture layers */}
-            {arm.texture === 'topo' && <TopoPattern color={arm.accent} />}
-            {arm.texture === 'glow' && (
-              <div
-                className="pointer-events-none absolute inset-0"
-                aria-hidden="true"
-                style={{
-                  background: `radial-gradient(ellipse at center, ${arm.accent}08 0%, transparent 70%)`,
-                }}
-              />
-            )}
-            {arm.texture === 'ruled' && (
-              <div
-                className="pointer-events-none absolute inset-0"
-                aria-hidden="true"
-                style={{
-                  background:
-                    'repeating-linear-gradient(to bottom, transparent, transparent 27px, rgba(28,25,23,0.03) 27px, rgba(28,25,23,0.03) 28px)',
-                }}
-              />
-            )}
-
-            <div className="relative">
-              <span
-                className="mb-4 block text-xs font-semibold uppercase tracking-widest"
-                style={{
-                  color: arm.accent,
-                  fontFamily: 'var(--font-display)',
-                }}
-              >
-                {arm.name}
-              </span>
+      <div className="mx-auto max-w-3xl">
+        <div className="arm-thread">
+          {arms.map((arm) => (
+            <div
+              key={arm.name}
+              className="arm-station pt-[34px] pb-11"
+              style={{ '--acc': arm.accent } as React.CSSProperties}
+              data-scroll-fade
+            >
+              <div className="flex items-center gap-3">
+                {/* D4 mark slot — reserved space for the arm's mark, not built here */}
+                <span className="inline-block h-5 w-5 shrink-0" aria-hidden="true" />
+                <span
+                  className="font-semibold"
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '13px',
+                    color: arm.accent,
+                  }}
+                >
+                  {arm.name}
+                </span>
+                <span
+                  className="text-text-faint"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '10px',
+                    letterSpacing: '0.22em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {arm.archetype}
+                </span>
+              </div>
 
               <h2
-                className="mb-8 font-bold text-text-primary"
+                className="mt-2.5 mb-3 font-bold text-text-primary"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontSize: 'clamp(28px, 4vw, 40px)',
-                  lineHeight: 1.15,
+                  fontSize: 'clamp(26px, 3.2vw, 32px)',
+                  lineHeight: 1.2,
                 }}
               >
                 {arm.question}
@@ -111,8 +98,8 @@ export function ActUnderstanding() {
                 className="text-text-secondary"
                 style={{
                   fontFamily: 'var(--font-serif)',
-                  fontSize: 'clamp(16px, 1.8vw, 20px)',
-                  lineHeight: 1.75,
+                  fontSize: '16.5px',
+                  lineHeight: 1.7,
                   maxWidth: '58ch',
                 }}
               >
@@ -121,21 +108,19 @@ export function ActUnderstanding() {
 
               {arm.pullQuote && (
                 <p
-                  className="mt-10 text-center italic"
-                  data-scroll-fade
+                  className="mt-2.5 italic text-text-muted"
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: 'clamp(22px, 3vw, 32px)',
-                    lineHeight: 1.4,
-                    color: arm.accent,
+                    fontSize: '16.5px',
+                    lineHeight: 1.7,
                   }}
                 >
                   {arm.pullQuote}
                 </p>
               )}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   )
