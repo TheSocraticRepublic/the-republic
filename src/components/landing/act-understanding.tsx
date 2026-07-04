@@ -45,7 +45,7 @@ const arms = [
 
 export function ActUnderstanding() {
   return (
-    <section className="relative z-10 bg-surface-0 px-6 py-24" data-scroll-section="understanding">
+    <section className="relative z-10 px-6 py-24" data-scroll-section="understanding">
       <div className="mx-auto max-w-2xl space-y-32">
         {arms.map((arm) => (
           <div

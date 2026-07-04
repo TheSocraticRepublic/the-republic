@@ -3,7 +3,7 @@ import { SectionBackdrop } from './section-backdrop'
 export function ActAgency() {
   return (
     <section
-      className="relative z-10 bg-surface-0 px-6 py-32"
+      className="relative z-10 px-6 py-32"
       data-scroll-section="agency"
       data-scroll-bg="#FAFAF9"
     >

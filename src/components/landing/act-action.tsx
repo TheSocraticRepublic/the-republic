@@ -4,7 +4,7 @@ import { SectionBackdrop } from './section-backdrop'
 
 export function ActAction() {
   return (
-    <section className="relative z-10 bg-surface-0 px-6 py-32" data-scroll-section="action">
+    <section className="relative z-10 px-6 py-32" data-scroll-section="action">
       <SectionBackdrop
         src="/landing/creek-mist.jpg"
         opacity={0.55}

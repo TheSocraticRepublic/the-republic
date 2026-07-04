@@ -4,7 +4,7 @@ import { SectionBackdrop } from './section-backdrop'
 export function ActConfusion() {
   return (
     <section
-      className="relative z-10 bg-surface-0 px-6 pt-82 pb-32"
+      className="relative z-10 px-6 pt-82 pb-32"
       data-scroll-section="confusion"
       data-scroll-bg="#F5F4F2"
     >

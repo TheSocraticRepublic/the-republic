@@ -95,36 +95,11 @@ export function ScrollOrchestrator({ children }: { children: ReactNode }) {
             },
           })
 
-          // Background color transitions
-          if (bgRef.current) {
-            const sections = [
-              {
-                trigger: '[data-scroll-section="confusion"]',
-                color: '#F5F4F2',
-              },
-              {
-                trigger: '[data-scroll-section="understanding"]',
-                color: '#FAFAF9',
-              },
-              {
-                trigger: '[data-scroll-section="agency"]',
-                color: '#FAFAF9',
-              },
-            ]
-
-            sections.forEach(({ trigger, color }) => {
-              gsap.to(bgRef.current!, {
-                backgroundColor: color,
-                ease: 'none',
-                scrollTrigger: {
-                  trigger,
-                  start: 'top center',
-                  end: 'top 30%',
-                  scrub: true,
-                },
-              })
-            })
-          }
+          // The dark -> light journey now lives in pure CSS: each movement
+          // wrapper in page.tsx carries its `.movement-*` ground and blends to
+          // the next in its top boundary band (globals.css). That renders with
+          // GSAP off and is reduced-motion safe, so there is no scroll-driven
+          // background animation here — only parallax + reveal above.
         }, containerRef)
       } catch {
         document.querySelectorAll('[data-scroll-fade]').forEach((el) => {
