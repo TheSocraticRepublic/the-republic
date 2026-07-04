@@ -25,7 +25,7 @@ type InvestigationStatus = 'generating' | 'complete' | 'failed' | 'cancelled' | 
 
 // Token-backed status colors. `failed` has no dedicated token — it's mapped
 // to the lever accent (nearest semantic fit: negative/blocked outcome),
-// which is a deliberate, visible change from the prior hardcoded #C85B5B to
+// which is a deliberate, visible change from the prior hardcoded hex C85B5B to
 // var(--accent-lever) (#DA6E6E under dark). `active` (legacy, no briefing)
 // reuses the `generating` gold — previously a one-off duplicated hex value,
 // now the same shared gadfly-accent token.
@@ -144,7 +144,8 @@ export default async function InvestigationsPage() {
             Your civic inquiries
           </p>
         </div>
-        <CTAButton href="/investigate" icon={Search}>
+        <CTAButton href="/investigate">
+          <Search size={13} strokeWidth={2} />
           New Investigation
         </CTAButton>
       </div>

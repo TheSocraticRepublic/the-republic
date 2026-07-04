@@ -2,14 +2,14 @@
 
 import Link from 'next/link'
 import { clsx } from 'clsx'
-import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 interface CTAButtonBaseProps {
-  /** Convenience icon for the common static-label case. For dynamic content
-   *  (e.g. a loading-state swap), compose the icon into `children` instead
-   *  and omit this prop. */
-  icon?: LucideIcon
+  /** Pass the icon pre-rendered (e.g. `<Search size={13} strokeWidth={2} />`)
+   *  alongside the label, not as a separate prop — this component is a
+   *  Client Component, and Server Component callers can only cross that
+   *  boundary with already-rendered elements (children), not raw component
+   *  references. */
   children: ReactNode
   className?: string
   /** `sm` matches the investigations/forum "New X" links (px-4 py-2.5).
@@ -43,7 +43,6 @@ const PILL_STYLE = {
 }
 
 export function CTAButton({
-  icon: Icon,
   children,
   className,
   size = 'sm',
@@ -61,7 +60,6 @@ export function CTAButton({
   if (href) {
     return (
       <Link href={href} className={classes} style={PILL_STYLE}>
-        {Icon && <Icon size={13} strokeWidth={2} />}
         {children}
       </Link>
     )

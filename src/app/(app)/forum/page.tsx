@@ -102,7 +102,8 @@ export default async function ForumPage({
           </h1>
           <p className="mt-0.5 text-xs text-text-muted">Community discussions</p>
         </div>
-        <CTAButton href="/forum/new" icon={Plus}>
+        <CTAButton href="/forum/new">
+          <Plus size={13} strokeWidth={2} />
           New Thread
         </CTAButton>
       </div>
