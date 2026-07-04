@@ -1,6 +1,30 @@
 @import "tailwindcss";
 
-@theme {
+/*
+ * Theme doctrine: dark where you work, light where you read.
+ *
+ * The app chrome (nav, panels, forms, cards) is dark by default — no user
+ * toggle. Long-form reading surfaces (the briefing document, legal/FOI
+ * text) get a light "paper" treatment via `.dark-island`, because sustained
+ * reading is more legible on light backgrounds even inside a dark app. The
+ * landing page is the one place that travels dark -> light as you scroll,
+ * via `.light-scope` (see below) — it opens in the cave (dark) and ends in
+ * daylight (light), matching its own narrative arc.
+ *
+ * `@theme inline` (not `@theme`) is required below because these mappings
+ * reference OTHER custom properties (`--color-surface-0: var(--surface-0)`)
+ * rather than literal values. Tailwind v4 resolves non-inline `@theme`
+ * variables at `:root` — so on a plain `@theme` block, a scope nested under
+ * `:root` (e.g. `.light-scope` wrapping part of the page) can redeclare
+ * `--surface-0` all it wants; the utility classes (`bg-surface-0`, etc.)
+ * already resolved to the `:root` value and won't see it. `inline` makes
+ * Tailwind carry the `var()` reference itself into the generated utility,
+ * so it resolves at the element that uses the class — which is what lets a
+ * nested scope actually override rendered color. This is the documented
+ * Tailwind v4 pattern for theme variables that reference other variables
+ * (see shadcn/ui's own dark-mode setup for the same idiom).
+ */
+@theme inline {
   /* Surface hierarchy (warm stone palette) */
   --color-surface-0: var(--surface-0);
   --color-surface-1: var(--surface-1);
@@ -119,6 +143,42 @@
   --accent-votes: #D4764E;
 
   color-scheme: dark;
+}
+
+/*
+ * Light scope — reintroduces the light token set within a `.dark`-scoped
+ * ancestor (i.e. anywhere under the app-wide `<html class="dark">`).
+ * Re-declares exactly the variable set `.dark` overrides, mirroring the
+ * `:root` light values. Requires `@theme inline` above to actually flip
+ * rendered Tailwind utilities (see doctrine comment at the top of this
+ * file) — on plain `@theme`, this class would be a no-op against utility
+ * classes.
+ *
+ * Ships unapplied in D1 (nothing references `.light-scope` yet); D2 wraps
+ * the landing page in it for the dark -> light scroll transition.
+ */
+.light-scope {
+  --surface-0: #E8E6E1;
+  --surface-1: #EFEDE9;
+  --surface-2: #E0DDD8;
+  --surface-3: #D6D3CD;
+
+  --text-primary: #1C1917;
+  --text-secondary: #3D3833;
+  --text-muted: #6B6560;
+  --text-faint: #9A948E;
+
+  --border: rgba(28, 25, 23, 0.10);
+  --border-strong: rgba(28, 25, 23, 0.18);
+
+  --accent-scout: #9333EA;
+  --accent-oracle: #0891B2;
+  --accent-gadfly: #B45309;
+  --accent-lever: #DC2626;
+  --accent-mirror: #059669;
+  --accent-votes: #D4764E;
+
+  color-scheme: light;
 }
 
 html,
