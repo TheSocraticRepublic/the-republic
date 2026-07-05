@@ -45,6 +45,10 @@ export function AppShell({ children, userEmail, displayName, effectiveWeight }: 
             className="fixed inset-y-0 left-0 z-50 w-72 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left md:hidden"
             aria-label="Navigation menu"
           >
+            <Dialog.Title className="sr-only">Navigation menu</Dialog.Title>
+            <Dialog.Description className="sr-only">
+              Site navigation and account links
+            </Dialog.Description>
             <Dialog.Close aria-label="Close navigation" className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
               <X size={16} strokeWidth={2} />
             </Dialog.Close>
