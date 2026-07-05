@@ -1,6 +1,5 @@
 import { ArmHeader } from '@/components/layout/arm-header'
 import { ComparisonForm } from '@/components/mirror/comparison-form'
-import { EmptyState } from '@/components/ui/empty-state'
 
 export const metadata = {
   title: 'Mirror',
@@ -27,10 +26,6 @@ export default async function MirrorPage({ searchParams }: MirrorPageProps) {
         Try: compare a rent-increase bylaw against three nearby cities
       </p>
       <ComparisonForm initialDocumentId={initialDocumentId} />
-      <EmptyState
-        className="mt-10"
-        message="Comparisons aren't saved yet — each one is generated fresh. Run it again anytime you need it."
-      />
     </div>
   )
 }

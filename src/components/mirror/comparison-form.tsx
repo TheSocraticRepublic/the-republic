@@ -238,20 +238,21 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
         </div>
       </section>
 
-      {/* Results */}
-      {(isStreaming || hasResult) && streamedText && (
-        <section>
+      {/* Results — ComparisonView renders its own "no result yet" note when
+          there's nothing to show, so it always mounts here. */}
+      <section>
+        {(isStreaming || hasResult) && streamedText && (
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
             Comparison results
           </h2>
-          <ComparisonView
-            text={streamedText}
-            isStreaming={isStreaming}
-            documentId={selectedDocId || undefined}
-            documentTitle={documents.find((d) => d.id === selectedDocId)?.title}
-          />
-        </section>
-      )}
+        )}
+        <ComparisonView
+          text={streamedText}
+          isStreaming={isStreaming}
+          documentId={selectedDocId || undefined}
+          documentTitle={documents.find((d) => d.id === selectedDocId)?.title}
+        />
+      </section>
     </div>
   )
 }

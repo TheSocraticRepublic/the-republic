@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { FileText, MessageCircleQuestion } from 'lucide-react'
 import { CrossArmActions } from '@/components/ui/cross-arm-actions'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface ComparisonViewProps {
   text: string
@@ -214,6 +215,17 @@ export function ComparisonView({ text, isStreaming, documentId, documentTitle }:
   // forward — an unlinked comparison has no object context for Lever or
   // Gadfly to pick up.
   const showCrossArmActions = !isStreaming && hasSections && !!documentId
+
+  // No comparison has run yet (or finished without producing sections) — the
+  // "aren't saved yet" note lives here, not on the page, so it disappears the
+  // moment a real result renders instead of competing with it underneath.
+  if (!isStreaming && !hasSections) {
+    return (
+      <EmptyState
+        message="Comparisons aren't saved yet — each one is generated fresh. Run it again anytime you need it."
+      />
+    )
+  }
 
   // During streaming, if we haven't parsed any sections yet, show raw text
   if (isStreaming && !hasSections) {
