@@ -12,7 +12,8 @@ import {
 import { eq, desc, and, count, sql } from 'drizzle-orm'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { validateThreadTitle, validatePostContent } from '@/lib/forum/validation'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
+import { pickForumRateLimit } from '@/lib/forum/rate-limit-tier'
 import { isFederationConfigured, threadUrl } from '@/lib/activitypub/context'
 import { getOrCreateActorKeys } from '@/lib/activitypub/keys'
 import { deliverActivity, buildKeyId } from '@/lib/activitypub/delivery'
@@ -27,7 +28,8 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const { success } = await checkRateLimit(`forum-thread:${userId}`)
+  const { effectiveWeight } = await checkModeratorAccess(userId)
+  const { success } = await pickForumRateLimit(effectiveWeight)(`forum-thread:${userId}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {
       status: 429,

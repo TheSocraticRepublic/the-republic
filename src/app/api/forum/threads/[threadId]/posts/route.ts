@@ -4,7 +4,8 @@ import { forumThreads, forumPosts, userProfiles, remoteFollowers } from '@/lib/d
 import { eq, and, sql } from 'drizzle-orm'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { validatePostContent, MAX_REPLY_DEPTH } from '@/lib/forum/validation'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
+import { pickForumRateLimit } from '@/lib/forum/rate-limit-tier'
 import { isFederationConfigured, postUrl } from '@/lib/activitypub/context'
 import { getOrCreateActorKeys } from '@/lib/activitypub/keys'
 import { deliverActivity, buildKeyId } from '@/lib/activitypub/delivery'
@@ -23,7 +24,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     })
   }
 
-  const { success } = await checkRateLimit(`forum-post:${userId}`)
+  const { effectiveWeight } = await checkModeratorAccess(userId)
+  const { success } = await pickForumRateLimit(effectiveWeight)(`forum-post:${userId}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {
       status: 429,
