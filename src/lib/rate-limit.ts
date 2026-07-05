@@ -87,7 +87,9 @@ export async function checkRateLimit(identifier: string): Promise<{
 
 /**
  * Tight rate limit for low-credential users — 5 requests per 60 seconds.
- * Applied to report submissions when effective weight < 5.
+ * Applied to forum thread creation, forum post creation, and report
+ * submission when effective weight < 5 (see `pickForumRateLimit`), plus a
+ * range of AI-backed and account-sensitive routes that call it directly.
  * Fails closed in production when Redis is not configured (success: false);
  * fails open in development.
  */

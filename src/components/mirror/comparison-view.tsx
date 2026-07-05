@@ -1,10 +1,15 @@
 'use client'
 
 import { useMemo } from 'react'
+import { FileText, MessageCircleQuestion } from 'lucide-react'
+import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 
 interface ComparisonViewProps {
   text: string
   isStreaming: boolean
+  /** The Oracle document this comparison was linked to, if any. */
+  documentId?: string
+  documentTitle?: string
 }
 
 interface ParsedSection {
@@ -201,9 +206,14 @@ function ProseSection({ content }: { content: string }) {
   )
 }
 
-export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
+export function ComparisonView({ text, isStreaming, documentId, documentTitle }: ComparisonViewProps) {
   const sections = useMemo(() => parseSections(text), [text])
   const hasSections = sections.length > 0
+
+  // Only meaningful once the comparison has a linked document to carry
+  // forward — an unlinked comparison has no object context for Lever or
+  // Gadfly to pick up.
+  const showCrossArmActions = !isStreaming && hasSections && !!documentId
 
   // During streaming, if we haven't parsed any sections yet, show raw text
   if (isStreaming && !hasSections) {
@@ -290,6 +300,31 @@ export function ComparisonView({ text, isStreaming }: ComparisonViewProps) {
 
       {isStreaming && (
         <span className="inline-block h-4 w-1 animate-pulse bg-[var(--accent-mirror)]/60" />
+      )}
+
+      {/* Cross-arm navigation — only when the comparison is tied to a document */}
+      {showCrossArmActions && (
+        <div className="border-t border-border pt-6">
+          <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-text-faint">
+            Continue your inquiry
+          </p>
+          <CrossArmActions
+            actions={[
+              {
+                label: 'Turn this into a public comment',
+                href: `/lever?documentId=${documentId}&actionType=public_comment`,
+                color: 'var(--accent-lever)',
+                icon: FileText,
+              },
+              {
+                label: 'Ask about this',
+                href: `/gadfly?documentId=${documentId}${documentTitle ? `&title=${encodeURIComponent(documentTitle)}` : ''}`,
+                color: 'var(--accent-gadfly)',
+                icon: MessageCircleQuestion,
+              },
+            ]}
+          />
+        </div>
       )}
     </div>
   )

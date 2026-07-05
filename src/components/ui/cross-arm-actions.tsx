@@ -21,12 +21,11 @@ export function CrossArmActions({ actions }: CrossArmActionsProps) {
     <div className="flex flex-wrap items-center gap-3">
       {actions.map((action) => {
         const Icon = action.icon
-        // Parse hex to RGB for inline style (avoid Tailwind dynamic class purging)
-        const hex = action.color.replace('#', '')
-        const r = parseInt(hex.slice(0, 2), 16)
-        const g = parseInt(hex.slice(2, 4), 16)
-        const b = parseInt(hex.slice(4, 6), 16)
-        const rgb = `${r}, ${g}, ${b}`
+        // color-mix works with both hex and CSS custom properties (var(--accent-*)),
+        // unlike the manual hex-parsing this replaced — that broke silently once
+        // every caller migrated to token-based colors (NaN channels -> invalid rgba()).
+        const borderTint = `color-mix(in srgb, ${action.color} 30%, transparent)`
+        const hoverTint = `color-mix(in srgb, ${action.color} 8%, transparent)`
 
         return (
           <Link
@@ -34,12 +33,12 @@ export function CrossArmActions({ actions }: CrossArmActionsProps) {
             href={action.href}
             className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors duration-150"
             style={{
-              borderColor: `rgba(${rgb}, 0.30)`,
+              borderColor: borderTint,
               color: action.color,
               backgroundColor: 'transparent',
             }}
             onMouseEnter={(e) => {
-              ;(e.currentTarget as HTMLAnchorElement).style.backgroundColor = `rgba(${rgb}, 0.08)`
+              ;(e.currentTarget as HTMLAnchorElement).style.backgroundColor = hoverTint
             }}
             onMouseLeave={(e) => {
               ;(e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'transparent'

@@ -244,7 +244,12 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
             Comparison results
           </h2>
-          <ComparisonView text={streamedText} isStreaming={isStreaming} />
+          <ComparisonView
+            text={streamedText}
+            isStreaming={isStreaming}
+            documentId={selectedDocId || undefined}
+            documentTitle={documents.find((d) => d.id === selectedDocId)?.title}
+          />
         </section>
       )}
     </div>
