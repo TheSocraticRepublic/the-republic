@@ -1,14 +1,68 @@
 import Image from 'next/image'
 import { headers } from 'next/headers'
 import { getDb } from '@/lib/db'
-import { investigations } from '@/lib/db/schema'
+import { investigations, gadflySessions, leverActions } from '@/lib/db/schema'
 import { eq, desc, and, isNotNull } from 'drizzle-orm'
 import Link from 'next/link'
 import { ConcernForm } from '@/components/investigation/concern-form'
 import { formatRelativeTime } from '@/lib/format-relative-time'
+import { StatusPill } from '@/components/ui/status-pill'
+import {
+  mergeRecentActivity,
+  type ActivityItem,
+  type ActivityType,
+} from '@/lib/activity/merge-recent-activity'
 
 export const metadata = {
   title: 'New Investigation',
+}
+
+const ACTIVITY_LIMIT = 8
+
+// Type label shown next to each Recent Activity row — plain text, not a pill.
+const TYPE_LABELS: Record<ActivityType, string> = {
+  investigation: 'Investigation',
+  inquiry: 'Inquiry',
+  action: 'Action',
+}
+
+// Status → StatusPill color/label maps, mirrored verbatim from each arm's own
+// existing mapping so this cross-type list doesn't invent new token pairings:
+//   - investigation: src/app/(app)/investigations/page.tsx STATUS_CONFIG
+//   - inquiry (gadfly): src/components/gadfly/session-card.tsx STATUS_LABELS
+//   - action (lever): src/components/lever/action-card.tsx STATUS_STYLES
+const INVESTIGATION_STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  generating: { label: 'Generating…', color: 'var(--accent-gadfly)', bg: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)' },
+  complete: { label: 'Complete', color: 'var(--accent-mirror)', bg: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)' },
+  failed: { label: 'Failed', color: 'var(--accent-lever)', bg: 'color-mix(in srgb, var(--accent-lever) 10%, transparent)' },
+  cancelled: { label: 'Cancelled', color: 'var(--accent-oracle)', bg: 'color-mix(in srgb, var(--accent-oracle) 10%, transparent)' },
+  // Rows fetched here are always status='active' WITH a completed briefing
+  // (see the query's isNotNull(briefingText) filter) — that combination
+  // resolves to 'complete' everywhere else in the app, so resolve it here too.
+  active: { label: 'Complete', color: 'var(--accent-mirror)', bg: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)' },
+  archived: { label: 'Archived', color: 'var(--accent-oracle)', bg: 'color-mix(in srgb, var(--accent-oracle) 10%, transparent)' },
+}
+
+const INQUIRY_STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  active: { label: 'Active', color: 'var(--accent-mirror)', bg: 'color-mix(in srgb, var(--accent-mirror) 12%, transparent)' },
+  completed: { label: 'Completed', color: '#a3a3a3', bg: 'rgba(163, 163, 163, 0.12)' },
+  abandoned: { label: 'Abandoned', color: 'var(--accent-lever)', bg: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)' },
+}
+
+const ACTION_STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  draft: { label: 'Draft', color: 'var(--accent-gadfly)', bg: 'color-mix(in srgb, var(--accent-gadfly) 12%, transparent)' },
+  final: { label: 'Final', color: 'var(--accent-mirror)', bg: 'color-mix(in srgb, var(--accent-mirror) 12%, transparent)' },
+  filed: { label: 'Filed', color: 'var(--accent-oracle)', bg: 'color-mix(in srgb, var(--accent-oracle) 12%, transparent)' },
+}
+
+function getActivityStatusStyle(item: ActivityItem): { label: string; color: string; bg: string } {
+  const stylesByType: Record<ActivityType, Record<string, { label: string; color: string; bg: string }>> = {
+    investigation: INVESTIGATION_STATUS_STYLES,
+    inquiry: INQUIRY_STATUS_STYLES,
+    action: ACTION_STATUS_STYLES,
+  }
+  const styles = stylesByType[item.type]
+  return styles[item.status] ?? Object.values(styles)[0]
 }
 
 export default async function InvestigatePage() {
@@ -18,17 +72,32 @@ export default async function InvestigatePage() {
   let recentInvestigations: Array<{
     id: string
     concern: string
-    jurisdictionName: string | null
+    status: string
+    createdAt: Date
+  }> = []
+  let recentInquiries: Array<{
+    id: string
+    title: string
+    status: string
+    createdAt: Date
+  }> = []
+  let recentActions: Array<{
+    id: string
+    title: string
+    status: string
     createdAt: Date
   }> = []
 
   if (userId) {
     const db = getDb()
+    // Fetch limit bumped from 5 to ACTIVITY_LIMIT (8): once merged with the
+    // other two types and sliced to the top 8 overall, under-fetching from
+    // any one source could wrongly exclude its most recent rows.
     recentInvestigations = await db
       .select({
         id: investigations.id,
         concern: investigations.concern,
-        jurisdictionName: investigations.jurisdictionName,
+        status: investigations.status,
         createdAt: investigations.createdAt,
       })
       .from(investigations)
@@ -40,10 +109,40 @@ export default async function InvestigatePage() {
         )
       )
       .orderBy(desc(investigations.createdAt))
-      .limit(5)
+      .limit(ACTIVITY_LIMIT)
+
+    recentInquiries = await db
+      .select({
+        id: gadflySessions.id,
+        title: gadflySessions.title,
+        status: gadflySessions.status,
+        createdAt: gadflySessions.createdAt,
+      })
+      .from(gadflySessions)
+      .where(eq(gadflySessions.userId, userId))
+      .orderBy(desc(gadflySessions.createdAt))
+      .limit(ACTIVITY_LIMIT)
+
+    recentActions = await db
+      .select({
+        id: leverActions.id,
+        title: leverActions.title,
+        status: leverActions.status,
+        createdAt: leverActions.createdAt,
+      })
+      .from(leverActions)
+      .where(eq(leverActions.userId, userId))
+      .orderBy(desc(leverActions.createdAt))
+      .limit(ACTIVITY_LIMIT)
   }
 
-  const hasRecent = recentInvestigations.length > 0
+  const activityItems = mergeRecentActivity(
+    recentInvestigations,
+    recentInquiries,
+    recentActions,
+    ACTIVITY_LIMIT
+  )
+  const hasActivity = activityItems.length > 0
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)]">
@@ -70,11 +169,11 @@ export default async function InvestigatePage() {
       </div>
 
       <div
-        className={`relative mx-auto px-6 py-12 ${hasRecent ? 'max-w-5xl' : 'max-w-3xl'}`}
+        className={`relative mx-auto px-6 py-12 ${hasActivity ? 'max-w-5xl' : 'max-w-3xl'}`}
       >
         <div
           className={
-            hasRecent
+            hasActivity
               ? 'grid grid-cols-1 gap-12 md:grid-cols-2'
               : ''
           }
@@ -106,38 +205,46 @@ export default async function InvestigatePage() {
             <ConcernForm />
           </div>
 
-          {/* Right column: recent investigations */}
-          {hasRecent && (
+          {/* Right column: cross-type recent activity (investigations,
+              inquiries, actions) — "pick up where you left off", not a
+              dashboard. Title / type / status / relative-time only. */}
+          {hasActivity && (
             <div>
               <h2
                 className="mb-6 text-sm font-semibold uppercase tracking-wider text-text-muted"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
-                Recent Investigations
+                Recent Activity
               </h2>
               <div className="space-y-3">
-                {recentInvestigations.map((inv) => (
-                  <Link
-                    key={inv.id}
-                    href={`/investigate/${inv.id}`}
-                    className="card-lift block rounded-xl border border-border px-4 py-3 transition-colors duration-150 hover:border-border-strong"
-                    style={{ backgroundColor: 'var(--surface-1)' }}
-                  >
-                    <p className="line-clamp-2 text-sm text-text-secondary">
-                      {inv.concern}
-                    </p>
-                    <div className="mt-2 flex items-center gap-3">
-                      {inv.jurisdictionName && (
+                {activityItems.map((item) => {
+                  const statusStyle = getActivityStatusStyle(item)
+                  return (
+                    <Link
+                      key={`${item.type}-${item.id}`}
+                      href={item.href}
+                      className="card-lift block rounded-xl border border-border px-4 py-3 transition-colors duration-150 hover:border-border-strong"
+                      style={{ backgroundColor: 'var(--surface-1)' }}
+                    >
+                      <p className="line-clamp-2 text-sm text-text-secondary">
+                        {item.title}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2">
                         <span className="text-xs text-text-muted">
-                          {inv.jurisdictionName}
+                          {TYPE_LABELS[item.type]}
                         </span>
-                      )}
-                      <span className="text-xs text-text-faint">
-                        {formatRelativeTime(inv.createdAt)}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+                        <StatusPill
+                          label={statusStyle.label}
+                          color={statusStyle.color}
+                          bg={statusStyle.bg}
+                        />
+                        <span className="ml-auto text-xs text-text-muted">
+                          {formatRelativeTime(item.createdAt)}
+                        </span>
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
             </div>
           )}
