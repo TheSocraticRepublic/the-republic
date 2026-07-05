@@ -8,36 +8,37 @@ import { clsx } from 'clsx'
 import { useState } from 'react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
 
+// Jen: group label + arm microcopy pending copy review
 const arms = [
   {
     name: 'Scout',
     href: '/scout',
     icon: Compass,
-    description: 'Document discovery',
+    description: 'Find the documents',
   },
   {
     name: 'Oracle',
     href: '/oracle',
     icon: Eye,
-    description: 'Document analysis',
+    description: 'See who a document serves',
   },
   {
     name: 'Gadfly',
     href: '/gadfly',
     icon: MessageCircleQuestion,
-    description: 'Socratic inquiry',
+    description: 'Sharpen your own thinking',
   },
   {
     name: 'Lever',
     href: '/lever',
     icon: FileText,
-    description: 'Civic actions',
+    description: 'Turn findings into filings',
   },
   {
     name: 'Mirror',
     href: '/mirror',
     icon: GitCompare,
-    description: 'Policy comparison',
+    description: 'Compare across governments',
   },
 ]
 
@@ -51,7 +52,7 @@ interface SidebarProps {
 
 export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant = 'sidebar', onNavigate }: SidebarProps) {
   const pathname = usePathname()
-  const [expertToolsOpen, setExpertToolsOpen] = useState(false)
+  const [instrumentsOpen, setInstrumentsOpen] = useState(true)
 
   const isDrawer = variant === 'drawer'
   const linkPy = isDrawer ? 'py-3' : 'py-2.5'
@@ -294,25 +295,28 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
         {/* Divider */}
         <div className="mx-3 my-3 h-px bg-border" />
 
-        {/* Expert Tools — collapsible section */}
+        {/* The Instruments — visible-by-default group (successor to the collapsed "Expert Tools" accordion) */}
         <div>
+          {/* Jen: group label + arm microcopy pending copy review */}
           <button
-            onClick={() => setExpertToolsOpen((v) => !v)}
+            onClick={() => setInstrumentsOpen((v) => !v)}
+            aria-expanded={instrumentsOpen}
+            aria-controls="instruments-list"
             className="flex w-full items-center justify-between px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-text-faint hover:text-text-muted transition-colors"
           >
-            <span>Expert Tools</span>
+            <span>The Instruments</span>
             <ChevronDown
               size={11}
               strokeWidth={2}
               className={clsx(
                 'transition-transform duration-200',
-                expertToolsOpen ? 'rotate-0' : '-rotate-90'
+                instrumentsOpen ? 'rotate-0' : '-rotate-90'
               )}
             />
           </button>
 
-          {expertToolsOpen && (
-            <ul className="mt-0.5 space-y-0.5">
+          {instrumentsOpen && (
+            <ul id="instruments-list" className="mt-0.5 space-y-0.5">
               {arms.map((arm) => {
                 const isActive = pathname.startsWith(arm.href)
                 const Icon = arm.icon
@@ -335,16 +339,20 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
                           isActive ? 'bg-surface-1 shadow-sm' : 'group-hover:bg-surface-1'
                         )}
                       >
+                        {/* Resting-state accent tint (was flat text-muted) so the five instruments read as color-coded at rest, not only when active. Jen: confirm treatment. */}
                         <Icon
                           size={15}
-                          className={clsx(!isActive && 'text-text-muted group-hover:text-text-secondary')}
-                          style={isActive ? { color: `var(--accent-${arm.name.toLowerCase()})` } : undefined}
                           strokeWidth={1.75}
+                          style={{
+                            color: isActive
+                              ? `var(--accent-${arm.name.toLowerCase()})`
+                              : `color-mix(in srgb, var(--accent-${arm.name.toLowerCase()}) 62%, transparent)`,
+                          }}
                         />
                       </span>
                       <span className="flex flex-col">
                         <span className="font-medium leading-tight">{arm.name}</span>
-                        <span className="text-[10px] text-text-faint leading-tight">
+                        <span className="text-[10px] text-text-muted leading-tight">
                           {arm.description}
                         </span>
                       </span>
