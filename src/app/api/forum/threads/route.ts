@@ -13,7 +13,7 @@ import { eq, desc, and, count, sql } from 'drizzle-orm'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { validateThreadTitle, validatePostContent } from '@/lib/forum/validation'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
-import { pickForumRateLimit } from '@/lib/forum/rate-limit-tier'
+import { pickForumRateLimit, checkForumWriteFlood } from '@/lib/forum/rate-limit-tier'
 import { isFederationConfigured, threadUrl } from '@/lib/activitypub/context'
 import { getOrCreateActorKeys } from '@/lib/activitypub/keys'
 import { deliverActivity, buildKeyId } from '@/lib/activitypub/delivery'
@@ -25,6 +25,13 @@ export async function POST(request: NextRequest) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const flood = await checkForumWriteFlood(userId)
+  if (!flood.success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429, headers: { 'Content-Type': 'application/json' },
     })
   }
 

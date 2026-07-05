@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { pickForumRateLimit, FORUM_LOW_WEIGHT_THRESHOLD } from '@/lib/forum/rate-limit-tier'
+import {
+  pickForumRateLimit,
+  FORUM_LOW_WEIGHT_THRESHOLD,
+  checkForumWriteFlood,
+} from '@/lib/forum/rate-limit-tier'
 import { checkRateLimit, checkTightRateLimit } from '@/lib/rate-limit'
 
 describe('FORUM_LOW_WEIGHT_THRESHOLD', () => {
@@ -27,5 +31,24 @@ describe('pickForumRateLimit', () => {
 
   it('returns checkTightRateLimit for negative weight', () => {
     expect(pickForumRateLimit(-1)).toBe(checkTightRateLimit)
+  })
+})
+
+describe('checkForumWriteFlood', () => {
+  it('is a function that delegates to the normal (not tight) rate limiter', async () => {
+    expect(typeof checkForumWriteFlood).toBe('function')
+
+    // No UPSTASH_* env vars in the test environment, so both limiters fall
+    // back to the open/closed-by-NODE_ENV stub in lib/rate-limit.ts. The
+    // fallback threads the caller's `limit` through as-is, so comparing
+    // against the normal limiter's own fallback output (limit: 30) confirms
+    // this helper is wired to checkRateLimit, not checkTightRateLimit
+    // (limit: 5) — the coarse flood-breaker must use the normal ceiling.
+    const [floodResult, normalResult] = await Promise.all([
+      checkForumWriteFlood('user-flood-test'),
+      checkRateLimit('forum-write:user-flood-test'),
+    ])
+    expect(floodResult.limit).toBe(normalResult.limit)
+    expect(floodResult.limit).toBe(30)
   })
 })

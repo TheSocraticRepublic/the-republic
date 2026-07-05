@@ -13,3 +13,12 @@ export const FORUM_LOW_WEIGHT_THRESHOLD = 5
 export function pickForumRateLimit(effectiveWeight: number) {
   return effectiveWeight < FORUM_LOW_WEIGHT_THRESHOLD ? checkTightRateLimit : checkRateLimit
 }
+
+/** Coarse flood-breaker for forum WRITE endpoints. A cheap Redis gate applied
+ *  BEFORE the credential lookup, so a flood is rejected without touching
+ *  Postgres. Uses the NORMAL limit (the max any user is allowed), so it never
+ *  rejects a legitimate request — it only bounds credential-lookup amplification
+ *  under abuse to the normal per-window ceiling. */
+export function checkForumWriteFlood(userId: string) {
+  return checkRateLimit(`forum-write:${userId}`)
+}
