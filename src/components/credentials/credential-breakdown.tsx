@@ -46,6 +46,10 @@ export function CredentialBreakdown({ summary }: CredentialBreakdownProps) {
         >
           {effectiveTotal}
         </p>
+        <p className="mt-1 text-xs text-text-muted">
+          Effective credential weight — earned through real civic action; decays only with long
+          inactivity.
+        </p>
         {decayMultiplier < 1.0 && rawTotal > 0 && (
           <p className="mt-0.5 text-xs text-text-faint">
             (decayed from {rawTotal})

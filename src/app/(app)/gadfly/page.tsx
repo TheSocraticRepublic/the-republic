@@ -42,7 +42,7 @@ export default async function GadflyPage({ searchParams }: GadflyPageProps) {
       <ArmHeader
         arm="gadfly"
         title="Gadfly"
-        subtitle="Socratic inquiry"
+        subtitle="Socratic inquiry: questions that sharpen your thinking — the Gadfly never answers for you."
         action={
           <NewSessionDialog
             initialDocumentId={initialDocumentId}

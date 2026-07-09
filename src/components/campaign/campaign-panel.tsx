@@ -269,7 +269,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
           <CrossArmActions
             actions={[
               {
-                label: 'File as FIPPA request',
+                label: 'File a freedom-of-information request (FIPPA)',
                 href: `/lever?investigationId=${investigationId}&actionType=fippa_request`,
                 color: 'var(--accent-lever)',
                 icon: FileText,

@@ -3,10 +3,11 @@ import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { ArrowLeft, ExternalLink, GitCompare } from 'lucide-react'
 import Link from 'next/link'
 import { ArmHeader } from '@/components/layout/arm-header'
 import { ActionViewer } from '@/components/lever/action-viewer'
+import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 
 export const metadata = {
   title: 'Lever',
@@ -74,6 +75,25 @@ export default async function LeverActionPage({ params }: PageProps) {
         initialStatus={action.status}
         actionType={action.actionType}
       />
+
+      {/* Cross-arm navigation — only when this action is tied to a document */}
+      {action.documentId && (
+        <div className="mt-6 border-t border-border pt-6">
+          <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-text-faint">
+            Continue your inquiry
+          </p>
+          <CrossArmActions
+            actions={[
+              {
+                label: 'Compare governments',
+                href: `/mirror?documentId=${action.documentId}`,
+                color: 'var(--accent-mirror)',
+                icon: GitCompare,
+              },
+            ]}
+          />
+        </div>
+      )}
     </div>
   )
 }

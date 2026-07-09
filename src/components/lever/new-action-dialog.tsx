@@ -32,7 +32,7 @@ interface ExistingAction {
 type ActionType = (typeof leverActionTypeEnum.enumValues)[number]
 
 const ACTION_TYPES: { value: ActionType; label: string; description: string }[] = [
-  { value: 'fippa_request', label: 'FIPPA Request', description: 'Freedom of Information' },
+  { value: 'fippa_request', label: 'FIPPA Request', description: 'Freedom-of-information request' },
   { value: 'public_comment', label: 'Public Comment', description: 'Council or agency' },
   { value: 'policy_brief', label: 'Policy Brief', description: 'Evidence-based proposal' },
 ]

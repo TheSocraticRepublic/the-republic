@@ -28,6 +28,10 @@ export default async function ModerationPage() {
             You need a credential weight of at least 10 to access the moderation queue. Your
             current effective weight is {effectiveWeight}.
           </p>
+          <p className="mt-1.5 text-text-muted">
+            Credential weight is earned through real civic action; it decays only with long
+            inactivity.
+          </p>
           <p className="mt-3">
             Earn credentials through diverse civic actions: completing investigations, filing
             access requests, sharing responses, and peer-reviewing others&apos; work.

@@ -8,7 +8,7 @@ import {
 } from '@/lib/db/schema'
 import { eq, and, ne, isNull, or, asc } from 'drizzle-orm'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
-import { checkTightRateLimit, checkRateLimit } from '@/lib/rate-limit'
+import { pickForumRateLimit } from '@/lib/forum/rate-limit-tier'
 import { stripHtmlTags } from '@/lib/profile/validation'
 
 const VALID_REASONS = ['spam', 'harassment', 'misinformation', 'off_topic', 'other'] as const
@@ -27,8 +27,7 @@ export async function POST(request: NextRequest) {
 
   // Determine effective weight for rate limiting purposes
   const { effectiveWeight } = await checkModeratorAccess(userId)
-  const rateLimitFn = effectiveWeight < 5 ? checkTightRateLimit : checkRateLimit
-  const { success } = await rateLimitFn(`forum-report:${userId}`)
+  const { success } = await pickForumRateLimit(effectiveWeight)(`forum-report:${userId}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {
       status: 429,

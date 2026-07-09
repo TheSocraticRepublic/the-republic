@@ -162,6 +162,7 @@ export function ConcernForm() {
               id="concern-jurisdiction"
               value={selectedJurisdictionId}
               onChange={(e) => setSelectedJurisdictionId(e.target.value)}
+              aria-describedby="concern-jurisdiction-hint"
               className="w-full appearance-none rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-secondary outline-none focus:border-border-strong focus:ring-0"
               disabled={loading}
             >
@@ -180,6 +181,9 @@ export function ConcernForm() {
             />
           </div>
         )}
+        <p id="concern-jurisdiction-hint" className="mt-1.5 text-xs text-text-muted">
+          Which government&apos;s rules apply — usually your province.
+        </p>
       </div>
 
       {/* Postal code (optional — for vote tracker integration) */}
