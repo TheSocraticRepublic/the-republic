@@ -12,6 +12,13 @@ const envSchema = z.object({
   IRYS_NETWORK: z.string().default('devnet'),
   ARWEAVE_GATEWAY: z.string().default('https://arweave.net'),
 
+  // FORUM-1: server-side, fail-closed gate for the (unshipped) Forum surface.
+  // Read directly via isForumEnabled() (src/lib/forum/flag.ts), not the `env`
+  // proxy — same reasoning as ENABLE_ARWEAVE above. Declared here too so it
+  // shows up in schema validation / docs, not because anything parses it
+  // through getEnv().
+  FORUM_ENABLED: z.string().default('false'),
+
   UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   AP_DOMAIN: z.string().optional(),

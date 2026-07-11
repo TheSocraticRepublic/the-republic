@@ -108,10 +108,41 @@ export async function POST(
     )
   }
 
-  // Idempotent: if already permanent, return the existing record without re-uploading
+  // Idempotent: if already permanent, return the existing record without re-uploading.
+  //
+  // SEC-2: this branch is reached BEFORE the ownership check below (any
+  // authenticated caller can hit this endpoint for any investigationId — that
+  // matches the sibling GET /api/archive/[investigationId] route, which is
+  // intentionally public). existingRecord.userId must therefore never appear
+  // in this response: it's the archiver's internal user ID, and leaking it
+  // here deanonymizes them with no ownership gate in front of it. Whitelist
+  // safe fields only and resolve archivedBy via displayName instead — the
+  // exact convention the GET route and the success path below already use
+  // ("userId is intentionally omitted... Caller gets displayName via join").
   if (existingRecord.archiveStatus === 'arweave_permanent') {
+    const [archiverProfile] = await db
+      .select({ displayName: userProfiles.displayName })
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, existingRecord.userId))
+      .limit(1)
+
     return new Response(
-      JSON.stringify({ archiveRecord: { ...existingRecord, investigationId } }),
+      JSON.stringify({
+        archiveRecord: {
+          id: existingRecord.id,
+          investigationId,
+          archiveStatus: existingRecord.archiveStatus,
+          ipfsCid: existingRecord.ipfsCid,
+          contentHash: existingRecord.contentHash,
+          arweaveTxId: existingRecord.arweaveTxId,
+          preservedAt: existingRecord.preservedAt,
+          permanenceAt: existingRecord.permanenceAt,
+          createdAt: existingRecord.createdAt,
+          updatedAt: existingRecord.updatedAt,
+          metadata: existingRecord.metadata,
+          archivedBy: archiverProfile?.displayName ?? null,
+        },
+      }),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },

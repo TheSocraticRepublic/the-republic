@@ -4,8 +4,13 @@ import { getDb } from '@/lib/db'
 import { forumThreads, forumPosts, userProfiles, jurisdictions, contentReports } from '@/lib/db/schema'
 import { eq, asc, and, inArray } from 'drizzle-orm'
 import { safeRoute } from '@/lib/api/safe-route'
+import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
 
 export const GET = safeRoute(async (request: NextRequest, { params }) => {
+  if (!isForumEnabled()) {
+    return forumDisabledResponse()
+  }
+
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {

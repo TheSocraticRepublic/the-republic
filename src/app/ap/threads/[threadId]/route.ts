@@ -6,12 +6,20 @@ import { forumThreads, forumPosts, userProfiles } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/api/ip'
+import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
 
 interface RouteContext {
   params: Promise<{ threadId: string }>
 }
 
 export async function GET(request: NextRequest, { params }: RouteContext) {
+  // FORUM-1: gated before the federation-configured check — a remote server
+  // gets an identical 404 whether federation is configured or not while the
+  // forum is closed, rather than a 503 that confirms the object would exist.
+  if (!isForumEnabled()) {
+    return forumDisabledResponse()
+  }
+
   if (!isFederationConfigured()) {
     return new Response(JSON.stringify({ error: 'Federation not configured' }), {
       status: 503,

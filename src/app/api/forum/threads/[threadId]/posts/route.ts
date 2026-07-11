@@ -10,12 +10,17 @@ import { isFederationConfigured, postUrl } from '@/lib/activitypub/context'
 import { getOrCreateActorKeys } from '@/lib/activitypub/keys'
 import { deliverActivity, buildKeyId } from '@/lib/activitypub/delivery'
 import { postToNote, wrapInCreate } from '@/lib/activitypub/activity'
+import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
 
 interface RouteContext {
   params: Promise<{ threadId: string }>
 }
 
 export async function POST(request: NextRequest, { params }: RouteContext) {
+  if (!isForumEnabled()) {
+    return forumDisabledResponse()
+  }
+
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -152,7 +157,10 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     // Deliver to Fediverse followers after the response is sent.
     // after() runs the callback post-response without blocking the client and
     // without being killed when the handler returns — safe for async fan-out.
-    if (isFederationConfigured()) {
+    // isForumEnabled() is already guaranteed true here (the handler returns
+    // above when it's off) — repeated as defense-in-depth so this fan-out
+    // stays gated even if the top-of-handler check is ever refactored away.
+    if (isFederationConfigured() && isForumEnabled()) {
       after(async () => {
         await deliverPostToFollowers(userId, result.post, parentId).catch((err) => {
           console.error('[AP] Error in post delivery background task', err)
