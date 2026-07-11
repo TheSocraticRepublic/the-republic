@@ -5,6 +5,7 @@ import { getDb } from '@/lib/db'
 import { forumThreads, forumPosts, userProfiles } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/api/ip'
 
 interface RouteContext {
   params: Promise<{ threadId: string }>
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     })
   }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const ip = getClientIp(request)
   const { success } = await checkRateLimit(`ap-thread:${ip}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {

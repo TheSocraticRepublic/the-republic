@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendMagicCode } from '@/lib/auth/magic-code'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, checkGlobalSendCodeLimit } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/api/ip'
 
 export async function POST(request: NextRequest) {
@@ -9,6 +9,17 @@ export async function POST(request: NextRequest) {
     const { success } = await checkRateLimit(`send-code:${ip}`)
 
     if (!success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait before requesting another code.' },
+        { status: 429 }
+      )
+    }
+
+    // SEC-1: global backstop, independent of IP — bounds total send-code
+    // volume even if an attacker defeats the per-IP limit above by rotating
+    // source IPs across the fleet.
+    const { success: globalOk } = await checkGlobalSendCodeLimit()
+    if (!globalOk) {
       return NextResponse.json(
         { error: 'Too many requests. Please wait before requesting another code.' },
         { status: 429 }

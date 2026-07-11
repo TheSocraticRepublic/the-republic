@@ -6,6 +6,7 @@ import { getDb } from '@/lib/db'
 import { userProfiles } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/api/ip'
 
 const AP_MEDIA_TYPES = ['application/activity+json', 'application/ld+json']
 
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     })
   }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const ip = getClientIp(request)
   const { success } = await checkRateLimit(`ap-actor:${ip}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {

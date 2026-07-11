@@ -1,9 +1,19 @@
+// OBS-1: this file — not `sentry.client.config.ts` — is the file Next.js
+// (via Turbopack) auto-loads for client-side instrumentation. The old
+// `sentry.client.config.ts` convention only worked because @sentry/nextjs's
+// webpack loader auto-injected it; Turbopack does not, so client-side
+// Sentry was silently dead (no errors, no breadcrumbs, no pageload
+// transactions ever left the browser). Moved here per the current
+// Next.js/Sentry `instrumentation-client.ts` convention:
+// https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
 import * as Sentry from '@sentry/nextjs'
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   enabled: process.env.NODE_ENV === 'production',
   tracesSampleRate: 0.1,
+  replaysSessionSampleRate: 0,
+  replaysOnErrorSampleRate: 0,
   // Never send PII to the (US-based) monitoring service. PIPEDA: citizens'
   // emails, concern text, postal codes, and auth tokens must not leave in
   // error payloads.
@@ -58,3 +68,8 @@ Sentry.init({
     return event
   },
 })
+
+// Required by @sentry/nextjs to instrument App Router client-side
+// navigations (pageload/navigation transactions). Without this export,
+// the SDK build step warns and navigation spans are not captured.
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart

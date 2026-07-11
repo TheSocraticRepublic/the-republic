@@ -11,6 +11,7 @@ import { getDb } from '@/lib/db'
 import { userProfiles, forumThreads, forumPosts } from '@/lib/db/schema'
 import { eq, and, desc, count } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/api/ip'
 
 const PAGE_SIZE = 20
 
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     })
   }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const ip = getClientIp(request)
   const { success } = await checkRateLimit(`ap-outbox:${ip}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {

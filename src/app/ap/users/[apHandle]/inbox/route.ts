@@ -13,6 +13,7 @@ import { userProfiles, remoteFollowers } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { validateApDateHeader } from '@/lib/activitypub/date-guard'
+import { getClientIp } from '@/lib/api/ip'
 
 interface RouteContext {
   params: Promise<{ apHandle: string }>
@@ -88,8 +89,9 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     })
   }
 
-  // N-3: extract first IP only — x-forwarded-for may be a comma-separated list
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  // SEC-1: getClientIp trusts x-nf-client-connection-ip (Netlify-set, not
+  // client-forgeable) ahead of x-forwarded-for — see lib/api/ip.ts.
+  const ip = getClientIp(request)
   const { success } = await checkRateLimit(`ap-inbox:${ip}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {

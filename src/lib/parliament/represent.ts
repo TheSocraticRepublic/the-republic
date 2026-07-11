@@ -18,7 +18,10 @@ export async function lookupPostalCode(
 ): Promise<RepresentPostcodeResponse> {
   const normalized = normalizePostalCode(postalCode)
   if (!isValidCanadianPostalCode(normalized)) {
-    throw new Error(`Invalid Canadian postal code: ${postalCode}`)
+    // PII-1: do not interpolate the raw postal code into the thrown
+    // message — this Error's .message is what ends up in console.error /
+    // Sentry captures at both call sites (parliament/lookup, investigate).
+    throw new Error('Invalid Canadian postal code')
   }
 
   // Do NOT pass `sets=federal-electoral-districts` — that filters to a *boundary*
@@ -31,11 +34,15 @@ export async function lookupPostalCode(
   })
 
   if (res.status === 404) {
-    throw new Error(`Postal code not found: ${normalized}`)
+    // PII-1: status code only — see note above, `normalized` is a postal code.
+    throw new Error('Postal code not found')
   }
 
   if (!res.ok) {
-    throw new Error(`Represent API ${res.status}: ${url}`)
+    // PII-1: never interpolate `url` — it embeds the caller's postal code
+    // (`${BASE_URL}/postcodes/${normalized}/...`). Status code only.
+    console.error(`[represent] postcode lookup failed with status ${res.status}`)
+    throw new Error(`Represent API request failed with status ${res.status}`)
   }
 
   return res.json()
