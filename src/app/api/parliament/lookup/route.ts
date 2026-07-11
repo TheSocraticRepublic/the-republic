@@ -12,7 +12,14 @@ import {
 
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 
-export async function GET(request: NextRequest) {
+// CRITICAL-1: POST, not GET — a postal code in a query string leaks via
+// browser history, Sentry breadcrumbs/spans (see instrumentation-client.ts),
+// and Netlify access logs. Same auth, rate-limit, validation, and response
+// shape as before; only the transport for the postal code moved to a JSON
+// body. See postal-code-form.tsx for the only caller (verified via grep —
+// api/investigate/route.ts calls lookupPostalCode() from represent.ts
+// directly, server-side, and never hits this route).
+export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -29,7 +36,17 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  const rawCode = request.nextUrl.searchParams.get('postalCode')
+  let body: { postalCode?: string }
+  try {
+    body = await request.json()
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const rawCode = body.postalCode
   if (!rawCode) {
     return new Response(JSON.stringify({ error: 'postalCode is required' }), {
       status: 400,

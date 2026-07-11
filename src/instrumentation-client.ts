@@ -8,6 +8,19 @@
 // https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
 import * as Sentry from '@sentry/nextjs'
 
+// PII-1 defense-in-depth: strips everything from `?` (or `#`) onward, so any
+// URL string handed to a Sentry hook never carries a query string past this
+// point. The root-cause fix is moving PII (postal codes) off URLs entirely —
+// see postal-code-form.tsx (POST body, not query string) — this is the
+// backstop for any future route that puts a param in a URL, since the
+// client SDK's default integrations capture URLs in places `beforeSend`'s
+// `event.request.url` scrub never touches: fetch/xhr/navigation breadcrumbs
+// (`breadcrumb.data`) and `http.client` transaction spans (`span.description`
+// + `span.data`).
+function stripQueryString(url: string): string {
+  return url.split(/[?#]/, 1)[0]
+}
+
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   enabled: process.env.NODE_ENV === 'production',
@@ -44,6 +57,28 @@ Sentry.init({
     }
     return event
   },
+  // PII-1: the default Breadcrumbs integration records every fetch/xhr as
+  // `breadcrumb.data.url` and every client-side route change as
+  // `breadcrumb.data.{from,to}` — none of that passes through `beforeSend`'s
+  // `event.request` scrub above. Strip query strings, keep the path.
+  beforeBreadcrumb(breadcrumb) {
+    if (
+      (breadcrumb.category === 'fetch' || breadcrumb.category === 'xhr') &&
+      breadcrumb.data &&
+      typeof breadcrumb.data.url === 'string'
+    ) {
+      breadcrumb.data.url = stripQueryString(breadcrumb.data.url)
+    }
+    if (breadcrumb.category === 'navigation' && breadcrumb.data) {
+      if (typeof breadcrumb.data.to === 'string') {
+        breadcrumb.data.to = stripQueryString(breadcrumb.data.to)
+      }
+      if (typeof breadcrumb.data.from === 'string') {
+        breadcrumb.data.from = stripQueryString(breadcrumb.data.from)
+      }
+    }
+    return breadcrumb
+  },
   // PII-1: transactions carry event.request.url too (route + query string).
   beforeSendTransaction(event) {
     if (event.request) {
@@ -64,6 +99,27 @@ Sentry.init({
       delete event.user.email
       delete event.user.ip_address
       delete event.user.username
+    }
+    // PII-1: `http.client` spans (tracesSampleRate: 0.1) carry the request
+    // URL — including its query string — in `span.description` and in
+    // `span.data` (attribute keys vary by SDK version: `url`, `http.url`,
+    // `url.full`). `event.request.url` above never covers this. Strip every
+    // string field rather than allowlisting attribute names, so this stays
+    // correct across SDK versions.
+    if (event.spans) {
+      for (const span of event.spans) {
+        if (span.description) {
+          span.description = stripQueryString(span.description)
+        }
+        if (span.data) {
+          for (const key of Object.keys(span.data)) {
+            const value = span.data[key]
+            if (typeof value === 'string') {
+              span.data[key] = stripQueryString(value)
+            }
+          }
+        }
+      }
     }
     return event
   },

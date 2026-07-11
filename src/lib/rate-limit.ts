@@ -181,10 +181,22 @@ export async function checkDailyAiGeneralLimit(userId: string): Promise<{
  * threshold must stay well above genuine peak legitimate traffic (so it
  * never blocks real users) while still bounding worst-case abuse cost.
  * 300 requests / 5 minutes is a starting value, not a researched ceiling —
- * tune GLOBAL_SEND_CODE_LIMIT / GLOBAL_SEND_CODE_WINDOW against real traffic
- * once there's production signal.
+ * tune against real traffic once there's production signal.
+ *
+ * WARNING-1 (audit remediation r1): env-overridable via SEND_CODE_GLOBAL_LIMIT
+ * so the ceiling can be tuned for a launch traffic spike without a code
+ * change/deploy. Unset, non-numeric, or non-positive values fall back to the
+ * documented default of 300 (fail-closed on bad input, not fail-open to an
+ * unbounded limit). See .env.example.
  */
-export const GLOBAL_SEND_CODE_LIMIT = 300
+function resolveGlobalSendCodeLimit(): number {
+  const raw = process.env.SEND_CODE_GLOBAL_LIMIT
+  if (!raw) return 300
+  const parsed = Number(raw)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 300
+}
+
+export const GLOBAL_SEND_CODE_LIMIT = resolveGlobalSendCodeLimit()
 const GLOBAL_SEND_CODE_WINDOW = '5 m'
 const GLOBAL_SEND_CODE_KEY = 'global'
 
