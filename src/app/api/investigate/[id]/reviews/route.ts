@@ -7,6 +7,7 @@ import {
   validateReviewScores,
   validateReviewSummary,
   REVIEW_DIMENSIONS,
+  REVIEWABLE_INVESTIGATION_STATUS,
 } from '@/lib/review/validation'
 import { stripHtmlTags } from '@/lib/profile/validation'
 
@@ -77,11 +78,13 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
   const db = getDb()
 
-  // Fetch investigation — only active investigations accept reviews
+  // Fetch investigation — only complete investigations accept reviews.
+  // ('active' is a pre-migration-0003 legacy status no writer has set since;
+  // see REVIEWABLE_INVESTIGATION_STATUS in lib/review/validation.ts.)
   const [investigation] = await db
     .select({ id: investigations.id, userId: investigations.userId })
     .from(investigations)
-    .where(and(eq(investigations.id, id), eq(investigations.status, 'active')))
+    .where(and(eq(investigations.id, id), eq(investigations.status, REVIEWABLE_INVESTIGATION_STATUS)))
     .limit(1)
 
   if (!investigation) {
@@ -165,11 +168,11 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   const db = getDb()
 
-  // Only return reviews for active investigations
+  // Only return reviews for complete investigations (see note in POST above)
   const [investigation] = await db
     .select({ id: investigations.id })
     .from(investigations)
-    .where(and(eq(investigations.id, id), eq(investigations.status, 'active')))
+    .where(and(eq(investigations.id, id), eq(investigations.status, REVIEWABLE_INVESTIGATION_STATUS)))
     .limit(1)
 
   if (!investigation) {

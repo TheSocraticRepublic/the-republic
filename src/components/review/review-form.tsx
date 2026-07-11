@@ -144,7 +144,7 @@ export function ReviewForm({ investigationId, onSubmitted }: ReviewFormProps) {
         </div>
       </div>
 
-      {error && <p className="mt-4 text-xs text-red-400">{error}</p>}
+      {error && <p role="alert" className="mt-4 text-xs text-red-400">{error}</p>}
 
       <div className="mt-5 flex items-center gap-3">
         <button

@@ -221,7 +221,7 @@ ActivityPub 1.0 over HTTPS. HTTP Signatures (RFC 9421 profile, via `jose`).
 ## Auth Flow
 
 1. User submits email to `POST /api/auth/send-code`
-2. Server generates a six-digit code, stores it (hashed) in Redis with a 10-minute TTL
+2. Server generates an eight-digit code, hashes it (SHA-256) and stores it in the `magic_codes` Postgres table with a 10-minute expiry (`expires_at` column, checked at verification time — not a Redis TTL)
 3. Code sent to email
 4. User submits code to `POST /api/auth/verify-code`
 5. Server validates code, creates user record if new, issues JWT

@@ -103,7 +103,7 @@ describe('Archive schema — column presence', () => {
     expect(archiveAccessLog.accessType).toBeDefined()
     expect(archiveAccessLog.accessedAt).toBeDefined()
     // Privacy-respecting: no userId column
-    expect((archiveAccessLog as Record<string, unknown>).userId).toBeUndefined()
+    expect((archiveAccessLog as unknown as Record<string, unknown>).userId).toBeUndefined()
   })
 
   it('shadowAlerts has all required columns', () => {

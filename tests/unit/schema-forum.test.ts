@@ -115,6 +115,6 @@ describe('Forum schema — column presence', () => {
     expect(credentialEvents.sourceType).toBeDefined()
     expect(credentialEvents.description).toBeDefined()
     // append-only: no updatedAt
-    expect((credentialEvents as Record<string, unknown>).updatedAt).toBeUndefined()
+    expect((credentialEvents as unknown as Record<string, unknown>).updatedAt).toBeUndefined()
   })
 })

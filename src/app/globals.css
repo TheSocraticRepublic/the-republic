@@ -347,6 +347,26 @@ body {
   outline-offset: 2px;
 }
 
+/*
+ * Light-surface focus ring override (A11Y-1). The oracle-blue ring above
+ * computes to ~1.73:1 against light reading surfaces (#fafaf9 / #EFECE6) —
+ * under the WCAG 2.4.11 3:1 floor and effectively invisible to keyboard
+ * users. `.light-scope` (landing page daylight movements) and
+ * `.content-island` (briefing paper) get a dark-ink ring instead, computing
+ * to ~6:1 against both surfaces. The dark-chrome ring above is untouched
+ * (already 5.34:1) and still applies everywhere else, including inside
+ * `.content-island` when BriefingView's in-component dark toggle is on
+ * (DARK_PALETTE) — `.content-island--dark` marks that state so this
+ * override backs off and the ring falls back to the oracle-blue default.
+ */
+.light-scope *:focus-visible {
+  outline-color: color-mix(in srgb, var(--text-primary) 70%, transparent);
+}
+
+.content-island:not(.content-island--dark) *:focus-visible {
+  outline-color: color-mix(in srgb, var(--color-island-text) 70%, transparent);
+}
+
 /* Content island entrance animation */
 @keyframes island-entrance {
   from {

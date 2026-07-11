@@ -4,6 +4,8 @@ import {
   validateReviewScores,
   validateReviewSummary,
   REVIEW_SUMMARY_MAX,
+  REVIEWABLE_INVESTIGATION_STATUS,
+  isReviewableInvestigationStatus,
 } from '@/lib/review/validation'
 
 describe('validateReviewScore', () => {
@@ -116,5 +118,23 @@ describe('validateReviewSummary', () => {
     // 2000 visible chars with HTML wrapper — should still be valid
     const summary = `<p>${'x'.repeat(REVIEW_SUMMARY_MAX)}</p>`
     expect(validateReviewSummary(summary).valid).toBe(true)
+  })
+})
+
+describe('isReviewableInvestigationStatus', () => {
+  it('accepts the reviewable status constant', () => {
+    expect(REVIEWABLE_INVESTIGATION_STATUS).toBe('complete')
+    expect(isReviewableInvestigationStatus(REVIEWABLE_INVESTIGATION_STATUS)).toBe(true)
+  })
+
+  it('rejects the dead legacy "active" status (no writer sets it since migration 0003)', () => {
+    expect(isReviewableInvestigationStatus('active')).toBe(false)
+  })
+
+  it('rejects every other status in the investigation state machine', () => {
+    const nonReviewable = ['generating', 'failed', 'cancelled', 'archived']
+    for (const status of nonReviewable) {
+      expect(isReviewableInvestigationStatus(status)).toBe(false)
+    }
   })
 })
