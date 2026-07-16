@@ -66,7 +66,7 @@ export function PostComposer({
         className="w-full rounded-lg px-3 py-2.5 text-sm text-text-primary bg-surface-1 border border-border-strong placeholder-text-faint resize-none focus:outline-none focus:border-border-strong transition-colors"
       />
       <div className="flex items-center justify-between">
-        <span className={`text-[10px] ${isOverLimit ? 'text-red-400' : 'text-text-faint'}`}>
+        <span className={`text-2xs font-medium ${isOverLimit ? 'text-red-400' : 'text-text-faint'}`}>
           {charCount}/{POST_CONTENT_MAX}
         </span>
         <div className="flex items-center gap-2">

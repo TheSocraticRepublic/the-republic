@@ -192,7 +192,7 @@ export function PostCard({
     >
       <div className="flex items-center justify-between mb-3">
         <ProfileBadge displayName={authorDisplayName} size="sm" />
-        <div className="flex items-center gap-2 text-[10px] text-text-faint">
+        <div className="flex items-center gap-2 text-2xs font-medium text-text-faint">
           <span>{formatRelativeTime(createdAt)}</span>
           {editedAt && <span className="text-text-faint">(edited)</span>}
         </div>
