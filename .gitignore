@@ -55,3 +55,6 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# Session dev tools (contrast verifier, etc.) — never shipped
+/scratchpad/
