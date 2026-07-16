@@ -27,7 +27,7 @@ export function VoteDetailCard({
         backgroundColor: 'var(--surface-1)',
       }}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-3">
+      <p className="text-3xs font-semibold uppercase text-text-faint mb-3">
         Vote {session}/{number}
       </p>
 
@@ -41,7 +41,7 @@ export function VoteDetailCard({
         <span className="text-xs text-text-muted">{date}</span>
 
         <span
-          className="rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+          className="rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wider"
           style={{
             color: result === 'passed' ? 'var(--status-success)' : 'var(--status-danger)',
             backgroundColor:

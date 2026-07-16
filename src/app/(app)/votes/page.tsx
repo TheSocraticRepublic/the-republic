@@ -32,7 +32,7 @@ export default function VoteTrackerPage() {
           className="h-px flex-1"
           style={{ backgroundColor: 'var(--surface-3)' }}
         />
-        <span className="text-[10px] text-text-faint uppercase tracking-widest">or</span>
+        <span className="text-3xs font-semibold uppercase text-text-faint">or</span>
         <div
           className="h-px flex-1"
           style={{ backgroundColor: 'var(--surface-3)' }}

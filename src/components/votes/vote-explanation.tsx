@@ -74,13 +74,13 @@ export function VoteExplanation({ voteId, existingExplanation }: VoteExplanation
     >
       <div className="mb-4 flex items-center justify-between">
         <p
-          className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+          className="text-3xs font-semibold uppercase"
           style={{ color: '#a8a29e' }}
         >
           What This Vote Means
         </p>
         {isStreaming && (
-          <span className="flex items-center gap-1.5 text-[10px]" style={{ color: '#a8a29e' }}>
+          <span className="flex items-center gap-1.5 text-2xs font-medium" style={{ color: '#a8a29e' }}>
             <Loader2 size={10} className="animate-spin" />
             Analyzing
           </span>

@@ -69,7 +69,7 @@ export default async function MpProfilePage({ params }: PageProps) {
             style={{ backgroundColor: 'var(--surface-3)' }}
           />
           <span
-            className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+            className="text-3xs font-semibold uppercase"
             style={{ color: 'var(--accent-votes)' }}
           >
             Voting Record

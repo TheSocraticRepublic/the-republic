@@ -85,7 +85,7 @@ export default async function AllMPsPage() {
                 </p>
                 <div className="mt-0.5 flex items-center gap-2">
                   <PartyBadge party={mp.party} />
-                  <span className="text-[10px] text-text-faint">
+                  <span className="text-2xs font-medium text-text-faint">
                     {mp.ridingName}, {mp.ridingProvince}
                   </span>
                 </div>

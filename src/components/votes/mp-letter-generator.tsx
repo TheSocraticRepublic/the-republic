@@ -75,13 +75,13 @@ export function MpLetterGenerator({
       >
         <div className="mb-4 flex items-center justify-between">
           <p
-            className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+            className="text-3xs font-semibold uppercase"
             style={{ color: '#a8a29e' }}
           >
             Letter to {mpName}
           </p>
           {isStreaming && (
-            <span className="flex items-center gap-1.5 text-[10px]" style={{ color: '#a8a29e' }}>
+            <span className="flex items-center gap-1.5 text-2xs font-medium" style={{ color: '#a8a29e' }}>
               <Loader2 size={10} className="animate-spin" />
               Writing
             </span>
@@ -121,7 +121,7 @@ export function MpLetterGenerator({
         backgroundColor: 'var(--surface-1)',
       }}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
+      <p className="text-3xs font-semibold uppercase text-text-faint">
         Write to {mpName}
       </p>
       <textarea
@@ -138,7 +138,7 @@ export function MpLetterGenerator({
       <div className="flex items-center gap-2 justify-end">
         <button
           onClick={() => setShowForm(false)}
-          className="text-[10px] text-text-faint hover:text-text-secondary transition-colors px-3 py-1.5"
+          className="text-2xs font-medium text-text-faint hover:text-text-secondary transition-colors px-3 py-1.5"
         >
           Cancel
         </button>

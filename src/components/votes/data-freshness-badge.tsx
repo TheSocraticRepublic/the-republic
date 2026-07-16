@@ -44,7 +44,7 @@ export function DataFreshnessBadge() {
   const color = isStale ? 'var(--status-warning)' : 'var(--text-muted)'
 
   return (
-    <div className="flex items-center gap-2 text-[10px]" style={{ color }}>
+    <div className="flex items-center gap-2 text-2xs font-medium" style={{ color }}>
       <span
         className="h-1.5 w-1.5 rounded-full"
         style={{ backgroundColor: color }}

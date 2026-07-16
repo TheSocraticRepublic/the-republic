@@ -53,7 +53,7 @@ export function BallotList({ voteId }: BallotListProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
+        <p className="text-3xs font-semibold uppercase text-text-faint">
           All Ballots ({ballots.length})
         </p>
         <div className="flex gap-2">
@@ -61,7 +61,7 @@ export function BallotList({ voteId }: BallotListProps) {
             <button
               key={s}
               onClick={() => setSortBy(s)}
-              className="text-[10px] px-2 py-1 rounded transition-colors"
+              className="text-2xs font-medium px-2 py-1 rounded transition-colors"
               style={{
                 color: sortBy === s ? 'var(--accent-votes)' : '#525252',
                 backgroundColor:

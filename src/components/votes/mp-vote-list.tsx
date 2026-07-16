@@ -81,9 +81,9 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
                 {vote.descriptionEn}
               </p>
               <div className="mt-1.5 flex items-center gap-2">
-                <span className="text-[10px] text-text-faint">{vote.date}</span>
+                <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
                 <span
-                  className="rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider"
+                  className="rounded px-1.5 py-0.5 text-xs font-medium uppercase tracking-wider"
                   style={{
                     color: vote.result === 'passed' ? 'var(--status-success)' : 'var(--status-danger)',
                     backgroundColor:
@@ -114,7 +114,7 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
           >
             Previous
           </button>
-          <span className="text-[10px] text-text-faint">Page {page}</span>
+          <span className="text-2xs font-medium text-text-faint">Page {page}</span>
           <button
             onClick={() => {
               setLoading(true)

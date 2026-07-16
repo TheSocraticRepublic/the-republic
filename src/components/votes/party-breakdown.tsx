@@ -16,7 +16,7 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
 
   return (
     <div className="space-y-3">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
+      <p className="text-3xs font-semibold uppercase text-text-faint">
         Party Breakdown
       </p>
       {partyVotes.map((pv) => {
@@ -37,7 +37,7 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
                 />
                 <span className="text-xs text-text-secondary">{pv.party}</span>
               </span>
-              <span className="text-[10px] text-text-faint">
+              <span className="text-xs text-text-faint">
                 {pv.yea}Y / {pv.nay}N{pv.paired > 0 ? ` / ${pv.paired}P` : ''}
               </span>
             </div>
