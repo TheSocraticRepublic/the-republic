@@ -9,7 +9,12 @@
  *   npx tsx scripts/apply-custom-migrations.ts
  *
  * Prerequisites:
- *   DATABASE_URL must be set (direct Supabase endpoint, not the pgBouncer pooler).
+ *   DIRECT_DATABASE_URL must be set (the :5432 SESSION-mode Supabase pooler
+ *   endpoint) — or DATABASE_URL as a fallback. DDL and long transactions
+ *   cannot run against the :6543 transaction-mode pooler (no prepared
+ *   statements, no session state). The truly-direct host
+ *   (db.<ref>.supabase.co) is IPv6-only and unreachable from this stack — it
+ *   is NOT used as a fallback. See scripts/lib/migration-database-url.ts.
  *   The schema structure must already exist (either from drizzle-kit push or 0000 baseline).
  *   See drizzle/DR.md for the full two-step disaster-recovery procedure.
  *
@@ -24,6 +29,7 @@ import postgres from 'postgres'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as url from 'url'
+import { resolveMigrationDatabaseUrl } from './lib/migration-database-url'
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
@@ -55,9 +61,11 @@ o/bKiIz+Fq8=
 -----END CERTIFICATE-----`
 
 async function main() {
-  const databaseUrl = process.env.DATABASE_URL
-  if (!databaseUrl) {
-    console.error('ERROR: DATABASE_URL environment variable is required.')
+  let databaseUrl: string
+  try {
+    databaseUrl = resolveMigrationDatabaseUrl()
+  } catch (err) {
+    console.error(`ERROR: ${err instanceof Error ? err.message : err}`)
     console.error('See drizzle/DR.md for setup instructions.')
     process.exit(1)
   }

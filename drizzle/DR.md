@@ -19,6 +19,28 @@ schema snapshot). This is not drift or an accident — it reflects the honest bo
 of what drizzle-kit can represent. The `000N` files are living idempotent scripts,
 not immutable history entries.
 
+## Connection architecture
+
+Two connection paths, two env vars:
+
+- **`DATABASE_URL`** — the app runtime connection. Points at the `:6543`
+  transaction-mode pooler (multiplexed, releases the connection per
+  transaction — the serverless-correct path).
+- **`DIRECT_DATABASE_URL`** — read ONLY by migration/DDL tooling
+  (`drizzle.config.ts`, `scripts/apply-custom-migrations.ts`, via the shared
+  `scripts/lib/migration-database-url.ts` helper). Points at the `:5432`
+  SESSION-mode pooler. Falls back to `DATABASE_URL` when unset.
+
+Why the split: the `:6543` transaction pooler doesn't support prepared
+statements or session state, so it can't run DDL (`CREATE EXTENSION`,
+multi-statement transactions, `ALTER TYPE ADD VALUE` outside a transaction).
+Migrations need the `:5432` session pooler instead.
+
+Why not the truly-direct host (`db.<ref>.supabase.co:5432`): it's IPv6-only
+and unreachable from this stack (Netlify) — it is NOT a fallback.
+`DIRECT_DATABASE_URL` should hold the **pooler host's** `:5432` value, not the
+direct host.
+
 ## Two-step DR procedure
 
 ### Step 1 — Structure (drizzle-kit)
@@ -108,10 +130,12 @@ DELETE FROM _custom_migrations WHERE filename = '0001_enable_rls.sql';
 
 ## Connection note
 
-`DATABASE_URL` must point at the **direct** Supabase endpoint (`db.<ref>.supabase.co:5432`)
-for migration work. The transaction pooler (`:6543`) does not support all DDL operations
-(e.g., `CREATE EXTENSION`, multi-statement transactions). The CA cert in
-`scripts/apply-custom-migrations.ts` and `src/lib/db/index.ts` covers both endpoints.
+Migration tooling reads `DIRECT_DATABASE_URL` (falling back to `DATABASE_URL`
+when unset) — see "Connection architecture" above for the full two-URL model.
+The transaction pooler (`:6543`) does not support all DDL operations (e.g.,
+`CREATE EXTENSION`, multi-statement transactions). The CA cert in
+`scripts/apply-custom-migrations.ts` and `src/lib/db/index.ts` covers both the
+`:5432` and `:6543` pooler endpoints.
 
 ## Running `db:migrate-custom` against live infrastructure
 

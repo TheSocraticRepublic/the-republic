@@ -2,6 +2,10 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  // Only consumed by CLI migration tooling (drizzle.config.ts,
+  // scripts/apply-custom-migrations.ts via scripts/lib/migration-database-url.ts).
+  // The app runtime never reads this — it always uses DATABASE_URL.
+  DIRECT_DATABASE_URL: z.string().min(1).optional(),
   JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
   NEXT_PUBLIC_APP_URL: z.string().url('NEXT_PUBLIC_APP_URL must be a valid URL'),
 
