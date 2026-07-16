@@ -28,7 +28,7 @@ function renderInline(text: string): React.ReactNode {
       return (
         <span
           key={i}
-          className="inline-block rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider mr-1.5 align-middle"
+          className="inline-block rounded-md px-1.5 py-0.5 text-3xs font-semibold uppercase mr-1.5 align-middle"
           style={{ color: conf.color, backgroundColor: conf.bg }}
         >
           {conf.label}
@@ -126,14 +126,14 @@ export function HistoricalContext({ content, isStreaming }: HistoricalContextPro
       {/* Section label */}
       <div className="mb-6 flex items-center justify-between">
         <p
-          className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+          className="text-3xs font-semibold uppercase"
           style={{ color: '#a8a29e' }}
         >
           Historical Context
         </p>
         {isStreaming && (
           <span
-            className="flex items-center gap-1.5 text-[10px] font-medium"
+            className="flex items-center gap-1.5 text-2xs font-medium"
             style={{ color: '#a8a29e' }}
           >
             <span
@@ -167,7 +167,7 @@ export function HistoricalContext({ content, isStreaming }: HistoricalContextPro
             <div key={i}>
               {section.heading && (
                 <h3
-                  className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em]"
+                  className="mb-4 text-3xs font-semibold uppercase"
                   style={{ color: '#78716c' }}
                 >
                   {section.heading}
@@ -196,7 +196,7 @@ export function HistoricalContext({ content, isStreaming }: HistoricalContextPro
           {Object.values(CONFIDENCE_STYLES).map((conf) => (
             <span
               key={conf.label}
-              className="flex items-center gap-1.5 text-[10px]"
+              className="flex items-center gap-1.5 text-2xs font-medium"
               style={{ color: '#78716c' }}
             >
               <span

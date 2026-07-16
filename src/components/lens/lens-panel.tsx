@@ -254,7 +254,7 @@ export function LensPanel({
       {/* Player profiles */}
       <section>
         <p
-          className="mb-4 text-[10px] font-semibold uppercase tracking-widest"
+          className="mb-4 text-3xs font-semibold uppercase"
           style={{ color: palette.faint }}
         >
           Key Players

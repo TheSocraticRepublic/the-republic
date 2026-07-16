@@ -35,7 +35,7 @@ export function GadflyEntry({
     >
       {/* Label */}
       <p
-        className="mb-4 text-[10px] font-semibold uppercase tracking-[0.12em]"
+        className="mb-4 text-3xs font-semibold uppercase"
         style={{ color: 'var(--accent-gadfly)' }}
       >
         A question worth sitting with
