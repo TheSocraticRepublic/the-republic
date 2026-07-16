@@ -1812,7 +1812,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
   if (isStreaming && !hasSections) {
     return (
       <article
-        className="content-island"
+        className={`content-island${darkMode ? ' content-island--dark' : ''}`}
         style={{
           position: 'relative',
           backgroundColor: palette.bg,
@@ -1861,7 +1861,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
 
   return (
     <article
-      className="content-island"
+      className={`content-island${darkMode ? ' content-island--dark' : ''}`}
       style={{
         position: 'relative',
         backgroundColor: palette.bg,

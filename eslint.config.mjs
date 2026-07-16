@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated Netlify server bundle — not source, shouldn't be linted.
+    ".netlify/**",
   ]),
 ]);
 

@@ -79,7 +79,7 @@ export function ReportForm({ targetType, targetId, onSubmitted, onCancel }: Repo
         placeholder="Additional context (optional)"
         className="w-full rounded-md px-2 py-1.5 text-xs text-text-primary bg-surface-1 border border-border placeholder-text-faint resize-none focus:outline-none focus:border-border-strong transition-colors"
       />
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
       <div className="flex items-center gap-2">
         <button
           type="submit"

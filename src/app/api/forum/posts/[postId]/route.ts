@@ -5,12 +5,17 @@ import { eq, and, sql, lt, count } from 'drizzle-orm'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { validatePostContent } from '@/lib/forum/validation'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
 
 interface RouteContext {
   params: Promise<{ postId: string }>
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  if (!isForumEnabled()) {
+    return forumDisabledResponse()
+  }
+
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -90,6 +95,10 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  if (!isForumEnabled()) {
+    return forumDisabledResponse()
+  }
+
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {

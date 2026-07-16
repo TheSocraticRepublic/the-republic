@@ -37,11 +37,14 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
   const [streamedText, setStreamedText] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [hasResult, setHasResult] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [docsError, setDocsError] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
   // Fetch user documents on mount
   useEffect(() => {
     setFetchingDocs(true)
+    setDocsError(false)
     fetch('/api/oracle/documents')
       .then((r) => r.json())
       .then((data) => {
@@ -52,7 +55,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
           setSelectedDocId(initialDocumentId)
         }
       })
-      .catch(() => {})
+      .catch(() => setDocsError(true))
       .finally(() => setFetchingDocs(false))
   }, [initialDocumentId])
 
@@ -69,6 +72,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
     setIsStreaming(true)
     setStreamedText('')
     setHasResult(false)
+    setSubmitError(null)
 
     try {
       const res = await fetch('/api/mirror/compare', {
@@ -85,12 +89,14 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: 'Request failed' }))
         console.error('[mirror] compare failed:', data.error)
+        setSubmitError(typeof data.error === 'string' ? data.error : 'Something went wrong. Please try again.')
         setIsStreaming(false)
         setLoading(false)
         return
       }
 
       if (!res.body) {
+        setSubmitError('Something went wrong. Please try again.')
         setIsStreaming(false)
         setLoading(false)
         return
@@ -112,6 +118,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
         console.error('[mirror] stream error:', err)
+        setSubmitError('Something went wrong. Please try again.')
       }
     } finally {
       setIsStreaming(false)
@@ -160,6 +167,11 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
                 />
               </div>
             )}
+            {docsError && (
+              <p role="alert" className="mt-1.5 text-xs text-red-400">
+                Couldn&apos;t load your documents. You can still compare without a linked document.
+              </p>
+            )}
           </div>
 
           {/* Policy area */}
@@ -204,6 +216,10 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
               disabled={loading}
             />
           </div>
+
+          {submitError && (
+            <p role="alert" className="text-xs text-red-400">{submitError}</p>
+          )}
 
           {/* Submit */}
           <div className="flex justify-end">

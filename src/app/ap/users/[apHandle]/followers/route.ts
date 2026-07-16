@@ -8,6 +8,7 @@ import { getDb } from '@/lib/db'
 import { userProfiles, remoteFollowers } from '@/lib/db/schema'
 import { eq, count } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/api/ip'
 
 const PAGE_SIZE = 50
 
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     })
   }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const ip = getClientIp(request)
   const { success } = await checkRateLimit(`ap-followers:${ip}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {

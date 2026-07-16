@@ -36,9 +36,11 @@ const INVESTIGATION_STATUS_STYLES: Record<string, { label: string; color: string
   complete: { label: 'Complete', color: 'var(--accent-mirror)', bg: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)' },
   failed: { label: 'Failed', color: 'var(--accent-lever)', bg: 'color-mix(in srgb, var(--accent-lever) 10%, transparent)' },
   cancelled: { label: 'Cancelled', color: 'var(--accent-oracle)', bg: 'color-mix(in srgb, var(--accent-oracle) 10%, transparent)' },
-  // Rows fetched here are always status='active' WITH a completed briefing
-  // (see the query's isNotNull(briefingText) filter) — that combination
-  // resolves to 'complete' everywhere else in the app, so resolve it here too.
+  // Rows fetched here are status='complete' WITH a completed briefing (see
+  // the query's isNotNull(briefingText) filter — belt-and-suspenders, since
+  // 'complete' already implies a briefing exists). The 'active' entry below
+  // is legacy/defensive only — no writer has set that status since migration
+  // 0003; see REVIEWABLE_INVESTIGATION_STATUS in lib/review/validation.ts.
   active: { label: 'Complete', color: 'var(--accent-mirror)', bg: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)' },
   archived: { label: 'Archived', color: 'var(--accent-oracle)', bg: 'color-mix(in srgb, var(--accent-oracle) 10%, transparent)' },
 }
@@ -104,7 +106,7 @@ export default async function InvestigatePage() {
       .where(
         and(
           eq(investigations.userId, userId),
-          eq(investigations.status, 'active'),
+          eq(investigations.status, 'complete'),
           isNotNull(investigations.briefingText)
         )
       )

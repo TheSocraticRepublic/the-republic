@@ -9,12 +9,17 @@ import {
 import { eq, and } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { stripHtmlTags } from '@/lib/profile/validation'
+import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
 
 interface RouteContext {
   params: Promise<{ reportId: string }>
 }
 
 export async function POST(request: NextRequest, { params }: RouteContext) {
+  if (!isForumEnabled()) {
+    return forumDisabledResponse()
+  }
+
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {

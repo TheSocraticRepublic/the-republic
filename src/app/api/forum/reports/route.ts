@@ -10,6 +10,7 @@ import { eq, and, ne, isNull, or, asc } from 'drizzle-orm'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 import { pickForumRateLimit } from '@/lib/forum/rate-limit-tier'
 import { stripHtmlTags } from '@/lib/profile/validation'
+import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
 
 const VALID_REASONS = ['spam', 'harassment', 'misinformation', 'off_topic', 'other'] as const
 type ReportReason = (typeof VALID_REASONS)[number]
@@ -17,6 +18,10 @@ const VALID_TARGET_TYPES = ['thread', 'post'] as const
 type TargetType = (typeof VALID_TARGET_TYPES)[number]
 
 export async function POST(request: NextRequest) {
+  if (!isForumEnabled()) {
+    return forumDisabledResponse()
+  }
+
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -157,6 +162,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  if (!isForumEnabled()) {
+    return forumDisabledResponse()
+  }
+
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {

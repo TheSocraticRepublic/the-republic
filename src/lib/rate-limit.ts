@@ -167,3 +167,71 @@ export async function checkDailyAiGeneralLimit(userId: string): Promise<{
   }
   return limiter.limit(userId)
 }
+
+/**
+ * Global backstop for /api/auth/send-code — SEC-1. getClientIp resolves the
+ * real client IP wherever Netlify supplies a trustworthy header, but a
+ * distributed sender (botnet, IP-rotating proxy pool) can still spread
+ * requests across enough distinct IPs to defeat the per-IP limiter above
+ * while still driving real cost (magic-code emails) and inbox-spam harm.
+ *
+ * This is a SINGLE global bucket — the same fixed key for every caller, not
+ * keyed by IP or email — so it caps total send-code volume across the whole
+ * app regardless of origin. It is a backstop, not the primary control: the
+ * threshold must stay well above genuine peak legitimate traffic (so it
+ * never blocks real users) while still bounding worst-case abuse cost.
+ * 300 requests / 5 minutes is a starting value, not a researched ceiling —
+ * tune against real traffic once there's production signal.
+ *
+ * WARNING-1 (audit remediation r1): env-overridable via SEND_CODE_GLOBAL_LIMIT
+ * so the ceiling can be tuned for a launch traffic spike without a code
+ * change/deploy. Unset, non-numeric, or non-positive values fall back to the
+ * documented default of 300 (fail-closed on bad input, not fail-open to an
+ * unbounded limit). See .env.example.
+ */
+function resolveGlobalSendCodeLimit(): number {
+  const raw = process.env.SEND_CODE_GLOBAL_LIMIT
+  if (!raw) return 300
+  const parsed = Number(raw)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 300
+}
+
+export const GLOBAL_SEND_CODE_LIMIT = resolveGlobalSendCodeLimit()
+const GLOBAL_SEND_CODE_WINDOW = '5 m'
+const GLOBAL_SEND_CODE_KEY = 'global'
+
+let _globalSendCodeLimit: Ratelimit | null = null
+
+function getGlobalSendCodeLimit(): Ratelimit | null {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    logProdWarning()
+    return null
+  }
+  if (!_globalSendCodeLimit) {
+    _globalSendCodeLimit = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(GLOBAL_SEND_CODE_LIMIT, GLOBAL_SEND_CODE_WINDOW),
+      analytics: false,
+      prefix: 'republic-global-send-code',
+    })
+  }
+  return _globalSendCodeLimit
+}
+
+/**
+ * Checks the global send-code ceiling. Fails closed in production when
+ * Redis is not configured (matches checkRateLimit / checkTightRateLimit);
+ * fails open in development.
+ */
+export async function checkGlobalSendCodeLimit(): Promise<{
+  success: boolean
+  limit: number
+  remaining: number
+  reset: number
+}> {
+  const limiter = getGlobalSendCodeLimit()
+  if (!limiter) {
+    return rateLimitFallback(GLOBAL_SEND_CODE_LIMIT)
+  }
+  return limiter.limit(GLOBAL_SEND_CODE_KEY)
+}

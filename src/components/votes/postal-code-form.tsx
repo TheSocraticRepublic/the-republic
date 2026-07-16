@@ -31,7 +31,14 @@ export function PostalCodeForm() {
     setError(null)
 
     try {
-      const res = await fetch(`/api/parliament/lookup?postalCode=${normalized}`)
+      // POST, not GET: a postal code in a query string lands in browser
+      // history, Sentry breadcrumbs/spans, and Netlify access logs. A JSON
+      // body avoids all three at once (see CRITICAL-1 in the OBS-1 review).
+      const res = await fetch('/api/parliament/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postalCode: normalized }),
+      })
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: 'Lookup failed' }))
         setError(data.error || 'Could not find your MP')
@@ -78,7 +85,7 @@ export function PostalCodeForm() {
       </div>
 
       {error && (
-        <p className="text-xs text-red-400">{error}</p>
+        <p role="alert" className="text-xs text-red-400">{error}</p>
       )}
 
       <button

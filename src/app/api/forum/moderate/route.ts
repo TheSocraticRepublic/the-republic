@@ -10,6 +10,7 @@ import { eq, and } from 'drizzle-orm'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
 
 const VALID_ACTIONS = [
   'hide_post',
@@ -21,6 +22,10 @@ const VALID_ACTIONS = [
 type ActionType = (typeof VALID_ACTIONS)[number]
 
 export async function POST(request: NextRequest) {
+  if (!isForumEnabled()) {
+    return forumDisabledResponse()
+  }
+
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {

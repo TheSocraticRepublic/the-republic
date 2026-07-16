@@ -4,11 +4,12 @@ import { archiveRecords, investigations, jurisdictions, userProfiles } from '@/l
 import { eq, and, gte, lte, count, desc } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
+import { getClientIp } from '@/lib/api/ip'
 
 const PAGE_SIZE = 50
 
 export const GET = safeRoute(async (request: NextRequest) => {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const ip = getClientIp(request)
   const { success } = await checkRateLimit(`archive-list:${ip}`)
   if (!success) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429, headers: { 'Content-Type': 'application/json' } })
 

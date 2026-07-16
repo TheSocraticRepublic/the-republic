@@ -11,6 +11,8 @@ import { getDb } from '@/lib/db'
 import { userProfiles, forumThreads, forumPosts } from '@/lib/db/schema'
 import { eq, and, desc, count } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/api/ip'
+import { isForumEnabled } from '@/lib/forum/flag'
 
 const PAGE_SIZE = 20
 
@@ -26,7 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     })
   }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const ip = getClientIp(request)
   const { success } = await checkRateLimit(`ap-outbox:${ip}`)
   if (!success) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {
@@ -57,21 +59,31 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   const pageParam = request.nextUrl.searchParams.get('page')
 
+  // FORUM-1: forum threads/posts are currently the ONLY content this outbox
+  // serves. Gating the object endpoints (ap/threads/[id], ap/posts/[id]) alone
+  // isn't enough — this endpoint independently fans forum titles/content out
+  // to any remote server that fetches it. While FORUM_ENABLED is off, treat
+  // the outbox as empty rather than querying/exposing forum content. The
+  // actor/outbox endpoint itself stays live (a valid empty OrderedCollection,
+  // per the ActivityPub spec) — only the forum-sourced items are withheld.
+  const forumEnabled = isForumEnabled()
+
   // Without ?page, return the OrderedCollection summary (no items)
   if (!pageParam) {
-    const [threadCountRows, postCountRows] = await Promise.all([
-      db
-        .select({ n: count() })
-        .from(forumThreads)
-        .where(and(eq(forumThreads.authorId, userId), eq(forumThreads.status, 'open'))),
-      db
-        .select({ n: count() })
-        .from(forumPosts)
-        .where(eq(forumPosts.authorId, userId)),
-    ])
-
-    const total =
-      Number(threadCountRows[0]?.n ?? 0) + Number(postCountRows[0]?.n ?? 0)
+    let total = 0
+    if (forumEnabled) {
+      const [threadCountRows, postCountRows] = await Promise.all([
+        db
+          .select({ n: count() })
+          .from(forumThreads)
+          .where(and(eq(forumThreads.authorId, userId), eq(forumThreads.status, 'open'))),
+        db
+          .select({ n: count() })
+          .from(forumPosts)
+          .where(eq(forumPosts.authorId, userId)),
+      ])
+      total = Number(threadCountRows[0]?.n ?? 0) + Number(postCountRows[0]?.n ?? 0)
+    }
 
     return new Response(
       JSON.stringify({
@@ -94,31 +106,33 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   const page = Math.max(1, parseInt(pageParam, 10))
   const offset = (page - 1) * PAGE_SIZE
 
-  const [threads, posts] = await Promise.all([
-    db
-      .select({
-        id: forumThreads.id,
-        title: forumThreads.title,
-        createdAt: forumThreads.createdAt,
-      })
-      .from(forumThreads)
-      .where(and(eq(forumThreads.authorId, userId), eq(forumThreads.status, 'open')))
-      .orderBy(desc(forumThreads.createdAt))
-      .limit(PAGE_SIZE)
-      .offset(offset),
-    db
-      .select({
-        id: forumPosts.id,
-        content: forumPosts.content,
-        parentId: forumPosts.parentId,
-        createdAt: forumPosts.createdAt,
-      })
-      .from(forumPosts)
-      .where(eq(forumPosts.authorId, userId))
-      .orderBy(desc(forumPosts.createdAt))
-      .limit(PAGE_SIZE)
-      .offset(offset),
-  ])
+  const [threads, posts] = forumEnabled
+    ? await Promise.all([
+        db
+          .select({
+            id: forumThreads.id,
+            title: forumThreads.title,
+            createdAt: forumThreads.createdAt,
+          })
+          .from(forumThreads)
+          .where(and(eq(forumThreads.authorId, userId), eq(forumThreads.status, 'open')))
+          .orderBy(desc(forumThreads.createdAt))
+          .limit(PAGE_SIZE)
+          .offset(offset),
+        db
+          .select({
+            id: forumPosts.id,
+            content: forumPosts.content,
+            parentId: forumPosts.parentId,
+            createdAt: forumPosts.createdAt,
+          })
+          .from(forumPosts)
+          .where(eq(forumPosts.authorId, userId))
+          .orderBy(desc(forumPosts.createdAt))
+          .limit(PAGE_SIZE)
+          .offset(offset),
+      ])
+    : [[], []]
 
   const items: unknown[] = []
 

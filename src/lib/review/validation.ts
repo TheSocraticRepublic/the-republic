@@ -1,5 +1,18 @@
 import { stripHtmlTags } from '@/lib/profile/validation'
 
+// The only investigations.status value peer review considers reviewable.
+// 'active' is a pre-migration-0003 legacy status: writers only ever set
+// 'generating' | 'complete' | 'failed' | 'cancelled' now (0003 reclassified
+// every legacy 'active' row into 'complete' or 'failed', and 'archived' has
+// never had a writer either — both are dead states, not reachable terminal
+// ones). Keep this in sync with investigationStatusEnum in lib/db/schema.ts
+// if the status state machine changes.
+export const REVIEWABLE_INVESTIGATION_STATUS = 'complete' as const
+
+export function isReviewableInvestigationStatus(status: string): boolean {
+  return status === REVIEWABLE_INVESTIGATION_STATUS
+}
+
 export const REVIEW_SCORE_MIN = 1
 export const REVIEW_SCORE_MAX = 5
 export const REVIEW_SUMMARY_MAX = 2000

@@ -22,12 +22,14 @@ export function MpLetterGenerator({
   const [letter, setLetter] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const startedRef = useRef(false)
 
   async function generateLetter() {
     if (startedRef.current || !concern.trim()) return
     startedRef.current = true
     setIsStreaming(true)
+    setSubmitError(null)
 
     try {
       const res = await fetch(`/api/parliament/mps/${mpId}/letter`, {
@@ -41,6 +43,7 @@ export function MpLetterGenerator({
       })
 
       if (!res.ok || !res.body) {
+        setSubmitError('Something went wrong generating the letter. Please try again.')
         setIsStreaming(false)
         startedRef.current = false
         return
@@ -57,6 +60,7 @@ export function MpLetterGenerator({
         setLetter(accumulated)
       }
     } catch {
+      setSubmitError('Something went wrong. Please try again.')
       startedRef.current = false
     } finally {
       setIsStreaming(false)
@@ -128,6 +132,9 @@ export function MpLetterGenerator({
         className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm text-text-primary placeholder-text-faint focus:outline-none focus:border-neutral-500 resize-none"
         style={{ borderColor: 'var(--border-strong)' }}
       />
+      {submitError && (
+        <p role="alert" className="text-xs text-red-400">{submitError}</p>
+      )}
       <div className="flex items-center gap-2 justify-end">
         <button
           onClick={() => setShowForm(false)}

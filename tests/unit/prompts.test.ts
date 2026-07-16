@@ -118,6 +118,7 @@ const mockJurisdictionModule: JurisdictionModule = {
   foiFramework: {
     name: 'FIPPA',
     fullCitation: 'Freedom of Information and Protection of Privacy Act, RSBC 1996, c. 165',
+    verified: true,
     sections: {
       rightOfAccess: 's. 4',
       dutyToAssist: 's. 6',
