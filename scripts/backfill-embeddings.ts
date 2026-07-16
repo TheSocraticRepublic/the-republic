@@ -20,6 +20,7 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import { isNull, eq } from 'drizzle-orm'
 import { documentChunks } from '../src/lib/db/schema'
 import { voyageEmbedBatched } from '../src/lib/ai/voyage'
+import { resolveMigrationDatabaseUrl } from './lib/migration-database-url'
 
 const BATCH_SIZE = 64
 const MAX_RETRIES_ON_429 = 3
@@ -50,11 +51,7 @@ async function embedWithRetry(
 }
 
 async function main(): Promise<void> {
-  const databaseUrl = process.env.DATABASE_URL
-  if (!databaseUrl) {
-    console.error('DATABASE_URL environment variable is required')
-    process.exit(1)
-  }
+  const databaseUrl = resolveMigrationDatabaseUrl()
 
   const apiKey = process.env.VOYAGE_API_KEY
   if (!apiKey) {
@@ -62,7 +59,7 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
-  const client = postgres(databaseUrl, { max: 1 })
+  const client = postgres(databaseUrl, { max: 1, prepare: false })
   const db = drizzle(client)
 
   // Fetch all chunks with missing embeddings — no join needed; filtering on

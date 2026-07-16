@@ -27,6 +27,7 @@ import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { users, documents, documentChunks } from '../src/lib/db/schema'
 import { searchDocumentChunks } from '../src/lib/ai/search-chunks'
+import { resolveMigrationDatabaseUrl } from './lib/migration-database-url'
 
 // 1024-dimensional test vectors.
 //
@@ -52,11 +53,7 @@ function assert(condition: boolean, label: string): void {
 }
 
 async function main(): Promise<void> {
-  const databaseUrl = process.env.DATABASE_URL
-  if (!databaseUrl) {
-    console.error('DATABASE_URL environment variable is required')
-    process.exit(1)
-  }
+  const databaseUrl = resolveMigrationDatabaseUrl()
 
   // VOYAGE_API_KEY is intentionally NOT required — we inject QUERY_VEC directly.
   // searchDocumentChunks accepts a pre-computed vector as its 5th argument and
@@ -65,7 +62,7 @@ async function main(): Promise<void> {
     console.log('Note: VOYAGE_API_KEY is set but will not be used — query vector is injected directly.')
   }
 
-  const client = postgres(databaseUrl, { max: 1 })
+  const client = postgres(databaseUrl, { max: 1, prepare: false })
   const db = drizzle(client)
 
   let passed = 0

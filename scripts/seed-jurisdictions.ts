@@ -9,6 +9,7 @@ import { jurisdictions } from '../src/lib/db/schema'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as url from 'url'
+import { resolveMigrationDatabaseUrl } from './lib/migration-database-url'
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
@@ -22,13 +23,9 @@ interface JurisdictionSeed {
 }
 
 async function main() {
-  const databaseUrl = process.env.DATABASE_URL
-  if (!databaseUrl) {
-    console.error('DATABASE_URL environment variable is required')
-    process.exit(1)
-  }
+  const databaseUrl = resolveMigrationDatabaseUrl()
 
-  const client = postgres(databaseUrl, { max: 1 })
+  const client = postgres(databaseUrl, { max: 1, prepare: false })
   const db = drizzle(client)
 
   const seedPath = path.join(__dirname, '..', 'data', 'seeds', 'jurisdictions.json')
