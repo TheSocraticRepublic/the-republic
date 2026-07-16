@@ -113,7 +113,7 @@ export function ReviewForm({ investigationId, onSubmitted }: ReviewFormProps) {
                     )}
                   >
                     {score}
-                    <span className="block text-[10px] font-normal mt-0.5 leading-tight">
+                    <span className="block text-2xs font-medium mt-0.5 leading-tight">
                       {SCORE_LABELS[score]}
                     </span>
                   </button>

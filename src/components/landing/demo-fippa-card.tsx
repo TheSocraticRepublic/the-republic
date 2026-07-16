@@ -11,13 +11,13 @@ export function DemoFippaCard() {
     >
       <div className="flex items-center justify-between border-b border-border px-6 py-3.5">
         <span
-          className="text-[11px] uppercase tracking-[0.14em] text-text-muted"
+          className="text-3xs font-semibold uppercase text-text-muted"
           style={{ fontFamily: 'var(--font-mono)' }}
         >
           Freedom of Information Request
         </span>
         <span
-          className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+          className="rounded-full px-2.5 py-0.5 text-2xs font-medium"
           style={{
             background: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)',
             color: 'color-mix(in srgb, var(--accent-lever) 75%, #000)',

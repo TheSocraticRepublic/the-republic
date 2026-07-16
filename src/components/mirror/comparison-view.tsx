@@ -317,7 +317,7 @@ export function ComparisonView({ text, isStreaming, documentId, documentTitle }:
       {/* Cross-arm navigation — only when the comparison is tied to a document */}
       {showCrossArmActions && (
         <div className="border-t border-border pt-6">
-          <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-text-faint">
+          <p className="mb-3 text-3xs font-semibold uppercase text-text-faint">
             Continue your inquiry
           </p>
           <CrossArmActions

@@ -194,7 +194,7 @@ function SectionHeader({
         />
       )}
       <h3
-        className="text-[11px] font-semibold uppercase tracking-[0.1em]"
+        className="text-3xs font-semibold uppercase"
         style={{ color: color ?? palette.muted }}
       >
         {heading}

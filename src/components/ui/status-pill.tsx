@@ -26,7 +26,7 @@ export function StatusPill({
 
   return (
     <span
-      className={`inline-flex items-center ${shape} px-2 py-0.5 text-[10px] font-medium`}
+      className={`inline-flex items-center ${shape} px-2 py-0.5 text-2xs font-medium`}
       style={{ backgroundColor: bg, color }}
       aria-label={ariaLabel}
     >

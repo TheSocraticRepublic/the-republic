@@ -86,7 +86,7 @@ export function ActConfusion() {
         >
           <div className="relative">
             <span
-              className="block text-[10px] uppercase"
+              className="block text-2xs font-medium uppercase"
               style={{
                 fontFamily: 'var(--font-mono)',
                 letterSpacing: '0.22em',
