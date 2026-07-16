@@ -75,7 +75,7 @@ function InfographicView({ spec }: { spec: Record<string, unknown> }) {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className="rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors"
+            className="rounded-md px-2.5 py-1 text-3xs font-semibold uppercase transition-colors"
             style={{
               backgroundColor: tab === t ? 'color-mix(in srgb, var(--accent-lever) 10%, transparent)' : 'transparent',
               color: tab === t ? 'var(--accent-lever)' : '#a8a29e',
@@ -157,12 +157,12 @@ function SocialPostView({ spec }: { spec: Record<string, unknown> }) {
         >
           <div className="flex items-center justify-between">
             <span
-              className="text-[10px] font-semibold uppercase tracking-widest"
+              className="text-3xs font-semibold uppercase"
               style={{ color: '#a8a29e' }}
             >
               {v.tone}
             </span>
-            <span className="text-[10px]" style={{ color: '#a8a29e' }}>
+            <span className="text-2xs font-medium" style={{ color: '#a8a29e' }}>
               {v.characterCount} chars
             </span>
           </div>
@@ -239,7 +239,7 @@ function TimelineView({ spec }: { spec: Record<string, unknown> }) {
             )}
           </div>
           <div className="pb-2">
-            <p className="text-[10px] font-medium" style={{ color: '#a8a29e' }}>{item.date}</p>
+            <p className="text-2xs font-medium" style={{ color: '#a8a29e' }}>{item.date}</p>
             <p className="text-sm" style={{ color: '#292524' }}>{item.event}</p>
             {item.significance && (
               <p className="text-xs" style={{ color: '#78716c' }}>{item.significance}</p>
@@ -263,7 +263,7 @@ function ComparisonView({ spec }: { spec: Record<string, unknown> }) {
           className="rounded-lg px-3 py-2.5"
           style={{ backgroundColor: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--accent-lever) 15%, transparent)' }}
         >
-          <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--accent-lever)' }}>
+          <p className="text-3xs font-semibold uppercase mb-1" style={{ color: 'var(--accent-lever)' }}>
             Current — {subject.jurisdiction}
           </p>
           <p className="text-sm" style={{ color: '#292524' }}>{subject.policy}</p>
@@ -275,7 +275,7 @@ function ComparisonView({ spec }: { spec: Record<string, unknown> }) {
           className="rounded-lg px-3 py-2.5"
           style={{ backgroundColor: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}
         >
-          <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: '#a8a29e' }}>
+          <p className="text-3xs font-semibold uppercase mb-1" style={{ color: '#a8a29e' }}>
             {alt.jurisdiction}
           </p>
           <p className="text-sm" style={{ color: '#292524' }}>{alt.policy}</p>
@@ -488,7 +488,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
       >
         <div>
           <p
-            className="text-[10px] font-semibold uppercase tracking-widest"
+            className="text-3xs font-semibold uppercase"
             style={{ color: 'var(--accent-lever)' }}
           >
             {label}
@@ -609,18 +609,18 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
                   border: `1px solid ${rc.popoverBorder}`,
                 }}
               >
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--accent-oracle)' }}>
+                <p className="text-3xs font-semibold uppercase mb-2" style={{ color: 'var(--accent-oracle)' }}>
                   Render in Claude Artifacts
                 </p>
                 <ol className="space-y-1.5 text-xs leading-relaxed" style={{ color: rc.textColor }}>
                   <li>1. Click <strong>Copy JSON</strong> above to copy your spec</li>
                   <li>2. Open <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--accent-oracle)' }}>claude.ai</a> in a new tab</li>
-                  <li>3. Use the prompt template from <code className="rounded px-1 py-0.5 text-[10px]" style={{ backgroundColor: 'rgba(0,0,0,0.06)', color: '#292524' }}>docs/claude-artifacts-template.md</code></li>
+                  <li>3. Use the prompt template from <code className="rounded px-1 py-0.5 text-2xs font-medium" style={{ backgroundColor: 'rgba(0,0,0,0.06)', color: '#292524' }}>docs/claude-artifacts-template.md</code></li>
                   <li>4. Paste the template prompt, then your JSON at the end</li>
                 </ol>
                 <button
                   onClick={() => setShowClaudeHint(false)}
-                  className="mt-3 text-[10px]"
+                  className="mt-3 text-2xs font-medium"
                   style={{ color: rc.faintColor }}
                 >
                   Dismiss
