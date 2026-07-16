@@ -170,7 +170,7 @@ function PowerMapSection({ content }: { content: string }) {
               style={{ borderColor }}
             >
               <p
-                className={clsx('mb-1 text-[11px] font-semibold uppercase tracking-wider', textClass)}
+                className={clsx('mb-1 text-3xs font-semibold uppercase', textClass)}
                 style={textStyle}
               >
                 {entry.label}
@@ -222,7 +222,7 @@ function QuestionsSection({ content }: { content: string }) {
           {questions.map((q, i) => (
             <li key={i} className="flex items-start gap-3">
               <span
-                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded font-mono text-[11px] font-bold"
+                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded font-mono text-2xs font-bold"
                 style={{
                   backgroundColor: 'color-mix(in srgb, var(--accent-oracle) 12%, transparent)',
                   color: 'var(--accent-oracle)',

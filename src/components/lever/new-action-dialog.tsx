@@ -257,7 +257,7 @@ export function NewActionDialog({
                     )}
                   >
                     <span className="block font-semibold">{t.label}</span>
-                    <span className="mt-0.5 block text-[10px] opacity-70">{t.description}</span>
+                    <span className="mt-0.5 block text-2xs font-medium opacity-70">{t.description}</span>
                   </button>
                 ))}
               </div>

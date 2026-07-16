@@ -79,7 +79,7 @@ export default async function LeverActionPage({ params }: PageProps) {
       {/* Cross-arm navigation — only when this action is tied to a document */}
       {action.documentId && (
         <div className="mt-6 border-t border-border pt-6">
-          <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-text-faint">
+          <p className="mb-3 text-3xs font-semibold uppercase text-text-faint">
             Continue your inquiry
           </p>
           <CrossArmActions

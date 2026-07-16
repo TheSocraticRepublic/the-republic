@@ -73,7 +73,7 @@ export function ActionCard({ id, title, actionType, status, createdAt }: ActionC
           </div>
 
           {/* Date */}
-          <div className="mt-2.5 flex items-center text-[11px] text-text-muted">
+          <div className="mt-2.5 flex items-center text-2xs font-medium text-text-muted">
             <span className="ml-auto">{formatDate(createdAt)}</span>
           </div>
         </div>

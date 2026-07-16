@@ -84,18 +84,18 @@ export function DocumentCard({
           >
             {title}
           </h3>
-          <p className="mt-0.5 text-[11px] text-text-muted">{formatDocType(documentType)}</p>
+          <p className="mt-0.5 text-2xs font-medium text-text-muted">{formatDocType(documentType)}</p>
         </div>
 
         {/* Status badge */}
-        <span className={clsx('flex items-center gap-1 text-[11px] font-medium', color)}>
+        <span className={clsx('flex items-center gap-1 text-2xs font-medium', color)}>
           <StatusIcon size={12} strokeWidth={2} />
           {label}
         </span>
       </div>
 
       {/* Metadata row */}
-      <div className="flex items-center gap-4 text-[11px] text-text-muted">
+      <div className="flex items-center gap-4 text-2xs font-medium text-text-muted">
         {pageCount != null && (
           <span>{pageCount} {pageCount === 1 ? 'page' : 'pages'}</span>
         )}

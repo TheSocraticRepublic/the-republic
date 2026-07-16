@@ -361,7 +361,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
           style={{ minHeight: '400px' }}
         >
           {/* Generating indicator */}
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[11px] text-text-muted">
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 text-2xs font-medium text-text-muted">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent-lever)] animate-pulse" />
             Generating
           </div>
@@ -402,7 +402,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       {mode === 'editing' && (
         <div className="rounded-xl border border-border bg-surface-1 shadow-sm overflow-hidden">
           <div className="px-4 py-2.5 border-b border-border bg-surface-1">
-            <p className="text-[11px] text-text-muted">
+            <p className="text-2xs font-medium text-text-muted">
               Edit the document text directly. Changes are saved when you click Save.
             </p>
           </div>
