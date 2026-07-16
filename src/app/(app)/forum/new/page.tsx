@@ -96,7 +96,7 @@ function NewThreadForm() {
             required
             className={inputClass}
           />
-          <p className="text-[10px] text-text-faint text-right">
+          <p className="text-2xs font-medium text-text-faint text-right">
             {title.length}/{THREAD_TITLE_MAX}
           </p>
         </div>
@@ -113,7 +113,7 @@ function NewThreadForm() {
             rows={8}
             className={`${inputClass} resize-none`}
           />
-          <p className="text-[10px] text-text-faint text-right">
+          <p className="text-2xs font-medium text-text-faint text-right">
             {content.length}/{POST_CONTENT_MAX}
           </p>
         </div>

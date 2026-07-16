@@ -153,7 +153,7 @@ function ProfileSetupForm() {
               {nameError && (
                 <p className="mt-1 text-xs text-red-600">{nameError}</p>
               )}
-              <p className="mt-1 text-[11px] text-text-faint">
+              <p className="mt-1 text-2xs font-medium text-text-faint">
                 Lowercase letters, numbers, underscores, and hyphens only
               </p>
             </div>
@@ -176,7 +176,7 @@ function ProfileSetupForm() {
                 placeholder="What brings you to Open Cave?"
                 className="w-full resize-none rounded-lg border border-border bg-surface-0 px-3.5 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none transition-colors focus:border-border-strong focus:bg-surface-1"
               />
-              <p className="mt-1 text-right text-[11px] text-text-faint">
+              <p className="mt-1 text-right text-2xs font-medium text-text-faint">
                 {bio.length}/500
               </p>
             </div>
