@@ -2,6 +2,9 @@ const PARTY_COLORS: Record<string, string> = {
   Liberal: '#E4434E',
   Conservative: '#5B84B8',
   NDP: '#F58220',
+  // federal_mps.party stores the short form "Bloc" (verified against prod DB);
+  // keep the full name as an alias so either feed form resolves to the cyan.
+  Bloc: '#33B2CC',
   'Bloc Québécois': '#33B2CC',
   Green: '#3D9B35',
   Independent: '#8F8F8F',
