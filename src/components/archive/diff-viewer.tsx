@@ -30,7 +30,7 @@ const CHANGE_TYPE_LABELS: Record<DocumentChangeType, string> = {
 function ChangeTypeBadge({ type }: { type: DocumentChangeType }) {
   if (type === 'deleted' || type === 'retracted') {
     return (
-      <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-amber-950/60 border border-amber-700/40 text-amber-400">
+      <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-medium bg-amber-950/60 border border-amber-700/40 text-amber-400">
         <span className="opacity-70">-</span>
         {CHANGE_TYPE_LABELS[type]}
       </span>
@@ -38,7 +38,7 @@ function ChangeTypeBadge({ type }: { type: DocumentChangeType }) {
   }
 
   return (
-    <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-sky-950/60 border border-sky-700/40 text-sky-400">
+    <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-medium bg-sky-950/60 border border-sky-700/40 text-sky-400">
       <span className="opacity-70">+</span>
       {CHANGE_TYPE_LABELS[type]}
     </span>
@@ -66,7 +66,7 @@ export function DiffViewer({ versions }: DiffViewerProps) {
               </span>
               <ChangeTypeBadge type={version.changeType} />
             </div>
-            <span className="text-[10px] text-text-faint flex-shrink-0">
+            <span className="text-2xs font-medium text-text-faint flex-shrink-0">
               {formatDate(version.detectedAt)}
             </span>
           </div>
