@@ -41,6 +41,15 @@ and unreachable from this stack (Netlify) — it is NOT a fallback.
 `DIRECT_DATABASE_URL` should hold the **pooler host's** `:5432` value, not the
 direct host.
 
+**Switch executed 2026-07-15:** production `DATABASE_URL` moved from the pooler
+host's `:5432` (session) to `:6543` (transaction); `DIRECT_DATABASE_URL` set to
+the `:5432` value. Both URLs were pre-flight-validated against the live DB before
+the change. Verified post-deploy: `/api/health` `database:ok` + a 24-way
+concurrency burst returned 24/24 with no `EMAXCONNSESSION` (the 2026-06-19 failure
+mode). Set via the Netlify API/CLI (production context, secret). Rollback path:
+set `DATABASE_URL` back to the pooler `:5432` value + redeploy (one deploy cycle,
+no data risk — a connection-path change, not data).
+
 ## Two-step DR procedure
 
 ### Step 1 — Structure (drizzle-kit)
