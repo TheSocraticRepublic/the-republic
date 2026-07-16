@@ -100,7 +100,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       console.error('[investigate/retry] failed to revert investigation after trigger failure', dbErr)
     }
     return new Response(JSON.stringify({
-      error: 'Failed to start investigation generation. Please try again.',
+      error: 'Failed to start investigation generation. Try again.',
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

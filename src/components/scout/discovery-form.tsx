@@ -88,14 +88,14 @@ export function DiscoveryForm() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: 'Request failed' }))
-        setErrorMessage(data.error ?? 'Discovery failed. Please try again.')
+        setErrorMessage(data.error ?? 'Discovery failed. Try again.')
         setIsStreaming(false)
         setLoading(false)
         return
       }
 
       if (!res.body) {
-        setErrorMessage('No response received. Please try again.')
+        setErrorMessage('No response received. Try again.')
         setIsStreaming(false)
         setLoading(false)
         return
@@ -116,7 +116,7 @@ export function DiscoveryForm() {
       setHasResult(true)
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
-        setErrorMessage('An unexpected error occurred. Please try again.')
+        setErrorMessage('An unexpected error occurred. Try again.')
       }
     } finally {
       setIsStreaming(false)

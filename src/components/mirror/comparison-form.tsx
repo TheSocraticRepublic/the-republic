@@ -89,14 +89,14 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: 'Request failed' }))
         console.error('[mirror] compare failed:', data.error)
-        setSubmitError(typeof data.error === 'string' ? data.error : 'Something went wrong. Please try again.')
+        setSubmitError(typeof data.error === 'string' ? data.error : 'Something went wrong. Try again.')
         setIsStreaming(false)
         setLoading(false)
         return
       }
 
       if (!res.body) {
-        setSubmitError('Something went wrong. Please try again.')
+        setSubmitError('Something went wrong. Try again.')
         setIsStreaming(false)
         setLoading(false)
         return
@@ -118,7 +118,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
         console.error('[mirror] stream error:', err)
-        setSubmitError('Something went wrong. Please try again.')
+        setSubmitError('Something went wrong. Try again.')
       }
     } finally {
       setIsStreaming(false)

@@ -181,7 +181,7 @@ export function NewActionDialog({
       router.push(`/lever/${data.actionId}`)
     } catch (err) {
       console.error(err)
-      setCreateError('Failed to create action. Please try again.')
+      setCreateError('Failed to create action. Try again.')
     } finally {
       setLoading(false)
     }

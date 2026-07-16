@@ -43,7 +43,7 @@ export function MpLetterGenerator({
       })
 
       if (!res.ok || !res.body) {
-        setSubmitError('Something went wrong generating the letter. Please try again.')
+        setSubmitError('Something went wrong generating the letter. Try again.')
         setIsStreaming(false)
         startedRef.current = false
         return
@@ -60,7 +60,7 @@ export function MpLetterGenerator({
         setLetter(accumulated)
       }
     } catch {
-      setSubmitError('Something went wrong. Please try again.')
+      setSubmitError('Something went wrong. Try again.')
       startedRef.current = false
     } finally {
       setIsStreaming(false)

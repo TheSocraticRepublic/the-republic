@@ -83,13 +83,13 @@ export function GadflySession({
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         console.error('[gadfly] Turn failed:', data.error)
-        setSubmitError('Something went wrong. Please try again.')
+        setSubmitError('Something went wrong. Try again.')
         setIsStreaming(false)
         return
       }
 
       if (!res.body) {
-        setSubmitError('Something went wrong. Please try again.')
+        setSubmitError('Something went wrong. Try again.')
         setIsStreaming(false)
         return
       }
@@ -135,7 +135,7 @@ export function GadflySession({
       }
     } catch (err) {
       console.error('[gadfly] Stream error:', err)
-      setSubmitError('Something went wrong. Please try again.')
+      setSubmitError('Something went wrong. Try again.')
       setIsStreaming(false)
       setStreamingContent('')
     }

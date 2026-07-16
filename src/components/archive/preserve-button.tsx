@@ -22,7 +22,7 @@ export function PreserveButton({ investigationId }: PreserveButtonProps) {
       if (res.ok) {
         router.refresh()
       } else {
-        let message = 'Preservation failed. Please try again.'
+        let message = 'Preservation failed. Try again.'
         try {
           const body = await res.json()
           if (body?.error) message = body.error

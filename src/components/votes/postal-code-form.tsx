@@ -54,7 +54,7 @@ export function PostalCodeForm() {
         setLoading(false)
       }
     } catch {
-      setError('Something went wrong. Please try again.')
+      setError('Something went wrong. Try again.')
       setLoading(false)
     }
   }

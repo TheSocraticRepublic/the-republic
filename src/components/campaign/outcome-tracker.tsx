@@ -128,10 +128,10 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
         setTimeout(() => setSubmitSuccess(false), 3000)
       } else {
         const data = await res.json().catch(() => null)
-        setSubmitError(data?.error ?? 'Failed to save outcome. Please try again.')
+        setSubmitError(data?.error ?? 'Failed to save outcome. Try again.')
       }
     } catch {
-      setSubmitError('Network error. Please check your connection and try again.')
+      setSubmitError('Network error. Check your connection and try again.')
     } finally {
       setSubmitting(false)
     }

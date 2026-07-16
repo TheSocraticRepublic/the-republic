@@ -94,7 +94,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         console.error('[action-viewer] Generate failed:', err)
-        setActionError('Generation failed. Please try again.')
+        setActionError('Generation failed. Try again.')
         setMode('viewing')
       }
     }
@@ -123,7 +123,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       setStatus(next)
     } catch (err) {
       console.error('[action-viewer] Status update failed:', err)
-      setActionError('Failed to update status. Please try again.')
+      setActionError('Failed to update status. Try again.')
     } finally {
       setStatusUpdating(false)
     }
@@ -142,7 +142,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       setMode('viewing')
     } catch (err) {
       console.error('[action-viewer] Save failed:', err)
-      setActionError('Failed to save changes. Please try again.')
+      setActionError('Failed to save changes. Try again.')
     } finally {
       setSaving(false)
     }

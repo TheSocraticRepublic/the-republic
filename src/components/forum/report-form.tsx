@@ -26,7 +26,7 @@ export function ReportForm({ targetType, targetId, onSubmitted, onCancel }: Repo
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!reason) {
-      setError('Please select a reason')
+      setError('Select a reason')
       return
     }
     setLoading(true)

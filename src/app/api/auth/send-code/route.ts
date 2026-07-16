@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
 
     if (!success) {
       return NextResponse.json(
-        { error: 'Too many requests. Please wait before requesting another code.' },
+        { error: 'Too many requests. Wait before requesting another code.' },
         { status: 429 }
       )
     }
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const { success: globalOk } = await checkGlobalSendCodeLimit()
     if (!globalOk) {
       return NextResponse.json(
-        { error: 'Too many requests. Please wait before requesting another code.' },
+        { error: 'Too many requests. Wait before requesting another code.' },
         { status: 429 }
       )
     }

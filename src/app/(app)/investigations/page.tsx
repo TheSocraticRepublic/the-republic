@@ -155,7 +155,7 @@ export default async function InvestigationsPage() {
         {records.length === 0 ? (
           <EmptyState
             className="shadow-sm"
-            message="No investigations yet. Start one."
+            message="Each one starts with a concern."
             action={{ label: 'Start your first investigation', href: '/investigate' }}
           />
         ) : (

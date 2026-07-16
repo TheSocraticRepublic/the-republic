@@ -131,7 +131,7 @@ export function ReviewSection({ investigationId, isAuthor }: ReviewSectionProps)
 
       {isAuthor && reviews.length === 0 && (
         <p className="text-sm text-text-muted">
-          Reviews from other citizens will appear here
+          Reviews from other citizens will appear here.
         </p>
       )}
 

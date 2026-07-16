@@ -55,7 +55,7 @@ export function FeedbackDialog() {
       }
       setSubmitted(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      setError(err instanceof Error ? err.message : 'Something went wrong. Try again.')
     } finally {
       setSubmitting(false)
     }

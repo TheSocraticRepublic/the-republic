@@ -62,7 +62,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
       router.push(`/gadfly/${data.sessionId}`)
     } catch (err) {
       console.error(err)
-      setCreateError('Failed to create inquiry. Please try again.')
+      setCreateError('Failed to create inquiry. Try again.')
     } finally {
       setLoading(false)
     }
