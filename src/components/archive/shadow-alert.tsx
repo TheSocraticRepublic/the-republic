@@ -26,10 +26,10 @@ export function ShadowAlert({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-amber-600/80">
+            <span className="text-3xs font-semibold uppercase text-amber-600/80">
               {ALERT_TYPE_LABELS[alertType]}
             </span>
-            <span className="text-[10px] text-text-faint">
+            <span className="text-2xs font-medium text-text-faint">
               {referenceCount} reference{referenceCount !== 1 ? 's' : ''}
             </span>
           </div>
@@ -43,7 +43,7 @@ export function ShadowAlert({
           <span className="text-xs font-medium tabular-nums text-amber-500">
             {confidencePct}%
           </span>
-          <p className="text-[10px] text-text-faint">confidence</p>
+          <p className="text-2xs font-medium text-text-faint">confidence</p>
         </div>
       </div>
     </div>

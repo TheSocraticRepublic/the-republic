@@ -49,7 +49,7 @@ export async function POST(
   const aiDaily = await checkDailyAiGeneralLimit(userId)
   if (!aiDaily.success) {
     return new Response(JSON.stringify({
-      error: 'Daily AI usage limit reached. Please try again tomorrow.',
+      error: 'Daily AI usage limit reached. Try again tomorrow.',
     }), { status: 429, headers: { 'Content-Type': 'application/json' } })
   }
 

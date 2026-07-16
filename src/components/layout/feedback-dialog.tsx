@@ -55,7 +55,7 @@ export function FeedbackDialog() {
       }
       setSubmitted(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      setError(err instanceof Error ? err.message : 'Something went wrong. Try again.')
     } finally {
       setSubmitting(false)
     }
@@ -64,7 +64,7 @@ export function FeedbackDialog() {
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Trigger asChild>
-        <button className="flex items-center gap-1.5 text-[11px] text-text-muted transition-colors hover:text-text-secondary">
+        <button className="flex items-center gap-1.5 text-2xs font-medium text-text-muted transition-colors hover:text-text-secondary">
           <MessageSquarePlus size={11} strokeWidth={1.75} />
           Report a bug or suggestion
         </button>
@@ -133,7 +133,7 @@ export function FeedbackDialog() {
                       )}
                     >
                       <span className="block font-medium">{opt.label}</span>
-                      <span className="block text-[10px] opacity-70">{opt.subtitle}</span>
+                      <span className="block text-2xs font-medium opacity-70">{opt.subtitle}</span>
                     </button>
                   ))}
                 </div>
@@ -160,7 +160,7 @@ export function FeedbackDialog() {
                   maxLength={5000}
                   className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-white/20 shadow-sm"
                 />
-                <p className="mt-1 text-right text-[10px] text-text-faint">
+                <p className="mt-1 text-right text-2xs font-medium text-text-faint">
                   {description.length} / 5000
                 </p>
               </div>

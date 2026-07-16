@@ -76,7 +76,7 @@ export default async function OracleDocumentPage({ params }: PageProps) {
             >
               {doc.title}
             </h1>
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-text-muted">
+            <div className="mt-1 flex flex-wrap items-center gap-3 text-2xs font-medium text-text-muted">
               <span>{formatDocType(doc.documentType)}</span>
               {doc.pageCount != null && (
                 <span>{doc.pageCount} {doc.pageCount === 1 ? 'page' : 'pages'}</span>
@@ -125,7 +125,7 @@ export default async function OracleDocumentPage({ params }: PageProps) {
 
           {/* Cross-arm navigation */}
           <div className="mt-6 border-t border-border pt-6">
-            <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-text-faint">
+            <p className="mb-3 text-3xs font-semibold uppercase text-text-faint">
               Continue your inquiry
             </p>
             <CrossArmActions

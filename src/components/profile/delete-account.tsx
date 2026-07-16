@@ -24,7 +24,7 @@ export function DeleteAccount() {
       router.push('/')
       router.refresh()
     } catch {
-      setError('Could not delete your account. Please try again, or contact us.')
+      setError('Could not delete your account. Try again, or contact us.')
       setBusy(false)
     }
   }

@@ -53,7 +53,7 @@ function GadflyMessage({
     >
       {questionType && QUESTION_TYPE_LABELS[questionType] && (
         <span
-          className="absolute right-0 top-0 text-[10px] uppercase tracking-widest"
+          className="absolute right-0 top-0 text-3xs font-semibold uppercase"
           style={{
             fontFamily: 'var(--font-body)',
             color: 'var(--accent-gadfly)',

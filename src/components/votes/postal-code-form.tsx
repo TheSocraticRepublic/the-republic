@@ -54,7 +54,7 @@ export function PostalCodeForm() {
         setLoading(false)
       }
     } catch {
-      setError('Something went wrong. Please try again.')
+      setError('Something went wrong. Try again.')
       setLoading(false)
     }
   }
@@ -64,7 +64,7 @@ export function PostalCodeForm() {
       <div>
         <label
           htmlFor="postal-code"
-          className="block text-[10px] font-semibold uppercase tracking-widest text-text-muted mb-2"
+          className="block text-3xs font-semibold uppercase text-text-muted mb-2"
         >
           Your postal code
         </label>

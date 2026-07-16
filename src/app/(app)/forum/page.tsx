@@ -121,7 +121,7 @@ export default async function ForumPage({
       <section>
         {threads.length === 0 ? (
           <EmptyState
-            message="No discussions yet. Be the first to start one."
+            message="Someone has to speak first."
             action={{ label: 'Start a discussion', href: '/forum/new' }}
           />
         ) : (

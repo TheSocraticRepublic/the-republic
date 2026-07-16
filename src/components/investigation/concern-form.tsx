@@ -73,7 +73,7 @@ export function ConcernForm() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: 'Request failed' }))
         console.error('[investigate] request failed:', data.error)
-        setSubmitError('Something went wrong. Please try again.')
+        setSubmitError('Something went wrong. Try again.')
         setLoading(false)
         return
       }
@@ -83,7 +83,7 @@ export function ConcernForm() {
       const investigationId: string | undefined = data?.id
       if (!investigationId) {
         console.error('[investigate] missing id in response body')
-        setSubmitError('Something went wrong. Please try again.')
+        setSubmitError('Something went wrong. Try again.')
         setLoading(false)
         return
       }
@@ -93,7 +93,7 @@ export function ConcernForm() {
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
         console.error('[investigate] request error:', err)
-        setSubmitError('Something went wrong. Please try again.')
+        setSubmitError('Something went wrong. Try again.')
       }
       setLoading(false)
     }

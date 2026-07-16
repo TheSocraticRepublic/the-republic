@@ -27,7 +27,7 @@ export function VoteDetailCard({
         backgroundColor: 'var(--surface-1)',
       }}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-3">
+      <p className="text-3xs font-semibold uppercase text-text-faint mb-3">
         Vote {session}/{number}
       </p>
 
@@ -41,23 +41,23 @@ export function VoteDetailCard({
         <span className="text-xs text-text-muted">{date}</span>
 
         <span
-          className="rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+          className="rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wider"
           style={{
-            color: result === 'passed' ? '#4ade80' : '#ef4444',
+            color: result === 'passed' ? 'var(--status-success)' : 'var(--status-danger)',
             backgroundColor:
               result === 'passed'
-                ? 'rgba(74,222,128,0.10)'
-                : 'rgba(239,68,68,0.10)',
+                ? 'color-mix(in srgb, var(--status-success) 10%, transparent)'
+                : 'color-mix(in srgb, var(--status-danger) 10%, transparent)',
           }}
         >
           {result}
         </span>
 
         <div className="flex items-center gap-3 text-xs">
-          <span className="text-emerald-400">{yeaTotal} Yea</span>
-          <span className="text-red-400">{nayTotal} Nay</span>
+          <span className="text-status-success">{yeaTotal} Yea</span>
+          <span className="text-status-danger">{nayTotal} Nay</span>
           {pairedTotal != null && pairedTotal > 0 && (
-            <span className="text-amber-400">{pairedTotal} Paired</span>
+            <span className="text-status-warning">{pairedTotal} Paired</span>
           )}
         </div>
       </div>

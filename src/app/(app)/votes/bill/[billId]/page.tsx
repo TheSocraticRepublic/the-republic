@@ -78,9 +78,9 @@ export default async function BillDetailPage({ params }: PageProps) {
           >
             {bill.number}
           </span>
-          <span className="text-[10px] text-text-faint">{bill.session}</span>
+          <span className="text-2xs font-medium text-text-faint">{bill.session}</span>
           {bill.isLaw && (
-            <span className="rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-400/10">
+            <span className="rounded-md px-1.5 py-0.5 text-3xs font-semibold uppercase text-emerald-400 bg-emerald-400/10">
               Law
             </span>
           )}
@@ -139,7 +139,7 @@ export default async function BillDetailPage({ params }: PageProps) {
               style={{ backgroundColor: 'var(--surface-3)' }}
             />
             <span
-              className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+              className="text-3xs font-semibold uppercase"
               style={{ color: 'var(--accent-votes)' }}
             >
               Recorded Votes
@@ -164,16 +164,17 @@ export default async function BillDetailPage({ params }: PageProps) {
                 <p className="text-xs text-text-secondary leading-snug mb-1.5">
                   {vote.descriptionEn}
                 </p>
-                <div className="flex items-center gap-3 text-[10px]">
-                  <span className="text-text-faint">{vote.date}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
                   <span
+                    className="text-xs"
                     style={{
-                      color: vote.result === 'passed' ? '#4ade80' : '#ef4444',
+                      color: vote.result === 'passed' ? 'var(--status-success)' : 'var(--status-danger)',
                     }}
                   >
                     {vote.result}
                   </span>
-                  <span className="text-text-faint">
+                  <span className="text-xs text-text-faint">
                     {vote.yeaTotal}Y / {vote.nayTotal}N
                   </span>
                 </div>

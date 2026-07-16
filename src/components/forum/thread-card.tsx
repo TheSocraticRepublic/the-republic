@@ -50,7 +50,7 @@ export function ThreadCard({
               <div className="flex items-center gap-1.5 ml-1">
                 {jurisdictionName && (
                   <span
-                    className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                    className="rounded-full px-2 py-0.5 text-2xs font-medium"
                     style={{
                       backgroundColor: 'color-mix(in srgb, var(--accent-oracle) 10%, transparent)',
                       color: 'var(--accent-oracle)',
@@ -61,7 +61,7 @@ export function ThreadCard({
                 )}
                 {concernCategory && (
                   <span
-                    className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                    className="rounded-full px-2 py-0.5 text-2xs font-medium"
                     style={{
                       backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',
                       color: 'var(--accent-gadfly)',
@@ -76,7 +76,7 @@ export function ThreadCard({
         </div>
         <div className="flex-shrink-0 flex flex-col items-end gap-1 text-right">
           {lastPostAt && (
-            <span className="text-[10px] text-text-faint">
+            <span className="text-2xs font-medium text-text-faint">
               {formatRelativeTime(lastPostAt)}
             </span>
           )}

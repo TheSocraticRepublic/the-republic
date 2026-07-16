@@ -52,7 +52,7 @@ export function OracleAnalysisPanel({
             Oracle Analysis
           </span>
           {hasSavedAnalysis && !isLoading && !completion && (
-            <span className="rounded-full border border-border bg-surface-1 px-2 py-0.5 text-[10px] text-text-muted">
+            <span className="rounded-full border border-border bg-surface-1 px-2 py-0.5 text-2xs font-medium text-text-muted">
               Saved
             </span>
           )}
@@ -85,7 +85,7 @@ export function OracleAnalysisPanel({
       {/* Error state */}
       {error && (
         <div className="rounded-xl border border-red-500/20 bg-red-500/[0.05] px-4 py-3 text-sm text-red-300">
-          Analysis failed: {error.message}. Please try again.
+          Analysis failed: {error.message}. Try again.
         </div>
       )}
 

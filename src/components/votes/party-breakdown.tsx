@@ -16,7 +16,7 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
 
   return (
     <div className="space-y-3">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint">
+      <p className="text-3xs font-semibold uppercase text-text-faint">
         Party Breakdown
       </p>
       {partyVotes.map((pv) => {
@@ -25,7 +25,7 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
         const yeaPct = (pv.yea / total) * 100
         const nayPct = (pv.nay / total) * 100
         const pairedPct = (pv.paired / total) * 100
-        const partyColor = PARTY_COLORS[pv.party] ?? '#737373'
+        const partyColor = PARTY_COLORS[pv.party] ?? '#8F8F8F'
 
         return (
           <div key={pv.party} className="space-y-1.5">
@@ -37,7 +37,7 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
                 />
                 <span className="text-xs text-text-secondary">{pv.party}</span>
               </span>
-              <span className="text-[10px] text-text-faint">
+              <span className="text-xs text-text-faint">
                 {pv.yea}Y / {pv.nay}N{pv.paired > 0 ? ` / ${pv.paired}P` : ''}
               </span>
             </div>
@@ -50,7 +50,7 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
                   className="h-full"
                   style={{
                     width: `${yeaPct}%`,
-                    backgroundColor: '#4ade80',
+                    backgroundColor: 'var(--status-success)',
                   }}
                 />
               )}
@@ -59,7 +59,7 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
                   className="h-full"
                   style={{
                     width: `${nayPct}%`,
-                    backgroundColor: '#ef4444',
+                    backgroundColor: 'var(--status-danger)',
                   }}
                 />
               )}
@@ -68,7 +68,7 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
                   className="h-full"
                   style={{
                     width: `${pairedPct}%`,
-                    backgroundColor: '#f59e0b',
+                    backgroundColor: 'var(--status-warning)',
                   }}
                 />
               )}

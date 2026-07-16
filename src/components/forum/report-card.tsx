@@ -108,21 +108,21 @@ export function ReportCard({
         <div className="flex items-center gap-2">
           {isAppeal && (
             <span
-              className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded"
+              className="text-3xs font-semibold uppercase px-2 py-0.5 rounded"
               style={{
-                backgroundColor: 'rgba(200, 160, 75, 0.15)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 15%, transparent)',
                 color: 'var(--accent-gadfly)',
-                border: '1px solid rgba(200, 160, 75, 0.25)',
+                border: '1px solid color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
               }}
             >
               Appeal
             </span>
           )}
           <span
-            className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded"
+            className="text-3xs font-semibold uppercase px-2 py-0.5 rounded"
             style={{
               backgroundColor: 'var(--surface-3)',
-              color: '#a1a1aa',
+              color: 'var(--text-muted)',
               border: '1px solid var(--border)',
             }}
           >
@@ -137,7 +137,7 @@ export function ReportCard({
           className="rounded-lg px-3 py-2 text-xs text-text-secondary"
           style={{ backgroundColor: 'var(--surface-1)', border: '1px solid var(--border)' }}
         >
-          <p className="text-[10px] text-text-faint mb-1">
+          <p className="text-2xs font-medium text-text-faint mb-1">
             {isPost ? 'Post' : 'Thread'} by {target.authorDisplayName}
             {target.status !== 'visible' && target.status !== 'open' && (
               <span className="ml-2 text-amber-600">({target.status})</span>

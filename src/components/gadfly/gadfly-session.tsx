@@ -83,13 +83,13 @@ export function GadflySession({
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         console.error('[gadfly] Turn failed:', data.error)
-        setSubmitError('Something went wrong. Please try again.')
+        setSubmitError('Something went wrong. Try again.')
         setIsStreaming(false)
         return
       }
 
       if (!res.body) {
-        setSubmitError('Something went wrong. Please try again.')
+        setSubmitError('Something went wrong. Try again.')
         setIsStreaming(false)
         return
       }
@@ -135,7 +135,7 @@ export function GadflySession({
       }
     } catch (err) {
       console.error('[gadfly] Stream error:', err)
-      setSubmitError('Something went wrong. Please try again.')
+      setSubmitError('Something went wrong. Try again.')
       setIsStreaming(false)
       setStreamingContent('')
     }
@@ -184,7 +184,7 @@ export function GadflySession({
 
           {/* Mode badge */}
           <span
-            className="ml-4 flex-shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
+            className="ml-4 flex-shrink-0 rounded-md px-2 py-0.5 text-3xs font-semibold uppercase"
             style={{
               color: 'var(--accent-gadfly)',
               backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',

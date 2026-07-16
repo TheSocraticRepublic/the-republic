@@ -155,7 +155,7 @@ export default async function InvestigationsPage() {
         {records.length === 0 ? (
           <EmptyState
             className="shadow-sm"
-            message="No investigations yet. Start one."
+            message="Each one starts with a concern."
             action={{ label: 'Start your first investigation', href: '/investigate' }}
           />
         ) : (
@@ -187,7 +187,7 @@ export default async function InvestigationsPage() {
                         </p>
                       )}
                       {(inv.status === 'failed' || inv.status === 'cancelled') && inv.failureReason && (
-                        <p className="mt-1 text-[11px] text-text-faint italic" role="status">
+                        <p className="mt-1 text-2xs font-medium text-text-faint italic" role="status">
                           {inv.failureReason}
                         </p>
                       )}
@@ -201,7 +201,7 @@ export default async function InvestigationsPage() {
                         status={inv.status as 'generating' | 'complete' | 'failed' | 'cancelled' | 'active' | 'archived'}
                         hasBriefing={!!inv.briefingText}
                       />
-                      <span className="text-[10px] text-text-faint">
+                      <span className="text-2xs font-medium text-text-faint">
                         <LocalDate iso={inv.createdAt.toISOString()} />
                       </span>
                     </div>

@@ -128,10 +128,10 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
         setTimeout(() => setSubmitSuccess(false), 3000)
       } else {
         const data = await res.json().catch(() => null)
-        setSubmitError(data?.error ?? 'Failed to save outcome. Please try again.')
+        setSubmitError(data?.error ?? 'Failed to save outcome. Try again.')
       }
     } catch {
-      setSubmitError('Network error. Please check your connection and try again.')
+      setSubmitError('Network error. Check your connection and try again.')
     } finally {
       setSubmitting(false)
     }
@@ -148,7 +148,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
       {/* Header */}
       <div className="space-y-1">
         <p
-          className="text-[10px] font-semibold uppercase tracking-widest"
+          className="text-3xs font-semibold uppercase"
           style={{ color: 'var(--accent-lever)' }}
         >
           How is it going?
@@ -287,7 +287,7 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
         <div className="space-y-3 pt-2">
           <div className="h-px w-full" style={{ backgroundColor: 'var(--border)' }} />
           <p
-            className="text-[10px] font-semibold uppercase tracking-widest"
+            className="text-3xs font-semibold uppercase"
             style={{ color: 'color-mix(in srgb, var(--accent-lever) 60%, transparent)' }}
           >
             Recorded Outcomes
@@ -304,14 +304,14 @@ export function OutcomeTracker({ investigationId, materials }: OutcomeTrackerPro
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-1">
+                    <p className="text-3xs font-semibold uppercase text-text-faint mb-1">
                       {OUTCOME_TYPE_LABELS[o.outcomeType] ?? o.outcomeType}
                     </p>
                     <p className="text-xs text-text-secondary leading-relaxed">
                       {o.description}
                     </p>
                     {o.outcomeDate && (
-                      <p className="mt-1 text-[10px] text-text-faint">
+                      <p className="mt-1 text-2xs font-medium text-text-faint">
                         {o.outcomeDate}
                       </p>
                     )}
@@ -376,7 +376,7 @@ function OutcomeForm({
     >
       {/* Description */}
       <div className="space-y-1">
-        <label className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+        <label className="text-3xs font-semibold uppercase text-text-muted">
           What happened?
         </label>
         <textarea
@@ -391,7 +391,7 @@ function OutcomeForm({
 
       {/* Date picker */}
       <div className="space-y-1">
-        <label className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+        <label className="text-3xs font-semibold uppercase text-text-muted">
           Date (optional)
         </label>
         <input
@@ -405,7 +405,7 @@ function OutcomeForm({
 
       {/* Satisfaction 1-5 stars */}
       <div className="space-y-1">
-        <label className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+        <label className="text-3xs font-semibold uppercase text-text-muted">
           Satisfaction (optional)
         </label>
         <div className="flex gap-1">
@@ -447,7 +447,7 @@ function OutcomeForm({
       <div className="flex items-center gap-2 justify-end pt-1">
         <button
           onClick={onCancel}
-          className="text-[10px] text-text-faint hover:text-text-secondary transition-colors px-3 py-1.5"
+          className="text-2xs font-medium text-text-faint hover:text-text-secondary transition-colors px-3 py-1.5"
           type="button"
         >
           Cancel

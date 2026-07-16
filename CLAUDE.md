@@ -109,6 +109,16 @@ src/
 - PDF exports: light mode (`#fafaf9` bg), print-optimized, Instrument Sans +
   Inter + Source Serif 4 (registered independently in `src/lib/pdf/fonts.ts`
   — `@react-pdf/renderer` can't consume the app's `next/font` variables)
+- Copy register: three voices, chosen by arm/surface, never mixed within one
+  surface. **Aphoristic/serif** (the `EmptyState` `serif` prop) — Gadfly
+  everywhere, Lever's *landing* surface only; short, reflective, earns its
+  italics. **Convivial-plain** — Forum, Investigations, Mirror, the
+  civic-context strip; warm, human, plain sentences, no jargon. **Plain-instructional**
+  — Oracle, Scout, Votes, and *every* error message app-wide, no exceptions;
+  state the fact, state the action if there is one, skip both the courtesy
+  padding ("Please") and the poetry. Serif is for the aphorism, not for the
+  threshold — an empty state earns italics only on a surface whose arm
+  voice already lives there.
 
 ## Critical Rules
 

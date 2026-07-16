@@ -39,10 +39,10 @@ interface IssueTimelineProps {
 }
 
 const EVENT_TYPE_STYLES: Record<string, { color: string; bg: string }> = {
-  deadline: { color: '#ef4444', bg: 'rgba(239,68,68,0.10)' },
-  comment_period: { color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
+  deadline: { color: 'var(--status-danger)', bg: 'color-mix(in srgb, var(--status-danger) 10%, transparent)' },
+  comment_period: { color: 'var(--status-warning)', bg: 'color-mix(in srgb, var(--status-warning) 10%, transparent)' },
   meeting: { color: '#60a5fa', bg: 'rgba(96,165,250,0.10)' },
-  decision: { color: '#4ade80', bg: 'rgba(74,222,128,0.10)' },
+  decision: { color: 'var(--status-success)', bg: 'color-mix(in srgb, var(--status-success) 10%, transparent)' },
   custom: { color: '#a3a3a3', bg: 'rgba(163,163,163,0.08)' },
 }
 
@@ -104,7 +104,7 @@ export function IssueTimeline({ investigationId, events, onEventAdded, darkMode 
           backgroundColor: tl.bg,
         }}
       >
-        <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: tl.faint }}>
+        <p className="text-3xs font-semibold uppercase mb-2" style={{ color: tl.faint }}>
           Timeline
         </p>
         <p className="text-sm leading-relaxed mb-4" style={{ color: tl.faint }}>
@@ -124,13 +124,13 @@ export function IssueTimeline({ investigationId, events, onEventAdded, darkMode 
   return (
     <div className="space-y-1">
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: tl.faint }}>
+        <p className="text-3xs font-semibold uppercase" style={{ color: tl.faint }}>
           Timeline
         </p>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="text-[10px] transition-colors"
+            className="text-2xs font-medium transition-colors"
             style={{ color: tl.faint }}
           >
             + Add event
@@ -167,14 +167,14 @@ export function IssueTimeline({ investigationId, events, onEventAdded, darkMode 
                   <div className="flex-1 min-w-0 pb-2">
                     <p className="text-xs font-medium leading-snug" style={{ color: tl.text }}>{event.title}</p>
                     {event.description && (
-                      <p className="mt-0.5 text-[11px] leading-relaxed" style={{ color: tl.faint }}>
+                      <p className="mt-0.5 text-2xs font-medium leading-relaxed" style={{ color: tl.faint }}>
                         {event.description}
                       </p>
                     )}
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-[10px]" style={{ color: tl.faint }}>{event.eventDate}</span>
+                      <span className="text-2xs font-medium" style={{ color: tl.faint }}>{event.eventDate}</span>
                       <span
-                        className="rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider"
+                        className="rounded px-1.5 py-0.5 text-3xs font-semibold uppercase"
                         style={{ color: style.color, backgroundColor: style.bg }}
                       >
                         {event.eventType.replace('_', ' ')}
@@ -239,7 +239,7 @@ export function IssueTimeline({ investigationId, events, onEventAdded, darkMode 
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="text-[10px] transition-colors px-3 py-1.5"
+              className="text-2xs font-medium transition-colors px-3 py-1.5"
               style={{ color: tl.faint }}
             >
               Cancel
@@ -247,7 +247,7 @@ export function IssueTimeline({ investigationId, events, onEventAdded, darkMode 
             <button
               type="submit"
               disabled={submitting || !formTitle.trim() || !formDate}
-              className="rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors disabled:opacity-40"
+              className="rounded-lg px-3 py-1.5 text-3xs font-semibold uppercase transition-colors disabled:opacity-40"
               style={{
                 color: 'var(--accent-gadfly)',
                 backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',

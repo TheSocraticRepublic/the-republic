@@ -42,7 +42,7 @@ export function ReviewCard({
     <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-5">
       <div className="mb-4 flex items-center justify-between">
         <ProfileBadge displayName={reviewerDisplayName} size="sm" />
-        <span className="text-[10px] text-text-faint">{formatRelativeTime(createdAt)}</span>
+        <span className="text-2xs font-medium text-text-faint">{formatRelativeTime(createdAt)}</span>
       </div>
 
       <div className="space-y-2">
@@ -50,7 +50,7 @@ export function ReviewCard({
           const score = scoreMap[key]
           return (
             <div key={key} className="flex items-center gap-2">
-              <span className="w-20 flex-shrink-0 text-[10px] text-text-faint">{label}</span>
+              <span className="w-20 flex-shrink-0 text-2xs font-medium text-text-faint">{label}</span>
               <div className="flex-1 h-1.5 bg-surface-3 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full bg-white/20"

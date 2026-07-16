@@ -63,7 +63,7 @@ export default function RecentVotesPage() {
           }}
         >
           <p className="text-sm text-text-muted">
-            No vote data available. Run a sync to populate parliamentary data.
+            No vote data yet. This deployment hasn’t synced with Parliament.
           </p>
         </div>
       ) : (
@@ -82,21 +82,21 @@ export default function RecentVotesPage() {
                 <p className="text-xs font-medium text-text-secondary leading-snug line-clamp-2 mb-1.5">
                   {vote.descriptionEn}
                 </p>
-                <div className="flex items-center gap-3 text-[10px]">
-                  <span className="text-text-faint">{vote.date}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
                   <span
-                    className="rounded-md px-1.5 py-0.5 font-semibold uppercase tracking-wider"
+                    className="rounded-md px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wider"
                     style={{
-                      color: vote.result === 'passed' ? '#4ade80' : '#ef4444',
+                      color: vote.result === 'passed' ? 'var(--status-success)' : 'var(--status-danger)',
                       backgroundColor:
                         vote.result === 'passed'
-                          ? 'rgba(74,222,128,0.08)'
-                          : 'rgba(239,68,68,0.08)',
+                          ? 'color-mix(in srgb, var(--status-success) 8%, transparent)'
+                          : 'color-mix(in srgb, var(--status-danger) 8%, transparent)',
                     }}
                   >
                     {vote.result}
                   </span>
-                  <span className="text-text-faint">
+                  <span className="text-xs text-text-faint">
                     {vote.yeaTotal}Y / {vote.nayTotal}N
                   </span>
                 </div>
@@ -116,7 +116,7 @@ export default function RecentVotesPage() {
               >
                 Previous
               </button>
-              <span className="text-[10px] text-text-faint">Page {page}</span>
+              <span className="text-2xs font-medium text-text-faint">Page {page}</span>
               <button
                 onClick={() => {
                   setLoading(true)

@@ -161,7 +161,7 @@ export function PlayerCard({
         </p>
         {onToggle && (
           <span
-            className="text-[10px] mt-0.5 flex-shrink-0 transition-transform duration-150"
+            className="text-2xs font-medium mt-0.5 flex-shrink-0 transition-transform duration-150"
             style={{
               color: p.muted,
               transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -175,7 +175,7 @@ export function PlayerCard({
       {/* Type + role badges */}
       <div className="flex flex-wrap gap-1.5">
         <span
-          className="rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+          className="rounded-md px-2 py-0.5 text-3xs font-semibold uppercase"
           style={{
             color: styles.color,
             backgroundColor: styles.bg,
@@ -185,7 +185,7 @@ export function PlayerCard({
           {formatPlayerType(playerType)}
         </span>
         <span
-          className="rounded-md px-2 py-0.5 text-[10px] font-medium"
+          className="rounded-md px-2 py-0.5 text-2xs font-medium"
           style={{
             color: p.muted,
             backgroundColor: p.roleBg,
@@ -213,7 +213,7 @@ export function PlayerCard({
           {/* Track Record */}
           {appearances && appearances.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: p.faint }}>
+              <p className="text-3xs font-semibold uppercase mb-2" style={{ color: p.faint }}>
                 Track Record
               </p>
               <div className="space-y-2">
@@ -227,11 +227,11 @@ export function PlayerCard({
                       {a.concern}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-[10px]" style={{ color: p.faint }}>
+                      <span className="text-2xs font-medium" style={{ color: p.faint }}>
                         {formatRole(a.role)}
                       </span>
                       {a.jurisdictionName && (
-                        <span className="text-[10px]" style={{ color: p.faint }}>
+                        <span className="text-2xs font-medium" style={{ color: p.faint }}>
                           {a.jurisdictionName}
                         </span>
                       )}
@@ -245,7 +245,7 @@ export function PlayerCard({
           {/* Connections */}
           {relatedPlayers && relatedPlayers.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: p.faint }}>
+              <p className="text-3xs font-semibold uppercase mb-2" style={{ color: p.faint }}>
                 Connections
               </p>
               <div className="flex flex-wrap gap-2">
@@ -275,7 +275,7 @@ export function PlayerCard({
           {/* External links */}
           {links.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: p.faint }}>
+              <p className="text-3xs font-semibold uppercase mb-2" style={{ color: p.faint }}>
                 External Records
               </p>
               <div className="flex flex-wrap gap-2">

@@ -71,7 +71,7 @@ export const POST = safeRoute(async function handler(request: NextRequest) {
   const daily = await checkDailyAiLimit(userId)
   if (!daily.success) {
     return new Response(JSON.stringify({
-      error: 'Daily investigation limit reached (5 per day). Please try again tomorrow.',
+      error: 'Daily investigation limit reached (5 per day). Try again tomorrow.',
       remaining: 0,
       reset: daily.reset,
     }), {
@@ -175,7 +175,7 @@ export const POST = safeRoute(async function handler(request: NextRequest) {
       console.error('[investigate] failed to mark investigation as failed after trigger failure', dbErr)
     }
     return new Response(JSON.stringify({
-      error: 'Failed to start investigation generation. Please try again.',
+      error: 'Failed to start investigation generation. Try again.',
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

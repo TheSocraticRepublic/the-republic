@@ -194,7 +194,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                   </div>
                   {existing && !isGenerating && (
                     <span
-                      className="flex-shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest"
+                      className="flex-shrink-0 rounded px-1.5 py-0.5 text-3xs font-semibold uppercase"
                       style={{ backgroundColor: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)', color: 'var(--accent-lever)' }}
                     >
                       Done
@@ -236,7 +236,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
       {MATERIAL_TYPES.filter((type) => !materials.some((m) => m.materialType === type) && activeMaterialType !== type).length > 0 && (
         <div className="space-y-3">
           <p
-            className="text-[10px] font-semibold uppercase tracking-widest"
+            className="text-3xs font-semibold uppercase"
             style={{ color: palette.faint }}
           >
             Available
@@ -263,7 +263,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
       {/* Cross-arm: File as FIPPA request when fact_sheet or talking_points exist */}
       {materials.some((m) => m.materialType === 'fact_sheet' || m.materialType === 'talking_points') && (
         <div className="space-y-3">
-          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: palette.faint }}>
+          <p className="text-3xs font-semibold uppercase" style={{ color: palette.faint }}>
             Civic Actions
           </p>
           <CrossArmActions
@@ -299,7 +299,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                     {action.title}
                   </span>
                   <span
-                    className="text-[9px] font-semibold uppercase tracking-wider"
+                    className="text-3xs font-semibold uppercase"
                     style={{
                       color:
                         action.status === 'filed' ? 'var(--accent-oracle)'
@@ -327,7 +327,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
       {/* Generated materials */}
       {materials.length > 0 && (
         <section className="space-y-6">
-          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: palette.faint }}>
+          <p className="text-3xs font-semibold uppercase" style={{ color: palette.faint }}>
             Generated Materials
           </p>
           {materials.map((material) => (

@@ -80,7 +80,7 @@ export function MediaSpecGenerator({
       {/* Type label */}
       <div className="space-y-0.5">
         <p
-          className="text-[10px] font-semibold uppercase tracking-widest"
+          className="text-3xs font-semibold uppercase"
           style={{ color: 'var(--accent-lever)' }}
         >
           Generate
@@ -90,7 +90,7 @@ export function MediaSpecGenerator({
 
       {/* Audience selector */}
       <div className="space-y-2">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+        <p className="text-3xs font-semibold uppercase text-text-muted">
           Target Audience
         </p>
         <div className="flex flex-wrap gap-2">

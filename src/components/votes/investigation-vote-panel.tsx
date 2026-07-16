@@ -67,7 +67,7 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
       <div className="flex items-center gap-3">
         <div className="h-px flex-1" style={{ backgroundColor: 'var(--surface-3)' }} />
         <span
-          className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+          className="text-3xs font-semibold uppercase"
           style={{ color: 'var(--accent-votes)' }}
         >
           Your MP&apos;s Record
@@ -99,7 +99,7 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
             <p className="text-sm font-medium text-text-primary truncate">{mp.name}</p>
             <div className="flex items-center gap-2">
               <PartyBadge party={mp.party} />
-              <span className="text-[10px] text-text-faint">{mp.ridingName}</span>
+              <span className="text-2xs font-medium text-text-faint">{mp.ridingName}</span>
             </div>
           </div>
         </Link>
@@ -124,13 +124,13 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
                     {vote.descriptionEn}
                   </p>
                   {vote.relevanceExplanation && (
-                    <p className="mt-1 text-[10px] text-text-muted italic">
+                    <p className="mt-1 text-2xs font-medium text-text-muted italic">
                       {vote.relevanceExplanation}
                     </p>
                   )}
-                  <span className="mt-1 text-[10px] text-text-faint">{vote.date}</span>
+                  <span className="mt-1 text-2xs font-medium text-text-faint">{vote.date}</span>
                 </div>
-                {vote.mpBallot && <VoteBadge ballot={vote.mpBallot} size="md" />}
+                {vote.mpBallot && <VoteBadge ballot={vote.mpBallot} />}
               </div>
             </Link>
           ))}

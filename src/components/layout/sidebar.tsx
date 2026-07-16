@@ -106,7 +106,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             Open Cave
           </span>
         </Link>
-        <p className="mt-0.5 text-[11px] tracking-wider text-text-muted uppercase">
+        <p className="mt-0.5 text-3xs font-semibold text-text-muted uppercase">
           Civic AI
         </p>
       </div>
@@ -142,7 +142,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             </span>
             <span className="flex flex-col">
               <span className="font-semibold leading-tight">New Investigation</span>
-              <span className="text-[10px] text-text-faint leading-tight">Start here</span>
+              <span className="text-2xs font-medium text-text-faint leading-tight">Start here</span>
             </span>
             {investigateActive && (
               <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
@@ -178,7 +178,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             </span>
             <span className="flex flex-col">
               <span className="font-semibold leading-tight">Investigations</span>
-              <span className="text-[10px] text-text-faint leading-tight">Your history</span>
+              <span className="text-2xs font-medium text-text-faint leading-tight">Your history</span>
             </span>
             {investigationsActive && (
               <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
@@ -201,7 +201,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             </span>
             <span className="flex flex-col">
               <span className="font-semibold leading-tight text-text-muted">Forum</span>
-              <span className="text-[10px] text-text-faint leading-tight">Coming soon</span>
+              <span className="text-2xs font-medium text-text-faint leading-tight">Coming soon</span>
             </span>
           </span>
 
@@ -236,7 +236,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             </span>
             <span className="flex flex-col">
               <span className="font-semibold leading-tight">Vote Tracker</span>
-              <span className="text-[10px] text-text-faint leading-tight">MP voting records</span>
+              <span className="text-2xs font-medium text-text-faint leading-tight">MP voting records</span>
             </span>
             {votesActive && (
               <span
@@ -276,7 +276,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
               </span>
               <span className="flex flex-col">
                 <span className="font-semibold leading-tight">Moderation</span>
-                <span className="text-[10px] text-text-faint leading-tight">Review reports</span>
+                <span className="text-2xs font-medium text-text-faint leading-tight">Review reports</span>
               </span>
               {moderationActive && (
                 <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
@@ -313,7 +313,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             </span>
             <span className="flex flex-col">
               <span className="font-semibold leading-tight">Profile</span>
-              <span className="text-[10px] text-text-faint leading-tight">Your identity</span>
+              <span className="text-2xs font-medium text-text-faint leading-tight">Your identity</span>
             </span>
             {profileActive && (
               <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
@@ -330,7 +330,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
               onClick={() => setInstrumentsOpen((v) => !v)}
               aria-expanded={instrumentsOpen}
               aria-controls="instruments-list"
-              className="flex w-full items-center justify-between px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-text-faint hover:text-text-muted transition-colors"
+              className="flex w-full items-center justify-between px-2 py-1.5 text-3xs font-semibold uppercase text-text-faint hover:text-text-muted transition-colors"
             >
               <span>The Instruments</span>
               <ChevronDown
@@ -380,7 +380,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
                         </span>
                         <span className="flex flex-col">
                           <span className="font-medium leading-tight">{arm.name}</span>
-                          <span className="text-[10px] text-text-muted leading-none">
+                          <span className="text-2xs font-medium text-text-muted leading-none">
                             {arm.description}
                           </span>
                         </span>
@@ -413,7 +413,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             </span>
             <span className="flex flex-col">
               <span className="font-medium leading-tight">Foundations</span>
-              <span className="text-[10px] text-text-faint leading-tight">The groundwork</span>
+              <span className="text-2xs font-medium text-text-faint leading-tight">The groundwork</span>
             </span>
           </Link>
         </div>
@@ -430,17 +430,17 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
 
       {/* Beta + support */}
       <div className="mx-3 rounded-lg border border-border bg-surface-3/50 px-3 py-3">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-text-faint">
+        <p className="text-3xs font-semibold uppercase text-text-faint">
           Beta
         </p>
-        <p className="mt-1 text-[11px] leading-relaxed text-text-muted">
+        <p className="mt-1 text-2xs font-medium leading-relaxed text-text-muted">
           Testing civic issues in BC, Alberta, and Ontario, with an environmental focus.
         </p>
         <a
           href="https://ko-fi.com/toasted40013"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 flex items-center gap-1.5 text-[11px] text-text-muted transition-colors hover:text-text-secondary"
+          className="mt-2 flex items-center gap-1.5 text-2xs font-medium text-text-muted transition-colors hover:text-text-secondary"
         >
           <Heart size={11} strokeWidth={1.75} />
           Support this project
@@ -458,7 +458,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
               <ProfileBadge displayName={displayName} size="sm" />
             ) : null}
             {userEmail && (
-              <p className="truncate text-[11px] text-text-muted mt-1">
+              <p className="truncate text-2xs font-medium text-text-muted mt-1">
                 {userEmail}
               </p>
             )}

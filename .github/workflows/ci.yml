@@ -32,6 +32,9 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Design token lint
+        run: ./scripts/lint-design-tokens.sh
+
       - name: Security audit
         # Gate on 'high' — confirmed clean (npm audit --audit-level=high exits 0 on 2026-06-28).
         # All current findings are moderate or low severity via @irys/sdk transitive deps

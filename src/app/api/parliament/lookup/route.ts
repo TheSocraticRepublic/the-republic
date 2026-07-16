@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
     if (!mpId) {
       return new Response(
         JSON.stringify({
-          error: 'MP found but not yet in our database. Please run a data sync first.',
+          error: 'MP found but not yet in our database. Run a data sync first.',
           mpName: federalMp.name,
           ridingName,
         }),

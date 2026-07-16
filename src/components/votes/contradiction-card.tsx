@@ -23,13 +23,13 @@ export function ContradictionCard({ contradiction }: ContradictionCardProps) {
     >
       {/* Statement */}
       <div className="mb-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-1">
+        <p className="text-3xs font-semibold uppercase text-text-faint mb-1">
           Said
         </p>
         <p className="text-xs text-text-secondary leading-relaxed italic">
           &quot;{contradiction.statement}&quot;
         </p>
-        <p className="mt-1 text-[10px] text-text-faint">
+        <p className="mt-1 text-2xs font-medium text-text-faint">
           {contradiction.statementDate} — {contradiction.statementContext}
         </p>
       </div>
@@ -42,25 +42,25 @@ export function ContradictionCard({ contradiction }: ContradictionCardProps) {
 
       {/* Vote */}
       <div className="mb-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-faint mb-1">
+        <p className="text-3xs font-semibold uppercase text-text-faint mb-1">
           Voted
         </p>
         <p className="text-xs text-text-secondary leading-relaxed">
           <span
-            className="inline-block rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider mr-1.5"
+            className="inline-block rounded-md px-1.5 py-0.5 text-3xs font-semibold uppercase mr-1.5"
             style={{
-              color: contradiction.ballot.toLowerCase() === 'yes' ? '#4ade80' : '#ef4444',
+              color: contradiction.ballot.toLowerCase() === 'yes' ? 'var(--status-success)' : 'var(--status-danger)',
               backgroundColor:
                 contradiction.ballot.toLowerCase() === 'yes'
-                  ? 'rgba(74,222,128,0.10)'
-                  : 'rgba(239,68,68,0.10)',
+                  ? 'color-mix(in srgb, var(--status-success) 10%, transparent)'
+                  : 'color-mix(in srgb, var(--status-danger) 10%, transparent)',
             }}
           >
             {contradiction.ballot}
           </span>
           {contradiction.vote}
         </p>
-        <p className="mt-1 text-[10px] text-text-faint">
+        <p className="mt-1 text-2xs font-medium text-text-faint">
           {contradiction.voteDate}
         </p>
       </div>

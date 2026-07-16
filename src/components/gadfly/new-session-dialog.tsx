@@ -62,7 +62,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
       router.push(`/gadfly/${data.sessionId}`)
     } catch (err) {
       console.error(err)
-      setCreateError('Failed to create inquiry. Please try again.')
+      setCreateError('Failed to create inquiry. Try again.')
     } finally {
       setLoading(false)
     }
@@ -181,7 +181,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
                     )}
                   >
                     <span className="block font-medium capitalize">{m}</span>
-                    <span className="block text-[10px] opacity-70">
+                    <span className="block text-2xs font-medium opacity-70">
                       {m === 'socratic' ? 'Questions only' : 'Direct dialogue'}
                     </span>
                   </button>

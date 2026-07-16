@@ -133,12 +133,12 @@ export function ProvenanceChain({
                       href={step.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-mono text-[11px] text-sky-500 hover:text-sky-400 transition-colors underline underline-offset-2"
+                      className="font-mono text-2xs font-medium text-sky-500 hover:text-sky-400 transition-colors underline underline-offset-2"
                     >
                       {step.copyLabel}
                     </a>
                   ) : (
-                    <span className="font-mono text-[11px] text-text-muted">
+                    <span className="font-mono text-2xs font-medium text-text-muted">
                       {step.copyLabel}
                     </span>
                   )}
@@ -146,7 +146,7 @@ export function ProvenanceChain({
                     type="button"
                     aria-label="Copy identifier"
                     onClick={() => handleCopy(step.copyValue!, step.label)}
-                    className="text-[10px] text-text-faint hover:text-text-secondary transition-colors px-1.5 py-0.5 rounded border border-border hover:border-border-strong"
+                    className="text-2xs font-medium text-text-faint hover:text-text-secondary transition-colors px-1.5 py-0.5 rounded border border-border hover:border-border-strong"
                   >
                     {copied === step.label ? 'Copied' : 'Copy'}
                   </button>

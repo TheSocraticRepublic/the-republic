@@ -9,9 +9,9 @@ interface HistoricalContextProps {
 }
 
 const CONFIDENCE_STYLES: Record<string, { color: string; bg: string; label: string }> = {
-  '[DOCUMENTED]': { color: '#4ade80', bg: 'rgba(74,222,128,0.08)', label: 'DOCUMENTED' },
-  '[REPORTED]': { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', label: 'REPORTED' },
-  '[INFERRED]': { color: '#a3a3a3', bg: 'rgba(163,163,163,0.08)', label: 'INFERRED' },
+  '[DOCUMENTED]': { color: 'var(--status-success)', bg: 'color-mix(in srgb, var(--status-success) 8%, transparent)', label: 'DOCUMENTED' },
+  '[REPORTED]': { color: 'var(--status-warning)', bg: 'color-mix(in srgb, var(--status-warning) 8%, transparent)', label: 'REPORTED' },
+  '[INFERRED]': { color: 'var(--status-neutral)', bg: 'color-mix(in srgb, var(--status-neutral) 8%, transparent)', label: 'INFERRED' },
 }
 
 const CONFIDENCE_REGEX = /(\[DOCUMENTED\]|\[REPORTED\]|\[INFERRED\])/g
@@ -28,7 +28,7 @@ function renderInline(text: string): React.ReactNode {
       return (
         <span
           key={i}
-          className="inline-block rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider mr-1.5 align-middle"
+          className="inline-block rounded-md px-1.5 py-0.5 text-3xs font-semibold uppercase mr-1.5 align-middle"
           style={{ color: conf.color, backgroundColor: conf.bg }}
         >
           {conf.label}
@@ -126,14 +126,14 @@ export function HistoricalContext({ content, isStreaming }: HistoricalContextPro
       {/* Section label */}
       <div className="mb-6 flex items-center justify-between">
         <p
-          className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+          className="text-3xs font-semibold uppercase"
           style={{ color: '#a8a29e' }}
         >
           Historical Context
         </p>
         {isStreaming && (
           <span
-            className="flex items-center gap-1.5 text-[10px] font-medium"
+            className="flex items-center gap-1.5 text-2xs font-medium"
             style={{ color: '#a8a29e' }}
           >
             <span
@@ -167,7 +167,7 @@ export function HistoricalContext({ content, isStreaming }: HistoricalContextPro
             <div key={i}>
               {section.heading && (
                 <h3
-                  className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em]"
+                  className="mb-4 text-3xs font-semibold uppercase"
                   style={{ color: '#78716c' }}
                 >
                   {section.heading}
@@ -196,7 +196,7 @@ export function HistoricalContext({ content, isStreaming }: HistoricalContextPro
           {Object.values(CONFIDENCE_STYLES).map((conf) => (
             <span
               key={conf.label}
-              className="flex items-center gap-1.5 text-[10px]"
+              className="flex items-center gap-1.5 text-2xs font-medium"
               style={{ color: '#78716c' }}
             >
               <span
