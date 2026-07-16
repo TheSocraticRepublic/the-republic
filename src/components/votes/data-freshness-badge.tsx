@@ -41,7 +41,7 @@ export function DataFreshnessBadge() {
   const lastSyncDate = status.lastSync?.completedAt ?? status.lastSync?.startedAt
 
   const isStale = daysSince !== null && daysSince > 7
-  const color = isStale ? '#f59e0b' : 'var(--text-muted)'
+  const color = isStale ? 'var(--status-warning)' : 'var(--text-muted)'
 
   return (
     <div className="flex items-center gap-2 text-[10px]" style={{ color }}>

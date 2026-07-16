@@ -168,7 +168,7 @@ export default async function BillDetailPage({ params }: PageProps) {
                   <span className="text-text-faint">{vote.date}</span>
                   <span
                     style={{
-                      color: vote.result === 'passed' ? '#4ade80' : '#ef4444',
+                      color: vote.result === 'passed' ? 'var(--status-success)' : 'var(--status-danger)',
                     }}
                   >
                     {vote.result}

@@ -130,7 +130,7 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
                   )}
                   <span className="mt-1 text-[10px] text-text-faint">{vote.date}</span>
                 </div>
-                {vote.mpBallot && <VoteBadge ballot={vote.mpBallot} size="md" />}
+                {vote.mpBallot && <VoteBadge ballot={vote.mpBallot} />}
               </div>
             </Link>
           ))}

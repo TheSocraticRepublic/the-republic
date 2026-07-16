@@ -85,18 +85,18 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
                 <span
                   className="rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider"
                   style={{
-                    color: vote.result === 'passed' ? '#4ade80' : '#ef4444',
+                    color: vote.result === 'passed' ? 'var(--status-success)' : 'var(--status-danger)',
                     backgroundColor:
                       vote.result === 'passed'
-                        ? 'rgba(74,222,128,0.08)'
-                        : 'rgba(239,68,68,0.08)',
+                        ? 'color-mix(in srgb, var(--status-success) 8%, transparent)'
+                        : 'color-mix(in srgb, var(--status-danger) 8%, transparent)',
                   }}
                 >
                   {vote.result}
                 </span>
               </div>
             </div>
-            <VoteBadge ballot={vote.ballot} size="md" />
+            <VoteBadge ballot={vote.ballot} />
           </div>
         </Link>
       ))}

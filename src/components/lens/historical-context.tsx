@@ -9,9 +9,9 @@ interface HistoricalContextProps {
 }
 
 const CONFIDENCE_STYLES: Record<string, { color: string; bg: string; label: string }> = {
-  '[DOCUMENTED]': { color: '#4ade80', bg: 'rgba(74,222,128,0.08)', label: 'DOCUMENTED' },
-  '[REPORTED]': { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', label: 'REPORTED' },
-  '[INFERRED]': { color: '#a3a3a3', bg: 'rgba(163,163,163,0.08)', label: 'INFERRED' },
+  '[DOCUMENTED]': { color: 'var(--status-success)', bg: 'color-mix(in srgb, var(--status-success) 8%, transparent)', label: 'DOCUMENTED' },
+  '[REPORTED]': { color: 'var(--status-warning)', bg: 'color-mix(in srgb, var(--status-warning) 8%, transparent)', label: 'REPORTED' },
+  '[INFERRED]': { color: 'var(--status-neutral)', bg: 'color-mix(in srgb, var(--status-neutral) 8%, transparent)', label: 'INFERRED' },
 }
 
 const CONFIDENCE_REGEX = /(\[DOCUMENTED\]|\[REPORTED\]|\[INFERRED\])/g

@@ -1,23 +1,19 @@
 const BALLOT_STYLES: Record<string, { color: string; bg: string; label: string }> = {
-  yes: { color: '#4ade80', bg: 'rgba(74,222,128,0.10)', label: 'Yea' },
-  no: { color: '#ef4444', bg: 'rgba(239,68,68,0.10)', label: 'Nay' },
-  paired: { color: '#f59e0b', bg: 'rgba(245,158,11,0.10)', label: 'Paired' },
-  didnt_vote: { color: '#737373', bg: 'rgba(115,115,115,0.10)', label: 'Absent' },
+  yes:        { color: 'var(--status-success)', bg: 'color-mix(in srgb, var(--status-success) 10%, transparent)', label: 'Yea' },
+  no:         { color: 'var(--status-danger)',  bg: 'color-mix(in srgb, var(--status-danger) 10%, transparent)',  label: 'Nay' },
+  paired:     { color: 'var(--status-warning)', bg: 'color-mix(in srgb, var(--status-warning) 10%, transparent)', label: 'Paired' },
+  didnt_vote: { color: 'var(--status-neutral)', bg: 'color-mix(in srgb, var(--status-neutral) 10%, transparent)', label: 'Absent' },
 }
 
 interface VoteBadgeProps {
   ballot: string
-  size?: 'sm' | 'md'
 }
 
-export function VoteBadge({ ballot, size = 'sm' }: VoteBadgeProps) {
+export function VoteBadge({ ballot }: VoteBadgeProps) {
   const style = BALLOT_STYLES[ballot] ?? BALLOT_STYLES.didnt_vote
-
   return (
     <span
-      className={`inline-block rounded-md font-semibold uppercase tracking-wider ${
-        size === 'sm' ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]'
-      }`}
+      className="inline-block rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wider"
       style={{ color: style.color, backgroundColor: style.bg }}
     >
       {style.label}

@@ -39,10 +39,10 @@ interface IssueTimelineProps {
 }
 
 const EVENT_TYPE_STYLES: Record<string, { color: string; bg: string }> = {
-  deadline: { color: '#ef4444', bg: 'rgba(239,68,68,0.10)' },
-  comment_period: { color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
+  deadline: { color: 'var(--status-danger)', bg: 'color-mix(in srgb, var(--status-danger) 10%, transparent)' },
+  comment_period: { color: 'var(--status-warning)', bg: 'color-mix(in srgb, var(--status-warning) 10%, transparent)' },
   meeting: { color: '#60a5fa', bg: 'rgba(96,165,250,0.10)' },
-  decision: { color: '#4ade80', bg: 'rgba(74,222,128,0.10)' },
+  decision: { color: 'var(--status-success)', bg: 'color-mix(in srgb, var(--status-success) 10%, transparent)' },
   custom: { color: '#a3a3a3', bg: 'rgba(163,163,163,0.08)' },
 }
 
