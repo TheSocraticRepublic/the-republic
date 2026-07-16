@@ -337,7 +337,7 @@ export function CivicContextStrip({
               }}
             >
               <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>
-                This investigation hasn't reached the forum yet.
+                This investigation hasn’t reached the forum yet.
               </p>
               <p style={{ marginTop: '6px' }}>
                 <Link

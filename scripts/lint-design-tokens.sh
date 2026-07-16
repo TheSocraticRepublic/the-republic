@@ -11,7 +11,7 @@
 #
 #   2. Status-hex floor -- the dark-mode --status-* hex values (plus the
 #      two pre-lift hexes they replaced) must not be reintroduced as raw
-#      literals in src/components. They belong behind
+#      literals anywhere in src/. They belong behind
 #      var(--status-success|danger|warning|neutral) or
 #      color-mix(in srgb, var(--status-*) N%, transparent).
 #
@@ -35,7 +35,7 @@ else
 fi
 
 echo
-echo "== Gate 2: raw status-hex literals in src/components =="
+echo "== Gate 2: raw status-hex literals in src/ =="
 # Forbidden: the dark-mode status hexes (#4ade80 success, #f87171 danger,
 # #f59e0b warning) plus two pre-lift hexes a regression could reintroduce
 # (#ef4444 -> lifted to #f87171 for danger contrast; #737373 -> lifted to
@@ -48,21 +48,45 @@ echo "== Gate 2: raw status-hex literals in src/components =="
 # reasoning-card.tsx x2, issue-timeline.tsx DARK_TL, lens-panel.tsx,
 # player-card.tsx DARK_CARD -- see Jen spec Batch 2b). Gating on it would
 # false-positive on every one of those six files.
-ALL_HITS=$(grep -rnE '#(4ade80|f87171|ef4444|f59e0b|737373)' src/components 2>/dev/null)
+#
+# Searches all of src/ (not just src/components) so a regression in
+# src/app pages (e.g. votes/bill/[billId], votes/recent -- both converted
+# by this relay) is caught too. Widening past src/components surfaces two
+# more legitimate, narrowly-justified exceptions (below) that never showed
+# up under the old src/components-only scope.
+ALL_HITS=$(grep -rnE '#(4ade80|f87171|ef4444|f59e0b|737373)' src/ 2>/dev/null)
 
-# Allowlist: src/components/lens/player-card.tsx lines 79, 84, 140.
+# Allowlist 1: src/components/lens/player-card.tsx, hexes #4ade80 / #f59e0b
+# only -- matched by file + hex, not pinned line numbers, so an unrelated
+# edit shifting these lines can't false-positive the gate.
 # PLAYER_TYPE_STYLES assigns one fixed hue per player TYPE (organization =
 # #4ade80, rights_holder = #f59e0b) -- a categorical identity color for a
 # classification a player doesn't transition between, structurally the same
 # as action-card.tsx's document-type colors. Two of the five hues happen to
 # equal today's status green/amber by coincidence of a shared palette, not
 # because they carry status meaning. Ruled STAYS, do not convert, by the
-# Jen spec (Batch 2b). Line 140 reuses the same rights_holder hue as an
-# emphasis border, not a new color.
-UNALLOWED_HITS=$(printf '%s\n' "$ALL_HITS" | grep -vE '^src/components/lens/player-card\.tsx:(79|84|140):' | grep -v '^$')
+# Jen spec (Batch 2b). The border-emphasis use reuses the same
+# rights_holder hue, not a new color.
+#
+# Allowlist 2: src/app/globals.css -- this is the token DEFINITION site.
+# The --status-* custom properties are assigned these exact hex literals;
+# grepping the definition for its own values isn't drift, it's the source
+# of truth the rest of the gate protects. Whole-file exempt.
+#
+# Allowlist 3: src/app/icon.tsx -- the Next.js favicon, rendered via
+# next/og's ImageResponse (Satori), which cannot consume CSS custom
+# properties -- only literal values reach the renderer, so var(--status-*)
+# is not an option here. The gradient is also semantically unrelated: a
+# decorative "light inside the cave" brand glyph, not a status pill. Only
+# #f59e0b appears in the forbidden set (paired with #fbbf24, which isn't
+# forbidden); matched by file + hex for the same reason as allowlist 1.
+UNALLOWED_HITS=$(printf '%s\n' "$ALL_HITS" | grep -v '^$' \
+  | grep -vE '^src/components/lens/player-card\.tsx:[0-9]+:.*#(4ade80|f59e0b)' \
+  | grep -vE '^src/app/globals\.css:' \
+  | grep -vE '^src/app/icon\.tsx:[0-9]+:.*#f59e0b')
 
 if [ -n "$UNALLOWED_HITS" ]; then
-  echo "FAIL: raw status-hex literal(s) found in src/components -- use var(--status-success|danger|warning|neutral) instead:"
+  echo "FAIL: raw status-hex literal(s) found in src/ -- use var(--status-success|danger|warning|neutral) instead:"
   echo "$UNALLOWED_HITS"
   FAIL=1
 else

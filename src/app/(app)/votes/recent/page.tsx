@@ -63,7 +63,7 @@ export default function RecentVotesPage() {
           }}
         >
           <p className="text-sm text-text-muted">
-            No vote data yet. This deployment hasn't synced with Parliament.
+            No vote data yet. This deployment hasn’t synced with Parliament.
           </p>
         </div>
       ) : (

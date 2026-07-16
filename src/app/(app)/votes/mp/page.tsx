@@ -48,7 +48,7 @@ export default async function AllMPsPage() {
           }}
         >
           <p className="text-sm text-text-muted">
-            No MP data yet. This deployment hasn't synced with Parliament.
+            No MP data yet. This deployment hasn’t synced with Parliament.
           </p>
         </div>
       ) : (
