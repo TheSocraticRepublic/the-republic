@@ -66,17 +66,17 @@ export function SessionStats({
           {/* Summary counts */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-text-faint">Questions</p>
+              <p className="text-3xs font-semibold uppercase text-text-faint">Questions</p>
               <p className="mt-1 text-xl font-bold text-text-primary">{questionCount}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-text-faint">Insights</p>
+              <p className="text-3xs font-semibold uppercase text-text-faint">Insights</p>
               <p className="mt-1 text-xl font-bold" style={{ color: 'var(--accent-gadfly)' }}>
                 {insightCount}
               </p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-text-faint">Complexity</p>
+              <p className="text-3xs font-semibold uppercase text-text-faint">Complexity</p>
               <div className="mt-1 flex items-end gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <span
@@ -98,7 +98,7 @@ export function SessionStats({
           {/* Question type distribution */}
           {totalTyped > 0 && (
             <div>
-              <p className="mb-2 text-[10px] uppercase tracking-widest text-text-faint">
+              <p className="mb-2 text-3xs font-semibold uppercase text-text-faint">
                 Question Types
               </p>
               <div className="space-y-1.5">
@@ -108,7 +108,7 @@ export function SessionStats({
                   const pct = Math.round((count / totalTyped) * 100)
                   return (
                     <div key={type} className="flex items-center gap-2">
-                      <span className="w-16 text-[10px] text-text-muted">{label}</span>
+                      <span className="w-16 text-2xs font-medium text-text-muted">{label}</span>
                       <div className="flex-1 h-1.5 rounded-full bg-surface-3">
                         <div
                           className="h-full rounded-full"
@@ -118,7 +118,7 @@ export function SessionStats({
                           }}
                         />
                       </div>
-                      <span className="w-5 text-right text-[10px] text-text-faint">{count}</span>
+                      <span className="w-5 text-right text-2xs font-medium text-text-faint">{count}</span>
                     </div>
                   )
                 })}

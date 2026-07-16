@@ -71,13 +71,13 @@ export function SessionCard({
           {/* Badges */}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <span
-              className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium"
+              className="inline-flex items-center rounded-md px-2 py-0.5 text-2xs font-medium"
               style={{ color: modeStyle.color, backgroundColor: modeStyle.bg }}
             >
               {modeStyle.label}
             </span>
             <span
-              className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium"
+              className="inline-flex items-center rounded-md px-2 py-0.5 text-2xs font-medium"
               style={{ color: statusStyle.color, backgroundColor: statusStyle.bg }}
             >
               {statusStyle.label}
@@ -85,7 +85,7 @@ export function SessionCard({
           </div>
 
           {/* Counts + date */}
-          <div className="mt-2.5 flex items-center gap-4 text-[11px] text-text-muted">
+          <div className="mt-2.5 flex items-center gap-4 text-2xs font-medium text-text-muted">
             <span>{questionCount} {questionCount === 1 ? 'question' : 'questions'}</span>
             {insightCount > 0 && (
               <span style={{ color: 'var(--accent-gadfly)' }}>

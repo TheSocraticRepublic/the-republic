@@ -184,7 +184,7 @@ export function GadflySession({
 
           {/* Mode badge */}
           <span
-            className="ml-4 flex-shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
+            className="ml-4 flex-shrink-0 rounded-md px-2 py-0.5 text-3xs font-semibold uppercase"
             style={{
               color: 'var(--accent-gadfly)',
               backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',

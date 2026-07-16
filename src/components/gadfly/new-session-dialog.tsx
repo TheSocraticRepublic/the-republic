@@ -181,7 +181,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
                     )}
                   >
                     <span className="block font-medium capitalize">{m}</span>
-                    <span className="block text-[10px] opacity-70">
+                    <span className="block text-2xs font-medium opacity-70">
                       {m === 'socratic' ? 'Questions only' : 'Direct dialogue'}
                     </span>
                   </button>
