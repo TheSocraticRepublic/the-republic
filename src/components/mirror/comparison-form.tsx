@@ -168,7 +168,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
               </div>
             )}
             {docsError && (
-              <p role="alert" className="mt-1.5 text-xs text-red-400">
+              <p role="alert" className="mt-1.5 text-xs text-status-danger">
                 Couldn&apos;t load your documents. You can still compare without a linked document.
               </p>
             )}
@@ -218,7 +218,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
           </div>
 
           {submitError && (
-            <p role="alert" className="text-xs text-red-400">{submitError}</p>
+            <p role="alert" className="text-xs text-status-danger">{submitError}</p>
           )}
 
           {/* Submit */}

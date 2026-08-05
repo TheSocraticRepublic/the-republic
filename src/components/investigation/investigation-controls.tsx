@@ -97,7 +97,7 @@ export function InvestigationControls({ id, status }: InvestigationControlsProps
       aria-label="Investigation actions"
     >
       {error && (
-        <span className="text-2xs font-medium text-red-400 mr-1" role="alert">{error}</span>
+        <span className="text-2xs font-medium text-status-danger mr-1" role="alert">{error}</span>
       )}
 
       {status === 'generating' && (
@@ -140,7 +140,7 @@ export function InvestigationControls({ id, status }: InvestigationControlsProps
           disabled={isDisabled}
           aria-label="Delete investigation"
           title="Delete"
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-2xs font-medium text-text-muted transition-colors hover:text-red-400 hover:bg-surface-3 disabled:opacity-40"
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-2xs font-medium text-text-muted transition-colors hover:text-status-danger hover:bg-surface-3 disabled:opacity-40"
         >
           {pending === 'delete' ? (
             <Loader2 size={10} className="animate-spin" />

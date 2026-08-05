@@ -133,7 +133,7 @@ export function MpLetterGenerator({
         style={{ borderColor: 'var(--border-strong)' }}
       />
       {submitError && (
-        <p role="alert" className="text-xs text-red-400">{submitError}</p>
+        <p role="alert" className="text-xs text-status-danger">{submitError}</p>
       )}
       <div className="flex items-center gap-2 justify-end">
         <button

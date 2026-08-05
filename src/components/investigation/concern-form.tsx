@@ -146,7 +146,7 @@ export function ConcernForm() {
 
       {/* Error alert */}
       {submitError && (
-        <p role="alert" className="text-xs text-red-400">{submitError}</p>
+        <p role="alert" className="text-xs text-status-danger">{submitError}</p>
       )}
 
       {/* Jurisdiction selector */}

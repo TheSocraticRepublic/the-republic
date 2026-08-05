@@ -75,7 +75,7 @@ export function BillSummary({ billId, existingSummary }: BillSummaryProps) {
           Summarize this bill
         </button>
         {error && (
-          <p className="mt-2 text-xs text-red-400">Failed to generate summary.</p>
+          <p className="mt-2 text-xs text-status-danger">Failed to generate summary.</p>
         )}
       </div>
     )

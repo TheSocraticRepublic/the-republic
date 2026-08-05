@@ -162,7 +162,7 @@ export function ReportCard({
           placeholder="Reason for action (required)"
           className="w-full rounded-md px-2 py-1.5 text-xs text-text-primary bg-surface-1 border border-border placeholder-text-faint resize-none focus:outline-none focus:border-border-strong transition-colors"
         />
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs text-status-danger">{error}</p>}
         <div className="flex flex-wrap items-center gap-2">
           {isPost && (
             <>

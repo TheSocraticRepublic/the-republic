@@ -209,7 +209,7 @@ export function GadflySession({
           {/* Input */}
           <div className="flex-shrink-0 border-t border-border p-4 space-y-3">
             {submitError && (
-              <p role="alert" className="text-xs text-red-400">{submitError}</p>
+              <p role="alert" className="text-xs text-status-danger">{submitError}</p>
             )}
             {isActive ? (
               <ChatInput

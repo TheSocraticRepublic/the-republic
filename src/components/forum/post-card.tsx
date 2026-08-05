@@ -155,7 +155,7 @@ export function PostCard({
                   placeholder="Why should this be reviewed again?"
                   className="w-full rounded-md px-2 py-1.5 text-xs text-text-primary bg-surface-1 border border-border placeholder-text-faint resize-none focus:outline-none focus:border-border-strong transition-colors"
                 />
-                {appealError && <p className="text-xs text-red-400">{appealError}</p>}
+                {appealError && <p className="text-xs text-status-danger">{appealError}</p>}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => reportId && handleAppeal(reportId)}
@@ -225,12 +225,12 @@ export function PostCard({
               Cancel
             </button>
           </div>
-          {error && <p className="text-xs text-red-400">{error}</p>}
+          {error && <p className="text-xs text-status-danger">{error}</p>}
         </div>
       ) : (
         <>
           <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">{content ?? ''}</p>
-          {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
+          {error && <p className="text-xs text-status-danger mt-2">{error}</p>}
           {showActions && (
             <div className="flex items-center gap-3 mt-3">
               {depth < MAX_REPLY_DEPTH && onReply && (
@@ -255,7 +255,7 @@ export function PostCard({
                     <button
                       onClick={handleDelete}
                       disabled={deleteLoading}
-                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                      className="text-xs text-status-danger hover:text-status-danger/80 transition-colors"
                     >
                       {deleteLoading ? 'Removing...' : 'Confirm remove'}
                     </button>

@@ -61,7 +61,7 @@ export function ContradictionList({ mpId }: ContradictionListProps) {
           Check for contradictions
         </button>
         {error && (
-          <p className="mt-2 text-xs text-red-400">Analysis failed. Try again.</p>
+          <p className="mt-2 text-xs text-status-danger">Analysis failed. Try again.</p>
         )}
       </div>
     )

@@ -102,7 +102,7 @@ export default async function OracleDocumentPage({ params }: PageProps) {
 
       {/* Document status: failed */}
       {doc.status === 'failed' && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/[0.05] px-5 py-4 text-sm text-red-300">
+        <div className="rounded-xl border border-status-danger/20 bg-status-danger/[0.05] px-5 py-4 text-sm text-status-danger">
           Document processing failed. Please try uploading again.
         </div>
       )}

@@ -348,7 +348,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
 
       {/* Error alert */}
       {actionError && (
-        <p role="alert" className="text-xs text-red-400">{actionError}</p>
+        <p role="alert" className="text-xs text-status-danger">{actionError}</p>
       )}
 
       {/* Document display */}

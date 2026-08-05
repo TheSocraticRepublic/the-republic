@@ -85,7 +85,7 @@ export function PostalCodeForm() {
       </div>
 
       {error && (
-        <p role="alert" className="text-xs text-red-400">{error}</p>
+        <p role="alert" className="text-xs text-status-danger">{error}</p>
       )}
 
       <button

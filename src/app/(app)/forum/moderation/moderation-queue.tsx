@@ -66,7 +66,7 @@ export function ModerationQueue() {
 
   if (error) {
     return (
-      <div className="text-sm text-red-400 py-4">
+      <div className="text-sm text-status-danger py-4">
         {error}
       </div>
     )
