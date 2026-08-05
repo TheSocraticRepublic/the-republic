@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { parliamentSyncLog, credentialEvents } from '@/lib/db/schema'
 import { syncParliamentData } from '@/lib/parliament/sync'
+import { CURRENT_PARLIAMENT_SESSION } from '@/lib/parliament/constants'
 import { eq, sql } from 'drizzle-orm'
 import { MODERATION_THRESHOLD } from '@/lib/credentials'
 import { checkRateLimit } from '@/lib/rate-limit'
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     // No body is fine — use defaults
   }
 
-  const session = body.session || '45-1'
+  const session = body.session || CURRENT_PARLIAMENT_SESSION
   const startedAt = new Date()
 
   try {

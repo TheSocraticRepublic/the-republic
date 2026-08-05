@@ -18,8 +18,7 @@ import {
   normalizeVoteResult,
 } from './types'
 import type { OparlBill } from './types'
-
-const CURRENT_SESSION = '45-1'
+import { CURRENT_PARLIAMENT_SESSION as CURRENT_SESSION } from './constants'
 
 export interface SyncResult {
   mps: { fetched: number; upserted: number }

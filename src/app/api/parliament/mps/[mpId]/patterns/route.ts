@@ -15,8 +15,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, and, desc } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
-
-const CURRENT_SESSION = '45-1'
+import { CURRENT_PARLIAMENT_SESSION as CURRENT_SESSION } from '@/lib/parliament/constants'
 
 export async function POST(
   request: NextRequest,
