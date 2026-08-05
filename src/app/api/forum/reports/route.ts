@@ -6,7 +6,7 @@ import {
   forumThreads,
   userProfiles,
 } from '@/lib/db/schema'
-import { eq, and, ne, isNull, inArray, asc } from 'drizzle-orm'
+import { eq, and, ne, isNull, or, inArray, asc } from 'drizzle-orm'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 import { pickForumRateLimit } from '@/lib/forum/rate-limit-tier'
 import { stripHtmlTags } from '@/lib/profile/validation'
