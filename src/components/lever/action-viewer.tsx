@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { Download, Pencil, RefreshCw, Check, X, Printer, FileText } from 'lucide-react'
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
@@ -45,7 +44,6 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   const [exporting, setExporting] = useState(false)
   const [pdfExporting, setPdfExporting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
-  const router = useRouter()
   const abortRef = useRef<AbortController | null>(null)
 
   // Auto-generate if no content on mount
@@ -214,7 +212,6 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   }, [actionId])
 
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.draft
-  const displayContent = mode === 'generating' ? streamedContent : content
   const nextStatus = STATUS_FLOW[status]
 
   return (

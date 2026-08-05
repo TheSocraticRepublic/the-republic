@@ -1513,7 +1513,7 @@ function InlineGadflyAction({ onOpenGadfly, palette }: { onOpenGadfly?: () => vo
 
 // ---- Executive card (nav + action hub — concern text removed per spec 3.3) ----
 
-function ExecutiveCard({ sections, onOpenCampaign, onOpenGadfly, onScrollToQuestions, palette }: { sections: ParsedSection[]; onOpenCampaign?: () => void; onOpenGadfly?: () => void; onScrollToQuestions?: () => void; palette: Palette }) {
+function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions, palette }: { sections: ParsedSection[]; onOpenCampaign?: () => void; onScrollToQuestions?: () => void; palette: Palette }) {
   // Key findings: all section headings except concern, context, and limitations
   const findingHeadings = sections
     .map((s) => s.heading)
@@ -1930,7 +1930,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
       )}
 
       {/* Executive card — always first when we have sections */}
-      {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} onScrollToQuestions={onScrollToQuestions} palette={palette} />}
+      {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onScrollToQuestions={onScrollToQuestions} palette={palette} />}
 
       {sections.map((section, i) => {
         const headingLower = section.heading.toLowerCase()

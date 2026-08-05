@@ -132,7 +132,6 @@ export default async function ForumPage({
                 id={thread.id}
                 title={thread.title}
                 authorDisplayName={thread.authorDisplayName}
-                postCount={thread.postCount}
                 lastPostAt={thread.lastPostAt}
                 jurisdictionName={thread.jurisdictionName}
                 concernCategory={thread.concernCategory}

@@ -3,7 +3,7 @@ import { getDb } from '@/lib/db'
 import { userProfiles, credentialEvents } from '@/lib/db/schema'
 import { eq, sum, sql } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { computeEffectiveWeight, computeDecayMultiplier } from '@/lib/credentials'
+import { computeEffectiveWeight } from '@/lib/credentials'
 import { safeRoute } from '@/lib/api/safe-route'
 import { getClientIp } from '@/lib/api/ip'
 

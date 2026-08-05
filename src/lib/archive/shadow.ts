@@ -12,7 +12,7 @@
 
 import { getDb } from '@/lib/db'
 import { investigations } from '@/lib/db/schema'
-import { eq, and, ne, isNull, sql, desc } from 'drizzle-orm'
+import { eq, and, ne, sql, desc } from 'drizzle-orm'
 
 export interface ShadowAlert {
   alertType: 'missing_topic' | 'missing_entity' | 'missing_jurisdiction_pattern'

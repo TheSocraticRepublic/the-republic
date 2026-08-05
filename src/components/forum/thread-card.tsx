@@ -7,7 +7,6 @@ interface ThreadCardProps {
   id: string
   title: string
   authorDisplayName: string
-  postCount: number
   lastPostAt: Date | string | null
   jurisdictionName?: string | null
   concernCategory?: string | null
@@ -19,7 +18,6 @@ export function ThreadCard({
   id,
   title,
   authorDisplayName,
-  postCount,
   lastPostAt,
   jurisdictionName,
   concernCategory,

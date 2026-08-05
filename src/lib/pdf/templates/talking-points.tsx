@@ -6,7 +6,7 @@ import {
   Wordmark,
   SourceFooter,
 } from '../primitives'
-import { colors, type as typeScale, space } from '../styles'
+import { colors, type as typeScale } from '../styles'
 import type { TalkingPointsSpec } from '@/lib/campaign/schemas'
 
 const styles = StyleSheet.create({

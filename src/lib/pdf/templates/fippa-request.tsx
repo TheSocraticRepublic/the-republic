@@ -4,7 +4,7 @@ import {
   RepublicDocument,
   RepublicPage,
 } from '../primitives'
-import { colors, type as typeScale, space } from '../styles'
+import { colors, type as typeScale } from '../styles'
 
 const styles = StyleSheet.create({
   // Sender block

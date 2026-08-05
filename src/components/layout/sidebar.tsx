@@ -64,7 +64,6 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
 
   const investigateActive = pathname === '/investigate'
   const investigationsActive = pathname === '/investigations' || (pathname.startsWith('/investigate/') && pathname !== '/investigate')
-  const forumActive = pathname === '/forum' || pathname.startsWith('/forum/')
   const votesActive = pathname === '/votes' || pathname.startsWith('/votes/')
   const profileActive = pathname === '/profile' || pathname.startsWith('/profile/')
   const moderationActive = pathname === '/forum/moderation' || pathname.startsWith('/forum/moderation/')

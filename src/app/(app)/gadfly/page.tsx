@@ -78,7 +78,6 @@ export default async function GadflyPage({ searchParams }: GadflyPageProps) {
                 status={session.status}
                 questionCount={session.questionCount}
                 insightCount={session.insightCount}
-                createdAt={session.createdAt}
                 updatedAt={session.updatedAt}
               />
             ))}

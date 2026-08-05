@@ -5,7 +5,7 @@ import {
   peerReviews,
 } from '@/lib/db/schema'
 import { eq, sum, sql } from 'drizzle-orm'
-import { computeEffectiveWeight, MODERATION_THRESHOLD } from '@/lib/credentials'
+import { computeEffectiveWeight } from '@/lib/credentials'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 
 /**

@@ -4,7 +4,6 @@ import {
   RepublicDocument,
   RepublicPage,
   Wordmark,
-  AccentBox,
   SourceFooter,
 } from '../primitives'
 import { colors, type as typeScale, space } from '../styles'
@@ -129,7 +128,6 @@ export function ComparisonTemplate({ spec }: ComparisonTemplateProps) {
     spec.subject.jurisdiction,
     ...spec.alternatives.map((a) => a.jurisdiction),
   ]
-  const colCount = allJurisdictions.length + 1 // +1 for dimension column
   const dimWidth = '22%'
   const dataWidth = `${78 / allJurisdictions.length}%`
 
