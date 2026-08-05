@@ -17,7 +17,13 @@ let _prodWarningLogged = false
 function logProdWarning(): void {
   if (!_prodWarningLogged && process.env.NODE_ENV === 'production') {
     _prodWarningLogged = true
-    console.warn('Rate limiting disabled: UPSTASH_REDIS_REST_URL not configured')
+    // NB: in production the fallback FAILS CLOSED — every rate-limited
+    // request 429s until Redis is configured. Say so, or this log sends an
+    // incident responder hunting for a "disabled" limiter that is actually
+    // rejecting everything.
+    console.warn(
+      'Rate limiting DEGRADED: UPSTASH_REDIS_REST_URL not configured — production fails closed, all rate-limited requests will 429'
+    )
   }
 }
 
