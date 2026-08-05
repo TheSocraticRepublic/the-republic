@@ -11,7 +11,9 @@ if (!API_KEY) {
   process.exit(1)
 }
 
-const MODEL = 'claude-sonnet-4-20250514'
+// Cross-reference: src/lib/ai/model.ts must match this value (same
+// convention as gadfly-drift-test.mjs — .mjs can't import the TS module).
+const MODEL = 'claude-sonnet-4-6'
 
 // --- Test Document: Realistic BC rezoning bylaw excerpt ---
 const TEST_DOCUMENT = `
