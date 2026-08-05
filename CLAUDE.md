@@ -59,8 +59,8 @@ src/
     db/              # Drizzle schema + singleton
     documents/       # Parser, chunker, classifier, cross-ref
     jurisdictions/   # BC/AB/ON modules: FOI citations, public bodies
-    lever/           # FIPPA, public comment, policy brief
-    mirror/          # Jurisdiction matching, outcome evaluation
+    activity/        # Recent-activity merge (Investigate landing)
+    investigation/   # Briefing generation (run-briefing, constants)
     parliament/      # OpenParliament API client, Represent API, sync
     pdf/             # @react-pdf/renderer templates, primitives, fonts
     archive/         # Bundles, hashing, diff, shadow detection

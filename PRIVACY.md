@@ -63,7 +63,9 @@ not exist in the schema. You cannot accidentally log what there is no column to 
 The system logging policy distinguishes two categories: events that may be logged
 (`auth_failure`, `rate_limit_violation`, `moderation_action`, `credential_award`,
 `archive_creation`, `permanence_promotion`) and events that are explicitly prohibited from
-logging. These are enforced in code via `src/lib/privacy/logging-policy.ts`.
+logging. This policy is codified as a machine-readable module
+(`src/lib/privacy/logging-policy.ts`, covered by unit tests); logging call
+sites follow it by convention — there is no automated interception layer yet.
 
 ---
 

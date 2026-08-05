@@ -117,8 +117,8 @@ src/
     ├── review/                 # Peer review business logic
     ├── forum/                  # Forum business logic
     ├── campaign/               # Campaign layer logic
-    ├── lever/                  # Civic action generation
-    ├── mirror/                 # Cross-jurisdiction comparison
+    ├── activity/               # Recent-activity merge for the Investigate landing
+    ├── investigation/          # Briefing generation (run-briefing, constants)
     ├── parliament/             # OpenParliament + Represent API clients, sync
     ├── pdf/                    # @react-pdf/renderer templates + primitives
     ├── archive/                # Archive bundles, hashing, diff, shadow detection
@@ -148,7 +148,7 @@ An investigation is the top-level container for a citizen's inquiry. It holds do
 
 **Oracle** (`src/lib/ai/prompts/`) — Analyzes documents. Streaming responses via AI SDK. Produces: plain-language summaries, power maps (beneficiaries / decision-makers / affected / funding sources / oversight gaps), missing information, hidden assumptions, and questions to ask. The Oracle is a lens, not an advocate — it surfaces structure, not conclusions.
 
-**Mirror** (`src/lib/mirror/`) — Cross-jurisdiction comparison. Finds what other provinces or municipalities have done with the same policy problem. Only cites real jurisdictions with real data.
+**Mirror** (`src/app/api/mirror/` + `src/lib/ai/prompts/mirror-system.ts`) — Cross-jurisdiction comparison. Finds what other provinces or municipalities have done with the same policy problem. Only cites real jurisdictions with real data — enforced by seeding the prompt with a DB-verified jurisdiction reference block; the streamed output itself is not post-validated (a known gap: model compliance, not code, keeps fabricated jurisdictions out).
 
 ### The Lens
 
@@ -160,7 +160,7 @@ An investigation is the top-level container for a citizen's inquiry. It holds do
 
 ### The Campaign
 
-**Lever** (`src/lib/lever/`) — Generates fileable civic documents. FOI requests use template-based citation — never AI-generated statutory citations. The Lever knows the actual section numbers because jurisdiction modules contain them. A request that cites the wrong section number fails. This constraint is why template-based citation is non-negotiable.
+**Lever** (`src/app/api/lever/{actions,generate,export}` + `src/lib/ai/prompts/lever-system.ts` + `src/lib/jurisdictions/`) — Generates fileable civic documents. Statutory citations live in jurisdiction modules and the system prompt, never invented by the model — a request that cites the wrong section number fails, which is why template-based citation is non-negotiable. NOTE (2026-08-05 audit): today this guarantee is *prompt-level* — the model transcribes citations from prompt instructions, and the jurisdiction modules' `letterTemplate` splice mechanism is unwired; the prompt is also BC-hardcoded while the route resolves AB/ON. Restoring code-level citation injection per resolved jurisdiction is the JURIS-1 batch.
 
 Action types: `fippa_request`, `public_comment`, `policy_brief`, `legal_template`, `media_spec`, `talking_points`, `coalition_template`.
 
@@ -169,6 +169,15 @@ Action types: `fippa_request`, `public_comment`, `policy_brief`, `legal_template
 Federal legislator accountability (`src/lib/parliament/`, `/votes` routes, `/api/parliament`). Data comes from openparliament.ca (MPs, votes, bills, ballots) and the Represent API (postal code → riding → MP). Vote, bill, and MP data is synced into local tables via `/api/parliament/sync`; postal-code lookups call the Represent API at request time. AI features (bill summaries, vote explanations, voting-pattern analysis, said-X-voted-Y contradiction detection) are versioned by prompt and cached in the database. Letter generation routes through the Lever. Investigations can attach relevant votes via postal code on the concern form.
 
 ## The Forum
+
+**Feature gate:** the entire Forum surface ships DISABLED. `isForumEnabled()`
+(`src/lib/forum/flag.ts`) requires the literal string `'true'` in
+`FORUM_ENABLED` — fail-closed — and gates the forum pages, all `/api/forum/*`
+handlers, the AP object endpoints (`/ap/threads`, `/ap/posts`), outbox forum
+items, and forum-content federation delivery. The sections below describe the
+built system behind that gate. One deliberate nuance: actor/inbox/webfinger/
+followers stay live while the forum is off, so remote followers can accumulate
+during the closed period and receive fan-out the moment the flag flips.
 
 ### Threads and Posts
 
@@ -206,7 +215,7 @@ Credential-weighted. A user with high civic credentials carries more weight in m
 
 ## Federation
 
-ActivityPub 1.0 over HTTPS. HTTP Signatures (RFC 9421 profile, via `jose`).
+ActivityPub 1.0 over HTTPS. HTTP Signatures implement the draft-cavage-http-signatures-12 profile (the Mastodon-compatible one — deliberately NOT RFC 9421, whose wire format the Fediverse does not yet speak), via `jose`.
 
 **Actor model:** Each `user_profile` with an `ap_handle` is an AP Actor. Actor URIs are keyed on `AP_DOMAIN` — this value is immutable. The actor JSON-LD is served at `/u/{handle}`. The public key is embedded in the actor document.
 
