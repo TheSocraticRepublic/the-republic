@@ -58,3 +58,7 @@ next-env.d.ts
 
 # Session dev tools (contrast verifier, etc.) — never shipped
 /scratchpad/
+
+# Code-refresh audit reports — name unfixed weaknesses; the repo is public,
+# so these stay local (canonical copy: ~/marvin/state/production-audits/)
+/.refresh/
