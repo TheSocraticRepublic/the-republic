@@ -4,7 +4,6 @@ import {
   archiveRecords,
   investigations,
   credentialEvents,
-  userProfiles,
 } from '@/lib/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
 
@@ -198,54 +197,6 @@ export async function POST(
 
   return new Response(JSON.stringify({ archiveRecord }), {
     status: isNewArchive ? 201 : 200,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
-
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ investigationId: string }> }
-) {
-  const { investigationId } = await params
-
-  // Validate investigationId format before querying the DB
-  if (!UUID_REGEX.test(investigationId)) {
-    return new Response(JSON.stringify({ error: 'Invalid investigationId format' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
-
-  const db = getDb()
-
-  const [archiveRecord] = await db
-    .select({
-      id: archiveRecords.id,
-      investigationId: archiveRecords.investigationId,
-      // userId is intentionally omitted — this is a public endpoint
-      archivedBy: userProfiles.displayName,
-      archiveStatus: archiveRecords.archiveStatus,
-      ipfsCid: archiveRecords.ipfsCid,
-      contentHash: archiveRecords.contentHash,
-      preservedAt: archiveRecords.preservedAt,
-      createdAt: archiveRecords.createdAt,
-      updatedAt: archiveRecords.updatedAt,
-      metadata: archiveRecords.metadata,
-    })
-    .from(archiveRecords)
-    .leftJoin(userProfiles, eq(archiveRecords.userId, userProfiles.userId))
-    .where(eq(archiveRecords.investigationId, investigationId))
-    .limit(1)
-
-  if (!archiveRecord) {
-    return new Response(JSON.stringify({ error: 'Archive record not found' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
-
-  return new Response(JSON.stringify({ archiveRecord }), {
-    status: 200,
     headers: { 'Content-Type': 'application/json' },
   })
 }

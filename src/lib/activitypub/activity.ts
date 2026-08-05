@@ -43,10 +43,6 @@ export interface ApArticle {
   url: string
 }
 
-export interface ApAccept extends ApActivity {
-  type: 'Accept'
-}
-
 // --- Activity builders ---
 
 /**
@@ -66,25 +62,6 @@ export function wrapInCreate(
     to: ['https://www.w3.org/ns/activitystreams#Public'],
     cc: [`${actor}/followers`],
     object,
-  }
-}
-
-/**
- * Builds an Accept activity in response to a Follow.
- * Used when a remote actor sends a Follow to an Open Cave user's inbox.
- */
-export function buildAcceptActivity(
-  followActivity: { id: string; actor: string },
-  localApHandle: string,
-  acceptId: string
-): ApAccept {
-  const actor = actorUrl(localApHandle)
-  return {
-    '@context': AP_CONTEXT,
-    id: acceptId,
-    type: 'Accept',
-    actor,
-    object: followActivity,
   }
 }
 
@@ -112,23 +89,6 @@ export function threadToArticle(thread: {
     to: ['https://www.w3.org/ns/activitystreams#Public'],
     cc: [`${actor}/followers`],
     url: id,
-  }
-}
-
-/**
- * Builds an Announce activity. Used when an Open Cave archive broadcasts
- * preservation of an investigation to the fediverse.
- *
- * @param actorUrl  - The full URL of the announcing actor
- * @param objectUrl - The full URL of the object being announced (e.g. archive AP URL)
- */
-export function buildAnnounceActivity(actorUrl: string, objectUrl: string): ApActivity {
-  return {
-    '@context': AP_CONTEXT,
-    id: `${actorUrl}#announces/${encodeURIComponent(objectUrl)}`,
-    type: 'Announce',
-    actor: actorUrl,
-    object: objectUrl,
   }
 }
 

@@ -25,7 +25,6 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     // is schedule-only. Without this, the CSRF check below 403s every trigger.
     pathname.startsWith('/.netlify/') ||
     pathname.startsWith('/login') ||
-    pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/health') ||
     pathname.startsWith('/archive') ||
     // Foundations — the philosophical groundwork. Covers the /foundations index

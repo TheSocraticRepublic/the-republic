@@ -17,7 +17,7 @@ import { env } from '@/lib/env'
 //
 // RENEWAL: When this CA expires (2031-04-26), re-fetch with:
 //   openssl s_client -connect <pooler>:6543 -starttls postgres -showcerts
-// and update the PEM below and src/lib/db/supabase-ca.crt.
+// and update the PEM below.
 const SUPABASE_ROOT_CA = `-----BEGIN CERTIFICATE-----
 MIIDxDCCAqygAwIBAgIUbLxMod62P2ktCiAkxnKJwtE9VPYwDQYJKoZIhvcNAQEL
 BQAwazELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB0RlbHdhcmUxEzARBgNVBAcMCk5l

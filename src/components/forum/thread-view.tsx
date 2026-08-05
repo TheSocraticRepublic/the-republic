@@ -112,7 +112,6 @@ function renderNodes(
           editedAt={node.editedAt}
           status={node.status}
           createdAt={node.createdAt}
-          parentId={node.parentId}
           depth={node.depth}
           currentUserId={props.currentUserId}
           threadStatus={props.threadStatus}

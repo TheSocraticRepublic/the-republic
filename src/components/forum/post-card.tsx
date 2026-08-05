@@ -15,7 +15,6 @@ interface PostCardProps {
   editedAt?: Date | string | null
   status: 'visible' | 'hidden' | 'removed_by_author'
   createdAt: Date | string
-  parentId?: string | null
   depth: number
   currentUserId: string
   threadStatus: 'open' | 'locked' | 'archived'
@@ -25,7 +24,6 @@ interface PostCardProps {
   onReply?: (postId: string) => void
   onEdit?: (postId: string, newContent: string) => Promise<void>
   onDelete?: (postId: string) => Promise<void>
-  onReport?: (postId: string) => void
 }
 
 export function PostCard({
