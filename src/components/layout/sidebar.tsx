@@ -116,6 +116,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
           <Link
             href="/investigate"
             onClick={onNavigate}
+            aria-current={investigateActive ? 'page' : undefined}
             className={clsx(
               `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
               investigateActive
@@ -152,6 +153,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
           <Link
             href="/investigations"
             onClick={onNavigate}
+            aria-current={investigationsActive ? 'page' : undefined}
             className={clsx(
               `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
               investigationsActive
@@ -208,6 +210,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
           <Link
             href="/votes"
             onClick={onNavigate}
+            aria-current={votesActive ? 'page' : undefined}
             className={clsx(
               `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
               votesActive
@@ -250,6 +253,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             <Link
               href="/forum/moderation"
               onClick={onNavigate}
+              aria-current={moderationActive ? 'page' : undefined}
               className={clsx(
                 `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
                 moderationActive
@@ -287,6 +291,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
           <Link
             href="/profile"
             onClick={onNavigate}
+            aria-current={profileActive ? 'page' : undefined}
             className={clsx(
               `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
               profileActive
@@ -352,6 +357,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
                       <Link
                         href={arm.href}
                         onClick={onNavigate}
+                        aria-current={isActive ? 'page' : undefined}
                         className={clsx(
                           `group flex items-center gap-3 rounded-lg px-3 ${armPy} text-sm transition-all duration-150`,
                           isActive
