@@ -56,10 +56,10 @@ import {
   normalizeVoteResult,
 } from '../src/lib/parliament/types'
 import type { OparlBill } from '../src/lib/parliament/types'
+import { CURRENT_PARLIAMENT_SESSION as CURRENT_SESSION } from '../src/lib/parliament/constants'
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const CURRENT_SESSION = '45-1'
 const BALLOT_FETCH_DELAY_MS = 250        // polite to the API; sequential fetches
 const DEADLINE_MS = 50 * 60 * 1000      // 50-minute wall-clock safety limit
 

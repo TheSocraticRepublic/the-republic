@@ -107,8 +107,10 @@ echo "== Gate 3: red-family Tailwind palette classes in src/ =="
 # emerald/yellow/amber families are NOT gated yet -- their remaining sites
 # are design-batch work (tinted body copy, archive washes); extend this
 # gate when that batch lands.
+# Allowlist anchored on the 'Oversight Gaps' entry text, not just the file —
+# so a future non-categorical red-400 elsewhere in analysis-view still trips.
 RED_HITS=$(grep -rnE '(text|bg|border)-red-[0-9]{3}' src/ 2>/dev/null \
-  | grep -vE '^src/components/oracle/analysis-view\.tsx:[0-9]+:.*text-red-400')
+  | grep -vE "^src/components/oracle/analysis-view\.tsx:[0-9]+:.*'Oversight Gaps'.*text-red-400")
 if [ -n "$RED_HITS" ]; then
   echo "FAIL: raw red palette class(es) found -- use text-status-danger / bg-status-danger/N / border-status-danger/N:"
   echo "$RED_HITS"
