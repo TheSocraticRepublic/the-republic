@@ -6,7 +6,7 @@ import {
   forumThreads,
   userProfiles,
 } from '@/lib/db/schema'
-import { eq, and, ne, isNull, or, asc } from 'drizzle-orm'
+import { eq, and, ne, isNull, inArray, asc } from 'drizzle-orm'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 import { pickForumRateLimit } from '@/lib/forum/rate-limit-tier'
 import { stripHtmlTags } from '@/lib/profile/validation'
@@ -234,16 +234,7 @@ export async function GET(request: NextRequest) {
           })
           .from(forumPosts)
           .innerJoin(userProfiles, eq(forumPosts.authorId, userProfiles.userId))
-          .where(
-            postIds.length === 1
-              ? eq(forumPosts.id, postIds[0])
-              : // Use OR chain for multiple IDs — inArray not available directly
-                // but we can use the eq pattern with explicit OR
-                postIds.reduce<ReturnType<typeof eq> | undefined>(
-                  (acc, id) => (acc ? or(acc, eq(forumPosts.id, id)) : eq(forumPosts.id, id)),
-                  undefined
-                )!
-          )
+          .where(inArray(forumPosts.id, postIds))
       : Promise.resolve([]),
     threadIds.length > 0
       ? db
@@ -255,15 +246,7 @@ export async function GET(request: NextRequest) {
           })
           .from(forumThreads)
           .innerJoin(userProfiles, eq(forumThreads.authorId, userProfiles.userId))
-          .where(
-            threadIds.length === 1
-              ? eq(forumThreads.id, threadIds[0])
-              : threadIds.reduce<ReturnType<typeof eq> | undefined>(
-                  (acc, id) =>
-                    acc ? or(acc, eq(forumThreads.id, id)) : eq(forumThreads.id, id),
-                  undefined
-                )!
-          )
+          .where(inArray(forumThreads.id, threadIds))
       : Promise.resolve([]),
   ])
 
