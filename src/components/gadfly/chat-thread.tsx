@@ -134,11 +134,18 @@ export function ChatThread({
               key={turn.id}
               content={turn.content}
               questionType={turn.questionType}
-              insights={insightsByTurn[turn.id]}
             />
           )
         }
-        return <CitizenMessage key={turn.id} content={turn.content} />
+        const insights = insightsByTurn[turn.id]
+        return (
+          <div key={turn.id}>
+            <CitizenMessage content={turn.content} />
+            {insights?.map((ins) => (
+              <InsightBadge key={ins.id} insight={ins.insight} />
+            ))}
+          </div>
+        )
       })}
 
       {/* Streaming gadfly response */}

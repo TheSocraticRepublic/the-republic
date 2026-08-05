@@ -42,7 +42,10 @@ const CONSERVATION_KEYWORDS = [
 
 function isConservationConcern(concern: string): boolean {
   const lower = concern.toLowerCase()
-  return CONSERVATION_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()))
+  return CONSERVATION_KEYWORDS.some((kw) => {
+    const pattern = new RegExp(`\\b${kw.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`)
+    return pattern.test(lower)
+  })
 }
 
 function detectConcernCategory(concern: string): string | null {

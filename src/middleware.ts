@@ -46,12 +46,20 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/ap/posts/') ||
     pathname.startsWith('/ap/archive/')
   ) {
-    return applySecurityHeaders(NextResponse.next())
+    const sanitized = new Headers(request.headers)
+    sanitized.delete('x-user-id')
+    sanitized.delete('x-user-email')
+    sanitized.delete('x-pathname')
+    return applySecurityHeaders(NextResponse.next({ request: { headers: sanitized } }))
   }
 
   // Root landing page is public
   if (pathname === '/') {
-    return applySecurityHeaders(NextResponse.next())
+    const sanitized = new Headers(request.headers)
+    sanitized.delete('x-user-id')
+    sanitized.delete('x-user-email')
+    sanitized.delete('x-pathname')
+    return applySecurityHeaders(NextResponse.next({ request: { headers: sanitized } }))
   }
 
   // CSRF: reject cross-origin state-changing requests (skip in dev)

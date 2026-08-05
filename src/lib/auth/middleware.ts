@@ -12,11 +12,21 @@ export async function withAuth(request: NextRequest): Promise<NextResponse> {
   const token = request.cookies.get(AUTH_COOKIE)?.value
 
   if (!token) {
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
+      })
+    }
     return redirectToLogin(request)
   }
 
   const payload = await verifyJWT(token)
   if (!payload) {
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
+      })
+    }
     return redirectToLogin(request)
   }
 

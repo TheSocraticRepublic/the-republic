@@ -52,9 +52,9 @@ function parseSections(text: string): ParsedSection[] {
  */
 function detectTransferability(text: string): 'high' | 'medium' | 'low' | null {
   const lower = text.toLowerCase()
-  if (lower.includes('high')) return 'high'
-  if (lower.includes('medium') || lower.includes('moderate')) return 'medium'
-  if (lower.includes('low')) return 'low'
+  if (/\bhigh\b/.test(lower)) return 'high'
+  if (/\b(?:medium|moderate)\b/.test(lower)) return 'medium'
+  if (/\blow\b/.test(lower)) return 'low'
   return null
 }
 

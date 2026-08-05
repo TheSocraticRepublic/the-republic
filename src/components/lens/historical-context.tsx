@@ -14,7 +14,7 @@ const CONFIDENCE_STYLES: Record<string, { color: string; bg: string; label: stri
   '[INFERRED]': { color: 'var(--status-neutral)', bg: 'color-mix(in srgb, var(--status-neutral) 8%, transparent)', label: 'INFERRED' },
 }
 
-const CONFIDENCE_REGEX = /(\[DOCUMENTED\]|\[REPORTED\]|\[INFERRED\])/g
+const CONFIDENCE_REGEX = /(\[DOCUMENTED\]|\[REPORTED\]|\[INFERRED\])/
 
 function renderInline(text: string): React.ReactNode {
   // Split on both confidence markers and bold markers

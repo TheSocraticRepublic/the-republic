@@ -55,8 +55,8 @@ describe('detectJurisdiction', () => {
     expect(detectJurisdiction('', 'Vancouver')).toBe('bc')
   })
 
-  it('defaults to bc when no jurisdiction provided', () => {
-    expect(detectJurisdiction('some concern text')).toBe('bc')
+  it('returns undefined when no jurisdiction can be detected', () => {
+    expect(detectJurisdiction('some concern text')).toBeUndefined()
   })
 })
 

@@ -61,10 +61,7 @@ export async function POST(
   // Short-circuit for returning users: serve persisted context without re-streaming
   if (investigation.lensContextText) {
     return new Response(investigation.lensContextText, {
-      headers: {
-        'Content-Type': 'text/plain',
-        'X-Gadfly-Seed': investigation.gadflySeededQuestion || '',
-      },
+      headers: { 'Content-Type': 'text/plain' },
     })
   }
 

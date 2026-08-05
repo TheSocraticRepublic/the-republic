@@ -161,7 +161,8 @@ export async function POST(request: NextRequest) {
       title,
       content: '',
       metadata: {
-        publicBodyName: publicBodyName ?? null,
+        publicBody: publicBodyName ?? null,
+        addressee: publicBodyName ?? null,
         description: description.trim(),
       },
       status: 'draft',

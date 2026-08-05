@@ -74,7 +74,7 @@ function parseKeyFindings(content: string): Array<{ text: string; hasQuote: bool
 function parseBullets(content: string): string[] {
   return content
     .split('\n')
-    .map((l) => l.replace(/^[-*\d.]\s+/, '').trim())
+    .map((l) => l.replace(/^(?:[-*]|\d+\.)\s+/, '').trim())
     .filter(Boolean)
 }
 

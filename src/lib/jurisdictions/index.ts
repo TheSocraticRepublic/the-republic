@@ -98,12 +98,6 @@ export function detectJurisdiction(
     }
   }
 
-  // Default to BC for now (conservation-first, BC-first vertical)
-  // This will become smarter as more jurisdiction modules are added
-  if (Object.keys(JURISDICTION_REGISTRY).includes('bc')) {
-    return 'bc'
-  }
-
   return undefined
 }
 
