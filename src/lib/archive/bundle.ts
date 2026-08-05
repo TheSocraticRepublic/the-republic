@@ -9,8 +9,6 @@ import {
   jurisdictions,
 } from '@/lib/db/schema'
 import { eq, and, inArray } from 'drizzle-orm'
-import { readFileSync } from 'fs'
-import { join } from 'path'
 
 // Maximum raw text characters to include per document in the bundle
 const RAW_TEXT_LIMIT = 50_000
@@ -88,16 +86,7 @@ export interface ArchiveBundle {
   provenance: ArchiveBundleProvenance
 }
 
-// Module-level constant — read package.json once at import time, not on every call.
-const REPUBLIC_VERSION: string = (() => {
-  try {
-    const pkgPath = join(process.cwd(), 'package.json')
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { version?: string }
-    return pkg.version ?? 'unknown'
-  } catch {
-    return 'unknown'
-  }
-})()
+import { APP_VERSION as REPUBLIC_VERSION } from '@/lib/version'
 
 export async function buildArchiveBundle(
   investigationId: string,

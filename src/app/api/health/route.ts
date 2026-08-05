@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sql } from 'drizzle-orm'
 import { getDb } from '@/lib/db'
+import { APP_VERSION } from '@/lib/version'
 
 // A health check must never be cached and must reflect live state.
 export const dynamic = 'force-dynamic'
@@ -37,7 +38,7 @@ export async function GET() {
       status: healthy ? 'ok' : 'degraded',
       checks,
       timestamp: new Date().toISOString(),
-      version: '0.1.0',
+      version: APP_VERSION,
     },
     { status: healthy ? 200 : 503 }
   )
