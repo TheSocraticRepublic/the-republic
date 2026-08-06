@@ -2,13 +2,19 @@ import { PARTY_COLORS } from './party-badge'
 
 interface PartyVoteData {
   party: string
-  yea: number
-  nay: number
-  paired: number
+  position: string
+  disagreement: number | null
 }
 
 interface PartyBreakdownProps {
   partyVotes: PartyVoteData[]
+}
+
+const POSITION_STYLES: Record<string, { color: string; label: string }> = {
+  Yes: { color: 'var(--status-success)', label: 'Yes' },
+  No: { color: 'var(--status-danger)', label: 'No' },
+  Paired: { color: 'var(--status-warning)', label: 'Paired' },
+  Unknown: { color: 'var(--status-neutral)', label: 'Unknown' },
 }
 
 export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
@@ -20,59 +26,34 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
         Party Breakdown
       </p>
       {partyVotes.map((pv) => {
-        const total = pv.yea + pv.nay + pv.paired
-        if (total === 0) return null
-        const yeaPct = (pv.yea / total) * 100
-        const nayPct = (pv.nay / total) * 100
-        const pairedPct = (pv.paired / total) * 100
         const partyColor = PARTY_COLORS[pv.party] ?? '#8F8F8F'
+        const posStyle = POSITION_STYLES[pv.position] ?? POSITION_STYLES.Unknown
 
         return (
-          <div key={pv.party} className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <span
-                  className="h-2 w-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: partyColor }}
-                />
-                <span className="text-xs text-text-secondary">{pv.party}</span>
+          <div key={pv.party} className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-1.5 min-w-0">
+              <span
+                className="h-2 w-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: partyColor }}
+              />
+              <span className="text-xs text-text-secondary truncate">{pv.party}</span>
+            </span>
+            <span className="flex items-center gap-2 flex-shrink-0">
+              <span
+                className="inline-flex items-center rounded-md px-2 py-0.5 text-2xs font-medium"
+                style={{
+                  color: posStyle.color,
+                  backgroundColor: `color-mix(in srgb, ${posStyle.color} 12%, transparent)`,
+                }}
+              >
+                {posStyle.label}
               </span>
-              <span className="text-xs text-text-faint">
-                {pv.yea}Y / {pv.nay}N{pv.paired > 0 ? ` / ${pv.paired}P` : ''}
-              </span>
-            </div>
-            <div
-              className="flex h-2 rounded-full overflow-hidden"
-              style={{ backgroundColor: 'var(--surface-1)' }}
-            >
-              {yeaPct > 0 && (
-                <div
-                  className="h-full"
-                  style={{
-                    width: `${yeaPct}%`,
-                    backgroundColor: 'var(--status-success)',
-                  }}
-                />
+              {pv.disagreement != null && pv.disagreement > 0 && (
+                <span className="text-2xs text-text-faint">
+                  {Math.round(pv.disagreement * 100)}% broke ranks
+                </span>
               )}
-              {nayPct > 0 && (
-                <div
-                  className="h-full"
-                  style={{
-                    width: `${nayPct}%`,
-                    backgroundColor: 'var(--status-danger)',
-                  }}
-                />
-              )}
-              {pairedPct > 0 && (
-                <div
-                  className="h-full"
-                  style={{
-                    width: `${pairedPct}%`,
-                    backgroundColor: 'var(--status-warning)',
-                  }}
-                />
-              )}
-            </div>
+            </span>
           </div>
         )
       })}
@@ -80,35 +61,24 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
   )
 }
 
+function normalizeVotePosition(vote: string): string {
+  const lower = (vote ?? '').toLowerCase()
+  if (lower === 'yes' || lower === 'yea') return 'Yes'
+  if (lower === 'no' || lower === 'nay') return 'No'
+  if (lower === 'paired') return 'Paired'
+  return 'Unknown'
+}
+
 export function parsePartyVotes(
   partyVotesJson: unknown
 ): PartyVoteData[] {
   if (!Array.isArray(partyVotesJson)) return []
 
-  const partyMap = new Map<string, { yea: number; nay: number; paired: number }>()
-
-  for (const pv of partyVotesJson) {
-    const partyName =
-      pv?.party?.short_name?.en ?? pv?.party?.name?.en ?? 'Unknown'
-    const voteDirection = (pv?.vote ?? '').toLowerCase()
-
-    if (!partyMap.has(partyName)) {
-      partyMap.set(partyName, { yea: 0, nay: 0, paired: 0 })
-    }
-
-    const entry = partyMap.get(partyName)!
-
-    if (voteDirection === 'yes' || voteDirection === 'yea') {
-      entry.yea += pv?.party_size ?? 1
-    } else if (voteDirection === 'no' || voteDirection === 'nay') {
-      entry.nay += pv?.party_size ?? 1
-    } else if (voteDirection === 'paired') {
-      entry.paired += pv?.party_size ?? 1
-    }
-  }
-
-  return Array.from(partyMap.entries()).map(([party, counts]) => ({
-    party,
-    ...counts,
+  return partyVotesJson.map((pv) => ({
+    party:
+      pv?.party?.short_name?.en ?? pv?.party?.name?.en ?? 'Unknown',
+    position: normalizeVotePosition(pv?.vote),
+    disagreement:
+      typeof pv?.disagreement === 'number' ? pv.disagreement : null,
   }))
 }

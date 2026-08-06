@@ -250,23 +250,27 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
               </button>
             )}
 
-            {/* Edit */}
-            <button
-              onClick={() => { setEditContent(content); setMode('editing') }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
-            >
-              <Pencil size={12} strokeWidth={2} />
-              Edit
-            </button>
+            {/* Edit — only available in draft */}
+            {status === 'draft' && (
+              <button
+                onClick={() => { setEditContent(content); setMode('editing') }}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
+              >
+                <Pencil size={12} strokeWidth={2} />
+                Edit
+              </button>
+            )}
 
-            {/* Re-generate */}
-            <button
-              onClick={runGenerate}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
-            >
-              <RefreshCw size={12} strokeWidth={2} />
-              Re-generate
-            </button>
+            {/* Re-generate — not available once filed */}
+            {status !== 'filed' && (
+              <button
+                onClick={runGenerate}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
+              >
+                <RefreshCw size={12} strokeWidth={2} />
+                Re-generate
+              </button>
+            )}
 
             {/* Export */}
             <button

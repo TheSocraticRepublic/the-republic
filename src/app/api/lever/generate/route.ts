@@ -86,6 +86,13 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  if (action.status === 'filed') {
+    return new Response(JSON.stringify({ error: 'Cannot regenerate a filed action' }), {
+      status: 409,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   const metadata = (action.metadata ?? {}) as Record<string, unknown>
   const description = (metadata.description as string) ?? ''
   const publicBodyName = (metadata.publicBodyName as string) ?? null

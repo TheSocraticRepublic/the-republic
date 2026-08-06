@@ -55,8 +55,8 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
         archivedBy: userProfiles.displayName,
       })
       .from(archiveRecords)
-      .innerJoin(investigations, eq(archiveRecords.investigationId, investigations.id))
-      .innerJoin(userProfiles, eq(archiveRecords.userId, userProfiles.userId))
+      .leftJoin(investigations, eq(archiveRecords.investigationId, investigations.id))
+      .leftJoin(userProfiles, eq(archiveRecords.userId, userProfiles.userId))
       .where(eq(archiveRecords.investigationId, investigationId))
       .limit(1),
 
@@ -106,7 +106,7 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
             <h1
               className="text-lg font-bold tracking-tight text-text-primary leading-snug"
             >
-              {archive.concern}
+              {archive.concern ?? 'Archived investigation'}
             </h1>
             {archive.jurisdictionName && (
               <p className="mt-1 text-sm text-text-muted">{archive.jurisdictionName}</p>
@@ -119,7 +119,7 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
 
         <p className="mt-2 text-xs text-text-faint">
           Archived by{' '}
-          <span className="text-text-muted">{archive.archivedBy}</span>
+          <span className="text-text-muted">{archive.archivedBy ?? 'Account deleted'}</span>
         </p>
       </div>
 
@@ -143,8 +143,8 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
           Provenance
         </h2>
         <ProvenanceChain
-          createdAt={archive.createdAt}
-          briefingCompletedAt={archive.briefingCompletedAt}
+          createdAt={archive.createdAt ?? new Date(0)}
+          briefingCompletedAt={archive.briefingCompletedAt ?? null}
           preservedAt={archive.preservedAt}
           permanenceAt={archive.permanenceAt}
           ipfsCid={archive.ipfsCid}

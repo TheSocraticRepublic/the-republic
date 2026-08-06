@@ -121,6 +121,14 @@ export default async function OracleDocumentPage({ params }: PageProps) {
             documentId={doc.id}
             savedAnalysis={savedAnalysis?.summary ?? null}
             hasSavedAnalysis={!!savedAnalysis}
+            savedSections={savedAnalysis ? {
+              summary: typeof savedAnalysis.summary === 'string' ? savedAnalysis.summary : null,
+              keyFindings: Array.isArray(savedAnalysis.keyFindings) ? savedAnalysis.keyFindings : null,
+              powerMap: savedAnalysis.powerMap != null && typeof savedAnalysis.powerMap === 'object' ? savedAnalysis.powerMap as Record<string, unknown> : null,
+              missingInfo: Array.isArray(savedAnalysis.missingInfo) ? savedAnalysis.missingInfo : null,
+              hiddenAssumptions: Array.isArray(savedAnalysis.hiddenAssumptions) ? savedAnalysis.hiddenAssumptions : null,
+              questionsToAsk: Array.isArray(savedAnalysis.questionsToAsk) ? savedAnalysis.questionsToAsk : null,
+            } : undefined}
           />
 
           {/* Cross-arm navigation */}

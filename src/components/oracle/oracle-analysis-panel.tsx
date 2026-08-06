@@ -5,16 +5,27 @@ import { useCompletion } from '@ai-sdk/react'
 import { Eye, RefreshCw } from 'lucide-react'
 import { AnalysisView } from './analysis-view'
 
+export interface SavedSections {
+  summary: string | null
+  keyFindings: unknown[] | null
+  powerMap: Record<string, unknown> | null
+  missingInfo: unknown[] | null
+  hiddenAssumptions: unknown[] | null
+  questionsToAsk: unknown[] | null
+}
+
 interface OracleAnalysisPanelProps {
   documentId: string
   savedAnalysis: string | null
   hasSavedAnalysis: boolean
+  savedSections?: SavedSections
 }
 
 export function OracleAnalysisPanel({
   documentId,
   savedAnalysis,
   hasSavedAnalysis,
+  savedSections,
 }: OracleAnalysisPanelProps) {
   const [hasStarted, setHasStarted] = useState(hasSavedAnalysis)
 
@@ -91,7 +102,11 @@ export function OracleAnalysisPanel({
 
       {/* Content */}
       {showContent && (
-        <AnalysisView content={displayContent} isStreaming={isLoading} />
+        <AnalysisView
+          content={displayContent}
+          isStreaming={isLoading}
+          savedSections={!completion && !isLoading ? savedSections : undefined}
+        />
       )}
 
       {/* Pre-analysis state */}

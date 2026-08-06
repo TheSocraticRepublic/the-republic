@@ -5,7 +5,7 @@ import {
   federalMpBallots,
   federalBills,
 } from '@/lib/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, notInArray } from 'drizzle-orm'
 import {
   fetchCurrentMPs,
   fetchVotes,
@@ -21,7 +21,7 @@ import type { OparlBill } from './types'
 import { CURRENT_PARLIAMENT_SESSION as CURRENT_SESSION } from './constants'
 
 export interface SyncResult {
-  mps: { fetched: number; upserted: number }
+  mps: { fetched: number; upserted: number; deactivated: number }
   bills: { fetched: number; upserted: number }
   votes: { fetched: number; upserted: number }
   ballots: { fetched: number; upserted: number }
@@ -33,7 +33,7 @@ export async function syncParliamentData(
 ): Promise<SyncResult> {
   const db = getDb()
   const result: SyncResult = {
-    mps: { fetched: 0, upserted: 0 },
+    mps: { fetched: 0, upserted: 0, deactivated: 0 },
     bills: { fetched: 0, upserted: 0 },
     votes: { fetched: 0, upserted: 0 },
     ballots: { fetched: 0, upserted: 0 },
@@ -44,9 +44,11 @@ export async function syncParliamentData(
   try {
     const rawMps = await fetchCurrentMPs()
     result.mps.fetched = rawMps.length
+    const fetchedSlugs: string[] = []
 
     for (const mp of rawMps) {
       const slug = extractSlug(mp.url)
+      fetchedSlugs.push(slug)
       const party = mp.current_party?.short_name?.en ?? 'Unknown'
       const ridingName = mp.current_riding?.name?.en ?? 'Unknown'
       const ridingProvince = mp.current_riding?.province ?? 'Unknown'
@@ -101,6 +103,15 @@ export async function syncParliamentData(
         })
         result.mps.upserted++
       }
+    }
+    // Mark unfetched MPs as inactive (sanity floor: only if we fetched >= 250)
+    if (fetchedSlugs.length >= 250) {
+      const deactivated = await db
+        .update(federalMps)
+        .set({ active: false, updatedAt: new Date() })
+        .where(and(eq(federalMps.active, true), notInArray(federalMps.oparlSlug, fetchedSlugs)))
+        .returning({ id: federalMps.id })
+      result.mps.deactivated = deactivated.length
     }
   } catch (err) {
     result.errors.push(`MP sync failed: ${err instanceof Error ? err.message : String(err)}`)
@@ -188,10 +199,29 @@ export async function syncParliamentData(
     for (const vote of rawVotes) {
       const descriptionEn = vote.description?.en ?? `Vote ${vote.number}`
 
-      // Resolve bill FK
-      let billId: string | null = null
+      // Resolve bill FK — anti-clobber: only write billId when we can resolve it
+      // or when bill_url is explicitly absent
+      let billId: string | null | undefined
       if (vote.bill_url) {
         billId = billUrlToId.get(vote.bill_url) ?? null
+
+        // DB fallback: bill may exist from a prior sync even if not in this run's map
+        if (!billId) {
+          const billNumber = vote.bill_url.replace(/\/$/, '').split('/').pop() ?? null
+          if (billNumber) {
+            const [found] = await db
+              .select({ id: federalBills.id })
+              .from(federalBills)
+              .where(and(eq(federalBills.session, vote.session), eq(federalBills.number, billNumber)))
+              .limit(1)
+            billId = found?.id ?? undefined // undefined = omit from update, preserve existing FK
+          } else {
+            billId = undefined
+          }
+        }
+      } else {
+        // bill_url is falsy — no bill associated, safe to write null
+        billId = null
       }
 
       const [existingVote] = await db
@@ -213,8 +243,9 @@ export async function syncParliamentData(
             nayTotal: vote.nay_total,
             pairedTotal: vote.paired_total,
             partyVotes: vote.party_votes ?? null,
-            billId,
             lastSyncedAt: new Date(),
+            // Only write billId when resolved; undefined is omitted by spread, preserving existing FK
+            ...(billId !== undefined ? { billId } : {}),
           })
           .where(eq(federalVotes.id, existingVote.id))
         voteId = existingVote.id
@@ -233,8 +264,8 @@ export async function syncParliamentData(
             nayTotal: vote.nay_total,
             pairedTotal: vote.paired_total,
             partyVotes: vote.party_votes ?? null,
-            billId,
             lastSyncedAt: new Date(),
+            ...(billId !== undefined ? { billId } : {}),
           })
           .returning({ id: federalVotes.id })
         voteId = inserted.id

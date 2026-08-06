@@ -335,13 +335,29 @@ export async function runBriefingGeneration({
     const userMessage = messageParts.join('\n\n')
 
     // --- Model call (non-streaming, 240s abort) ---
-    const { text } = await generateText({
+    let genResult = await generateText({
       model: anthropic(MODEL),
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
       maxOutputTokens: 4096,
       abortSignal: AbortSignal.timeout(240_000),
     })
+
+    // Retry once with larger budget if truncated
+    if (genResult.finishReason === 'length') {
+      genResult = await generateText({
+        model: anthropic(MODEL),
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }],
+        maxOutputTokens: 8192,
+        abortSignal: AbortSignal.timeout(240_000),
+      })
+      if (genResult.finishReason === 'length') {
+        throw new Error('Briefing truncated after retry with maxOutputTokens=8192')
+      }
+    }
+
+    const { text } = genResult
 
     // --- Atomic persist transaction ---
     // The AND guards make this idempotent under Netlify's built-in retry /

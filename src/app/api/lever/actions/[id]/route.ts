@@ -100,6 +100,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: 'Action not found' }, { status: 404 })
   }
 
+  // Block content edits on non-draft actions (content already filed/finalized)
+  if (content !== undefined && existing.status !== 'draft') {
+    return NextResponse.json(
+      { error: 'Content can only be edited while the action is a draft' },
+      { status: 409 }
+    )
+  }
+
   // Validate status transitions: draft→final, final→filed only
   if (status && status !== existing.status) {
     const VALID_TRANSITIONS: Record<string, string> = {
