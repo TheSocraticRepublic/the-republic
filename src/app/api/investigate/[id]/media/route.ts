@@ -215,6 +215,9 @@ export async function POST(
         messages: [{ role: 'user', content: userMessage }],
         maxOutputTokens: 4096,
       })
+      if (genResult.finishReason === 'length') {
+        throw new Error('Media spec truncated after retry with maxOutputTokens=4096')
+      }
     }
 
     rawText = genResult.text
