@@ -83,17 +83,23 @@ async function guardedLimit(
   identifier: string,
   limit: number
 ): Promise<{ success: boolean; limit: number; remaining: number; reset: number }> {
+  let timer: ReturnType<typeof setTimeout> | undefined
   try {
-    return await Promise.race([
+    let timedOut = false
+    const result = await Promise.race([
       limiter.limit(identifier),
-      new Promise<{ success: boolean; limit: number; remaining: number; reset: number }>((resolve) =>
-        setTimeout(() => {
+      new Promise<{ success: boolean; limit: number; remaining: number; reset: number }>((resolve) => {
+        timer = setTimeout(() => {
+          timedOut = true
           console.warn('[rate-limit] Redis timeout — applying fallback')
           resolve(rateLimitFallback(limit))
         }, 1000)
-      ),
+      }),
     ])
+    if (!timedOut && timer) clearTimeout(timer)
+    return result
   } catch (err) {
+    if (timer) clearTimeout(timer)
     console.error('[rate-limit] Redis error — applying fallback', err)
     return rateLimitFallback(limit)
   }
