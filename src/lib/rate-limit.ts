@@ -27,34 +27,55 @@ function logProdWarning(): void {
   }
 }
 
-function getRatelimit(): Ratelimit | null {
+/**
+ * Build a Ratelimit client, returning null on ANY failure.
+ *
+ * Redis.fromEnv() throws (UrlError) when the env vars are present but
+ * malformed — a URL missing its scheme, or carrying stray whitespace. The
+ * truthiness guard above cannot catch that: Next.js inlines static
+ * `process.env.X` references at build time while fromEnv() reads them
+ * dynamically at runtime, so the guard can pass on a baked-in value while
+ * construction throws on the live one.
+ *
+ * Left unguarded this surfaces as a 500 on every rate-limited route — which
+ * is exactly how production auth went down on 2026-08-06 (same class as the
+ * 2026-06-19 Upstash outage). Returning null routes the caller to
+ * rateLimitFallback(), which fails CLOSED in production as designed.
+ */
+function buildLimiter(
+  limiter: ReturnType<typeof Ratelimit.slidingWindow>,
+  prefix: string
+): Ratelimit | null {
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
     logProdWarning()
     return null
   }
-  if (!_ratelimit) {
-    _ratelimit = new Ratelimit({
+  try {
+    return new Ratelimit({
       redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(30, '60 s'),
+      limiter,
       analytics: false,
-      prefix: 'republic',
+      prefix,
     })
+  } catch (err) {
+    console.error(
+      `[rate-limit] limiter construction failed for prefix "${prefix}" — check UPSTASH_REDIS_REST_URL/TOKEN. Falling back.`,
+      err
+    )
+    return null
+  }
+}
+
+function getRatelimit(): Ratelimit | null {
+  if (!_ratelimit) {
+    _ratelimit = buildLimiter(Ratelimit.slidingWindow(30, '60 s'), 'republic')
   }
   return _ratelimit
 }
 
 function getTightRatelimit(): Ratelimit | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    logProdWarning()
-    return null
-  }
   if (!_tightRatelimit) {
-    _tightRatelimit = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(5, '60 s'),
-      analytics: false,
-      prefix: 'republic-tight',
-    })
+    _tightRatelimit = buildLimiter(Ratelimit.slidingWindow(5, '60 s'), 'republic-tight')
   }
   return _tightRatelimit
 }
@@ -75,6 +96,74 @@ function rateLimitFallback(limit: number): {
 }
 
 /**
+ * Wraps limiter.limit() with a timeout and try/catch so a Redis hang or crash
+ * falls back gracefully instead of 500ing the request.
+ */
+async function guardedLimit(
+  limiter: Ratelimit,
+  identifier: string,
+  limit: number
+): Promise<{ success: boolean; limit: number; remaining: number; reset: number }> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    let timedOut = false
+    const result = await Promise.race([
+      limiter.limit(identifier),
+      new Promise<{ success: boolean; limit: number; remaining: number; reset: number }>((resolve) => {
+        timer = setTimeout(() => {
+          timedOut = true
+          console.warn('[rate-limit] Redis timeout — applying fallback')
+          resolve(rateLimitFallback(limit))
+        }, 1000)
+      }),
+    ])
+    if (!timedOut && timer) clearTimeout(timer)
+    return result
+  } catch (err) {
+    if (timer) clearTimeout(timer)
+    console.error('[rate-limit] Redis error — applying fallback', err)
+    return rateLimitFallback(limit)
+  }
+}
+
+/**
+ * Health probe for the rate limiter.
+ *
+ * Deliberately exercises the SAME path the routes use — buildLimiter() for
+ * construction, then a real Redis round-trip — so the health check goes red
+ * exactly when auth would break, and not merely when Redis is unreachable by
+ * some other measure. A probe that cannot detect the outage is worse than no
+ * probe: on 2026-08-06 auth returned 500 on every route while /api/health
+ * reported 200, because the check only ever touched Postgres.
+ *
+ * Uses a dedicated key so it can never consume a real user's budget.
+ */
+export async function probeRateLimiter(): Promise<{
+  ok: boolean
+  reason?: string
+}> {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return { ok: false, reason: 'not configured' }
+  }
+
+  const limiter = getRatelimit()
+  if (!limiter) {
+    // buildLimiter caught a construction failure (malformed URL, bad token).
+    return { ok: false, reason: 'limiter construction failed' }
+  }
+
+  try {
+    await limiter.limit('__health_probe__')
+    return { ok: true }
+  } catch (err) {
+    return {
+      ok: false,
+      reason: err instanceof Error ? err.message : 'redis round-trip failed',
+    }
+  }
+}
+
+/**
  * Check rate limit for a given identifier (IP address or user ID).
  * Fails closed in production when Redis is not configured.
  */
@@ -88,7 +177,7 @@ export async function checkRateLimit(identifier: string): Promise<{
   if (!limiter) {
     return rateLimitFallback(30)
   }
-  return limiter.limit(identifier)
+  return guardedLimit(limiter, identifier, 30)
 }
 
 /**
@@ -109,23 +198,14 @@ export async function checkTightRateLimit(identifier: string): Promise<{
   if (!limiter) {
     return rateLimitFallback(5)
   }
-  return limiter.limit(identifier)
+  return guardedLimit(limiter, identifier, 5)
 }
 
 let _dailyAiLimit: Ratelimit | null = null
 
 function getDailyAiLimit(): Ratelimit | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    logProdWarning()
-    return null
-  }
   if (!_dailyAiLimit) {
-    _dailyAiLimit = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.fixedWindow(5, '24 h'),
-      analytics: false,
-      prefix: 'republic-daily-ai',
-    })
+    _dailyAiLimit = buildLimiter(Ratelimit.fixedWindow(5, '24 h'), 'republic-daily-ai')
   }
   return _dailyAiLimit
 }
@@ -140,23 +220,17 @@ export async function checkDailyAiLimit(userId: string): Promise<{
   if (!limiter) {
     return rateLimitFallback(5)
   }
-  return limiter.limit(userId)
+  return guardedLimit(limiter, userId, 5)
 }
 
 let _dailyAiGeneralLimit: Ratelimit | null = null
 
 function getDailyAiGeneralLimit(): Ratelimit | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    logProdWarning()
-    return null
-  }
   if (!_dailyAiGeneralLimit) {
-    _dailyAiGeneralLimit = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.fixedWindow(10, '24 h'),
-      analytics: false,
-      prefix: 'republic-daily-ai-general',
-    })
+    _dailyAiGeneralLimit = buildLimiter(
+      Ratelimit.fixedWindow(10, '24 h'),
+      'republic-daily-ai-general'
+    )
   }
   return _dailyAiGeneralLimit
 }
@@ -171,7 +245,7 @@ export async function checkDailyAiGeneralLimit(userId: string): Promise<{
   if (!limiter) {
     return rateLimitFallback(10)
   }
-  return limiter.limit(userId)
+  return guardedLimit(limiter, userId, 10)
 }
 
 /**
@@ -209,17 +283,11 @@ const GLOBAL_SEND_CODE_KEY = 'global'
 let _globalSendCodeLimit: Ratelimit | null = null
 
 function getGlobalSendCodeLimit(): Ratelimit | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    logProdWarning()
-    return null
-  }
   if (!_globalSendCodeLimit) {
-    _globalSendCodeLimit = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(GLOBAL_SEND_CODE_LIMIT, GLOBAL_SEND_CODE_WINDOW),
-      analytics: false,
-      prefix: 'republic-global-send-code',
-    })
+    _globalSendCodeLimit = buildLimiter(
+      Ratelimit.slidingWindow(GLOBAL_SEND_CODE_LIMIT, GLOBAL_SEND_CODE_WINDOW),
+      'republic-global-send-code'
+    )
   }
   return _globalSendCodeLimit
 }
@@ -239,5 +307,5 @@ export async function checkGlobalSendCodeLimit(): Promise<{
   if (!limiter) {
     return rateLimitFallback(GLOBAL_SEND_CODE_LIMIT)
   }
-  return limiter.limit(GLOBAL_SEND_CODE_KEY)
+  return guardedLimit(limiter, GLOBAL_SEND_CODE_KEY, GLOBAL_SEND_CODE_LIMIT)
 }
