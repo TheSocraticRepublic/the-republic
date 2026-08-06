@@ -127,6 +127,43 @@ async function guardedLimit(
 }
 
 /**
+ * Health probe for the rate limiter.
+ *
+ * Deliberately exercises the SAME path the routes use — buildLimiter() for
+ * construction, then a real Redis round-trip — so the health check goes red
+ * exactly when auth would break, and not merely when Redis is unreachable by
+ * some other measure. A probe that cannot detect the outage is worse than no
+ * probe: on 2026-08-06 auth returned 500 on every route while /api/health
+ * reported 200, because the check only ever touched Postgres.
+ *
+ * Uses a dedicated key so it can never consume a real user's budget.
+ */
+export async function probeRateLimiter(): Promise<{
+  ok: boolean
+  reason?: string
+}> {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return { ok: false, reason: 'not configured' }
+  }
+
+  const limiter = getRatelimit()
+  if (!limiter) {
+    // buildLimiter caught a construction failure (malformed URL, bad token).
+    return { ok: false, reason: 'limiter construction failed' }
+  }
+
+  try {
+    await limiter.limit('__health_probe__')
+    return { ok: true }
+  } catch (err) {
+    return {
+      ok: false,
+      reason: err instanceof Error ? err.message : 'redis round-trip failed',
+    }
+  }
+}
+
+/**
  * Check rate limit for a given identifier (IP address or user ID).
  * Fails closed in production when Redis is not configured.
  */
