@@ -27,34 +27,55 @@ function logProdWarning(): void {
   }
 }
 
-function getRatelimit(): Ratelimit | null {
+/**
+ * Build a Ratelimit client, returning null on ANY failure.
+ *
+ * Redis.fromEnv() throws (UrlError) when the env vars are present but
+ * malformed — a URL missing its scheme, or carrying stray whitespace. The
+ * truthiness guard above cannot catch that: Next.js inlines static
+ * `process.env.X` references at build time while fromEnv() reads them
+ * dynamically at runtime, so the guard can pass on a baked-in value while
+ * construction throws on the live one.
+ *
+ * Left unguarded this surfaces as a 500 on every rate-limited route — which
+ * is exactly how production auth went down on 2026-08-06 (same class as the
+ * 2026-06-19 Upstash outage). Returning null routes the caller to
+ * rateLimitFallback(), which fails CLOSED in production as designed.
+ */
+function buildLimiter(
+  limiter: ReturnType<typeof Ratelimit.slidingWindow>,
+  prefix: string
+): Ratelimit | null {
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
     logProdWarning()
     return null
   }
-  if (!_ratelimit) {
-    _ratelimit = new Ratelimit({
+  try {
+    return new Ratelimit({
       redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(30, '60 s'),
+      limiter,
       analytics: false,
-      prefix: 'republic',
+      prefix,
     })
+  } catch (err) {
+    console.error(
+      `[rate-limit] limiter construction failed for prefix "${prefix}" — check UPSTASH_REDIS_REST_URL/TOKEN. Falling back.`,
+      err
+    )
+    return null
+  }
+}
+
+function getRatelimit(): Ratelimit | null {
+  if (!_ratelimit) {
+    _ratelimit = buildLimiter(Ratelimit.slidingWindow(30, '60 s'), 'republic')
   }
   return _ratelimit
 }
 
 function getTightRatelimit(): Ratelimit | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    logProdWarning()
-    return null
-  }
   if (!_tightRatelimit) {
-    _tightRatelimit = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(5, '60 s'),
-      analytics: false,
-      prefix: 'republic-tight',
-    })
+    _tightRatelimit = buildLimiter(Ratelimit.slidingWindow(5, '60 s'), 'republic-tight')
   }
   return _tightRatelimit
 }
@@ -146,17 +167,8 @@ export async function checkTightRateLimit(identifier: string): Promise<{
 let _dailyAiLimit: Ratelimit | null = null
 
 function getDailyAiLimit(): Ratelimit | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    logProdWarning()
-    return null
-  }
   if (!_dailyAiLimit) {
-    _dailyAiLimit = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.fixedWindow(5, '24 h'),
-      analytics: false,
-      prefix: 'republic-daily-ai',
-    })
+    _dailyAiLimit = buildLimiter(Ratelimit.fixedWindow(5, '24 h'), 'republic-daily-ai')
   }
   return _dailyAiLimit
 }
@@ -177,17 +189,11 @@ export async function checkDailyAiLimit(userId: string): Promise<{
 let _dailyAiGeneralLimit: Ratelimit | null = null
 
 function getDailyAiGeneralLimit(): Ratelimit | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    logProdWarning()
-    return null
-  }
   if (!_dailyAiGeneralLimit) {
-    _dailyAiGeneralLimit = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.fixedWindow(10, '24 h'),
-      analytics: false,
-      prefix: 'republic-daily-ai-general',
-    })
+    _dailyAiGeneralLimit = buildLimiter(
+      Ratelimit.fixedWindow(10, '24 h'),
+      'republic-daily-ai-general'
+    )
   }
   return _dailyAiGeneralLimit
 }
@@ -240,17 +246,11 @@ const GLOBAL_SEND_CODE_KEY = 'global'
 let _globalSendCodeLimit: Ratelimit | null = null
 
 function getGlobalSendCodeLimit(): Ratelimit | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    logProdWarning()
-    return null
-  }
   if (!_globalSendCodeLimit) {
-    _globalSendCodeLimit = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(GLOBAL_SEND_CODE_LIMIT, GLOBAL_SEND_CODE_WINDOW),
-      analytics: false,
-      prefix: 'republic-global-send-code',
-    })
+    _globalSendCodeLimit = buildLimiter(
+      Ratelimit.slidingWindow(GLOBAL_SEND_CODE_LIMIT, GLOBAL_SEND_CODE_WINDOW),
+      'republic-global-send-code'
+    )
   }
   return _globalSendCodeLimit
 }
