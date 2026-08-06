@@ -5,7 +5,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useRouter } from 'next/navigation'
 import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react'
 import { clsx } from 'clsx'
-import { bcPublicBodies as BC_PUBLIC_BODIES } from '@/lib/jurisdictions/bc/public-bodies'
+// Public bodies are loaded dynamically based on jurisdiction; BC is the fallback
 import { leverActionTypeEnum } from '@/lib/db/schema'
 import type { PublicBody } from '@/lib/jurisdictions/types'
 
@@ -70,7 +70,7 @@ export function NewActionDialog({
   const [description, setDescription] = useState('')
   const [documents, setDocuments] = useState<Document[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
-  const [publicBodies, setPublicBodies] = useState<PublicBody[]>(BC_PUBLIC_BODIES)
+  const [publicBodies, setPublicBodies] = useState<PublicBody[]>([])
   const [jurisdictionLabel, setJurisdictionLabel] = useState('BC')
   const [loading, setLoading] = useState(false)
   const [fetchingContext, setFetchingContext] = useState(false)
@@ -116,32 +116,41 @@ export function NewActionDialog({
       setSessions(sessionsData?.sessions ?? [])
 
       // Resolve jurisdiction from investigation's jurisdictionName
-      if (investigationData?.investigation) {
-        const inv = investigationData.investigation
-        const jName = (inv.jurisdictionName ?? '').toLowerCase()
+      const jName = investigationData?.investigation?.jurisdictionName ?? ''
 
-        // Map province strings from jurisdictionName to module keys
-        let resolvedBodies: PublicBody[] = BC_PUBLIC_BODIES
-        let label = 'BC'
+      // Map jurisdiction name to module key for dynamic import
+      const jLower = jName.toLowerCase()
+      let moduleKey = 'bc'
+      let label = 'BC'
 
-        if (jName.includes('british columbia')) {
-          // Already defaults to BC
-        } else if (jName.includes('alberta')) {
-          try {
-            const abMod = await import('@/lib/jurisdictions/ab/public-bodies')
-            resolvedBodies = abMod.abPublicBodies
-            label = 'AB'
-          } catch { /* fall through to BC */ }
-        } else if (jName.includes('ontario')) {
-          try {
-            const onMod = await import('@/lib/jurisdictions/on/public-bodies')
-            resolvedBodies = onMod.onPublicBodies
-            label = 'ON'
-          } catch { /* fall through to BC */ }
+      if (jLower.includes('alberta') || jLower.includes('edmonton') || jLower.includes('calgary')) {
+        moduleKey = 'ab'
+        label = 'AB'
+      } else if (jLower.includes('ontario') || jLower.includes('toronto') || jLower.includes('ottawa')) {
+        moduleKey = 'on'
+        label = 'ON'
+      }
+
+      try {
+        const mod = await import(`@/lib/jurisdictions/${moduleKey}/public-bodies`)
+        const bodies: PublicBody[] = mod[`${moduleKey}PublicBodies`]
+        if (bodies) {
+          setPublicBodies(bodies)
+          setJurisdictionLabel(label)
+        } else {
+          // Fallback to BC if the named export is missing
+          console.warn(`[NewActionDialog] No public bodies export for module key ${moduleKey}, falling back to BC`)
+          const bcMod = await import('@/lib/jurisdictions/bc/public-bodies')
+          setPublicBodies(bcMod.bcPublicBodies)
+          setJurisdictionLabel('BC')
         }
-
-        setPublicBodies(resolvedBodies)
-        setJurisdictionLabel(label)
+      } catch {
+        console.warn(`[NewActionDialog] Failed to load public bodies for ${moduleKey}, falling back to BC`)
+        try {
+          const bcMod = await import('@/lib/jurisdictions/bc/public-bodies')
+          setPublicBodies(bcMod.bcPublicBodies)
+          setJurisdictionLabel('BC')
+        } catch { /* no public bodies available */ }
       }
 
       // Check for duplicate FIPPA on this investigation

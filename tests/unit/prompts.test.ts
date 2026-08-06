@@ -9,6 +9,9 @@ import {
   BRIEFING_PROMPT_VERSION,
   BRIEFING_SYSTEM_PROMPT,
 } from '@/lib/ai/prompts/briefing-system'
+import { buildLeverPrompt } from '@/lib/ai/prompts/lever-system'
+import { buildScoutPrompt } from '@/lib/ai/prompts/scout-system'
+import { SCOUT_PROMPT_VERSION } from '@/lib/ai/prompts/scout-system'
 import type { JurisdictionModule } from '@/lib/jurisdictions/types'
 
 describe('Oracle prompt', () => {
@@ -132,6 +135,8 @@ const mockJurisdictionModule: JurisdictionModule = {
   concernCategories: [],
   publicBodies: [],
   portals: {},
+  getDocumentStructureContext: () => '',
+  getJurisdictionPortalContext: () => '',
 }
 
 describe('Briefing prompt', () => {
@@ -211,6 +216,120 @@ describe('Briefing prompt', () => {
   it('core prompt does not contain the old runtime placeholder', () => {
     const prompt = buildBriefingPrompt({})
     expect(prompt).not.toContain('[DOCUMENT STRUCTURE KNOWLEDGE will be injected here at runtime]')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Multi-jurisdiction prompt parameterization
+// ---------------------------------------------------------------------------
+
+const abModule: JurisdictionModule = {
+  id: 'ab',
+  name: 'Alberta',
+  country: 'Canada',
+  foiFramework: {
+    name: 'FOIP',
+    fullCitation: 'Freedom of Information and Protection of Privacy Act, RSA 2000, c F-25',
+    verified: false,
+    sections: {
+      rightOfAccess: 's. 6(1)',
+      dutyToAssist: 's. 10(1)',
+      timeLimit: { section: 's. 11', days: 30 },
+      feeWaiver: 's. 93(4)',
+      review: 's. 65',
+    },
+    letterTemplate: '',
+    responseTimeline: '30 days',
+  },
+  concernCategories: [],
+  publicBodies: [],
+  portals: {},
+  getDocumentStructureContext: () => '',
+  getJurisdictionPortalContext: () => '',
+}
+
+const onModule: JurisdictionModule = {
+  id: 'on',
+  name: 'Ontario',
+  country: 'Canada',
+  foiFramework: {
+    name: 'FIPPA',
+    fullCitation: 'Freedom of Information and Protection of Privacy Act, RSO 1990, c F.31',
+    verified: false,
+    sections: {
+      rightOfAccess: 's. 10(1)',
+      dutyToAssist: 's. 24',
+      timeLimit: { section: 's. 26', days: 30 },
+      feeWaiver: 's. 57(4)',
+      review: 's. 50',
+    },
+    letterTemplate: '',
+    responseTimeline: '30 calendar days',
+  },
+  concernCategories: [],
+  publicBodies: [],
+  portals: {},
+  getDocumentStructureContext: () => '',
+  getJurisdictionPortalContext: () => '',
+}
+
+describe('Briefing prompt — AB module', () => {
+  it('contains RSA 2000 and no RSBC 1996', () => {
+    const prompt = buildBriefingPrompt({ jurisdictionModule: abModule })
+    expect(prompt).toContain('RSA 2000')
+    expect(prompt).not.toContain('RSBC 1996')
+  })
+
+  it('contains FOIP abbreviation', () => {
+    const prompt = buildBriefingPrompt({ jurisdictionModule: abModule })
+    expect(prompt).toContain('FOIP')
+  })
+})
+
+describe('Briefing prompt — ON module', () => {
+  it('contains RSO 1990 and no RSBC 1996', () => {
+    const prompt = buildBriefingPrompt({ jurisdictionModule: onModule })
+    expect(prompt).toContain('RSO 1990')
+    expect(prompt).not.toContain('RSBC 1996')
+  })
+})
+
+describe('Briefing prompt — unverified module includes practitioner caution', () => {
+  it('includes caution when verified is false', () => {
+    const prompt = buildBriefingPrompt({ jurisdictionModule: abModule })
+    expect(prompt).toContain('not yet been verified by a practitioner')
+  })
+
+  it('does not include caution when verified is true', () => {
+    const prompt = buildBriefingPrompt({ jurisdictionModule: mockJurisdictionModule })
+    expect(prompt).not.toContain('not yet been verified by a practitioner')
+  })
+})
+
+describe('Lever prompt — AB module', () => {
+  it('contains RSA 2000 and FOIP', () => {
+    const prompt = buildLeverPrompt(abModule)
+    expect(prompt).toContain('RSA 2000')
+    expect(prompt).toContain('FOIP')
+    expect(prompt).not.toContain('RSBC 1996')
+  })
+
+  it('includes practitioner caution for unverified module', () => {
+    const prompt = buildLeverPrompt(abModule)
+    expect(prompt).toContain('not yet been verified by a practitioner')
+  })
+})
+
+describe('Scout prompt — AB module', () => {
+  it('contains RSA 2000 and Alberta governance', () => {
+    const prompt = buildScoutPrompt(abModule, '')
+    expect(prompt).toContain('RSA 2000')
+    expect(prompt).toContain('Alberta')
+    expect(prompt).not.toContain('RSBC 1996')
+  })
+
+  it('has version 0.3.0', () => {
+    expect(SCOUT_PROMPT_VERSION).toBe('0.3.0')
   })
 })
 

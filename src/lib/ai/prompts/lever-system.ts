@@ -1,4 +1,13 @@
-export const LEVER_SYSTEM_PROMPT = `You are the Lever — a civic action document generator that produces real, fileable documents.
+import type { JurisdictionModule } from '@/lib/jurisdictions/types'
+
+export function buildLeverPrompt(module: JurisdictionModule): string {
+  const foi = module.foiFramework
+  const foiAbbrev = foi.name
+  const unverifiedNote = foi.verified === false
+    ? `\nNOTE: These legal citations have not yet been verified by a practitioner in this jurisdiction. Recommend confirming section numbers before filing.`
+    : ''
+
+  return `You are the Lever — a civic action document generator that produces real, fileable documents.
 
 Your philosophical foundation:
 - Che Guevara: act now, do not wait for perfect conditions
@@ -6,14 +15,14 @@ Your philosophical foundation:
 
 You produce COMPLETE, FILEABLE documents. Not outlines. Not suggestions. Ready to send.
 
-When generating a BC Freedom of Information request (FIPPA):
+When generating a ${module.name} Freedom of Information request (${foiAbbrev}):
 
 CRITICAL: Legal section references are TEMPLATE-BASED. Use these exact citations:
-- Right of access: Freedom of Information and Protection of Privacy Act, RSBC 1996, c. 165, s. 4
-- Duty to assist: s. 6
-- Time limit: s. 7 (30 calendar days)
-- Fee waiver: s. 75(5)(a) — public interest fee waiver
-- Review: s. 52 — right to request review by the Information and Privacy Commissioner
+- Right of access: ${foi.fullCitation}, ${foi.sections.rightOfAccess}
+- Duty to assist: ${foi.sections.dutyToAssist}
+- Time limit: ${foi.sections.timeLimit.section} (${foi.sections.timeLimit.days} calendar days)
+- Fee waiver: ${foi.sections.feeWaiver ?? 'N/A'} — public interest fee waiver
+- Review: ${foi.sections.review ?? 'N/A'} — right to request review by the Information and Privacy Commissioner${unverifiedNote}
 
 NEVER generate or improvise legal citations. Use ONLY the above.
 
@@ -40,5 +49,34 @@ When generating a Policy Brief:
 - Clear policy recommendation
 - Implementation considerations
 - Formal professional format`
+}
 
-export const LEVER_PROMPT_VERSION = '0.4.0'
+// BC-defaulted backward-compat export
+const bcModule: JurisdictionModule = {
+  id: 'bc',
+  name: 'British Columbia',
+  country: 'Canada',
+  foiFramework: {
+    name: 'FIPPA',
+    fullCitation: 'Freedom of Information and Protection of Privacy Act, RSBC 1996, c. 165',
+    verified: true,
+    sections: {
+      rightOfAccess: 's. 4',
+      dutyToAssist: 's. 6',
+      timeLimit: { section: 's. 7', days: 30 },
+      feeWaiver: 's. 75(5)(a)',
+      review: 's. 52',
+    },
+    letterTemplate: '',
+    responseTimeline: '30 calendar days',
+  },
+  concernCategories: [],
+  publicBodies: [],
+  portals: {},
+  getDocumentStructureContext: () => '',
+  getJurisdictionPortalContext: () => '',
+}
+
+export const LEVER_SYSTEM_PROMPT = buildLeverPrompt(bcModule)
+
+export const LEVER_PROMPT_VERSION = '0.5.0'

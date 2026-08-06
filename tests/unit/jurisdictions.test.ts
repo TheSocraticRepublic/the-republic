@@ -3,6 +3,7 @@ import {
   loadJurisdictionModule,
   getRegisteredJurisdictions,
   detectJurisdiction,
+  resolveJurisdictionModuleId,
 } from '@/lib/jurisdictions'
 
 // ---------------------------------------------------------------------------
@@ -174,7 +175,7 @@ describe('Alberta jurisdiction module', () => {
     const { foiFramework } = await loadModule('ab')
     expect(foiFramework.name).toBeTruthy()
     expect(foiFramework.fullCitation).toBeTruthy()
-    expect(foiFramework.verified).toBe(true)
+    expect(foiFramework.verified).toBe(false)
     expect(foiFramework.sections.rightOfAccess).toBeTruthy()
     expect(foiFramework.sections.timeLimit.days).toBeGreaterThan(0)
     expect(foiFramework.letterTemplate).toBeTruthy()
@@ -298,7 +299,7 @@ describe('Ontario jurisdiction module', () => {
     const { foiFramework } = await loadModule('on')
     expect(foiFramework.name).toBeTruthy()
     expect(foiFramework.fullCitation).toBeTruthy()
-    expect(foiFramework.verified).toBe(true)
+    expect(foiFramework.verified).toBe(false)
     expect(foiFramework.sections.rightOfAccess).toBeTruthy()
     expect(foiFramework.sections.timeLimit.days).toBeGreaterThan(0)
     expect(foiFramework.letterTemplate).toBeTruthy()
@@ -401,14 +402,14 @@ describe('verified flag across modules', () => {
     expect(mod.foiFramework.verified).toBe(true)
   })
 
-  it('Alberta is verified: true', async () => {
+  it('Alberta is verified: false (unverified)', async () => {
     const mod = await loadModule('ab')
-    expect(mod.foiFramework.verified).toBe(true)
+    expect(mod.foiFramework.verified).toBe(false)
   })
 
-  it('Ontario is verified: true', async () => {
+  it('Ontario is verified: false (unverified)', async () => {
     const mod = await loadModule('on')
-    expect(mod.foiFramework.verified).toBe(true)
+    expect(mod.foiFramework.verified).toBe(false)
   })
 })
 
@@ -421,4 +422,60 @@ describe('loadJurisdictionModule — unknown jurisdiction', () => {
     const mod = await loadJurisdictionModule('xx')
     expect(mod).toBeUndefined()
   })
+})
+
+// ---------------------------------------------------------------------------
+// resolveJurisdictionModuleId
+// ---------------------------------------------------------------------------
+
+describe('resolveJurisdictionModuleId', () => {
+  it('resolves British Columbia by province name', () => {
+    expect(resolveJurisdictionModuleId({ province: 'British Columbia' })).toBe('bc')
+  })
+
+  it('resolves Alberta by province name', () => {
+    expect(resolveJurisdictionModuleId({ province: 'Alberta' })).toBe('ab')
+  })
+
+  it('resolves Ontario by province name', () => {
+    expect(resolveJurisdictionModuleId({ province: 'Ontario' })).toBe('on')
+  })
+
+  it('defaults to BC for unknown province (Quebec)', () => {
+    expect(resolveJurisdictionModuleId({ province: 'Quebec' })).toBe('bc')
+  })
+
+  it('falls back to name-based detection — Edmonton resolves to ab', () => {
+    expect(resolveJurisdictionModuleId({ jurisdictionName: 'Edmonton' })).toBe('ab')
+  })
+
+  it('falls back to name-based detection — Toronto resolves to on', () => {
+    expect(resolveJurisdictionModuleId({ jurisdictionName: 'Toronto' })).toBe('on')
+  })
+
+  it('defaults to BC when nothing matches', () => {
+    expect(resolveJurisdictionModuleId({ concern: 'some generic concern' })).toBe('bc')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Module interface completeness — getDocumentStructureContext / getJurisdictionPortalContext
+// ---------------------------------------------------------------------------
+
+describe('Module interface completeness', () => {
+  for (const id of ['bc', 'ab', 'on']) {
+    it(`${id} module exposes getDocumentStructureContext`, async () => {
+      const mod = await loadModule(id)
+      expect(typeof mod.getDocumentStructureContext).toBe('function')
+      const result = mod.getDocumentStructureContext()
+      expect(typeof result).toBe('string')
+    })
+
+    it(`${id} module exposes getJurisdictionPortalContext`, async () => {
+      const mod = await loadModule(id)
+      expect(typeof mod.getJurisdictionPortalContext).toBe('function')
+      const result = mod.getJurisdictionPortalContext('Test City')
+      expect(typeof result).toBe('string')
+    })
+  }
 })

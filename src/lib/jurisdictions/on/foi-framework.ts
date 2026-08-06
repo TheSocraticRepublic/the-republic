@@ -3,7 +3,7 @@ import type { FOIFramework } from '../types'
 export const onFoiFramework: FOIFramework = {
   name: 'FIPPA',
   fullCitation: 'Freedom of Information and Protection of Privacy Act, RSO 1990, c F.31',
-  verified: true,
+  verified: false,
   sections: {
     rightOfAccess: 's. 10(1)',
     dutyToAssist: 's. 24',

@@ -7,6 +7,8 @@ export interface JurisdictionModule {
   concernCategories: ConcernCategory[]
   publicBodies: PublicBody[]
   portals: Record<string, JurisdictionPortal>
+  getDocumentStructureContext: () => string
+  getJurisdictionPortalContext: (jurisdictionName: string) => string
 }
 
 export interface FOIFramework {

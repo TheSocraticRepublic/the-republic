@@ -3,7 +3,7 @@ import type { FOIFramework } from '../types'
 export const abFoiFramework: FOIFramework = {
   name: 'FOIP',
   fullCitation: 'Freedom of Information and Protection of Privacy Act, RSA 2000, c F-25',
-  verified: true,
+  verified: false,
   sections: {
     rightOfAccess: 's. 6(1)',
     dutyToAssist: 's. 10(1)',
