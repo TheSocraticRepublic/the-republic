@@ -7,11 +7,15 @@ import { eq } from 'drizzle-orm'
 import { AUTH_COOKIE } from '@/lib/auth/middleware'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/api/ip'
+import { checkCsrfOrigin } from '@/lib/api/csrf'
 
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 // 7 days in seconds
 
 export async function POST(request: NextRequest) {
   try {
+    const csrfReject = checkCsrfOrigin(request)
+    if (csrfReject) return csrfReject
+
     const ip = getClientIp(request)
     const { success } = await checkRateLimit(`verify-code:${ip}`)
     if (!success) {

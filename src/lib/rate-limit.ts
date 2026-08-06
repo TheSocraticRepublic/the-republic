@@ -75,6 +75,31 @@ function rateLimitFallback(limit: number): {
 }
 
 /**
+ * Wraps limiter.limit() with a timeout and try/catch so a Redis hang or crash
+ * falls back gracefully instead of 500ing the request.
+ */
+async function guardedLimit(
+  limiter: Ratelimit,
+  identifier: string,
+  limit: number
+): Promise<{ success: boolean; limit: number; remaining: number; reset: number }> {
+  try {
+    return await Promise.race([
+      limiter.limit(identifier),
+      new Promise<{ success: boolean; limit: number; remaining: number; reset: number }>((resolve) =>
+        setTimeout(() => {
+          console.warn('[rate-limit] Redis timeout — applying fallback')
+          resolve(rateLimitFallback(limit))
+        }, 1000)
+      ),
+    ])
+  } catch (err) {
+    console.error('[rate-limit] Redis error — applying fallback', err)
+    return rateLimitFallback(limit)
+  }
+}
+
+/**
  * Check rate limit for a given identifier (IP address or user ID).
  * Fails closed in production when Redis is not configured.
  */
@@ -88,7 +113,7 @@ export async function checkRateLimit(identifier: string): Promise<{
   if (!limiter) {
     return rateLimitFallback(30)
   }
-  return limiter.limit(identifier)
+  return guardedLimit(limiter, identifier, 30)
 }
 
 /**
@@ -109,7 +134,7 @@ export async function checkTightRateLimit(identifier: string): Promise<{
   if (!limiter) {
     return rateLimitFallback(5)
   }
-  return limiter.limit(identifier)
+  return guardedLimit(limiter, identifier, 5)
 }
 
 let _dailyAiLimit: Ratelimit | null = null
@@ -140,7 +165,7 @@ export async function checkDailyAiLimit(userId: string): Promise<{
   if (!limiter) {
     return rateLimitFallback(5)
   }
-  return limiter.limit(userId)
+  return guardedLimit(limiter, userId, 5)
 }
 
 let _dailyAiGeneralLimit: Ratelimit | null = null
@@ -171,7 +196,7 @@ export async function checkDailyAiGeneralLimit(userId: string): Promise<{
   if (!limiter) {
     return rateLimitFallback(10)
   }
-  return limiter.limit(userId)
+  return guardedLimit(limiter, userId, 10)
 }
 
 /**
@@ -239,5 +264,5 @@ export async function checkGlobalSendCodeLimit(): Promise<{
   if (!limiter) {
     return rateLimitFallback(GLOBAL_SEND_CODE_LIMIT)
   }
-  return limiter.limit(GLOBAL_SEND_CODE_KEY)
+  return guardedLimit(limiter, GLOBAL_SEND_CODE_KEY, GLOBAL_SEND_CODE_LIMIT)
 }
