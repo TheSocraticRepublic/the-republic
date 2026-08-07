@@ -51,14 +51,34 @@ describe('probeRateLimiter', () => {
     process.env.UPSTASH_REDIS_REST_URL = 'https://example.upstash.io'
     process.env.UPSTASH_REDIS_REST_TOKEN = 'bad-token'
 
+    // Fail the round-trip deterministically, in-process. This test previously
+    // relied on a REAL request to example.upstash.io failing inside vitest's
+    // 5s budget — but @upstash/redis retries 5 times with exponential backoff
+    // (~4.3s) before surfacing an error, so it sat on the timeout boundary and
+    // flaked on any slow DNS. A required CI check that is intermittently red
+    // decays into the same decoration as one that is always green.
+    //
+    // Construction is left real: Redis.fromEnv() still runs and still succeeds
+    // on a well-formed URL, which is the precondition this case depends on.
+    vi.doMock('@upstash/ratelimit', () => ({
+      Ratelimit: class {
+        static slidingWindow = () => ({})
+        async limit(): Promise<never> {
+          throw new Error('Redis timeout')
+        }
+      },
+    }))
+
     const { probeRateLimiter } = await import('@/lib/rate-limit')
     const result = await probeRateLimiter()
 
-    // Construction succeeds on a well-formed URL; the call then fails against
-    // a host that will not authenticate. Either way the probe must report down
-    // rather than throw.
     expect(result.ok).toBe(false)
-    expect(result.reason).toBeTruthy()
+    // Assert the exact message, not merely truthiness: the property that
+    // mattered during the 2026-08-06 outage was that the probe surfaces the
+    // UNDERLYING reason — "Redis timeout" (a hang) reads differently from
+    // "Redis error" (a bad credential), and that distinction is what isolated
+    // the cause within minutes.
+    expect(result.reason).toBe('Redis timeout')
   })
 
   it('never rejects — a throwing probe would 500 the health endpoint itself', async () => {
