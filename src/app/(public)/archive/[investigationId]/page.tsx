@@ -15,12 +15,25 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { investigationId } = await params
+
+  // Mirror the page body's preconditions exactly. The body rejects non-UUID
+  // params and requires an `archive_records` row before it renders anything;
+  // without the same predicates here this query reads the citizen's concern
+  // text for ANY investigation id, archived or not. Next 16 discards metadata
+  // when the page throws notFound(), so nothing is emitted today — but the
+  // query is still reading data the page has decided the caller may not see,
+  // and that is one boundary change away from mattering.
+  if (!UUID_RE.test(investigationId)) {
+    return { title: 'Archived Investigation' }
+  }
+
   const db = getDb()
 
   const [inv] = await db
     .select({ concern: investigations.concern })
-    .from(investigations)
-    .where(eq(investigations.id, investigationId))
+    .from(archiveRecords)
+    .innerJoin(investigations, eq(archiveRecords.investigationId, investigations.id))
+    .where(eq(archiveRecords.investigationId, investigationId))
     .limit(1)
 
   return {
