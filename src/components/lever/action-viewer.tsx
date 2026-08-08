@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { Download, Pencil, RefreshCw, Check, X, Printer, FileText } from 'lucide-react'
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
@@ -45,7 +44,6 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   const [exporting, setExporting] = useState(false)
   const [pdfExporting, setPdfExporting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
-  const router = useRouter()
   const abortRef = useRef<AbortController | null>(null)
 
   // Auto-generate if no content on mount
@@ -214,7 +212,6 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   }, [actionId])
 
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.draft
-  const displayContent = mode === 'generating' ? streamedContent : content
   const nextStatus = STATUS_FLOW[status]
 
   return (
@@ -253,23 +250,27 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
               </button>
             )}
 
-            {/* Edit */}
-            <button
-              onClick={() => { setEditContent(content); setMode('editing') }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
-            >
-              <Pencil size={12} strokeWidth={2} />
-              Edit
-            </button>
+            {/* Edit — only available in draft */}
+            {status === 'draft' && (
+              <button
+                onClick={() => { setEditContent(content); setMode('editing') }}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
+              >
+                <Pencil size={12} strokeWidth={2} />
+                Edit
+              </button>
+            )}
 
-            {/* Re-generate */}
-            <button
-              onClick={runGenerate}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
-            >
-              <RefreshCw size={12} strokeWidth={2} />
-              Re-generate
-            </button>
+            {/* Re-generate — not available once filed */}
+            {status !== 'filed' && (
+              <button
+                onClick={runGenerate}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
+              >
+                <RefreshCw size={12} strokeWidth={2} />
+                Re-generate
+              </button>
+            )}
 
             {/* Export */}
             <button
@@ -351,7 +352,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
 
       {/* Error alert */}
       {actionError && (
-        <p role="alert" className="text-xs text-red-400">{actionError}</p>
+        <p role="alert" className="text-xs text-status-danger">{actionError}</p>
       )}
 
       {/* Document display */}

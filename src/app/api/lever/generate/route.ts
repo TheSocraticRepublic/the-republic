@@ -9,7 +9,7 @@ import {
   gadflyTurns,
   investigations,
 } from '@/lib/db/schema'
-import { LEVER_SYSTEM_PROMPT } from '@/lib/ai/prompts/lever-system'
+import { buildLeverPrompt } from '@/lib/ai/prompts/lever-system'
 import { loadJurisdictionModule, detectJurisdiction } from '@/lib/jurisdictions'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
@@ -82,6 +82,13 @@ export async function POST(request: NextRequest) {
   if (!action) {
     return new Response(JSON.stringify({ error: 'Action not found' }), {
       status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  if (action.status === 'filed') {
+    return new Response(JSON.stringify({ error: 'Cannot regenerate a filed action' }), {
+      status: 409,
       headers: { 'Content-Type': 'application/json' },
     })
   }
@@ -188,10 +195,12 @@ export async function POST(request: NextRequest) {
   // Fall back to 'bc' if no jurisdiction detected
   if (!jurisdictionKey) jurisdictionKey = 'bc'
 
+  // Load the jurisdiction module once for prompt building and public body lookup
+  const jurisdictionModule = (await loadJurisdictionModule(jurisdictionKey)) ?? (await loadJurisdictionModule('bc'))
+
   // 4. For FIPPA requests, resolve public body address from jurisdiction module
   let publicBodyContext = ''
   if (action.actionType === 'fippa_request' && publicBodyName) {
-    const jurisdictionModule = await loadJurisdictionModule(jurisdictionKey)
     const pb = jurisdictionModule?.publicBodies.find((b) => b.name === publicBodyName)
     if (pb) {
       publicBodyContext = `\nPublic Body: ${pb.name}\nFOI Address: ${pb.foiAddress}`
@@ -220,11 +229,23 @@ Produce a complete, fileable document. Do not include explanatory preamble — g
   // 6. Stream and update action on finish
   const result = streamText({
     model: anthropic(MODEL),
-    system: LEVER_SYSTEM_PROMPT,
+    system: buildLeverPrompt(jurisdictionModule!),
     messages: [{ role: 'user', content: userMessage }],
     maxOutputTokens: 4096,
     onFinish: async ({ text }) => {
       try {
+        // Re-fetch current status to avoid overwriting a user edit (generate/PATCH race)
+        const [current] = await db
+          .select({ status: leverActions.status })
+          .from(leverActions)
+          .where(eq(leverActions.id, actionId))
+          .limit(1)
+
+        if (current && current.status !== 'draft') {
+          console.warn('[lever/generate] Skipping content save — action status is', current.status)
+          return
+        }
+
         await db
           .update(leverActions)
           .set({ content: text, updatedAt: new Date() })

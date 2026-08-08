@@ -3,8 +3,12 @@ import { AUTH_COOKIE } from '@/lib/auth/middleware'
 import { env } from '@/lib/env'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
+import { checkCsrfOrigin } from '@/lib/api/csrf'
 
 export const POST = safeRoute(async (request: NextRequest) => {
+  const csrfReject = checkCsrfOrigin(request)
+  if (csrfReject) return csrfReject
+
   const userId = request.headers.get('x-user-id') ?? 'anon'
   const { success } = await checkRateLimit(`signout:${userId}`)
   if (!success) {

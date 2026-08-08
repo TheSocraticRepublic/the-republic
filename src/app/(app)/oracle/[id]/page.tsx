@@ -102,7 +102,7 @@ export default async function OracleDocumentPage({ params }: PageProps) {
 
       {/* Document status: failed */}
       {doc.status === 'failed' && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/[0.05] px-5 py-4 text-sm text-red-300">
+        <div className="rounded-xl border border-status-danger/20 bg-status-danger/[0.05] px-5 py-4 text-sm text-status-danger">
           Document processing failed. Please try uploading again.
         </div>
       )}
@@ -121,6 +121,14 @@ export default async function OracleDocumentPage({ params }: PageProps) {
             documentId={doc.id}
             savedAnalysis={savedAnalysis?.summary ?? null}
             hasSavedAnalysis={!!savedAnalysis}
+            savedSections={savedAnalysis ? {
+              summary: typeof savedAnalysis.summary === 'string' ? savedAnalysis.summary : null,
+              keyFindings: Array.isArray(savedAnalysis.keyFindings) ? savedAnalysis.keyFindings : null,
+              powerMap: savedAnalysis.powerMap != null && typeof savedAnalysis.powerMap === 'object' ? savedAnalysis.powerMap as Record<string, unknown> : null,
+              missingInfo: Array.isArray(savedAnalysis.missingInfo) ? savedAnalysis.missingInfo : null,
+              hiddenAssumptions: Array.isArray(savedAnalysis.hiddenAssumptions) ? savedAnalysis.hiddenAssumptions : null,
+              questionsToAsk: Array.isArray(savedAnalysis.questionsToAsk) ? savedAnalysis.questionsToAsk : null,
+            } : undefined}
           />
 
           {/* Cross-arm navigation */}

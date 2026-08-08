@@ -151,7 +151,7 @@ function ProfileSetupForm() {
                 className="w-full rounded-lg border border-border bg-surface-0 px-3.5 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none transition-colors focus:border-border-strong focus:bg-surface-1"
               />
               {nameError && (
-                <p className="mt-1 text-xs text-red-600">{nameError}</p>
+                <p className="mt-1 text-xs text-status-danger">{nameError}</p>
               )}
               <p className="mt-1 text-2xs font-medium text-text-faint">
                 Lowercase letters, numbers, underscores, and hyphens only
@@ -182,7 +182,7 @@ function ProfileSetupForm() {
             </div>
 
             {error && (
-              <p className="text-xs text-red-600">{error}</p>
+              <p className="text-xs text-status-danger">{error}</p>
             )}
 
             <button

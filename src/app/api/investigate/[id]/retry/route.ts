@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { checkTightRateLimit } from '@/lib/rate-limit'
+import { checkTightRateLimit, checkDailyAiLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { investigations } from '@/lib/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
@@ -35,6 +35,13 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
+  }
+
+  const aiDaily = await checkDailyAiLimit(userId)
+  if (!aiDaily.success) {
+    return new Response(JSON.stringify({
+      error: 'Daily AI usage limit reached. Try again tomorrow.',
+    }), { status: 429, headers: { 'Content-Type': 'application/json' } })
   }
 
   const { id } = await params

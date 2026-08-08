@@ -46,7 +46,7 @@ export function DeleteAccount() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="mt-4 rounded-lg border border-[var(--accent-lever)]/50 px-3 py-1.5 text-xs font-medium text-[#E08585] transition-colors hover:bg-[var(--accent-lever)]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-lever)]/60"
+          className="mt-4 rounded-lg border border-[var(--accent-lever)]/50 px-3 py-1.5 text-xs font-medium text-status-danger transition-colors hover:bg-[var(--accent-lever)]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-lever)]/60"
         >
           Delete account
         </button>
@@ -64,7 +64,7 @@ export function DeleteAccount() {
             className="w-full max-w-xs rounded-lg border border-border bg-surface-1 px-3 py-1.5 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-lever)]/60"
           />
           {error && (
-            <p role="alert" className="text-xs text-[#E08585]">
+            <p role="alert" className="text-xs text-status-danger">
               {error}
             </p>
           )}

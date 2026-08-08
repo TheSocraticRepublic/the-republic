@@ -1,7 +1,7 @@
 import type { JurisdictionModule } from '../types'
-import { onConcernCategories } from './concern-categories'
+import { onConcernCategories, getDocumentStructureContext } from './concern-categories'
 import { onPublicBodies } from './public-bodies'
-import { onPortals } from './portals'
+import { onPortals, getJurisdictionPortalContext } from './portals'
 import { onFoiFramework } from './foi-framework'
 import { onAssessmentFramework } from './assessment-framework'
 
@@ -14,6 +14,8 @@ const onModule: JurisdictionModule = {
   concernCategories: onConcernCategories,
   publicBodies: onPublicBodies,
   portals: onPortals,
+  getDocumentStructureContext,
+  getJurisdictionPortalContext,
 }
 
 export default onModule

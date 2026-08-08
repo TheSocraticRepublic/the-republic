@@ -7,6 +7,7 @@
 // Next.js/Sentry `instrumentation-client.ts` convention:
 // https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
 import * as Sentry from '@sentry/nextjs'
+import { scrubEventPII } from '@/lib/sentry-scrub'
 
 // PII-1 defense-in-depth: strips everything from `?` (or `#`) onward, so any
 // URL string handed to a Sentry hook never carries a query string past this
@@ -32,30 +33,7 @@ Sentry.init({
   // error payloads.
   sendDefaultPii: false,
   beforeSend(event) {
-    if (event.request) {
-      delete event.request.data
-      delete event.request.cookies
-      // PII-1: request.url and query_string carry raw query params — on
-      // this app that includes `?postalCode=...` (parliament lookup,
-      // investigate). Drop both rather than trying to allowlist/redact
-      // params one at a time.
-      delete event.request.url
-      delete event.request.query_string
-      if (event.request.headers) {
-        delete event.request.headers['cookie']
-        delete event.request.headers['Cookie']
-        delete event.request.headers['authorization']
-        delete event.request.headers['Authorization']
-        delete event.request.headers['x-user-id']
-        delete event.request.headers['x-user-email']
-      }
-    }
-    if (event.user) {
-      delete event.user.email
-      delete event.user.ip_address
-      delete event.user.username
-    }
-    return event
+    return scrubEventPII(event)
   },
   // PII-1: the default Breadcrumbs integration records every fetch/xhr as
   // `breadcrumb.data.url` and every client-side route change as
@@ -81,25 +59,7 @@ Sentry.init({
   },
   // PII-1: transactions carry event.request.url too (route + query string).
   beforeSendTransaction(event) {
-    if (event.request) {
-      delete event.request.data
-      delete event.request.cookies
-      delete event.request.url
-      delete event.request.query_string
-      if (event.request.headers) {
-        delete event.request.headers['cookie']
-        delete event.request.headers['Cookie']
-        delete event.request.headers['authorization']
-        delete event.request.headers['Authorization']
-        delete event.request.headers['x-user-id']
-        delete event.request.headers['x-user-email']
-      }
-    }
-    if (event.user) {
-      delete event.user.email
-      delete event.user.ip_address
-      delete event.user.username
-    }
+    scrubEventPII(event)
     // PII-1: `http.client` spans (tracesSampleRate: 0.1) carry the request
     // URL — including its query string — in `span.description` and in
     // `span.data` (attribute keys vary by SDK version: `url`, `http.url`,

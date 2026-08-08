@@ -5,16 +5,27 @@ import { useCompletion } from '@ai-sdk/react'
 import { Eye, RefreshCw } from 'lucide-react'
 import { AnalysisView } from './analysis-view'
 
+export interface SavedSections {
+  summary: string | null
+  keyFindings: unknown[] | null
+  powerMap: Record<string, unknown> | null
+  missingInfo: unknown[] | null
+  hiddenAssumptions: unknown[] | null
+  questionsToAsk: unknown[] | null
+}
+
 interface OracleAnalysisPanelProps {
   documentId: string
   savedAnalysis: string | null
   hasSavedAnalysis: boolean
+  savedSections?: SavedSections
 }
 
 export function OracleAnalysisPanel({
   documentId,
   savedAnalysis,
   hasSavedAnalysis,
+  savedSections,
 }: OracleAnalysisPanelProps) {
   const [hasStarted, setHasStarted] = useState(hasSavedAnalysis)
 
@@ -84,14 +95,18 @@ export function OracleAnalysisPanel({
 
       {/* Error state */}
       {error && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/[0.05] px-4 py-3 text-sm text-red-300">
+        <div className="rounded-xl border border-status-danger/20 bg-status-danger/[0.05] px-4 py-3 text-sm text-status-danger">
           Analysis failed: {error.message}. Try again.
         </div>
       )}
 
       {/* Content */}
       {showContent && (
-        <AnalysisView content={displayContent} isStreaming={isLoading} />
+        <AnalysisView
+          content={displayContent}
+          isStreaming={isLoading}
+          savedSections={!completion && !isLoading ? savedSections : undefined}
+        />
       )}
 
       {/* Pre-analysis state */}

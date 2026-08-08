@@ -3,11 +3,8 @@ import { View, Text, StyleSheet } from '@react-pdf/renderer'
 import {
   RepublicDocument,
   RepublicPage,
-  AccentBand,
   Wordmark,
   SectionHeading,
-  FindingBlock,
-  PullQuote,
   SourceFooter,
 } from '../primitives'
 import { colors, type as typeScale, space } from '../styles'

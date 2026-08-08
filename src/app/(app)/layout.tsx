@@ -37,15 +37,14 @@ export default async function AppLayout({
         displayName = profileRows[0].displayName
       } else {
         const currentPath =
-          headersList.get('x-invoke-path') ??
-          headersList.get('x-pathname') ??
-          '/investigate'
+          headersList.get('x-pathname') ?? '/investigate'
 
         if (!currentPath.startsWith('/profile/setup')) {
           redirect(`/profile/setup?redirect=${encodeURIComponent(currentPath)}`)
         }
       }
-    } catch {
+    } catch (e) {
+      if (e && typeof e === 'object' && 'digest' in e) throw e
       displayName = 'Dev User'
     }
   }

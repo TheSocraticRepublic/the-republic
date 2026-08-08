@@ -93,4 +93,30 @@ else
   echo "OK: only the allowlisted player-card.tsx categorical hexes remain"
 fi
 
+echo
+echo "== Gate 3: red-family Tailwind palette classes in src/ =="
+# Danger signals belong on the status token (text-status-danger etc.), not
+# the raw red palette -- red-400 happens to equal the dark --status-danger
+# value today, so palette classes render "correctly" in dark and then break
+# silently in .light-scope / island surfaces where the token re-resolves.
+# Swept to zero by the 2026-08-05 code-refresh (~35 sites).
+#
+# Allowlist: analysis-view.tsx POWER_MAP_ENTRIES -- a five-way CATEGORICAL
+# palette for power-map roles (Oversight Gaps happens to be red); it is not
+# a status signal. Same ruling class as player-card.tsx in Gate 2. The
+# emerald/yellow/amber families are NOT gated yet -- their remaining sites
+# are design-batch work (tinted body copy, archive washes); extend this
+# gate when that batch lands.
+# Allowlist anchored on the 'Oversight Gaps' entry text, not just the file —
+# so a future non-categorical red-400 elsewhere in analysis-view still trips.
+RED_HITS=$(grep -rnE '(text|bg|border)-red-[0-9]{3}' src/ 2>/dev/null \
+  | grep -vE "^src/components/oracle/analysis-view\.tsx:[0-9]+:.*'Oversight Gaps'.*text-red-400")
+if [ -n "$RED_HITS" ]; then
+  echo "FAIL: raw red palette class(es) found -- use text-status-danger / bg-status-danger/N / border-status-danger/N:"
+  echo "$RED_HITS"
+  FAIL=1
+else
+  echo "OK: 0 hits outside the allowlisted categorical palette"
+fi
+
 exit $FAIL

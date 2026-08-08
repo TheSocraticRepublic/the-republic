@@ -1,5 +1,6 @@
 import type { AssessmentFramework } from '../types'
 
+// NOTE: These statute and registry references have NOT
 // been verified against current Alberta legislation. Confirm with Alberta Environment
 // and Protected Areas before relying on these references.
 

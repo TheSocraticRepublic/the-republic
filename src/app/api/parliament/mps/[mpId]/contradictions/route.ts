@@ -16,8 +16,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
 import { eq, and, desc } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
-
-const CURRENT_SESSION = '45-1'
+import { CURRENT_PARLIAMENT_SESSION as CURRENT_SESSION } from '@/lib/parliament/constants'
 
 interface Speech {
   url: string

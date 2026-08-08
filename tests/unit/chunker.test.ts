@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { chunkDocument, type Chunk } from '@/lib/documents/chunker'
+import { chunkDocument } from '@/lib/documents/chunker'
 
 const MAX_CHARS = 2048
 

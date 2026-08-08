@@ -90,7 +90,7 @@ export function VoteExplanation({ voteId, existingExplanation }: VoteExplanation
       <MarkdownProse content={explanation} />
 
       {error && (
-        <p className="mt-2 text-xs text-red-400">Failed to generate explanation.</p>
+        <p className="mt-2 text-xs text-status-danger">Failed to generate explanation.</p>
       )}
     </div>
   )

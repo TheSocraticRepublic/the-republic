@@ -104,11 +104,11 @@ src/
     │   ├── url-validation.ts   # Actor URI validation
     │   └── webfinger.ts        # WebFinger JRD generation
     ├── jurisdictions/
-    │   ├── bc/                 # British Columbia (verified)
-    │   ├── ab/                 # Alberta (unverified)
-    │   ├── on/                 # Ontario (unverified)
-    │   ├── index.ts            # Registry and lookup
-    │   ├── match.ts            # Jurisdiction detection from text
+    │   ├── bc/                 # British Columbia (verified: true)
+    │   ├── ab/                 # Alberta (verified: false — surfaces a caution)
+    │   ├── on/                 # Ontario (verified: false — surfaces a caution)
+    │   ├── index.ts            # Registry, lookup, resolveJurisdictionModuleId
+    │   ├── match.ts            # Concern→document-type matching (module-parameterized)
     │   ├── types.ts            # Shared jurisdiction interfaces
     │   └── CONTRIBUTING.md     # Module authoring guide
     ├── credentials/
@@ -117,8 +117,8 @@ src/
     ├── review/                 # Peer review business logic
     ├── forum/                  # Forum business logic
     ├── campaign/               # Campaign layer logic
-    ├── lever/                  # Civic action generation
-    ├── mirror/                 # Cross-jurisdiction comparison
+    ├── activity/               # Recent-activity merge for the Investigate landing
+    ├── investigation/          # Briefing generation (run-briefing, constants)
     ├── parliament/             # OpenParliament + Represent API clients, sync
     ├── pdf/                    # @react-pdf/renderer templates + primitives
     ├── archive/                # Archive bundles, hashing, diff, shadow detection
@@ -133,7 +133,8 @@ src/
     ├── scout/                  # Document ingestion and search
     ├── profile/                # User profile logic
     ├── documents/              # Document parsing and chunking
-    └── rate-limit.ts           # Upstash rate limiter
+    ├── api/csrf.ts             # Origin check for the matcher-excluded auth routes
+    └── rate-limit.ts           # Upstash limiter (guarded build + call, health probe)
 ```
 
 Cave-layer components are not co-located in a single directory. They are distributed across `components/investigation/`, `components/briefing/`, `components/lens/`, and `components/campaign/` — each directory owns the components for its layer.
@@ -148,7 +149,7 @@ An investigation is the top-level container for a citizen's inquiry. It holds do
 
 **Oracle** (`src/lib/ai/prompts/`) — Analyzes documents. Streaming responses via AI SDK. Produces: plain-language summaries, power maps (beneficiaries / decision-makers / affected / funding sources / oversight gaps), missing information, hidden assumptions, and questions to ask. The Oracle is a lens, not an advocate — it surfaces structure, not conclusions.
 
-**Mirror** (`src/lib/mirror/`) — Cross-jurisdiction comparison. Finds what other provinces or municipalities have done with the same policy problem. Only cites real jurisdictions with real data.
+**Mirror** (`src/app/api/mirror/` + `src/lib/ai/prompts/mirror-system.ts`) — Cross-jurisdiction comparison. Finds what other provinces or municipalities have done with the same policy problem. Only cites real jurisdictions with real data — enforced by seeding the prompt with a DB-verified jurisdiction reference block; the streamed output itself is not post-validated (a known gap: model compliance, not code, keeps fabricated jurisdictions out).
 
 ### The Lens
 
@@ -160,15 +161,86 @@ An investigation is the top-level container for a citizen's inquiry. It holds do
 
 ### The Campaign
 
-**Lever** (`src/lib/lever/`) — Generates fileable civic documents. FOI requests use template-based citation — never AI-generated statutory citations. The Lever knows the actual section numbers because jurisdiction modules contain them. A request that cites the wrong section number fails. This constraint is why template-based citation is non-negotiable.
+**Lever** (`src/app/api/lever/{actions,generate,export}` + `src/lib/ai/prompts/lever-system.ts` + `src/lib/jurisdictions/`) — Generates fileable civic documents. Statutory citations live in jurisdiction modules and the system prompt, never invented by the model — a request that cites the wrong section number fails, which is why template-based citation is non-negotiable. UPDATED (JURIS-1, shipped 2026-08-07): the prompt is no longer BC-hardcoded. `buildLeverPrompt(module)` interpolates the *resolved* jurisdiction's FOI framework (statute name, full citation, every section reference), so an Alberta request now carries FOIP rather than BC FIPPA. The guarantee remains *prompt-level* — the model transcribes citations supplied to it rather than the module's `letterTemplate` being spliced in code, and that splice mechanism is still unwired. What changed is which jurisdiction's citations reach the prompt, not the mechanism carrying them. AB and ON now ship `verified: false`, which appends a practitioner-verification caution to the generated output; before this batch the flag had zero consumers. Verifying the AB/ON citation content itself is JURIS-2 and needs a practitioner, not a model.
 
 Action types: `fippa_request`, `public_comment`, `policy_brief`, `legal_template`, `media_spec`, `talking_points`, `coalition_template`.
+
+## Jurisdiction Resolution
+
+Added by JURIS-1 (2026-08-07). Before it, the briefing pipeline, Scout, the
+Lever, `match.ts` and the Lever's public-body picker all called
+`loadJurisdictionModule('bc')` directly — so an Alberta citizen received BC
+FIPPA citations, BC public bodies, and BC document-type vocabulary regardless of
+the jurisdiction attached to their investigation.
+
+`resolveJurisdictionModuleId({ province, jurisdictionName, concern })` in
+`src/lib/jurisdictions/index.ts` is now the single entry point. Resolution
+order: the DB jurisdiction row's `province` (authoritative), then
+`detectJurisdiction()` keyword matching, then `'bc'` with a `console.warn`. The
+fallback is deliberate and temporary-but-honest — it matches the pre-JURIS-1
+behaviour rather than silently failing, and the warn makes an unmatched
+jurisdiction (Quebec, the Maritimes) observable rather than invisible.
+
+Two functions were added to the `JurisdictionModule` surface —
+`getDocumentStructureContext()` and `getJurisdictionPortalContext(name)` — so
+consumers reach them through the resolved module rather than importing from
+`jurisdictions/bc/*`. No `from '@/lib/jurisdictions/bc'` import remains in the
+pipeline; the only survivors are two explicit fallback paths in
+`new-action-dialog.tsx`.
+
+The three system prompts (`briefing-system`, `lever-system`, `scout-system`) are
+builders rather than constants, interpolating the resolved module's FOI
+framework. Each keeps a backward-compatible BC-bound export for tests, and Razor
+verified the BC output is byte-identical to the pre-JURIS-1 prompt — AB/ON
+changing is the point; BC changing would have been a regression.
+
+`foiFramework.verified` finally has a consumer: `false` appends a
+practitioner-verification caution to generated output. Verifying the AB/ON
+citation *content* remains open (JURIS-2) and requires a practitioner.
+
+## Health and Liveness
+
+`/api/health` probes **Postgres and Redis** and returns 503 when either is down.
+Both are hard dependencies: the rate limiter fails closed in production, so an
+unreachable Redis turns every auth route into a 429 — login is down either way,
+and the endpoint must be able to say so.
+
+`probeRateLimiter()` (`src/lib/rate-limit.ts`) deliberately exercises the same
+path the routes use — `buildLimiter()` construction plus a real Redis
+round-trip on a dedicated key — so health goes red exactly when auth would
+break, rather than merely when Redis is unreachable by some other measure.
+
+This shape is a direct product of the 2026-08-06 outage, where the endpoint
+probed Postgres alone and returned 200 with `database: ok` while every
+rate-limited route returned 500. A probe that cannot detect the outage is worse
+than no probe, because it manufactures confidence.
+
+The probe doubles as the Redis keep-alive. `.github/workflows/keepalive.yml`
+runs every 10 minutes, so Redis receives ~144 round-trips a day and Upstash's
+14-day idle-deletion timer can never start — the original cause, since the old
+keepalive ran `SELECT 1` against Postgres and never touched Redis. The residual
+dependency is GitHub's scheduler, which disables workflows after 60 days of repo
+inactivity; an external uptime monitor would sever that coupling.
+
+`email_configured` checks only that `RESEND_API_KEY` is present. It is
+deliberately *not* a live API call — a per-ping third-party request would spend
+quota and make our own liveness signal depend on someone else's uptime. The name
+is chosen so it cannot be misread as proof that delivery works.
 
 ## The Vote Tracker
 
 Federal legislator accountability (`src/lib/parliament/`, `/votes` routes, `/api/parliament`). Data comes from openparliament.ca (MPs, votes, bills, ballots) and the Represent API (postal code → riding → MP). Vote, bill, and MP data is synced into local tables via `/api/parliament/sync`; postal-code lookups call the Represent API at request time. AI features (bill summaries, vote explanations, voting-pattern analysis, said-X-voted-Y contradiction detection) are versioned by prompt and cached in the database. Letter generation routes through the Lever. Investigations can attach relevant votes via postal code on the concern form.
 
 ## The Forum
+
+**Feature gate:** the entire Forum surface ships DISABLED. `isForumEnabled()`
+(`src/lib/forum/flag.ts`) requires the literal string `'true'` in
+`FORUM_ENABLED` — fail-closed — and gates the forum pages, all `/api/forum/*`
+handlers, the AP object endpoints (`/ap/threads`, `/ap/posts`), outbox forum
+items, and forum-content federation delivery. The sections below describe the
+built system behind that gate. One deliberate nuance: actor/inbox/webfinger/
+followers stay live while the forum is off, so remote followers can accumulate
+during the closed period and receive fan-out the moment the flag flips.
 
 ### Threads and Posts
 
@@ -206,7 +278,7 @@ Credential-weighted. A user with high civic credentials carries more weight in m
 
 ## Federation
 
-ActivityPub 1.0 over HTTPS. HTTP Signatures (RFC 9421 profile, via `jose`).
+ActivityPub 1.0 over HTTPS. HTTP Signatures implement the draft-cavage-http-signatures-12 profile (the Mastodon-compatible one — deliberately NOT RFC 9421, whose wire format the Fediverse does not yet speak), via `jose`.
 
 **Actor model:** Each `user_profile` with an `ap_handle` is an AP Actor. Actor URIs are keyed on `AP_DOMAIN` — this value is immutable. The actor JSON-LD is served at `/u/{handle}`. The public key is embedded in the actor document.
 
@@ -230,6 +302,18 @@ ActivityPub 1.0 over HTTPS. HTTP Signatures (RFC 9421 profile, via `jose`).
 8. All API routes read `x-user-id` from headers — never from client-supplied request body or query params
 
 No OAuth. No passwords. No session tokens stored server-side beyond the short-lived magic code.
+
+**CSRF on the auth routes.** The middleware matcher excludes `api/auth/`, which
+removes not just JWT-gating (intended — these routes run pre-authentication) but
+also the Origin check every other state-changing route gets. That left
+`send-code`, `verify-code` and `signout` open to login CSRF: a cross-site form
+POST could redeem an attacker's code in the victim's browser, silently landing
+the victim's subsequent investigations and uploads in the attacker's account.
+`checkCsrfOrigin()` (`src/lib/api/csrf.ts`) is a faithful extraction of the
+middleware check and is called at the top of all three handlers, before rate
+limiting, so a forged request cannot even consume budget. The matcher is
+deliberately left alone — routing auth routes through `withAuth` would redirect
+them to `/login`.
 
 ## AI Integration
 

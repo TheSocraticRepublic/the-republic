@@ -61,7 +61,7 @@ export const POST = safeRoute(async (request: NextRequest, { params }: RouteCont
     )
   }
 
-  await db
+  const updated = await db
     .update(investigations)
     .set({
       status: 'cancelled',
@@ -75,6 +75,14 @@ export const POST = safeRoute(async (request: NextRequest, { params }: RouteCont
         sql`${investigations.status} = 'generating'`
       )
     )
+    .returning({ id: investigations.id })
+
+  if (updated.length === 0) {
+    return new Response(
+      JSON.stringify({ error: 'Investigation is no longer in a cancellable state' }),
+      { status: 409, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
 
   return new Response(JSON.stringify({ ok: true, status: 'cancelled' }), {
     headers: { 'Content-Type': 'application/json' },

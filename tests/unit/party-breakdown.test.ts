@@ -12,59 +12,115 @@ describe('parsePartyVotes', () => {
     expect(parsePartyVotes({})).toEqual([])
   })
 
-  it('parses standard openparliament party_votes format', () => {
+  it('parses real openparliament party_votes format', () => {
     const input = [
       {
         vote: 'Yes',
+        disagreement: 0.02,
         party: { short_name: { en: 'Liberal' }, name: { en: 'Liberal Party of Canada' } },
-        party_size: 150,
       },
       {
         vote: 'No',
+        disagreement: 0,
         party: { short_name: { en: 'Conservative' }, name: { en: 'Conservative Party of Canada' } },
-        party_size: 120,
       },
     ]
     const result = parsePartyVotes(input)
     expect(result).toHaveLength(2)
 
-    const liberal = result.find((r) => r.party === 'Liberal')
-    expect(liberal).toBeDefined()
-    expect(liberal!.yea).toBe(150)
-    expect(liberal!.nay).toBe(0)
+    expect(result[0]).toEqual({
+      party: 'Liberal',
+      position: 'Yes',
+      disagreement: 0.02,
+    })
 
-    const conservative = result.find((r) => r.party === 'Conservative')
-    expect(conservative).toBeDefined()
-    expect(conservative!.nay).toBe(120)
-    expect(conservative!.yea).toBe(0)
+    expect(result[1]).toEqual({
+      party: 'Conservative',
+      position: 'No',
+      disagreement: 0,
+    })
   })
 
-  it('handles missing party_size by defaulting to 1', () => {
+  it('normalizes yea/nay vote values', () => {
     const input = [
       {
-        vote: 'Yes',
-        party: { short_name: { en: 'Green' } },
+        vote: 'Yea',
+        disagreement: 0,
+        party: { short_name: { en: 'NDP' } },
+      },
+      {
+        vote: 'Nay',
+        disagreement: 0.1,
+        party: { short_name: { en: 'Bloc' } },
       },
     ]
     const result = parsePartyVotes(input)
-    expect(result[0].yea).toBe(1)
+    expect(result[0].position).toBe('Yes')
+    expect(result[1].position).toBe('No')
   })
 
   it('handles Paired votes', () => {
     const input = [
       {
         vote: 'Paired',
+        disagreement: 0,
         party: { short_name: { en: 'Liberal' } },
-        party_size: 2,
       },
     ]
     const result = parsePartyVotes(input)
-    expect(result[0].paired).toBe(2)
+    expect(result[0].position).toBe('Paired')
+  })
+
+  it('maps unknown vote values to Unknown', () => {
+    const input = [
+      {
+        vote: 'Abstain',
+        disagreement: 0,
+        party: { short_name: { en: 'Green' } },
+      },
+    ]
+    const result = parsePartyVotes(input)
+    expect(result[0].position).toBe('Unknown')
+  })
+
+  it('falls back to party name when short_name missing', () => {
+    const input = [
+      {
+        vote: 'Yes',
+        disagreement: 0,
+        party: { name: { en: 'Green Party of Canada' } },
+      },
+    ]
+    const result = parsePartyVotes(input)
+    expect(result[0].party).toBe('Green Party of Canada')
   })
 
   it('falls back to Unknown for missing party name', () => {
-    const input = [{ vote: 'Yes' }]
+    const input = [{ vote: 'Yes', disagreement: 0 }]
     const result = parsePartyVotes(input)
     expect(result[0].party).toBe('Unknown')
+  })
+
+  it('handles missing disagreement as null', () => {
+    const input = [
+      {
+        vote: 'Yes',
+        party: { short_name: { en: 'Liberal' } },
+      },
+    ]
+    const result = parsePartyVotes(input)
+    expect(result[0].disagreement).toBeNull()
+  })
+
+  it('shows disagreement when present and > 0', () => {
+    const input = [
+      {
+        vote: 'No',
+        disagreement: 0.15,
+        party: { short_name: { en: 'Conservative' } },
+      },
+    ]
+    const result = parsePartyVotes(input)
+    expect(result[0].disagreement).toBe(0.15)
   })
 })

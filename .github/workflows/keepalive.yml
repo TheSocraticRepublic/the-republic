@@ -1,23 +1,62 @@
-name: Keep-alive
+name: Health monitor
 
-# Prevents the free-tier Supabase project from auto-pausing after ~7 idle days
-# (which caused a full production outage on 2026-06-18). /api/health runs a
-# `SELECT 1` against the database, so each ping counts as DB activity and resets
-# the idle timer. Twice weekly keeps gaps to 3-4 days — safely under the ~7-day
-# pause threshold, with margin for a delayed run. A non-200 fails the job, which
-# emails the repo owner: a lightweight uptime signal until real alerting is set up.
+# Two jobs in one workflow, because they share an endpoint but not a purpose.
+#
+# 1. UPTIME. /api/health probes Postgres AND Redis and returns 503 if either is
+#    down, so a non-200 here means the site is not serving. Runs every 10
+#    minutes. The previous twice-weekly cadence left a 3.5-day blind window,
+#    which is exactly how the 2026-08-06 auth outage went unnoticed: every
+#    rate-limited route was returning 500 and the only monitor was asleep.
+#
+# 2. KEEP-ALIVE. Each ping runs a `SELECT 1`, which counts as DB activity and
+#    resets the Supabase idle timer (a free-tier auto-pause caused a full
+#    outage on 2026-06-18). The 10-minute cadence covers this for free.
+#
+# LIMITATION, stated plainly: GitHub's scheduled runners are best-effort. Runs
+# can be delayed under load, and GitHub disables schedules on repos with no
+# activity for 60 days. This is a real improvement over twice-weekly, not a
+# substitute for an external uptime service with paging. Treat it as the floor.
 
 on:
   schedule:
-    - cron: '0 9 * * 1,4' # Mondays and Thursdays, 09:00 UTC
+    - cron: '*/10 * * * *'
   workflow_dispatch: {}
+
+# Never let a slow run pile up on the next one.
+concurrency:
+  group: health-monitor
+  cancel-in-progress: false
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
-      - name: Ping /api/health (DB-aware)
+      - name: Probe /api/health
         run: |
-          code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 https://opencave.ca/api/health)
-          echo "health endpoint returned: $code"
-          test "$code" = "200"
+          set -uo pipefail
+
+          body=$(curl -sS --max-time 25 -w '\n%{http_code}' https://opencave.ca/api/health) || {
+            echo "::error::/api/health unreachable — request failed outright"
+            exit 1
+          }
+
+          code=$(printf '%s' "$body" | tail -n1)
+          json=$(printf '%s' "$body" | sed '$d')
+
+          echo "HTTP $code"
+          echo "$json"
+
+          if [ "$code" = "200" ]; then
+            echo "healthy"
+            exit 0
+          fi
+
+          # Name the failing dependency in the job output so the notification
+          # email says WHAT broke, not merely that something did.
+          echo "::error::/api/health returned $code"
+          for dep in database redis email_configured; do
+            state=$(printf '%s' "$json" | grep -o "\"$dep\":\"[a-z_]*\"" | cut -d'"' -f4)
+            [ -n "$state" ] && [ "$state" != "ok" ] && echo "::error::  $dep = $state"
+          done
+          exit 1

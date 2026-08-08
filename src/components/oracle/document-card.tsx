@@ -20,17 +20,17 @@ const STATUS_CONFIG: Record<DocumentStatus, { label: string; icon: typeof Clock;
   processing: {
     label: 'Processing',
     icon: Clock,
-    color: 'text-yellow-400',
+    color: 'text-status-warning',
   },
   ready: {
     label: 'Ready',
     icon: CheckCircle,
-    color: 'text-emerald-400',
+    color: 'text-status-success',
   },
   failed: {
     label: 'Failed',
     icon: AlertCircle,
-    color: 'text-red-400',
+    color: 'text-status-danger',
   },
 }
 

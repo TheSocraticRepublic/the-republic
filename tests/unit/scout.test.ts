@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { SCOUT_SYSTEM_PROMPT, SCOUT_PROMPT_VERSION } from '@/lib/ai/prompts/scout-system'
 import {
-  CONCERN_CATEGORIES,
-  JURISDICTION_PORTALS,
+  bcConcernCategories as CONCERN_CATEGORIES,
   getDocumentStructureContext,
+} from '@/lib/jurisdictions/bc/concern-categories'
+import {
+  bcPortals as JURISDICTION_PORTALS,
   getJurisdictionPortalContext,
-} from '@/lib/scout/document-structures'
+} from '@/lib/jurisdictions/bc/portals'
 
 describe('Scout prompt', () => {
   it('includes all 5 required output sections', () => {

@@ -1,7 +1,7 @@
 import type { JurisdictionModule } from '../types'
-import { bcConcernCategories } from './concern-categories'
+import { bcConcernCategories, getDocumentStructureContext } from './concern-categories'
 import { bcPublicBodies } from './public-bodies'
-import { bcPortals } from './portals'
+import { bcPortals, getJurisdictionPortalContext } from './portals'
 import { bcFoiFramework } from './foi-framework'
 import { bcAssessmentFramework } from './assessment-framework'
 
@@ -14,6 +14,8 @@ const bcModule: JurisdictionModule = {
   concernCategories: bcConcernCategories,
   publicBodies: bcPublicBodies,
   portals: bcPortals,
+  getDocumentStructureContext,
+  getJurisdictionPortalContext,
 }
 
 export default bcModule

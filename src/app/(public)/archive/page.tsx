@@ -37,8 +37,8 @@ export default async function ArchivePage({
         archivedBy: userProfiles.displayName,
       })
       .from(archiveRecords)
-      .innerJoin(investigations, eq(archiveRecords.investigationId, investigations.id))
-      .innerJoin(userProfiles, eq(archiveRecords.userId, userProfiles.userId))
+      .leftJoin(investigations, eq(archiveRecords.investigationId, investigations.id))
+      .leftJoin(userProfiles, eq(archiveRecords.userId, userProfiles.userId))
       .orderBy(desc(archiveRecords.createdAt))
       .limit(PAGE_SIZE)
       .offset(offset),
@@ -83,11 +83,11 @@ export default async function ArchivePage({
                 <ArchiveCard
                   key={record.investigationId}
                   investigationId={record.investigationId}
-                  concern={record.concern}
+                  concern={record.concern ?? 'Archived investigation'}
                   jurisdictionName={record.jurisdictionName ?? null}
                   preservedAt={record.preservedAt ?? new Date(0)}
                   archiveStatus={record.archiveStatus}
-                  archivedBy={record.archivedBy}
+                  archivedBy={record.archivedBy ?? 'Account deleted'}
                 />
               ))}
             </div>

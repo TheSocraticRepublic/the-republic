@@ -66,6 +66,7 @@ export async function deliverActivity(
       headers,
       body,
       signal: controller.signal,
+      redirect: 'manual',
     })
 
     if (!response.ok) {

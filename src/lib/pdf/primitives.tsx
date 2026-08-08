@@ -4,7 +4,6 @@ import {
   Page,
   View,
   Text,
-  Link,
   StyleSheet,
 } from '@react-pdf/renderer'
 import { colors, type as typeScale, space, shared } from './styles'

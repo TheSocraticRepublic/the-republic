@@ -2,10 +2,12 @@
 
 import { clsx } from 'clsx'
 import type React from 'react'
+import type { SavedSections } from './oracle-analysis-panel'
 
 interface AnalysisViewProps {
   content: string
   isStreaming?: boolean
+  savedSections?: SavedSections
 }
 
 interface ParsedSection {
@@ -74,7 +76,7 @@ function parseKeyFindings(content: string): Array<{ text: string; hasQuote: bool
 function parseBullets(content: string): string[] {
   return content
     .split('\n')
-    .map((l) => l.replace(/^[-*\d.]\s+/, '').trim())
+    .map((l) => l.replace(/^(?:[-*]|\d+\.)\s+/, '').trim())
     .filter(Boolean)
 }
 
@@ -275,7 +277,73 @@ const SECTION_RENDERERS: Record<
   'Questions to Ask': (c) => <QuestionsSection content={c} />,
 }
 
-export function AnalysisView({ content, isStreaming = false }: AnalysisViewProps) {
+/**
+ * Render from saved jsonb sections (bypass parseSections which requires ## headings).
+ */
+function renderSavedSections(saved: SavedSections): React.ReactNode {
+  const parts: React.ReactNode[] = []
+
+  if (saved.summary) {
+    parts.push(<div key="summary"><PlainSummary content={saved.summary} /></div>)
+  }
+
+  if (Array.isArray(saved.keyFindings) && saved.keyFindings.length > 0) {
+    const text = saved.keyFindings
+      .map((f) => (typeof f === 'string' ? f : ''))
+      .filter(Boolean)
+      .join('\n')
+    if (text) {
+      parts.push(<div key="keyFindings"><KeyFindingsSection content={text} /></div>)
+    }
+  }
+
+  if (saved.powerMap != null && typeof saved.powerMap === 'object') {
+    const raw = typeof (saved.powerMap as Record<string, unknown>).raw === 'string'
+      ? (saved.powerMap as Record<string, unknown>).raw as string
+      : JSON.stringify(saved.powerMap)
+    parts.push(<div key="powerMap"><PowerMapSection content={raw} /></div>)
+  }
+
+  if (Array.isArray(saved.missingInfo) && saved.missingInfo.length > 0) {
+    const text = saved.missingInfo
+      .map((f) => (typeof f === 'string' ? f : ''))
+      .filter(Boolean)
+      .join('\n')
+    if (text) {
+      parts.push(<div key="missingInfo"><BulletSection heading="What is Missing" content={text} /></div>)
+    }
+  }
+
+  if (Array.isArray(saved.hiddenAssumptions) && saved.hiddenAssumptions.length > 0) {
+    const text = saved.hiddenAssumptions
+      .map((f) => (typeof f === 'string' ? f : ''))
+      .filter(Boolean)
+      .join('\n')
+    if (text) {
+      parts.push(<div key="hiddenAssumptions"><BulletSection heading="Hidden Assumptions" content={text} /></div>)
+    }
+  }
+
+  if (Array.isArray(saved.questionsToAsk) && saved.questionsToAsk.length > 0) {
+    const text = saved.questionsToAsk
+      .map((f) => (typeof f === 'string' ? f : ''))
+      .filter(Boolean)
+      .join('\n')
+    if (text) {
+      parts.push(<div key="questionsToAsk"><QuestionsSection content={text} /></div>)
+    }
+  }
+
+  return parts.length > 0 ? <div>{parts}</div> : null
+}
+
+export function AnalysisView({ content, isStreaming = false, savedSections }: AnalysisViewProps) {
+  // When savedSections are provided and we're not streaming/completing, render from saved data
+  if (savedSections && !isStreaming) {
+    const rendered = renderSavedSections(savedSections)
+    if (rendered) return <>{rendered}</>
+  }
+
   const sections = parseSections(content)
 
   // During streaming, if we haven't hit any ## headings yet, show raw content

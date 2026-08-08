@@ -1,5 +1,6 @@
 import type { AssessmentFramework } from '../types'
 
+// NOTE: These statute and registry references have NOT
 // been verified against current Ontario legislation. Confirm with the Ministry of the
 // Environment, Conservation and Parks before relying on these references.
 

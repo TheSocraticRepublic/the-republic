@@ -60,9 +60,9 @@ The schema comment on `actor_keys` documents this requirement. It is not enforce
 
 ### Magic Code Expiry
 
-Magic codes expire after 10 minutes (stored in Redis with a TTL). An attacker with access to an email inbox has a 10-minute window to use an intercepted code. This is a short window but not zero.
+Magic codes expire after 10 minutes. Codes are eight digits, stored only as SHA-256 hashes in the `magic_codes` Postgres table with an `expires_at` column checked at verification time (not a Redis TTL); expired rows are purged by the scheduled reaper. An attacker with access to an email inbox has a 10-minute window to use an intercepted code. This is a short window but not zero.
 
-Codes are rate-limited per email address. Brute-force against a specific code is not feasible (six digits, rate-limited, single-use, short TTL).
+Codes are rate-limited per email address, with a global send ceiling across all addresses. Brute-force against a specific code is not feasible (eight digits, rate-limited, single-use, single-redemption CAS, short expiry).
 
 ### No Email Verification for Federation
 

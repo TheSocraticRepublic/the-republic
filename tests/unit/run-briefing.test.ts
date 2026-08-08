@@ -109,11 +109,7 @@ vi.mock('@/lib/archive/shadow', () => ({
 
 vi.mock('@/lib/jurisdictions', () => ({
   loadJurisdictionModule: vi.fn(() => Promise.resolve(null)),
-}))
-
-vi.mock('@/lib/jurisdictions/bc', () => ({
-  getDocumentStructureContext: vi.fn(() => ''),
-  getJurisdictionPortalContext: vi.fn(() => ''),
+  resolveJurisdictionModuleId: vi.fn(() => 'bc'),
 }))
 
 vi.mock('@/lib/jurisdictions/match', () => ({

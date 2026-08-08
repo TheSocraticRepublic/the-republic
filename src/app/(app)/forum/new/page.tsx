@@ -119,7 +119,7 @@ function NewThreadForm() {
         </div>
 
         {error && (
-          <p className="text-xs text-red-400">{error}</p>
+          <p className="text-xs text-status-danger">{error}</p>
         )}
 
         <div className="flex items-center justify-end gap-3 pt-1">

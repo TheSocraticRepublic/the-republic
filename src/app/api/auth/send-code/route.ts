@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendMagicCode } from '@/lib/auth/magic-code'
 import { checkRateLimit, checkGlobalSendCodeLimit } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/api/ip'
+import { checkCsrfOrigin } from '@/lib/api/csrf'
 
 export async function POST(request: NextRequest) {
   try {
+    const csrfReject = checkCsrfOrigin(request)
+    if (csrfReject) return csrfReject
+
     const ip = getClientIp(request)
     const { success } = await checkRateLimit(`send-code:${ip}`)
 

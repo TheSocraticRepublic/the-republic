@@ -10,7 +10,6 @@ interface SessionCardProps {
   status: 'active' | 'completed' | 'abandoned'
   questionCount: number
   insightCount: number
-  createdAt: Date | string
   updatedAt: Date | string
 }
 
@@ -37,7 +36,6 @@ export function SessionCard({
   status,
   questionCount,
   insightCount,
-  createdAt,
   updatedAt,
 }: SessionCardProps) {
   const modeStyle = MODE_LABELS[mode] ?? MODE_LABELS.socratic

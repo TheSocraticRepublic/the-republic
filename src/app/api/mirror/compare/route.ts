@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { checkTightRateLimit, checkDailyAiGeneralLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { documents, analyses, jurisdictions } from '@/lib/db/schema'
-import { MIRROR_SYSTEM_PROMPT, MIRROR_PROMPT_VERSION } from '@/lib/ai/prompts/mirror-system'
+import { MIRROR_SYSTEM_PROMPT } from '@/lib/ai/prompts/mirror-system'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, desc } from 'drizzle-orm'
@@ -140,9 +140,6 @@ export async function POST(request: NextRequest) {
     messages: [{ role: 'user', content: userMessage }],
     maxOutputTokens: 4096,
   })
-
-  // Log prompt version for observability
-  void MIRROR_PROMPT_VERSION
 
   return result.toTextStreamResponse()
 }

@@ -21,10 +21,6 @@ function isHeading(line: string): boolean {
   return HEADING_PATTERNS.some((re) => re.test(trimmed))
 }
 
-function endsWithSentenceBoundary(text: string): boolean {
-  return /[.!?]\s*$/.test(text.trimEnd())
-}
-
 /**
  * Split text at the last sentence boundary before maxLen.
  * Returns [before, after].

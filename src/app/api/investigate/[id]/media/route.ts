@@ -200,13 +200,27 @@ export async function POST(
   let rawText = ''
 
   try {
-    const { text } = await generateText({
+    let genResult = await generateText({
       model: anthropic(MODEL),
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
       maxOutputTokens: 2048,
     })
-    rawText = text
+
+    // Retry with larger budget if truncated (JSON truncation causes parse failures)
+    if (genResult.finishReason === 'length') {
+      genResult = await generateText({
+        model: anthropic(MODEL),
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }],
+        maxOutputTokens: 4096,
+      })
+      if (genResult.finishReason === 'length') {
+        throw new Error('Media spec truncated after retry with maxOutputTokens=4096')
+      }
+    }
+
+    rawText = genResult.text
 
     // Strip any accidental markdown code fences
     const cleaned = rawText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()

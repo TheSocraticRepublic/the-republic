@@ -219,7 +219,7 @@ export function DiscoveryForm() {
 
           {/* Error state */}
           {errorMessage && (
-            <p role="alert" className="text-xs text-red-400 mt-1">{errorMessage}</p>
+            <p role="alert" className="text-xs text-status-danger mt-1">{errorMessage}</p>
           )}
 
           {/* Submit / Cancel */}

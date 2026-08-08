@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
-import { parliamentSyncLog, federalMps, federalVotes, federalBills } from '@/lib/db/schema'
-import { eq, desc, sql } from 'drizzle-orm'
+import { parliamentSyncLog } from '@/lib/db/schema'
+import { desc, sql } from 'drizzle-orm'
 import { safeRoute } from '@/lib/api/safe-route'
 
 export const GET = safeRoute(async (request: NextRequest) => {

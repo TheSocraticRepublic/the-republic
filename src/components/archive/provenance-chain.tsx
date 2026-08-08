@@ -86,7 +86,7 @@ export function ProvenanceChain({
               <div
                 className={`mt-0.5 h-2.5 w-2.5 flex-shrink-0 rounded-full border transition-colors ${
                   isComplete
-                    ? 'border-[#89b4c8] bg-[#89b4c8]'
+                    ? 'border-[var(--accent-oracle)] bg-[var(--accent-oracle)]'
                     : 'border-neutral-700 bg-neutral-900'
                 }`}
               />
@@ -94,7 +94,7 @@ export function ProvenanceChain({
               {!isLast && (
                 <div
                   className={`w-px flex-1 my-1 min-h-[16px] ${
-                    isComplete ? 'bg-[#89b4c8]/20' : 'bg-neutral-800'
+                    isComplete ? 'bg-[var(--accent-oracle)]/20' : 'bg-neutral-800'
                   }`}
                 />
               )}

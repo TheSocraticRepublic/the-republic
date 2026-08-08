@@ -192,7 +192,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSession
 
           {/* Error alert */}
           {createError && (
-            <p role="alert" className="mt-4 text-xs text-red-400">{createError}</p>
+            <p role="alert" className="mt-4 text-xs text-status-danger">{createError}</p>
           )}
 
           {/* Action */}

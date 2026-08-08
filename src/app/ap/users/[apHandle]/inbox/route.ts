@@ -59,6 +59,7 @@ async function resolveAndVerifyPublicKey(
     const response = await fetch(keyIdActorUrl, {
       headers: { Accept: 'application/activity+json' },
       signal: AbortSignal.timeout(5000),
+      redirect: 'manual',
     })
     if (!response.ok) return null
     const actor = await response.json()
@@ -242,6 +243,7 @@ async function handleFollow(
     const response = await fetch(actorUri, {
       headers: { Accept: 'application/activity+json' },
       signal: AbortSignal.timeout(5000),
+      redirect: 'manual',
     })
     if (response.ok) {
       const remoteActor = await response.json()

@@ -80,7 +80,7 @@ export function UploadZone() {
         state === 'dragging'
           ? 'border-[var(--accent-oracle)]/60 bg-[var(--accent-oracle)]/[0.06]'
           : state === 'error'
-          ? 'border-red-500/40 bg-red-500/[0.04]'
+          ? 'border-status-danger/40 bg-status-danger/[0.04]'
           : 'border-border bg-surface-1 hover:border-border-strong hover:bg-surface-3'
       )}
       onDragOver={(e) => {
@@ -103,7 +103,7 @@ export function UploadZone() {
         {isUploading ? (
           <Loader2 size={22} strokeWidth={1.75} style={{ color: 'var(--accent-oracle)' }} className="animate-spin" />
         ) : state === 'error' ? (
-          <FileText size={22} strokeWidth={1.75} className="text-red-400" />
+          <FileText size={22} strokeWidth={1.75} className="text-status-danger" />
         ) : (
           <Upload size={22} strokeWidth={1.75} style={{ color: 'var(--accent-oracle)' }} />
         )}
@@ -115,7 +115,7 @@ export function UploadZone() {
           <p className="text-sm text-text-secondary">{progress}</p>
         ) : state === 'error' ? (
           <>
-            <p className="text-sm font-medium text-red-400">{error}</p>
+            <p className="text-sm font-medium text-status-danger">{error}</p>
             <button
               className="mt-2 text-xs text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
               onClick={() => {

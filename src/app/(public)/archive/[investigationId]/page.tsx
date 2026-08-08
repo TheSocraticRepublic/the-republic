@@ -15,12 +15,25 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { investigationId } = await params
+
+  // Mirror the page body's preconditions exactly. The body rejects non-UUID
+  // params and requires an `archive_records` row before it renders anything;
+  // without the same predicates here this query reads the citizen's concern
+  // text for ANY investigation id, archived or not. Next 16 discards metadata
+  // when the page throws notFound(), so nothing is emitted today — but the
+  // query is still reading data the page has decided the caller may not see,
+  // and that is one boundary change away from mattering.
+  if (!UUID_RE.test(investigationId)) {
+    return { title: 'Archived Investigation' }
+  }
+
   const db = getDb()
 
   const [inv] = await db
     .select({ concern: investigations.concern })
-    .from(investigations)
-    .where(eq(investigations.id, investigationId))
+    .from(archiveRecords)
+    .innerJoin(investigations, eq(archiveRecords.investigationId, investigations.id))
+    .where(eq(archiveRecords.investigationId, investigationId))
     .limit(1)
 
   return {
@@ -55,8 +68,8 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
         archivedBy: userProfiles.displayName,
       })
       .from(archiveRecords)
-      .innerJoin(investigations, eq(archiveRecords.investigationId, investigations.id))
-      .innerJoin(userProfiles, eq(archiveRecords.userId, userProfiles.userId))
+      .leftJoin(investigations, eq(archiveRecords.investigationId, investigations.id))
+      .leftJoin(userProfiles, eq(archiveRecords.userId, userProfiles.userId))
       .where(eq(archiveRecords.investigationId, investigationId))
       .limit(1),
 
@@ -106,7 +119,7 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
             <h1
               className="text-lg font-bold tracking-tight text-text-primary leading-snug"
             >
-              {archive.concern}
+              {archive.concern ?? 'Archived investigation'}
             </h1>
             {archive.jurisdictionName && (
               <p className="mt-1 text-sm text-text-muted">{archive.jurisdictionName}</p>
@@ -119,7 +132,7 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
 
         <p className="mt-2 text-xs text-text-faint">
           Archived by{' '}
-          <span className="text-text-muted">{archive.archivedBy}</span>
+          <span className="text-text-muted">{archive.archivedBy ?? 'Account deleted'}</span>
         </p>
       </div>
 
@@ -143,8 +156,8 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
           Provenance
         </h2>
         <ProvenanceChain
-          createdAt={archive.createdAt}
-          briefingCompletedAt={archive.briefingCompletedAt}
+          createdAt={archive.createdAt ?? new Date(0)}
+          briefingCompletedAt={archive.briefingCompletedAt ?? null}
           preservedAt={archive.preservedAt}
           permanenceAt={archive.permanenceAt}
           ipfsCid={archive.ipfsCid}

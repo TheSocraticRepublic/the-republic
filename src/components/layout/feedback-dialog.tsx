@@ -167,7 +167,7 @@ export function FeedbackDialog() {
 
               {/* Error */}
               {error && (
-                <p role="alert" className="text-xs text-red-400">
+                <p role="alert" className="text-xs text-status-danger">
                   {error}
                 </p>
               )}

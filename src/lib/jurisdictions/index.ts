@@ -98,13 +98,28 @@ export function detectJurisdiction(
     }
   }
 
-  // Default to BC for now (conservation-first, BC-first vertical)
-  // This will become smarter as more jurisdiction modules are added
-  if (Object.keys(JURISDICTION_REGISTRY).includes('bc')) {
-    return 'bc'
-  }
-
   return undefined
+}
+
+const PROVINCE_TO_MODULE: Record<string, string> = {
+  'british columbia': 'bc',
+  'alberta': 'ab',
+  'ontario': 'on',
+}
+
+export function resolveJurisdictionModuleId(opts: {
+  province?: string | null
+  jurisdictionName?: string | null
+  concern?: string
+}): string {
+  if (opts.province) {
+    const id = PROVINCE_TO_MODULE[opts.province.toLowerCase()]
+    if (id) return id
+  }
+  const detected = detectJurisdiction(opts.concern ?? '', opts.jurisdictionName ?? undefined)
+  if (detected) return detected
+  console.warn('[JURIS] unmatched jurisdiction, defaulting to BC')
+  return 'bc'
 }
 
 // Re-export types for convenience
