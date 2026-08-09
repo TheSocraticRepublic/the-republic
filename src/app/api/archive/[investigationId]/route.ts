@@ -162,7 +162,14 @@ export async function POST(
         updatedAt: sql`NOW()`,
       },
     })
-    .returning()
+    .returning({
+      id: archiveRecords.id,
+      investigationId: archiveRecords.investigationId,
+      archiveStatus: archiveRecords.archiveStatus,
+      ipfsCid: archiveRecords.ipfsCid,
+      contentHash: archiveRecords.contentHash,
+      preservedAt: archiveRecords.preservedAt,
+    })
 
   // Set investigations.preservedAt on first archive (COALESCE: only when null)
   await db
