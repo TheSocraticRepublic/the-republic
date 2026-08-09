@@ -141,11 +141,15 @@ export async function POST(
   // safe fields only and resolve archivedBy via displayName instead — the same
   // convention the success path below already uses.
   if (existingRecord.archiveStatus === 'arweave_permanent') {
-    const [archiverProfile] = await db
-      .select({ displayName: userProfiles.displayName })
-      .from(userProfiles)
-      .where(eq(userProfiles.userId, existingRecord.userId))
-      .limit(1)
+    let archivedBy: string | null = null
+    if (existingRecord.userId) {
+      const [archiverProfile] = await db
+        .select({ displayName: userProfiles.displayName })
+        .from(userProfiles)
+        .where(eq(userProfiles.userId, existingRecord.userId))
+        .limit(1)
+      archivedBy = archiverProfile?.displayName ?? null
+    }
 
     return new Response(
       JSON.stringify({
@@ -161,7 +165,7 @@ export async function POST(
           createdAt: existingRecord.createdAt,
           updatedAt: existingRecord.updatedAt,
           metadata: existingRecord.metadata,
-          archivedBy: archiverProfile?.displayName ?? null,
+          archivedBy,
         },
       }),
       {
@@ -359,17 +363,21 @@ export async function POST(
     })
 
   // Resolve displayName for the archiver — userId stays server-side
-  const [profile] = await db
-    .select({ displayName: userProfiles.displayName })
-    .from(userProfiles)
-    .where(eq(userProfiles.userId, existingRecord.userId))
-    .limit(1)
+  let archivedByName: string | null = null
+  if (existingRecord.userId) {
+    const [profile] = await db
+      .select({ displayName: userProfiles.displayName })
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, existingRecord.userId))
+      .limit(1)
+    archivedByName = profile?.displayName ?? null
+  }
 
   return new Response(
     JSON.stringify({
       archiveRecord: {
         ...archiveRecord,
-        archivedBy: profile?.displayName ?? null,
+        archivedBy: archivedByName,
       },
     }),
     {

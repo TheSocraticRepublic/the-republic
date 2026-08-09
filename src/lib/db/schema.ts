@@ -920,8 +920,7 @@ export const peerReviews = pgTable(
       .notNull()
       .references(() => investigations.id, { onDelete: 'cascade' }),
     reviewerId: uuid('reviewer_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+      .references(() => users.id, { onDelete: 'set null' }),
     factualAccuracy: smallint('factual_accuracy').notNull(),
     sourceQuality: smallint('source_quality').notNull(),
     missingContext: smallint('missing_context').notNull(),
@@ -1006,8 +1005,7 @@ export const moderationActions = pgTable(
   {
     id: uuid('id').defaultRandom().primaryKey(),
     moderatorId: uuid('moderator_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+      .references(() => users.id, { onDelete: 'set null' }),
     actionType: moderationActionTypeEnum('action_type').notNull(),
     targetType: reportTargetTypeEnum('target_type').notNull(),
     targetId: uuid('target_id').notNull(),
@@ -1055,12 +1053,8 @@ export const archiveRecords = pgTable(
   'archive_records',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    investigationId: uuid('investigation_id')
-      .notNull()
-      .references(() => investigations.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+    investigationId: uuid('investigation_id').notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
     archiveStatus: archiveStatusEnum('archive_status').notNull().default('pending'),
     ipfsCid: text('ipfs_cid'),
     arweaveTxId: text('arweave_tx_id'),
@@ -1068,6 +1062,9 @@ export const archiveRecords = pgTable(
     preservedAt: timestamp('preserved_at'),
     permanenceAt: timestamp('permanence_at'),
     metadata: jsonb('metadata'),
+    jurisdictionName: text('jurisdiction_name'),
+    policyArea: text('policy_area'),
+    concernCategory: text('concern_category'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -1186,8 +1183,7 @@ export const governanceVotes = pgTable(
       .notNull()
       .references(() => governanceProposals.id, { onDelete: 'cascade' }),
     voterId: uuid('voter_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+      .references(() => users.id, { onDelete: 'set null' }),
     choice: voteChoiceEnum('choice').notNull(),
     weight: real('weight').notNull(),
     rawCredentialWeight: real('raw_credential_weight').notNull(),
