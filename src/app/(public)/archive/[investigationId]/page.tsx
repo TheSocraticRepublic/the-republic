@@ -29,16 +29,19 @@ export async function generateMetadata({ params }: PageProps) {
 
   const db = getDb()
 
-  const [inv] = await db
-    .select({ concern: investigations.concern })
+  const [row] = await db
+    .select({
+      concern: investigations.concern,
+      snapshotPolicyArea: archiveRecords.policyArea,
+    })
     .from(archiveRecords)
-    .innerJoin(investigations, eq(archiveRecords.investigationId, investigations.id))
+    .leftJoin(investigations, eq(archiveRecords.investigationId, investigations.id))
     .where(eq(archiveRecords.investigationId, investigationId))
     .limit(1)
 
-  return {
-    title: inv ? `${inv.concern.slice(0, 80)} — The Archive` : 'Archived Investigation',
-  }
+  if (!row) return { title: 'Archived Investigation' }
+  const label = row.concern?.slice(0, 80) ?? row.snapshotPolicyArea ?? 'Investigation'
+  return { title: `${label} — The Archive` }
 }
 
 export default async function ArchiveDetailPage({ params }: PageProps) {
@@ -62,6 +65,8 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
         permanenceAt: archiveRecords.permanenceAt,
         concern: investigations.concern,
         jurisdictionName: investigations.jurisdictionName,
+        snapshotJurisdiction: archiveRecords.jurisdictionName,
+        snapshotPolicyArea: archiveRecords.policyArea,
         briefingText: investigations.briefingText,
         briefingCompletedAt: investigations.briefingCompletedAt,
         createdAt: investigations.createdAt,
@@ -119,10 +124,14 @@ export default async function ArchiveDetailPage({ params }: PageProps) {
             <h1
               className="text-lg font-bold tracking-tight text-text-primary leading-snug"
             >
-              {archive.concern ?? 'Archived investigation'}
+              {archive.concern ?? (archive.snapshotPolicyArea
+                ? `Archived investigation — ${archive.snapshotPolicyArea}`
+                : 'Archived investigation')}
             </h1>
-            {archive.jurisdictionName && (
-              <p className="mt-1 text-sm text-text-muted">{archive.jurisdictionName}</p>
+            {(archive.jurisdictionName ?? archive.snapshotJurisdiction) && (
+              <p className="mt-1 text-sm text-text-muted">
+                {archive.jurisdictionName ?? archive.snapshotJurisdiction}
+              </p>
             )}
           </div>
           <div className="flex-shrink-0 pt-0.5">

@@ -34,6 +34,8 @@ export default async function ArchivePage({
         preservedAt: archiveRecords.preservedAt,
         concern: investigations.concern,
         jurisdictionName: investigations.jurisdictionName,
+        snapshotJurisdiction: archiveRecords.jurisdictionName,
+        snapshotPolicyArea: archiveRecords.policyArea,
         archivedBy: userProfiles.displayName,
       })
       .from(archiveRecords)
@@ -83,8 +85,10 @@ export default async function ArchivePage({
                 <ArchiveCard
                   key={record.investigationId}
                   investigationId={record.investigationId}
-                  concern={record.concern ?? 'Archived investigation'}
-                  jurisdictionName={record.jurisdictionName ?? null}
+                  concern={record.concern ?? (record.snapshotPolicyArea
+                    ? `Archived investigation — ${record.snapshotPolicyArea}`
+                    : 'Archived investigation')}
+                  jurisdictionName={record.jurisdictionName ?? record.snapshotJurisdiction ?? null}
                   preservedAt={record.preservedAt ?? new Date(0)}
                   archiveStatus={record.archiveStatus}
                   archivedBy={record.archivedBy ?? 'Account deleted'}
