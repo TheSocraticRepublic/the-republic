@@ -22,6 +22,7 @@
  * are a separate, heavier sync (see ROADMAP: parliament sync needs a background job).
  */
 import postgres from 'postgres'
+import { supabaseSslConfig } from './lib/supabase-ssl'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { eq } from 'drizzle-orm'
 import { federalMps } from '../src/lib/db/schema'
@@ -41,7 +42,7 @@ async function main() {
   const client = postgres(databaseUrl, {
     max: 1,
     prepare: false,
-    ssl: { rejectUnauthorized: false },
+    ssl: supabaseSslConfig(),
   })
   const db = drizzle(client)
 

@@ -42,13 +42,15 @@ jobs:
       - name: Run parliament sync
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          INPUT_MAX_VOTES: ${{ github.event.inputs.max_votes }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: |
           MAX_ARG=""
-          if [ -n "${{ github.event.inputs.max_votes }}" ]; then
-            MAX_ARG="--max-votes=${{ github.event.inputs.max_votes }}"
+          if [ -n "$INPUT_MAX_VOTES" ]; then
+            MAX_ARG="--max-votes=$INPUT_MAX_VOTES"
           fi
           DRY_ARG=""
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+          if [ "$INPUT_DRY_RUN" = "true" ]; then
             DRY_ARG="--dry-run"
           fi
           npx tsx scripts/sync-parliament-full.ts $MAX_ARG $DRY_ARG

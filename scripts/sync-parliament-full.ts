@@ -36,6 +36,7 @@
  */
 
 import postgres from 'postgres'
+import { supabaseSslConfig } from './lib/supabase-ssl'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { eq, and } from 'drizzle-orm'
 import {
@@ -104,7 +105,7 @@ async function main() {
   const pg = postgres(databaseUrl, {
     max: 1,
     prepare: false,
-    ssl: { rejectUnauthorized: false },
+    ssl: supabaseSslConfig(),
   })
   const db = drizzle(pg)
 

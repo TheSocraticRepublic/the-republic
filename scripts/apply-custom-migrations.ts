@@ -70,10 +70,7 @@ async function main() {
     process.exit(1)
   }
 
-  const isProduction = process.env.NODE_ENV === 'production'
-  const sslConfig = isProduction
-    ? { ca: SUPABASE_ROOT_CA, rejectUnauthorized: true }
-    : { rejectUnauthorized: false }
+  const sslConfig = { ca: SUPABASE_ROOT_CA, rejectUnauthorized: true as const }
 
   const sql = postgres(databaseUrl, {
     max: 1,
