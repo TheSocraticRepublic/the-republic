@@ -105,3 +105,42 @@ describe('computeContentHash', () => {
     expect(() => computeContentHash(undefined)).not.toThrow()
   })
 })
+
+describe('republicVersion pinning (drift verification)', () => {
+  // bundle.republicVersion is sourced live from package.json and is INSIDE the
+  // hash. The permanence route rebuilds the bundle from current DB state to
+  // detect content drift — so without pinning the stored value back, the first
+  // package.json version bump makes every archived record fail verification
+  // and look like mass content tampering.
+  function bundleAt(republicVersion: string) {
+    return {
+      version: '1.1',
+      preservedAt: '2026-01-01T00:00:00.000Z',
+      republicVersion,
+      investigation: { id: 'inv-1', concern: 'Rezoning' },
+      documents: [],
+      analyses: [],
+      forumThreads: [],
+      peerReviews: [],
+      provenance: { jurisdiction: 'bc', concernCategory: null },
+    }
+  }
+
+  const STORED_REPUBLIC_VERSION = '0.1.0'
+  const LIVE_REPUBLIC_VERSION = '0.4.0'
+  const storedHash = computeContentHash(bundleAt(STORED_REPUBLIC_VERSION))
+
+  it('an unpinned rebuild under a bumped app version fails verification', () => {
+    // The bug this pinning exists to prevent — asserted first so the fix below
+    // is not a tautology.
+    const rebuilt = bundleAt(LIVE_REPUBLIC_VERSION)
+    expect(computeContentHash(rebuilt)).not.toBe(storedHash)
+  })
+
+  it('pinning republicVersion from stored metadata restores the stored hash', () => {
+    const rebuilt = bundleAt(LIVE_REPUBLIC_VERSION)
+    const storedMetadata = { republicVersion: STORED_REPUBLIC_VERSION }
+    rebuilt.republicVersion = storedMetadata.republicVersion
+    expect(computeContentHash(rebuilt)).toBe(storedHash)
+  })
+})

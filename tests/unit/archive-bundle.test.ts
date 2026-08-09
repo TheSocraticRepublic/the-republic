@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { ArchiveBundle } from '@/lib/archive/bundle'
+import { canonicalize } from '@/lib/archive/hash'
 
 // Type-level test: verifies the ArchiveBundle interface compiles correctly
 // and has the required shape. We create a minimal conforming object and
@@ -7,7 +8,7 @@ import type { ArchiveBundle } from '@/lib/archive/bundle'
 
 function makeBundle(): ArchiveBundle {
   return {
-    version: '1.0',
+    version: '1.1',
     preservedAt: new Date().toISOString(),
     republicVersion: '0.1.0',
     investigation: {
@@ -25,7 +26,6 @@ function makeBundle(): ArchiveBundle {
     forumThreads: [],
     peerReviews: [],
     provenance: {
-      archiverId: 'user-1',
       jurisdiction: null,
       concernCategory: null,
     },
@@ -33,9 +33,9 @@ function makeBundle(): ArchiveBundle {
 }
 
 describe('ArchiveBundle interface', () => {
-  it('bundle version is "1.0"', () => {
+  it('bundle version is "1.1"', () => {
     const bundle = makeBundle()
-    expect(bundle.version).toBe('1.0')
+    expect(bundle.version).toBe('1.1')
   })
 
   it('bundle has all required top-level fields', () => {
@@ -63,9 +63,14 @@ describe('ArchiveBundle interface', () => {
     expect(investigation).toHaveProperty('createdAt')
   })
 
-  it('provenance block has all required fields', () => {
+  // PRIV-2: the archiver's raw account UUID used to live here, and provenance
+  // is inside computeContentHash — so it was pinned to IPFS and written to
+  // Arweave permanently, publicly linking a named citizen to every
+  // investigation they archived. Dropped in bundle v1.1. This assertion is an
+  // intentional contract inversion, not a stale test.
+  it('provenance block carries no archiverId', () => {
     const { provenance } = makeBundle()
-    expect(provenance).toHaveProperty('archiverId')
+    expect(provenance).not.toHaveProperty('archiverId')
     expect(provenance).toHaveProperty('jurisdiction')
     expect(provenance).toHaveProperty('concernCategory')
   })
@@ -82,5 +87,31 @@ describe('ArchiveBundle interface', () => {
     const bundle = makeBundle()
     const parsed = new Date(bundle.preservedAt)
     expect(parsed.getTime()).not.toBeNaN()
+  })
+})
+
+describe('PRIV-2 — no archiver UUID reaches the canonicalized hash input', () => {
+  const ARCHIVER_UUID = '3f2504e0-4f89-11d3-9a0c-0305e82c3301'
+
+  // Asserted against the canonical STRING rather than against `provenance`, so
+  // a UUID leaking into any other field — a new provenance key, a summary, a
+  // document title — is caught too. This is the pinned-to-Arweave surface.
+  it('canonicalized v1.1 bundle contains no UUID at all', () => {
+    const bundle = makeBundle()
+    bundle.investigation.concern = 'Council rezoning decision'
+    const canonical = canonicalize(bundle)
+
+    expect(canonical).not.toContain(ARCHIVER_UUID)
+    expect(canonical).toMatch(/"version":"1\.1"/)
+    expect(canonical).not.toMatch(
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+    )
+  })
+
+  it('the guard would fail if a UUID were reintroduced anywhere', () => {
+    const bundle = makeBundle()
+    // Negative control: proves the assertion above is not vacuous.
+    bundle.investigation.policyArea = ARCHIVER_UUID
+    expect(canonicalize(bundle)).toContain(ARCHIVER_UUID)
   })
 })

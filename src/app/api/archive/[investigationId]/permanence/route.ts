@@ -12,6 +12,29 @@ import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+/** The bundle shape this route knows how to re-derive and verify. */
+const SUPPORTED_BUNDLE_VERSION = '1.1'
+
+/**
+ * archive_records.metadata is an untyped jsonb column. Narrow it defensively —
+ * both fields are load-bearing for hash verification, so a malformed row must
+ * surface as `undefined` rather than as a wrong string.
+ */
+function readArchiveMetadata(raw: unknown): {
+  bundleVersion: string | undefined
+  republicVersion: string | undefined
+} {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { bundleVersion: undefined, republicVersion: undefined }
+  }
+  const m = raw as Record<string, unknown>
+  return {
+    bundleVersion: typeof m.bundleVersion === 'string' ? m.bundleVersion : undefined,
+    republicVersion:
+      typeof m.republicVersion === 'string' ? m.republicVersion : undefined,
+  }
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ investigationId: string }> }
@@ -110,15 +133,13 @@ export async function POST(
 
   // Idempotent: if already permanent, return the existing record without re-uploading.
   //
-  // SEC-2: this branch is reached BEFORE the ownership check below (any
-  // authenticated caller can hit this endpoint for any investigationId — that
-  // matches the sibling GET /api/archive/[investigationId] route, which is
-  // intentionally public). existingRecord.userId must therefore never appear
+  // SEC-2: this branch is reached BEFORE the ownership check below, so any
+  // authenticated caller can hit this endpoint for any investigationId.
+  // existingRecord.userId must therefore never appear
   // in this response: it's the archiver's internal user ID, and leaking it
   // here deanonymizes them with no ownership gate in front of it. Whitelist
-  // safe fields only and resolve archivedBy via displayName instead — the
-  // exact convention the GET route and the success path below already use
-  // ("userId is intentionally omitted... Caller gets displayName via join").
+  // safe fields only and resolve archivedBy via displayName instead — the same
+  // convention the success path below already uses.
   if (existingRecord.archiveStatus === 'arweave_permanent') {
     const [archiverProfile] = await db
       .select({ displayName: userProfiles.displayName })
@@ -199,8 +220,26 @@ export async function POST(
   // hash matches, the current state IS what was archived — and that is what we upload
   // to Arweave. The hash check is the integrity guarantee.
   //
-  // archiverId is set to the original archiver (existingRecord.userId) to replicate
-  // the provenance field exactly as it was when the stored contentHash was computed.
+  const storedMetadata = readArchiveMetadata(existingRecord.metadata)
+
+  // The builder only knows how to produce the current bundle shape. A record
+  // pinned under an earlier shape cannot be re-derived, so its hash can never
+  // match — fail loudly with a reason instead of silently reporting drift.
+  if (storedMetadata.bundleVersion !== SUPPORTED_BUNDLE_VERSION) {
+    return new Response(
+      JSON.stringify({
+        error: 'Archive record predates bundle v1.1 and cannot be verified.',
+        reason: `Stored bundleVersion is ${
+          storedMetadata.bundleVersion ?? 'absent'
+        }; this route can only verify ${SUPPORTED_BUNDLE_VERSION}. Re-archive this investigation, then retry.`,
+      }),
+      {
+        status: 409,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+  }
+
   let currentBundle
   try {
     currentBundle = await buildArchiveBundle(
@@ -208,7 +247,12 @@ export async function POST(
       db,
       new Date(existingRecord.preservedAt!)
     )
-    currentBundle.provenance.archiverId = existingRecord.userId
+    // republicVersion is inside the hash but is sourced live from package.json.
+    // Pin it back to the value stored at archival time, otherwise the first
+    // version bump makes every record look tampered with.
+    if (storedMetadata.republicVersion !== undefined) {
+      currentBundle.republicVersion = storedMetadata.republicVersion
+    }
   } catch (err) {
     console.error('Failed to build archive bundle for hash comparison', investigationId, err)
     return new Response(

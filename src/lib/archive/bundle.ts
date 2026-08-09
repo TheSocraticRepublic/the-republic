@@ -69,13 +69,14 @@ export interface ArchiveBundleInvestigation {
 }
 
 export interface ArchiveBundleProvenance {
-  archiverId: string
   jurisdiction: string | null
   concernCategory: string | null
 }
 
 export interface ArchiveBundle {
-  version: '1.0'
+  // '1.0' is retained in the union only so callers can discriminate a stored
+  // legacy record and reject it. The builder never emits it.
+  version: '1.0' | '1.1'
   preservedAt: string
   republicVersion: string
   investigation: ArchiveBundleInvestigation
@@ -254,7 +255,7 @@ export async function buildArchiveBundle(
   }))
 
   return {
-    version: '1.0',
+    version: '1.1',
     preservedAt: preservedAt.toISOString(),
     republicVersion: REPUBLIC_VERSION,
     investigation: {
@@ -272,7 +273,6 @@ export async function buildArchiveBundle(
     forumThreads: bundleThreads,
     peerReviews: bundleReviews,
     provenance: {
-      archiverId: '', // caller sets this before hashing
       jurisdiction: jurisdictionName,
       concernCategory: inv.concernCategory ?? null,
     },

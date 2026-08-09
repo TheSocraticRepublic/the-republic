@@ -107,9 +107,6 @@ export async function POST(
     })
   }
 
-  // Set the archiver
-  bundle.provenance.archiverId = userId
-
   // Compute content hash
   const contentHash = computeContentHash(bundle)
 
@@ -157,6 +154,11 @@ export async function POST(
         contentHash,
         archiveStatus: 'ipfs_pinned',
         preservedAt: now,
+        // metadata MUST be refreshed alongside contentHash. The stored
+        // bundleVersion is the key verification uses to pick a bundle shape;
+        // leaving it stale on re-archive stores a new hash against an old
+        // shape and 409s forever, uncleanable by re-archiving.
+        metadata: { bundleVersion: bundle.version, republicVersion: bundle.republicVersion },
         updatedAt: sql`NOW()`,
       },
     })
