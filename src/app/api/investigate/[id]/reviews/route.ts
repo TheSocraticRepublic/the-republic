@@ -196,15 +196,18 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       reviewerDisplayName: userProfiles.displayName,
     })
     .from(peerReviews)
-    .innerJoin(userProfiles, eq(peerReviews.reviewerId, userProfiles.userId))
+    .leftJoin(userProfiles, eq(peerReviews.reviewerId, userProfiles.userId))
     .where(eq(peerReviews.investigationId, id))
     .orderBy(desc(peerReviews.createdAt))
 
   // Determine if the current user has reviewed — Included in response for client UI state
   const currentUserHasReviewed = rows.some((r) => r.reviewerId === userId)
 
-  // Strip reviewerId before sending to client
-  const safeRows = rows.map(({ reviewerId: _rid, ...rest }) => rest)
+  // Strip reviewerId before sending to client; degrade display name for deleted accounts
+  const safeRows = rows.map(({ reviewerId: _rid, reviewerDisplayName, ...rest }) => ({
+    ...rest,
+    reviewerDisplayName: reviewerDisplayName ?? 'Account deleted',
+  }))
 
   if (rows.length === 0) {
     return new Response(
