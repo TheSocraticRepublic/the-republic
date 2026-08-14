@@ -123,7 +123,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         weight: 2,
         sourceId: review.id,
         sourceType: 'peer_review',
-      })
+      }).onConflictDoNothing()
 
       return review
     })

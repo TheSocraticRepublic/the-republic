@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
         weight: 1,
         sourceId: thread.id,
         sourceType: 'forum_post',
-      })
+      }).onConflictDoNothing()
 
       return { thread, firstPost }
     })

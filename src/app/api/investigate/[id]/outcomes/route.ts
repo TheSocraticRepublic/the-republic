@@ -170,7 +170,7 @@ export async function POST(
           weight: CREDENTIAL_WEIGHTS.outcome_tracked,
           sourceId: id,
           sourceType: 'outcome',
-        })
+        }).onConflictDoNothing()
       }
 
       return outcome

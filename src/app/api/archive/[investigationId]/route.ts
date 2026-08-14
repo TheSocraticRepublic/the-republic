@@ -206,7 +206,7 @@ export async function POST(
       weight: CREDENTIAL_WEIGHTS.investigation_archived,
       sourceId: investigationId,
       sourceType: 'archive_record',
-    })
+    }).onConflictDoNothing()
   }
 
   return new Response(JSON.stringify({ archiveRecord }), {
