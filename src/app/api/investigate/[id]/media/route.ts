@@ -119,7 +119,6 @@ export async function POST(
     .select({
       name: players.name,
       playerType: players.playerType,
-      description: players.description,
       role: investigationPlayers.role,
       context: investigationPlayers.context,
     })
@@ -172,7 +171,7 @@ export async function POST(
   // Build the user message with full investigation context
   const playerContext = investigationPlayerRecords.length > 0
     ? `\n\nKey players identified:\n${investigationPlayerRecords.map((p) =>
-        `- ${p.name} (${p.playerType}, role: ${p.role})${p.description ? `: ${p.description}` : ''}${p.context ? ` — Context: ${p.context}` : ''}`
+        `- ${p.name} (${p.playerType}, role: ${p.role})${p.context ? `: ${p.context}` : ''}`
       ).join('\n')}`
     : ''
 

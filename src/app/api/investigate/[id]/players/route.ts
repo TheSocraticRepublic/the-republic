@@ -44,7 +44,6 @@ export const GET = safeRoute(async (
       playerId: players.id,
       name: players.name,
       playerType: players.playerType,
-      description: players.description,
       metadata: players.metadata,
       role: investigationPlayers.role,
       context: investigationPlayers.context,

@@ -341,6 +341,8 @@ export const investigations = pgTable(
     index('investigations_user_id_idx').on(t.userId),
     index('investigations_status_idx').on(t.status),
     index('investigations_created_at_idx').on(t.createdAt),
+    index('investigations_jurisdiction_id_idx').on(t.jurisdictionId),
+    index('investigations_federal_mp_id_idx').on(t.federalMpId),
   ]
 )
 
@@ -461,6 +463,7 @@ export const gadflySessions = pgTable(
     index('gadfly_sessions_user_id_idx').on(t.userId),
     index('gadfly_sessions_status_idx').on(t.status),
     index('gadfly_sessions_investigation_id_idx').on(t.investigationId),
+    index('gadfly_sessions_document_id_idx').on(t.documentId),
   ]
 )
 
@@ -626,7 +629,6 @@ export const players = pgTable(
     jurisdictionId: uuid('jurisdiction_id').references(() => jurisdictions.id, {
       onDelete: 'set null',
     }),
-    description: text('description'),
     metadata: jsonb('metadata'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

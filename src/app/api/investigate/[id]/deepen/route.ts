@@ -160,8 +160,7 @@ async function extractPlayers(
     // Sanitize string fields: trim and cap lengths
     const name = (ep.name || '').trim().slice(0, 500)
     if (!name) continue
-    const description = ep.description ? ep.description.trim().slice(0, 2000) : null
-    const context = ep.context ? ep.context.trim().slice(0, 2000) : null
+    const context = (ep.description || ep.context || '').trim().slice(0, 2000) || null
 
     // Check if player already exists
     const existing = await db
@@ -180,7 +179,6 @@ async function extractPlayers(
         .values({
           name,
           playerType: ep.playerType as (typeof playerTypeEnum.enumValues)[number], // validated above
-          description,
         })
         .returning({ id: players.id })
       playerId = newPlayer.id
