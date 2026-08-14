@@ -111,8 +111,22 @@ WHERE indexname IN (
   'jurisdiction_policies_embedding_hnsw_idx'
 );
 
--- Should return policy count > 100
-SELECT count(*) FROM pg_policies WHERE schemaname = 'public';
+-- RLS verification: connect with the anon key (not service_role) and
+-- confirm it gets nothing. The 101 policies all key on auth.uid(), which is
+-- always NULL for non-Supabase-Auth connections. This makes RLS a
+-- CONNECTION-CLASS backstop (a leaked anon key gets zero rows), not a
+-- per-user access control — application-level WHERE user_id filters
+-- provide the per-user gate. The check below would fail if RLS were
+-- disabled or if policies were removed, which is the real invariant.
+--
+-- To run: use the anon key from NEXT_PUBLIC_SUPABASE_ANON_KEY against the
+-- project's REST API or direct connection. Assert zero rows from:
+--   SELECT * FROM investigations LIMIT 1;
+-- If this returns data, RLS is not enforcing.
+--
+-- The previous check (SELECT count(*) FROM pg_policies) was structurally
+-- incapable of detecting a policy that grants everything or one keyed to
+-- the wrong identity domain. A count is not a control.
 ```
 
 ## Migration file inventory
@@ -126,6 +140,9 @@ SELECT count(*) FROM pg_policies WHERE schemaname = 'public';
 | `0005_investigation_generation_started.sql` | Add `generation_started_at` column, backfill | Yes |
 | `0006_feedback_rls_and_cascade.sql` | feedback RLS + FK cascade | Yes |
 | `0007_check_constraints.sql` | CHECK: investigation_outcomes.satisfaction (1–5), governance_proposals.quorum_threshold (0–1) | Yes |
+| `0008_archive_survivability.sql` | archive_records: drop investigation FK (keep NOT NULL), userId SET NULL, 3 snapshot columns | Yes |
+| `0009_audit_trail_survivability.sql` | governance_votes/moderation_actions/peer_reviews: user FKs → SET NULL | Yes |
+| `0010_player_description_scope.sql` | Drop players.description (private briefing output in global table) | Yes |
 
 All files are **idempotent living scripts** — not immutable history. They can be
 updated (e.g., to add new policies) and re-applied safely. The `_custom_migrations`
