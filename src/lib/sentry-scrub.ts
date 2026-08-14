@@ -40,7 +40,77 @@ const SENSITIVE_HEADERS = [
   'Authorization',
   'x-user-id',
   'x-user-email',
+  'x-forwarded-for',
+  'X-Forwarded-For',
+  'x-real-ip',
+  'X-Real-Ip',
+  'x-nf-client-connection-ip',
+  'X-Nf-Client-Connection-Ip',
 ] as const
+
+// Path-segment redaction rules. Each entry: if the segment before a value
+// matches the pattern, the value is replaced. Structured as a table so the
+// next PII-in-path route is one entry, not a rediscovery.
+const PATH_REDACTIONS: { segment: string }[] = [
+  { segment: 'postcodes' },
+]
+
+export function redactUrl(url: string): string {
+  const [base] = url.split(/[?#]/, 1)
+  let result = base
+  for (const { segment } of PATH_REDACTIONS) {
+    const pattern = new RegExp(`(/${segment}/)([^/]+)`, 'gi')
+    result = result.replace(pattern, `$1[redacted]`)
+  }
+  return result
+}
+
+interface ScrubbableBreadcrumb {
+  category?: string
+  data?: Record<string, unknown>
+}
+
+interface ScrubbableSpan {
+  description?: string
+  data?: Record<string, unknown>
+}
+
+export function scrubBreadcrumb<T extends ScrubbableBreadcrumb>(breadcrumb: T): T {
+  if (
+    (breadcrumb.category === 'fetch' ||
+      breadcrumb.category === 'xhr' ||
+      breadcrumb.category === 'http') &&
+    breadcrumb.data &&
+    typeof breadcrumb.data.url === 'string'
+  ) {
+    breadcrumb.data.url = redactUrl(breadcrumb.data.url)
+  }
+  if (breadcrumb.category === 'navigation' && breadcrumb.data) {
+    if (typeof breadcrumb.data.to === 'string') {
+      breadcrumb.data.to = redactUrl(breadcrumb.data.to)
+    }
+    if (typeof breadcrumb.data.from === 'string') {
+      breadcrumb.data.from = redactUrl(breadcrumb.data.from)
+    }
+  }
+  return breadcrumb
+}
+
+export function scrubSpans(spans: ScrubbableSpan[]): void {
+  for (const span of spans) {
+    if (span.description) {
+      span.description = redactUrl(span.description)
+    }
+    if (span.data) {
+      for (const key of Object.keys(span.data)) {
+        const value = span.data[key]
+        if (typeof value === 'string') {
+          span.data[key] = redactUrl(value)
+        }
+      }
+    }
+  }
+}
 
 export function scrubEventPII<T extends ScrubbableEvent>(event: T): T {
   if (event.request) {
