@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         >
           Privacy Policy
         </h1>
-        <p className="mt-0.5 text-xs text-text-muted">Last updated 2026-06-28</p>
+        <p className="mt-0.5 text-xs text-text-muted">Last updated 2026-08-13</p>
       </header>
 
       <p className="text-sm leading-relaxed text-text-secondary">
@@ -77,7 +77,7 @@ export default function PrivacyPage() {
       <Section title="Third parties that process your data">
         <p>
           Open Cave relies on a small number of service providers to function. Each receives only
-          what it needs, and all are US-based — see data residency below.
+          what it needs — see data residency below for where each is based.
         </p>
         <ul className="ml-4 list-disc space-y-2 marker:text-text-faint">
           <li>

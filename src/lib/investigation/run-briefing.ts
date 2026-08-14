@@ -385,7 +385,7 @@ export async function runBriefingGeneration({
           weight: CREDENTIAL_WEIGHTS.investigation_completed,
           sourceId: investigationId,
           sourceType: 'investigation',
-        })
+        }).onConflictDoNothing()
       }
     })
 
