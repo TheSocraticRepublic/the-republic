@@ -15,6 +15,7 @@ import {
   boolean,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 import { customType } from 'drizzle-orm/pg-core'
 
 // pgvector custom type
@@ -536,6 +537,8 @@ export const leverActions = pgTable(
     index('lever_actions_user_id_idx').on(t.userId),
     index('lever_actions_status_idx').on(t.status),
     index('lever_actions_investigation_id_idx').on(t.investigationId),
+    index('lever_actions_session_id_idx').on(t.sessionId),
+    index('lever_actions_document_id_idx').on(t.documentId),
   ]
 )
 
@@ -636,6 +639,7 @@ export const players = pgTable(
   (t) => [
     index('players_name_idx').on(t.name),
     index('players_type_idx').on(t.playerType),
+    index('players_jurisdiction_id_idx').on(t.jurisdictionId),
   ]
 )
 
@@ -687,6 +691,7 @@ export const campaignMaterials = pgTable(
   (t) => [
     index('campaign_materials_investigation_idx').on(t.investigationId),
     index('campaign_materials_type_idx').on(t.materialType),
+    index('campaign_materials_user_id_idx').on(t.userId),
   ]
 )
 
@@ -728,6 +733,8 @@ export const regulatoryProcesses = pgTable(
     index('reg_processes_user_id_idx').on(t.userId),
     index('reg_processes_framework_idx').on(t.framework),
     index('reg_processes_comment_closes_idx').on(t.commentPeriodCloses),
+    index('regulatory_processes_jurisdiction_id_idx').on(t.jurisdictionId),
+    index('regulatory_processes_proponent_player_id_idx').on(t.proponentPlayerId),
   ]
 )
 
@@ -753,6 +760,7 @@ export const issueTracking = pgTable(
     index('issue_tracking_investigation_idx').on(t.investigationId),
     index('issue_tracking_event_date_idx').on(t.eventDate),
     index('issue_tracking_status_idx').on(t.status),
+    index('issue_tracking_user_id_idx').on(t.userId),
   ]
 )
 
@@ -781,6 +789,8 @@ export const investigationOutcomes = pgTable(
   (t) => [
     index('inv_outcomes_investigation_idx').on(t.investigationId),
     index('inv_outcomes_type_idx').on(t.outcomeType),
+    index('investigation_outcomes_user_id_idx').on(t.userId),
+    index('investigation_outcomes_document_id_idx').on(t.documentId),
   ]
 )
 
@@ -994,6 +1004,7 @@ export const contentReports = pgTable(
     index('content_reports_status_idx').on(t.status),
     index('content_reports_target_idx').on(t.targetType, t.targetId),
     index('content_reports_created_at_idx').on(t.createdAt),
+    index('content_reports_reviewed_by_idx').on(t.reviewedBy),
     uniqueIndex('content_reports_unique_reporter_target_idx').on(
       t.reporterId,
       t.targetType,
@@ -1046,6 +1057,9 @@ export const credentialEvents = pgTable(
     index('credential_events_user_id_idx').on(t.userId),
     index('credential_events_credential_type_idx').on(t.credentialType),
     index('credential_events_source_id_idx').on(t.sourceId),
+    uniqueIndex('credential_events_user_type_source_unique_idx')
+      .on(t.userId, t.credentialType, t.sourceId)
+      .where(sql`source_id IS NOT NULL`),
   ]
 )
 
@@ -1096,7 +1110,10 @@ export const documentVersions = pgTable(
     changeType: documentChangeTypeEnum('change_type').notNull(),
     detectedAt: timestamp('detected_at').defaultNow().notNull(),
   },
-  (t) => [index('document_versions_document_id_idx').on(t.documentId)]
+  (t) => [
+    index('document_versions_document_id_idx').on(t.documentId),
+    index('document_versions_previous_version_id_idx').on(t.previousVersionId),
+  ]
 )
 
 export const archiveAccessLog = pgTable(
@@ -1194,18 +1211,23 @@ export const governanceVotes = pgTable(
   (t) => [
     uniqueIndex('votes_proposal_voter_unique_idx').on(t.proposalId, t.voterId),
     index('votes_proposal_id_idx').on(t.proposalId),
+    index('governance_votes_voter_id_idx').on(t.voterId),
   ]
 )
 
-export const governanceConfig = pgTable('governance_config', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  key: text('key').notNull().unique(),
-  value: jsonb('value').notNull(),
-  updatedBy: uuid('updated_by').references(() => users.id, {
-    onDelete: 'set null',
-  }),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
+export const governanceConfig = pgTable(
+  'governance_config',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    key: text('key').notNull().unique(),
+    value: jsonb('value').notNull(),
+    updatedBy: uuid('updated_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [index('governance_config_updated_by_idx').on(t.updatedBy)]
+)
 
 // --- Parliament / Vote Tracker Tables ---
 
@@ -1272,6 +1294,7 @@ export const federalBills = pgTable(
   (t) => [
     uniqueIndex('federal_bills_session_number_idx').on(t.session, t.number),
     index('federal_bills_session_idx').on(t.session),
+    index('federal_bills_sponsor_mp_id_idx').on(t.sponsorMpId),
   ]
 )
 
@@ -1354,7 +1377,10 @@ export const postalCodeCache = pgTable(
     metadata: jsonb('metadata'),
     cachedAt: timestamp('cached_at').defaultNow().notNull(),
   },
-  (t) => [index('postal_code_cache_postal_code_idx').on(t.postalCode)]
+  (t) => [
+    index('postal_code_cache_postal_code_idx').on(t.postalCode),
+    index('postal_code_cache_mp_id_idx').on(t.mpId),
+  ]
 )
 
 export const parliamentSyncLog = pgTable(
@@ -1396,6 +1422,7 @@ export const investigationVotes = pgTable(
       t.voteId
     ),
     index('investigation_votes_investigation_idx').on(t.investigationId),
+    index('investigation_votes_vote_id_idx').on(t.voteId),
   ]
 )
 
