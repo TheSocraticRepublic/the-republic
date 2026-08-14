@@ -68,6 +68,9 @@ export function PostalCodeForm() {
         >
           Your postal code
         </label>
+        <p className="text-2xs text-text-faint mb-2">
+          Sent to Open North&apos;s Represent API to find your riding.
+        </p>
         <input
           id="postal-code"
           type="text"

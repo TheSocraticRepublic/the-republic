@@ -101,6 +101,13 @@ export default function PrivacyPage() {
             replay is disabled.
           </li>
           <li>
+            <strong className="text-text-primary">Open North (Represent API).</strong> When you enter
+            your postal code to look up your Member of Parliament, it is sent to Open
+            North&apos;s Represent API to resolve your federal riding and elected representative.
+            The postal code is transmitted in the request URL. Open North is a Canadian
+            non-profit; their privacy policy is at opennorth.ca.
+          </li>
+          <li>
             <strong className="text-text-primary">Upstash.</strong> A Redis service used only to
             rate-limit requests and stop abuse and cost-attacks. It receives your IP address (and,
             for some limits, your account ID) as a rate-limit key plus a short-lived counter —
@@ -123,7 +130,7 @@ export default function PrivacyPage() {
           Your account, investigations, documents, posts, and credentials live in a PostgreSQL
           database hosted in the <strong className="text-text-primary">United States</strong>{' '}
           (Supabase, us-east-2). The processors above (Anthropic, Voyage, Resend, Sentry, Upstash)
-          are also US-based.
+          are also US-based. Open North is based in Canada.
         </p>
         <p>
           This means your personal information is stored and processed in the United States and is
@@ -151,7 +158,9 @@ export default function PrivacyPage() {
         <p>
           Archive records you created <strong className="text-text-primary">persist</strong> — once
           pinned to IPFS or written to Arweave they exist as public goods and cannot be retracted.
-          Deleting your account will not remove them.
+          The permanent bundle carries no account identity. The archive page on this site credits
+          your display name while your account exists; after deletion it shows &ldquo;Account
+          deleted&rdquo; instead.
         </p>
       </Section>
 
