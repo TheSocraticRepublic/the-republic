@@ -171,6 +171,34 @@ risks dissolving the counter-hegemonic edge into a generic civic-engagement app 
 exact dependency-creating thing the project defines itself against (Illich test). Enter
 a new civic domain only when an honest lever for it can be named.
 
+## Parking Lot — every deferral, one index
+
+This is the single entry point for named-but-unscheduled work.
+
+Rule: a deferral is recorded here or it does not exist. The detailed sections below are kept
+verbatim and are not to be edited into summaries — this index points at them.
+
+Detailed open findings live in the private issue register
+(`~/marvin/state/the-republic-issue-register.md`), indexed here by section ID only because this
+repository is public:
+
+- Register §A remaining — 5 live unowned items
+- Register §D/E triage — findings never severity-rated against the code
+- Register §F — forum pre-launch list
+- Register Batch D candidates
+
+Named elsewhere and not yet scheduled:
+
+- P2 First Light — end-to-end civic outcome, never fired
+- DB scaling ceiling
+- External uptime monitor
+- Netlify deploy-failure alert
+- CSP enforce flip — the browser walk of every surface
+  - Walk every surface in Chrome DevTools watching for violations — public: `/`, `/login`, `/foundations`, `/privacy`, `/archive`, `/archive/[id]`, `/u/[name]`; authenticated: `/oracle`, `/investigate`, `/votes`, `/lever`, `/mirror`, `/scout`; plus PDF export (campaign or lever) — then flip `Content-Security-Policy-Report-Only` → `Content-Security-Policy` in `src/middleware.ts:19` if zero violations
+- Google Fonts references on the print pages (`print-utils.ts`)
+- JURIS-2 — AB/ON FOI citation practitioner review
+- D4 "The Athenians" — illustration variant selection
+
 ## Reference
 
 - `.claude/plans/opencave-design-program.md` — active program charters (July 2026, local)
