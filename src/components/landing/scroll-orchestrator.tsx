@@ -8,11 +8,13 @@ export function ScrollOrchestrator({ children }: { children: ReactNode }) {
   const reducedMotion = useReducedMotion()
 
   useEffect(() => {
+    const elements = document.querySelectorAll('[data-scroll-fade]')
+
     if (reducedMotion || !containerRef.current) {
-      document.querySelectorAll('[data-scroll-fade]').forEach((el) => {
-        el.classList.add('in-view')
-      })
-      return
+      elements.forEach((el) => el.classList.add('in-view'))
+      return () => {
+        elements.forEach((el) => el.classList.remove('in-view'))
+      }
     }
 
     const observer = new IntersectionObserver(
