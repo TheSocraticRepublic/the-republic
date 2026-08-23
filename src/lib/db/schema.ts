@@ -334,6 +334,7 @@ export const investigations = pgTable(
     // generationStartedAt: set when status transitions to 'generating'. Used by the
     // scheduled reaper and render-time reaper to detect stuck rows. Keyed on this
     // (not createdAt) so a retried row — with an old createdAt — isn't reaped instantly.
+    generationNonce: uuid('generation_nonce'),
     generationStartedAt: timestamp('generation_started_at', { withTimezone: true }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -483,7 +484,7 @@ export const gadflyTurns = pgTable(
   },
   (t) => [
     index('gadfly_turns_session_id_idx').on(t.sessionId),
-    index('gadfly_turns_turn_index_idx').on(t.sessionId, t.turnIndex),
+    uniqueIndex('gadfly_turns_session_turn_unique_idx').on(t.sessionId, t.turnIndex),
   ]
 )
 
@@ -1354,7 +1355,7 @@ export const mpVotingPatterns = pgTable(
       .notNull()
       .references(() => federalMps.id, { onDelete: 'cascade' }),
     session: text('session').notNull(),
-    patternAnalysis: text('pattern_analysis').notNull(),
+    patternAnalysis: text('pattern_analysis'),
     contradictions: jsonb('contradictions'),
     promptVersion: text('prompt_version').notNull(),
     generatedAt: timestamp('generated_at').defaultNow().notNull(),

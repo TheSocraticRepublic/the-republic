@@ -114,15 +114,27 @@ export async function POST(request: NextRequest) {
   const nextTurnIndex = existingTurns.length
 
   // 3. Save the citizen turn
-  const [citizenTurn] = await db
-    .insert(gadflyTurns)
-    .values({
-      sessionId,
-      role: 'citizen',
-      content: content.trim(),
-      turnIndex: nextTurnIndex,
-    })
-    .returning({ id: gadflyTurns.id })
+  let citizenTurn: { id: string }
+  try {
+    const [inserted] = await db
+      .insert(gadflyTurns)
+      .values({
+        sessionId,
+        role: 'citizen',
+        content: content.trim(),
+        turnIndex: nextTurnIndex,
+      })
+      .returning({ id: gadflyTurns.id })
+    citizenTurn = inserted
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === '23505') {
+      return new Response(JSON.stringify({ error: 'Turn collision — retry' }), {
+        status: 409,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    throw err
+  }
 
   // 4. Build conversation history for the AI
   const conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = []

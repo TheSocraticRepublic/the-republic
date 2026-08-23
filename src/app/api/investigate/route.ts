@@ -131,6 +131,7 @@ export const POST = safeRoute(async function handler(request: NextRequest) {
         environmentalReviewType:
           concernCategory === 'conservation' ? 'bc_eao' : null,
         status: 'generating',
+        generationNonce: crypto.randomUUID(),
         generationStartedAt: new Date(),
       })
       .returning({ id: investigations.id, federalMpId: investigations.federalMpId })

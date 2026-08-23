@@ -152,6 +152,7 @@ async function analyzeVoteRelevance(
 export interface RunBriefingOptions {
   db: Db
   investigationId: string
+  generationNonce?: string | null
 }
 
 /**
@@ -165,6 +166,7 @@ export interface RunBriefingOptions {
 export async function runBriefingGeneration({
   db,
   investigationId,
+  generationNonce,
 }: RunBriefingOptions): Promise<void> {
   // Load the investigation row (background fn already verified status='generating'
   // before calling us, but we re-select here for all the fields we need)
@@ -373,9 +375,13 @@ export async function runBriefingGeneration({
           updatedAt: sql`NOW()`,
         })
         .where(
-          sql`${investigations.id} = ${investigationId} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating'`
+          sql`${investigations.id} = ${investigationId} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating' AND (${investigations.generationNonce} IS NULL OR ${investigations.generationNonce} = ${generationNonce})`
         )
         .returning({ id: investigations.id })
+
+      if (updated.length === 0) {
+        console.warn('[run-briefing] stale nonce, skipping persist', investigationId)
+      }
 
       if (updated.length > 0) {
         // First and only completion — award the credential
@@ -463,7 +469,7 @@ export async function runBriefingGeneration({
           updatedAt: sql`NOW()`,
         })
         .where(
-          sql`${investigations.id} = ${investigationId} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating'`
+          sql`${investigations.id} = ${investigationId} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating' AND (${investigations.generationNonce} IS NULL OR ${investigations.generationNonce} = ${generationNonce})`
         )
     } catch (dbErr) {
       console.error('[run-briefing] failed to persist failed state', investigationId, dbErr)

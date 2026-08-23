@@ -68,7 +68,7 @@ export default async function handler(req: Request, _context: Context): Promise<
   // --- Idempotency guard: only proceed if status='generating' ---
   // Makes Netlify auto-retry and double-submit safe.
   const [row] = await db
-    .select({ status: investigations.status })
+    .select({ status: investigations.status, generationNonce: investigations.generationNonce })
     .from(investigations)
     .where(eq(investigations.id, investigationId))
     .limit(1)
@@ -87,7 +87,7 @@ export default async function handler(req: Request, _context: Context): Promise<
   // --- Run generation (with wall-clock backstop + terminal-state guarantee) ---
   try {
     await Promise.race([
-      runBriefingGeneration({ db, investigationId }),
+      runBriefingGeneration({ db, investigationId, generationNonce: row.generationNonce }),
       new Promise<never>((_, reject) =>
         setTimeout(
           () => reject(new Error(`bg-fn wall-clock timeout after ${BG_WALL_CLOCK_MS / 1000}s`)),
@@ -106,7 +106,7 @@ export default async function handler(req: Request, _context: Context): Promise<
         .update(investigations)
         .set({ status: 'failed', failureReason: `bg-fn: ${msg}`, updatedAt: sql`NOW()` })
         .where(
-          sql`${investigations.id} = ${investigationId} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating'`
+          sql`${investigations.id} = ${investigationId} AND ${investigations.briefingCompletedAt} IS NULL AND ${investigations.status} = 'generating' AND (${investigations.generationNonce} IS NULL OR ${investigations.generationNonce} = ${row.generationNonce})`
         )
     } catch (dbErr) {
       console.error('[generate-briefing] failed to persist terminal state', investigationId, dbErr)

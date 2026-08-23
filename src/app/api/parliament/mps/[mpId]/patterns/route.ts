@@ -72,7 +72,7 @@ export async function POST(
     )
     .limit(1)
 
-  if (cached && cached.promptVersion === MP_PATTERN_PROMPT_VERSION) {
+  if (cached && cached.patternAnalysis != null && cached.promptVersion === MP_PATTERN_PROMPT_VERSION) {
     return new Response(cached.patternAnalysis, {
       headers: { 'Content-Type': 'text/plain' },
     })

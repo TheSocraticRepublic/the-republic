@@ -84,6 +84,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       failureReason: null,
       briefingText: null,
       briefingCompletedAt: null,
+      generationNonce: crypto.randomUUID(),
       generationStartedAt: new Date(),
       updatedAt: sql`NOW()`,
     })

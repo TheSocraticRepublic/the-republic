@@ -158,17 +158,25 @@ export async function POST(
       contradictions = []
     }
 
-    // Persist to cache
-    if (cached) {
-      await db
-        .update(mpVotingPatterns)
-        .set({
+    // Persist to cache (upsert — works whether or not a patterns row exists)
+    await db
+      .insert(mpVotingPatterns)
+      .values({
+        mpId,
+        session: CURRENT_SESSION,
+        patternAnalysis: cached?.patternAnalysis ?? null,
+        contradictions,
+        promptVersion: CONTRADICTION_PROMPT_VERSION,
+        generatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [mpVotingPatterns.mpId, mpVotingPatterns.session],
+        set: {
           contradictions,
           promptVersion: CONTRADICTION_PROMPT_VERSION,
           generatedAt: new Date(),
-        })
-        .where(eq(mpVotingPatterns.id, cached.id))
-    }
+        },
+      })
 
     return new Response(JSON.stringify({ contradictions }), {
       headers: { 'Content-Type': 'application/json' },
