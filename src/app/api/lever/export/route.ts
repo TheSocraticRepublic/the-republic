@@ -192,7 +192,7 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
       'Content-Disposition': `attachment; filename="${filename}"`,
     },
   })
-}
+})
 
 /**
  * Add Markdown section headers to the raw text content based on action type.
@@ -257,4 +257,4 @@ function nodeReadableToWebReadable(
       }
     },
   })
-})
+}
