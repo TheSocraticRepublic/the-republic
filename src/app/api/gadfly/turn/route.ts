@@ -7,6 +7,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { streamText, generateText } from 'ai'
 import { eq, and, asc, desc, sql } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const MAX_DOCUMENT_CHARS = 50_000
 
@@ -39,7 +40,7 @@ function classifyQuestionType(text: string): GadflyQuestionType | null {
  * POST /api/gadfly/turn
  * Submit a citizen message and stream the Gadfly response.
  */
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -263,4 +264,4 @@ export async function POST(request: NextRequest) {
   })
 
   return result.toTextStreamResponse()
-}
+})

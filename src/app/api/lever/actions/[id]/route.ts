@@ -8,6 +8,7 @@ import {
 import { eq, and } from 'drizzle-orm'
 import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -17,7 +18,7 @@ interface RouteContext {
  * GET /api/lever/actions/[id]
  * Fetch a single lever action with full content.
  */
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export const GET = safeRoute(async function GET(request: NextRequest, { params }: RouteContext) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   }
 
   return NextResponse.json({ action })
-}
+})
 
 /**
  * PATCH /api/lever/actions/[id]
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
  *   - Auto-creates investigation outcome (if investigationId present)
  *   - Awards foi_filed credential for FIPPA requests (with dedup)
  */
-export async function PATCH(request: NextRequest, { params }: RouteContext) {
+export const PATCH = safeRoute(async function PATCH(request: NextRequest, { params }: RouteContext) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -219,4 +220,4 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   return NextResponse.json({ action: updated })
-}
+})

@@ -3,12 +3,13 @@ import { getDb } from '@/lib/db'
 import { gadflySessions, documents, investigations } from '@/lib/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
 /**
  * POST /api/gadfly/session
  * Create a new Gadfly session.
  */
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -81,13 +82,13 @@ export async function POST(request: NextRequest) {
     .returning({ id: gadflySessions.id, title: gadflySessions.title })
 
   return NextResponse.json({ sessionId: session.id, title: session.title }, { status: 201 })
-}
+})
 
 /**
  * GET /api/gadfly/session
  * List user's sessions, ordered by most recently updated.
  */
-export async function GET(request: NextRequest) {
+export const GET = safeRoute(async function GET(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -120,4 +121,4 @@ export async function GET(request: NextRequest) {
     .orderBy(desc(gadflySessions.updatedAt))
 
   return NextResponse.json({ sessions })
-}
+})

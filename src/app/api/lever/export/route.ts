@@ -5,6 +5,7 @@ import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { renderLeverPdf, hasLeverPdfTemplate } from '@/lib/pdf/render'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const ACTION_TYPE_LABELS: Record<string, string> = {
   fippa_request: 'fippa-request',
@@ -32,7 +33,7 @@ const ACTION_TYPE_DISPLAY: Record<string, string> = {
  * - md: Markdown with YAML frontmatter and section headers
  * - pdf: Rendered PDF using @react-pdf/renderer templates
  */
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -256,4 +257,4 @@ function nodeReadableToWebReadable(
       }
     },
   })
-}
+})

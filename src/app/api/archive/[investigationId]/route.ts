@@ -14,8 +14,9 @@ import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
 import { buildArchiveBundle } from '@/lib/archive/bundle'
 import { computeContentHash } from '@/lib/archive/hash'
 import { pinInvestigation, isPinataConfigured } from '@/lib/archive/ipfs'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function POST(
+export const POST = safeRoute(async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ investigationId: string }> }
 ) {
@@ -213,4 +214,4 @@ export async function POST(
     status: isNewArchive ? 201 : 200,
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})

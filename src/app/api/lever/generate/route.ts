@@ -15,6 +15,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, asc, desc, and } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const ACTION_TYPE_LABELS: Record<string, string> = {
   fippa_request: 'FIPPA Request',
@@ -28,7 +29,7 @@ const ACTION_TYPE_LABELS: Record<string, string> = {
  * The action record must already exist (created via POST /api/lever/actions).
  * On finish, updates the action content in the database.
  */
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -257,4 +258,4 @@ Produce a complete, fileable document. Do not include explanatory preamble — g
   })
 
   return result.toTextStreamResponse()
-}
+})

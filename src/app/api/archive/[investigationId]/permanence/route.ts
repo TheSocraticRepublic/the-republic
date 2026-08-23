@@ -8,6 +8,7 @@ import { computeContentHash } from '@/lib/archive/hash'
 import { isArweaveEnabled, permanizeInvestigation } from '@/lib/archive/arweave'
 import { checkPermanenceEligibility } from '@/lib/archive/permanence-gate'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -35,7 +36,7 @@ function readArchiveMetadata(raw: unknown): {
   }
 }
 
-export async function POST(
+export const POST = safeRoute(async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ investigationId: string }> }
 ) {
@@ -385,4 +386,4 @@ export async function POST(
       headers: { 'Content-Type': 'application/json' },
     }
   )
-}
+})

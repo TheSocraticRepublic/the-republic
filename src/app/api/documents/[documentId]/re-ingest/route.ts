@@ -5,10 +5,11 @@ import { eq } from 'drizzle-orm'
 import { checkTightRateLimit } from '@/lib/rate-limit'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 import { reIngestDocument } from '@/lib/archive/re-ingest'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-export async function POST(
+export const POST = safeRoute(async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ documentId: string }> }
 ) {
@@ -112,4 +113,4 @@ export async function POST(
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})

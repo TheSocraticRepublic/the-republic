@@ -10,6 +10,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
+import { safeRoute } from '@/lib/api/safe-route'
 
 /**
  * Build the search results context block for prompt injection.
@@ -37,7 +38,7 @@ function buildSearchResultsContext(
   return lines.join('\n')
 }
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -234,4 +235,4 @@ export async function POST(request: NextRequest) {
   void SCOUT_PROMPT_VERSION
 
   return result.toTextStreamResponse()
-}
+})

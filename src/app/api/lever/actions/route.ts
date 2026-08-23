@@ -3,12 +3,13 @@ import { getDb } from '@/lib/db'
 import { leverActions, documents, gadflySessions, investigations } from '@/lib/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
 /**
  * GET /api/lever/actions
  * List the current user's lever actions.
  */
-export async function GET(request: NextRequest) {
+export const GET = safeRoute(async function GET(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -38,14 +39,14 @@ export async function GET(request: NextRequest) {
     .orderBy(desc(leverActions.createdAt))
 
   return NextResponse.json({ actions })
-}
+})
 
 /**
  * POST /api/lever/actions
  * Create a new lever action stub (before generation).
  * Returns the action ID so the client can redirect to /lever/[id].
  */
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -170,4 +171,4 @@ export async function POST(request: NextRequest) {
     .returning({ id: leverActions.id, title: leverActions.title })
 
   return NextResponse.json({ actionId: action.id, title: action.title }, { status: 201 })
-}
+})
