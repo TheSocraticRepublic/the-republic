@@ -8,7 +8,7 @@ import {
   stripHtmlTags,
   canChangeDisplayName,
 } from '@/lib/profile/validation'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, checkTightRateLimit } from '@/lib/rate-limit'
 import { generateActorKeyPair } from '@/lib/activitypub/keys'
 
 // Postgres unique violation code
@@ -155,6 +155,14 @@ export async function PATCH(request: NextRequest) {
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkTightRateLimit(`profile-patch:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }
