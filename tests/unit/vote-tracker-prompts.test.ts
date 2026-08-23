@@ -13,14 +13,28 @@ describe('Bill summary prompt', () => {
 
   it('includes all required output sections', () => {
     const sections = [
-      '## What This Bill Does',
-      '## Who It Affects',
-      '## Key Provisions',
-      '## What This Summary Cannot Tell You',
+      '## What the Title Tells You',
+      '## Legislative Context',
+      '## What You Need to Read the Bill to Know',
     ]
     for (const section of sections) {
       expect(BILL_SUMMARY_SYSTEM_PROMPT).toContain(section)
     }
+  })
+
+  it('states the model only has metadata', () => {
+    expect(BILL_SUMMARY_SYSTEM_PROMPT).toContain('YOU ONLY HAVE METADATA')
+  })
+
+  it('prohibits fabricating provisions', () => {
+    expect(BILL_SUMMARY_SYSTEM_PROMPT).toContain('Never fabricate specific provisions')
+  })
+
+  it('does not demand provision-level specifics', () => {
+    expect(BILL_SUMMARY_SYSTEM_PROMPT).not.toContain('Key Provisions')
+    expect(BILL_SUMMARY_SYSTEM_PROMPT).not.toContain(
+      'increases the penalty from X to Y'
+    )
   })
 
   it('contains no-advocacy guardrail', () => {

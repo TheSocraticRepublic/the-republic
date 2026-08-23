@@ -69,7 +69,17 @@ export async function POST(
     messages: [
       {
         role: 'user',
-        content: `Summarize this Canadian federal bill:\n\nBill Number: ${bill.number}\nTitle: ${bill.titleEn}\nSession: ${bill.session}\nStatus: ${bill.statusCode ?? 'Unknown'}\nIntroduced: ${bill.introduced ?? 'Unknown'}\n${bill.shortTitleEn ? `Short Title: ${bill.shortTitleEn}` : ''}\n${bill.legisInfoUrl ? `LEGISinfo: ${bill.legisInfoUrl}` : ''}`,
+        content: [
+          `Explain what can be determined about this Canadian federal bill from its metadata only. You do not have the bill text.`,
+          ``,
+          `Bill Number: ${bill.number}`,
+          `Title: ${bill.titleEn}`,
+          bill.shortTitleEn ? `Short Title: ${bill.shortTitleEn}` : null,
+          `Session: ${bill.session}`,
+          `Status: ${bill.statusCode ?? 'Unknown'}`,
+          `Introduced: ${bill.introduced ?? 'Unknown'}`,
+          bill.legisInfoUrl ? `LEGISinfo: ${bill.legisInfoUrl}` : null,
+        ].filter(Boolean).join('\n'),
       },
     ],
     maxOutputTokens: 4096,

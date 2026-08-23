@@ -61,7 +61,7 @@ export function BillSummary({ billId, existingSummary }: BillSummaryProps) {
         }}
       >
         <p className="text-xs text-text-muted mb-4">
-          No AI summary available yet.
+          No AI overview available yet. This overview is based on the bill&apos;s title and metadata, not the bill text.
         </p>
         <button
           onClick={generateSummary}
@@ -72,7 +72,7 @@ export function BillSummary({ billId, existingSummary }: BillSummaryProps) {
             border: '1px solid rgba(212,118,78,0.20)',
           }}
         >
-          Summarize this bill
+          Explain this bill&apos;s metadata
         </button>
         {error && (
           <p className="mt-2 text-xs text-status-danger">Failed to generate summary.</p>
@@ -91,7 +91,7 @@ export function BillSummary({ billId, existingSummary }: BillSummaryProps) {
           className="text-3xs font-semibold uppercase"
           style={{ color: '#a8a29e' }}
         >
-          AI Summary
+          AI Overview — based on metadata only
         </p>
         {isStreaming && (
           <span className="flex items-center gap-1.5 text-2xs font-medium" style={{ color: '#a8a29e' }}>
