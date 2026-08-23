@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { getDb } from '@/lib/db'
-import { federalVotes } from '@/lib/db/schema'
+import { federalVotes, federalBills } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { VoteDetailCard } from '@/components/votes/vote-detail-card'
 import { PartyBreakdown, parsePartyVotes } from '@/components/votes/party-breakdown'
@@ -31,6 +32,16 @@ export default async function VoteDetailPage({ params }: PageProps) {
 
   const partyVoteData = parsePartyVotes(vote.partyVotes)
 
+  let bill: { id: string; number: string; titleEn: string } | null = null
+  if (vote.billId) {
+    const [b] = await db
+      .select({ id: federalBills.id, number: federalBills.number, titleEn: federalBills.titleEn })
+      .from(federalBills)
+      .where(eq(federalBills.id, vote.billId))
+      .limit(1)
+    bill = b ?? null
+  }
+
   return (
     <div data-arm="votes" className="mx-auto max-w-2xl px-6 py-10 space-y-10">
       <VoteDetailCard
@@ -43,6 +54,24 @@ export default async function VoteDetailPage({ params }: PageProps) {
         session={vote.session}
         number={vote.number}
       />
+
+      {bill && (
+        <Link
+          href={`/votes/bill/${bill.id}`}
+          className="block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3"
+          style={{
+            borderColor: 'var(--border)',
+            backgroundColor: 'var(--surface-1)',
+          }}
+        >
+          <span className="text-2xs font-semibold uppercase text-text-faint">Related Bill</span>
+          <p className="mt-1 text-xs text-text-secondary">
+            <span className="font-semibold" style={{ color: 'var(--accent-votes)' }}>{bill.number}</span>
+            {' — '}
+            {bill.titleEn}
+          </p>
+        </Link>
+      )}
 
       {/* AI Explanation */}
       <section>
