@@ -83,12 +83,14 @@ export function GadflySession({
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         console.error('[gadfly] Turn failed:', data.error)
+        setTurns((prev) => prev.filter((t) => t.id !== citizenTurn.id))
         setSubmitError('Something went wrong. Try again.')
         setIsStreaming(false)
         return
       }
 
       if (!res.body) {
+        setTurns((prev) => prev.filter((t) => t.id !== citizenTurn.id))
         setSubmitError('Something went wrong. Try again.')
         setIsStreaming(false)
         return
