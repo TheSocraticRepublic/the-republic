@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { checkTightRateLimit, checkDailyAiGeneralLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
-import { federalMps, federalVotes, federalMpBallots, leverActions } from '@/lib/db/schema'
+import { federalMps, federalVotes, federalMpBallots, leverActions, investigations } from '@/lib/db/schema'
 import {
   VOTE_LETTER_SYSTEM_PROMPT,
   VOTE_LETTER_PROMPT_VERSION,
@@ -70,6 +70,20 @@ export async function POST(
       status: 404,
       headers: { 'Content-Type': 'application/json' },
     })
+  }
+
+  if (body.investigationId) {
+    const [inv] = await db
+      .select({ id: investigations.id })
+      .from(investigations)
+      .where(and(eq(investigations.id, body.investigationId), eq(investigations.userId, userId)))
+      .limit(1)
+    if (!inv) {
+      return new Response(JSON.stringify({ error: 'Investigation not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
   }
 
   // Build vote context
