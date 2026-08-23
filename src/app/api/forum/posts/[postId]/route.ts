@@ -6,12 +6,13 @@ import { stripHtmlTags } from '@/lib/profile/validation'
 import { validatePostContent } from '@/lib/forum/validation'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
+import { safeRoute } from '@/lib/api/safe-route'
 
 interface RouteContext {
   params: Promise<{ postId: string }>
 }
 
-export async function PATCH(request: NextRequest, { params }: RouteContext) {
+export const PATCH = safeRoute(async function PATCH(request: NextRequest, { params }: RouteContext) {
   if (!isForumEnabled()) {
     return forumDisabledResponse()
   }
@@ -92,9 +93,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})
 
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+export const DELETE = safeRoute(async function DELETE(request: NextRequest, { params }: RouteContext) {
   if (!isForumEnabled()) {
     return forumDisabledResponse()
   }
@@ -183,4 +184,4 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       headers: { 'Content-Type': 'application/json' },
     })
   }
-}
+})

@@ -11,6 +11,7 @@ import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const VALID_ACTIONS = [
   'hide_post',
@@ -21,7 +22,7 @@ const VALID_ACTIONS = [
 ] as const
 type ActionType = (typeof VALID_ACTIONS)[number]
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   if (!isForumEnabled()) {
     return forumDisabledResponse()
   }
@@ -215,4 +216,4 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
     })
   }
-}
+})

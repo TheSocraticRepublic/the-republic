@@ -9,6 +9,7 @@ import {
 import type { CampaignMaterial } from '@/lib/campaign/schemas'
 import { esc, safeHref, errorPage, PRINT_CSP } from '@/lib/campaign/print-utils'
 import { checkRateLimit } from '@/lib/rate-limit'
+import * as Sentry from '@sentry/nextjs'
 
 interface RouteContext {
   params: Promise<{ materialId: string }>
@@ -60,7 +61,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
     const raw = JSON.parse(material.content)
     parsed = campaignMaterialSchema.parse(raw)
-  } catch {
+  } catch (err) {
+    Sentry.captureException(err)
     return new Response(errorPage('Could not parse material content'), {
       status: 422,
       headers: printHeaders,

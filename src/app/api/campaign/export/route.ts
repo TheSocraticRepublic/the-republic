@@ -6,6 +6,7 @@ import { campaignMaterialSchema } from '@/lib/campaign/schemas'
 import { renderCampaignPdf, hasCampaignPdfTemplate } from '@/lib/pdf/render'
 import { Readable } from 'stream'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
 /**
  * POST /api/campaign/export
@@ -16,7 +17,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
  *
  * Returns a streamed application/pdf response with Content-Disposition attachment.
  */
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -165,4 +166,4 @@ function nodeReadableToWebReadable(
       }
     },
   })
-}
+})

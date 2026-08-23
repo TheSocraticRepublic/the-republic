@@ -10,12 +10,13 @@ import { eq, and } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
+import { safeRoute } from '@/lib/api/safe-route'
 
 interface RouteContext {
   params: Promise<{ reportId: string }>
 }
 
-export async function POST(request: NextRequest, { params }: RouteContext) {
+export const POST = safeRoute(async function POST(request: NextRequest, { params }: RouteContext) {
   if (!isForumEnabled()) {
     return forumDisabledResponse()
   }
@@ -174,4 +175,4 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       headers: { 'Content-Type': 'application/json' },
     })
   }
-}
+})

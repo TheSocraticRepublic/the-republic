@@ -11,13 +11,14 @@ import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 import { pickForumRateLimit } from '@/lib/forum/rate-limit-tier'
 import { stripHtmlTags } from '@/lib/profile/validation'
 import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const VALID_REASONS = ['spam', 'harassment', 'misinformation', 'off_topic', 'other'] as const
 type ReportReason = (typeof VALID_REASONS)[number]
 const VALID_TARGET_TYPES = ['thread', 'post'] as const
 type TargetType = (typeof VALID_TARGET_TYPES)[number]
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   if (!isForumEnabled()) {
     return forumDisabledResponse()
   }
@@ -159,9 +160,9 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
     })
   }
-}
+})
 
-export async function GET(request: NextRequest) {
+export const GET = safeRoute(async function GET(request: NextRequest) {
   if (!isForumEnabled()) {
     return forumDisabledResponse()
   }
@@ -265,4 +266,4 @@ export async function GET(request: NextRequest) {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})

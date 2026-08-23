@@ -11,12 +11,13 @@ import { getOrCreateActorKeys } from '@/lib/activitypub/keys'
 import { deliverActivity, buildKeyId } from '@/lib/activitypub/delivery'
 import { postToNote, wrapInCreate } from '@/lib/activitypub/activity'
 import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
+import { safeRoute } from '@/lib/api/safe-route'
 
 interface RouteContext {
   params: Promise<{ threadId: string }>
 }
 
-export async function POST(request: NextRequest, { params }: RouteContext) {
+export const POST = safeRoute(async function POST(request: NextRequest, { params }: RouteContext) {
   if (!isForumEnabled()) {
     return forumDisabledResponse()
   }
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       headers: { 'Content-Type': 'application/json' },
     })
   }
-}
+})
 
 async function deliverPostToFollowers(
   userId: string,

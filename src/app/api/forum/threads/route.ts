@@ -19,8 +19,9 @@ import { getOrCreateActorKeys } from '@/lib/activitypub/keys'
 import { deliverActivity, buildKeyId } from '@/lib/activitypub/delivery'
 import { threadToArticle, wrapInCreate } from '@/lib/activitypub/activity'
 import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   if (!isForumEnabled()) {
     return forumDisabledResponse()
   }
@@ -169,7 +170,7 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
     })
   }
-}
+})
 
 async function deliverThreadToFollowers(
   userId: string,
@@ -232,7 +233,7 @@ async function deliverThreadToFollowers(
   }
 }
 
-export async function GET(request: NextRequest) {
+export const GET = safeRoute(async function GET(request: NextRequest) {
   if (!isForumEnabled()) {
     return forumDisabledResponse()
   }
@@ -311,4 +312,4 @@ export async function GET(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
     }
   )
-}
+})
