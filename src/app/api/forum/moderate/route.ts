@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
               reviewedAt: new Date(),
               updatedAt: new Date(),
             })
-            .where(eq(contentReports.id, targetId))
+            .where(and(eq(contentReports.id, targetId), eq(contentReports.status, 'pending')))
           break
       }
 
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
             reviewedAt: new Date(),
             updatedAt: new Date(),
           })
-          .where(eq(contentReports.id, reportId))
+          .where(and(eq(contentReports.id, reportId), eq(contentReports.status, 'pending')))
       }
 
       // Write audit log.
