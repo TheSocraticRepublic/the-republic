@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { gadflySessions, documents } from '@/lib/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { gadflySessions, documents, investigations } from '@/lib/db/schema'
+import { eq, and, desc } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 
 /**
@@ -51,6 +51,17 @@ export async function POST(request: NextRequest) {
 
     if (!title) {
       title = `${doc.title} — Socratic Inquiry`
+    }
+  }
+
+  if (investigationId) {
+    const [inv] = await db
+      .select({ id: investigations.id })
+      .from(investigations)
+      .where(and(eq(investigations.id, investigationId), eq(investigations.userId, userId)))
+      .limit(1)
+    if (!inv) {
+      return NextResponse.json({ error: 'Investigation not found' }, { status: 403 })
     }
   }
 
