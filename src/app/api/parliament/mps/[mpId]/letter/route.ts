@@ -80,7 +80,7 @@ export async function POST(
       .limit(1)
     if (!inv) {
       return new Response(JSON.stringify({ error: 'Investigation not found' }), {
-        status: 404,
+        status: 403,
         headers: { 'Content-Type': 'application/json' },
       })
     }

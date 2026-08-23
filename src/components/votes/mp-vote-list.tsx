@@ -77,7 +77,17 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
           backgroundColor: 'var(--surface-1)',
         }}
       >
-        <p className="text-sm text-text-faint">Voting records could not be loaded.</p>
+        <p className="text-sm text-text-faint mb-3">Voting records could not be loaded.</p>
+        <button
+          onClick={() => {
+            setError(false)
+            setLoading(true)
+            setPage(1)
+          }}
+          className="text-xs text-text-muted hover:text-text-secondary transition-colors underline underline-offset-2"
+        >
+          Try again
+        </button>
       </div>
     )
   }
