@@ -3,6 +3,8 @@ import { ArmHeader } from '@/components/layout/arm-header'
 import { PostalCodeForm } from '@/components/votes/postal-code-form'
 import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
+export const revalidate = 600
+
 export const metadata = {
   title: 'Vote Tracker',
 }

@@ -8,6 +8,8 @@ import { PartyBreakdown, parsePartyVotes } from '@/components/votes/party-breakd
 import { BallotList } from '@/components/votes/ballot-list'
 import { VoteExplanation } from '@/components/votes/vote-explanation'
 
+export const revalidate = 600
+
 export const metadata = {
   title: 'Vote Detail',
 }

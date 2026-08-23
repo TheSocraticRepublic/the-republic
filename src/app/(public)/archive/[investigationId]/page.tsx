@@ -44,6 +44,8 @@ export async function generateMetadata({ params }: PageProps) {
   return { title: `${label} — The Archive` }
 }
 
+export const revalidate = 1800
+
 export default async function ArchiveDetailPage({ params }: PageProps) {
   const { investigationId } = await params
 

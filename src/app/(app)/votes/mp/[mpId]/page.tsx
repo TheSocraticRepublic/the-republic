@@ -8,6 +8,8 @@ import { ContradictionList } from '@/components/votes/contradiction-list'
 import { MpVoteList } from '@/components/votes/mp-vote-list'
 import { MpLetterGenerator } from '@/components/votes/mp-letter-generator'
 
+export const revalidate = 600
+
 export const metadata = {
   title: 'MP Profile',
 }

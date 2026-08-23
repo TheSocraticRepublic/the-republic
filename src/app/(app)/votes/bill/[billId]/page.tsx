@@ -7,6 +7,8 @@ import { PartyBadge } from '@/components/votes/party-badge'
 import { BillSummary } from '@/components/votes/bill-summary'
 import { BILL_SUMMARY_PROMPT_VERSION } from '@/lib/ai/prompts/vote-tracker-system'
 
+export const revalidate = 600
+
 export const metadata = {
   title: 'Bill Detail',
 }

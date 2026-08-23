@@ -4,6 +4,8 @@ import { federalMps } from '@/lib/db/schema'
 import { eq, asc } from 'drizzle-orm'
 import { PartyBadge } from '@/components/votes/party-badge'
 
+export const revalidate = 600
+
 export const metadata = {
   title: 'All MPs',
 }

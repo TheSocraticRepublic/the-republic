@@ -4,6 +4,8 @@ import { eq, desc, count } from 'drizzle-orm'
 import { ArchiveCard } from '@/components/archive/archive-card'
 import { Pagination } from '@/components/forum/pagination'
 
+export const revalidate = 1800
+
 export const metadata = {
   title: 'The Archive',
 }

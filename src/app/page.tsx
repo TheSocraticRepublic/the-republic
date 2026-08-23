@@ -9,6 +9,8 @@ import { ActAgency } from '@/components/landing/act-agency'
 import { LandingCta } from '@/components/landing/landing-cta'
 import { LandingFooter } from '@/components/landing/landing-footer'
 
+export const revalidate = 3600
+
 export default function LandingPage() {
   return (
     <ScrollOrchestrator>
