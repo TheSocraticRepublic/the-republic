@@ -1,3 +1,9 @@
+function resultColor(result: string): string {
+  if (result === 'passed') return 'var(--status-success)'
+  if (result === 'tie') return 'var(--status-warning)'
+  return 'var(--status-danger)'
+}
+
 interface VoteDetailCardProps {
   date: string
   descriptionEn: string
@@ -43,11 +49,8 @@ export function VoteDetailCard({
         <span
           className="rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wider"
           style={{
-            color: result === 'passed' ? 'var(--status-success)' : 'var(--status-danger)',
-            backgroundColor:
-              result === 'passed'
-                ? 'color-mix(in srgb, var(--status-success) 10%, transparent)'
-                : 'color-mix(in srgb, var(--status-danger) 10%, transparent)',
+            color: resultColor(result),
+            backgroundColor: `color-mix(in srgb, ${resultColor(result)} 10%, transparent)`,
           }}
         >
           {result}

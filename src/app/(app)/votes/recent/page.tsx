@@ -87,11 +87,8 @@ export default function RecentVotesPage() {
                   <span
                     className="rounded-md px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wider"
                     style={{
-                      color: vote.result === 'passed' ? 'var(--status-success)' : 'var(--status-danger)',
-                      backgroundColor:
-                        vote.result === 'passed'
-                          ? 'color-mix(in srgb, var(--status-success) 8%, transparent)'
-                          : 'color-mix(in srgb, var(--status-danger) 8%, transparent)',
+                      color: vote.result === 'passed' ? 'var(--status-success)' : vote.result === 'tie' ? 'var(--status-warning)' : 'var(--status-danger)',
+                      backgroundColor: `color-mix(in srgb, ${vote.result === 'passed' ? 'var(--status-success)' : vote.result === 'tie' ? 'var(--status-warning)' : 'var(--status-danger)'} 8%, transparent)`,
                     }}
                   >
                     {vote.result}

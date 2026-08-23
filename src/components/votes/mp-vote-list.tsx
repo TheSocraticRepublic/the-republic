@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { VoteBadge } from './vote-badge'
 
+function resultColor(result: string): string {
+  if (result === 'passed') return 'var(--status-success)'
+  if (result === 'tie') return 'var(--status-warning)'
+  return 'var(--status-danger)'
+}
+
 interface MpVoteRecord {
   voteId: string
   session: string
@@ -21,18 +27,31 @@ interface MpVoteListProps {
 export function MpVoteList({ mpId }: MpVoteListProps) {
   const [votes, setVotes] = useState<MpVoteRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
     fetch(`/api/parliament/mps/${mpId}/votes?page=${page}&limit=20`)
-      .then((res) => (res.ok ? res.json() : { votes: [] }))
+      .then((res) => {
+        if (!res.ok) throw new Error(`${res.status}`)
+        return res.json()
+      })
       .then((data) => {
+        if (cancelled) return
         setVotes(data.votes ?? [])
         setHasMore(data.hasMore ?? false)
+        setError(false)
       })
-      .catch(() => setVotes([]))
-      .finally(() => setLoading(false))
+      .catch(() => {
+        if (cancelled) return
+        setError(true)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
   }, [mpId, page])
 
   if (loading) {
@@ -45,6 +64,20 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
             style={{ backgroundColor: 'var(--surface-1)' }}
           />
         ))}
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div
+        className="rounded-xl border px-6 py-8 text-center"
+        style={{
+          borderColor: 'var(--border)',
+          backgroundColor: 'var(--surface-1)',
+        }}
+      >
+        <p className="text-sm text-text-faint">Voting records could not be loaded.</p>
       </div>
     )
   }
@@ -85,11 +118,8 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
                 <span
                   className="rounded px-1.5 py-0.5 text-xs font-medium uppercase tracking-wider"
                   style={{
-                    color: vote.result === 'passed' ? 'var(--status-success)' : 'var(--status-danger)',
-                    backgroundColor:
-                      vote.result === 'passed'
-                        ? 'color-mix(in srgb, var(--status-success) 8%, transparent)'
-                        : 'color-mix(in srgb, var(--status-danger) 8%, transparent)',
+                    color: resultColor(vote.result),
+                    backgroundColor: `color-mix(in srgb, ${resultColor(vote.result)} 8%, transparent)`,
                   }}
                 >
                   {vote.result}

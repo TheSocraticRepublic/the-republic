@@ -178,7 +178,7 @@ export default async function BillDetailPage({ params }: PageProps) {
                   <span
                     className="text-xs"
                     style={{
-                      color: vote.result === 'passed' ? 'var(--status-success)' : 'var(--status-danger)',
+                      color: vote.result === 'passed' ? 'var(--status-success)' : vote.result === 'tie' ? 'var(--status-warning)' : 'var(--status-danger)',
                     }}
                   >
                     {vote.result}
