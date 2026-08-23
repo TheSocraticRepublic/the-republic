@@ -79,7 +79,7 @@ export async function POST(
           `Status: ${bill.statusCode ?? 'Unknown'}`,
           `Introduced: ${bill.introduced ?? 'Unknown'}`,
           bill.legisInfoUrl ? `LEGISinfo: ${bill.legisInfoUrl}` : null,
-        ].filter(Boolean).join('\n'),
+        ].filter((line): line is string => line != null).join('\n'),
       },
     ],
     maxOutputTokens: 4096,

@@ -5,6 +5,7 @@ import { federalBills, federalVotes, federalMps } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { PartyBadge } from '@/components/votes/party-badge'
 import { BillSummary } from '@/components/votes/bill-summary'
+import { BILL_SUMMARY_PROMPT_VERSION } from '@/lib/ai/prompts/vote-tracker-system'
 
 export const metadata = {
   title: 'Bill Detail',
@@ -31,6 +32,7 @@ export default async function BillDetailPage({ params }: PageProps) {
       isLaw: federalBills.isLaw,
       legisInfoUrl: federalBills.legisInfoUrl,
       aiSummary: federalBills.aiSummary,
+      aiSummaryPromptVersion: federalBills.aiSummaryPromptVersion,
       sponsorName: federalMps.name,
       sponsorParty: federalMps.party,
       sponsorMpId: federalMps.id,
@@ -127,7 +129,14 @@ export default async function BillDetailPage({ params }: PageProps) {
 
       {/* AI Summary */}
       <section>
-        <BillSummary billId={billId} existingSummary={bill.aiSummary} />
+        <BillSummary
+          billId={billId}
+          existingSummary={
+            bill.aiSummaryPromptVersion === BILL_SUMMARY_PROMPT_VERSION
+              ? bill.aiSummary
+              : null
+          }
+        />
       </section>
 
       {/* Linked votes */}
