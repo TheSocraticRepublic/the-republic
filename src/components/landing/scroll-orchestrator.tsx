@@ -29,8 +29,13 @@ export function ScrollOrchestrator({ children }: { children: ReactNode }) {
       { threshold: 0.1, rootMargin: '0px 0px -10% 0px' }
     )
 
-    document.querySelectorAll('[data-scroll-fade]').forEach((el) => {
-      observer.observe(el)
+    elements.forEach((el) => {
+      const rect = el.getBoundingClientRect()
+      if (rect.top < window.innerHeight) {
+        el.classList.add('in-view')
+      } else {
+        observer.observe(el)
+      }
     })
 
     let gsapCtx: { revert: () => void } | null = null
