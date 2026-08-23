@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, after } from 'next/server'
 import { checkTightRateLimit, checkDailyAiGeneralLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
 import { gadflySessions, gadflyTurns, insightMarkers, documents, analyses } from '@/lib/db/schema'
@@ -177,66 +177,77 @@ export async function POST(request: NextRequest) {
     system: systemPrompt,
     messages: conversationHistory,
     maxOutputTokens: 4096,
-    onFinish: async ({ text }) => {
-      try {
-        const gadflyTurnIndex = nextTurnIndex + 1
-        const questionType = classifyQuestionType(text)
+  })
 
-        // Save the gadfly turn
-        await db
-          .insert(gadflyTurns)
-          .values({
-            sessionId,
-            role: 'gadfly',
-            content: text,
-            questionType: questionType ?? undefined,
-            turnIndex: gadflyTurnIndex,
-          })
-          .returning({ id: gadflyTurns.id })
+  // after() extends the function lifetime past the response — Netlify will
+  // not kill the function while this callback is running. Without it, onFinish
+  // ran post-stream with no lifetime guarantee and the citizen's AI response
+  // could vanish if the function was killed after flush (O-11).
+  after(async () => {
+    const text = await result.text
 
-        // Run insight extraction on the citizen's message
-        let insightDetected = false
-        try {
-          const insightResult = await generateText({
-            model: anthropic(MODEL),
-            system: 'You are a brief classifier. Respond with exactly one sentence starting with the insight, or respond with exactly "NONE".',
-            messages: [
-              {
-                role: 'user',
-                content: `Did the citizen demonstrate a genuine insight, discovery, or independent connection in this message? If yes, state the insight in one sentence. If no, respond with NONE.\n\nCitizen message: "${content.trim()}"`,
-              },
-            ],
-            maxOutputTokens: 512,
-          })
+    // CRITICAL: persist the gadfly turn — independent try/catch so insight
+    // extraction failures never prevent saving the response.
+    const gadflyTurnIndex = nextTurnIndex + 1
+    try {
+      const questionType = classifyQuestionType(text)
+      await db
+        .insert(gadflyTurns)
+        .values({
+          sessionId,
+          role: 'gadfly',
+          content: text,
+          questionType: questionType ?? undefined,
+          turnIndex: gadflyTurnIndex,
+        })
+    } catch (err) {
+      console.error('[gadfly/turn] Failed to persist gadfly turn:', err)
+      return
+    }
 
-          const insightText = insightResult.text.trim()
-          if (insightText && insightText !== 'NONE' && !insightText.toUpperCase().startsWith('NONE')) {
-            await db.insert(insightMarkers).values({
-              turnId: citizenTurn.id,
-              sessionId,
-              insight: insightText,
-            })
-            insightDetected = true
-          }
-        } catch (err) {
-          console.error('[gadfly/turn] Insight extraction failed:', err)
-        }
+    // Nice-to-have: insight extraction on the citizen's message
+    let insightDetected = false
+    try {
+      const insightResult = await generateText({
+        model: anthropic(MODEL),
+        system: 'You are a brief classifier. Respond with exactly one sentence starting with the insight, or respond with exactly "NONE".',
+        messages: [
+          {
+            role: 'user',
+            content: `Did the citizen demonstrate a genuine insight, discovery, or independent connection in this message? If yes, state the insight in one sentence. If no, respond with NONE.\n\nCitizen message: "${content.trim()}"`,
+          },
+        ],
+        maxOutputTokens: 512,
+      })
 
-        // Update session counts and updatedAt
-        await db
-          .update(gadflySessions)
-          .set({
-            questionCount: sql`${gadflySessions.questionCount} + 1`,
-            insightCount: insightDetected
-              ? sql`${gadflySessions.insightCount} + 1`
-              : gadflySessions.insightCount,
-            updatedAt: new Date(),
-          })
-          .where(eq(gadflySessions.id, sessionId))
-      } catch (err) {
-        console.error('[gadfly/turn] Post-stream processing failed:', err)
+      const insightText = insightResult.text.trim()
+      if (insightText && insightText !== 'NONE' && !insightText.toUpperCase().startsWith('NONE')) {
+        await db.insert(insightMarkers).values({
+          turnId: citizenTurn.id,
+          sessionId,
+          insight: insightText,
+        })
+        insightDetected = true
       }
-    },
+    } catch (err) {
+      console.error('[gadfly/turn] Insight extraction failed:', err)
+    }
+
+    // Update session counts
+    try {
+      await db
+        .update(gadflySessions)
+        .set({
+          questionCount: sql`${gadflySessions.questionCount} + 1`,
+          insightCount: insightDetected
+            ? sql`${gadflySessions.insightCount} + 1`
+            : gadflySessions.insightCount,
+          updatedAt: new Date(),
+        })
+        .where(eq(gadflySessions.id, sessionId))
+    } catch (err) {
+      console.error('[gadfly/turn] Failed to update session counts:', err)
+    }
   })
 
   return result.toTextStreamResponse()
