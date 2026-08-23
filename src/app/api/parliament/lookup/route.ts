@@ -9,6 +9,7 @@ import {
   lookupPostalCode,
   extractFederalMP,
 } from '@/lib/parliament/represent'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 
@@ -19,7 +20,7 @@ const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 // body. See postal-code-form.tsx for the only caller (verified via grep —
 // api/investigate/route.ts calls lookupPostalCode() from represent.ts
 // directly, server-side, and never hits this route).
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -186,4 +187,4 @@ export async function POST(request: NextRequest) {
       { status: 502, headers: { 'Content-Type': 'application/json' } }
     )
   }
-}
+})

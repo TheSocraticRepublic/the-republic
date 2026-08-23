@@ -5,8 +5,9 @@ import { syncParliamentData } from '@/lib/parliament/sync'
 import { CURRENT_PARLIAMENT_SESSION } from '@/lib/parliament/constants'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -91,4 +92,4 @@ export async function POST(request: NextRequest) {
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
-}
+})

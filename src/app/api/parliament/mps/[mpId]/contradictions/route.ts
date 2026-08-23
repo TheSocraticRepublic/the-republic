@@ -17,6 +17,7 @@ import { generateText } from 'ai'
 import { eq, and, desc } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 import { CURRENT_PARLIAMENT_SESSION as CURRENT_SESSION } from '@/lib/parliament/constants'
+import { safeRoute } from '@/lib/api/safe-route'
 
 interface Speech {
   url: string
@@ -25,7 +26,7 @@ interface Speech {
   content_en?: string
 }
 
-export async function POST(
+export const POST = safeRoute(async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ mpId: string }> }
 ) {
@@ -188,4 +189,4 @@ export async function POST(
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
-}
+})
