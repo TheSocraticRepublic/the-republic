@@ -8,6 +8,7 @@ import {
 import { eq, and, desc } from 'drizzle-orm'
 import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const VALID_OUTCOME_TYPES = [
   'fippa_response_received',
@@ -21,7 +22,7 @@ const VALID_OUTCOME_TYPES = [
 
 type OutcomeType = (typeof VALID_OUTCOME_TYPES)[number]
 
-export async function POST(
+export const POST = safeRoute(async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -187,9 +188,9 @@ export async function POST(
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
-}
+})
 
-export async function GET(
+export const GET = safeRoute(async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -235,4 +236,4 @@ export async function GET(
   return new Response(JSON.stringify(outcomes), {
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})

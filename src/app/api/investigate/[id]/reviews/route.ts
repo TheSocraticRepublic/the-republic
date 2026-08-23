@@ -10,6 +10,7 @@ import {
   REVIEWABLE_INVESTIGATION_STATUS,
 } from '@/lib/review/validation'
 import { stripHtmlTags } from '@/lib/profile/validation'
+import { safeRoute } from '@/lib/api/safe-route'
 
 // Postgres unique violation code
 const PG_UNIQUE_VIOLATION = '23505'
@@ -22,7 +23,7 @@ interface RouteContext {
   params: Promise<{ id: string }>
 }
 
-export async function POST(request: NextRequest, { params }: RouteContext) {
+export const POST = safeRoute(async function POST(request: NextRequest, { params }: RouteContext) {
   const { id } = await params
 
   const userId = request.headers.get('x-user-id')
@@ -145,9 +146,9 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       headers: { 'Content-Type': 'application/json' },
     })
   }
-}
+})
 
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export const GET = safeRoute(async function GET(request: NextRequest, { params }: RouteContext) {
   const { id } = await params
 
   const userId = request.headers.get('x-user-id')
@@ -256,4 +257,4 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       headers: { 'Content-Type': 'application/json' },
     }
   )
-}
+})

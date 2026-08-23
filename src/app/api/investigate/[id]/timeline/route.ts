@@ -9,8 +9,9 @@ import {
 import { eq, and, asc } from 'drizzle-orm'
 import { mergeTimelineEvents } from '@/lib/timeline/merge'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function GET(
+export const GET = safeRoute(async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -75,9 +76,9 @@ export async function GET(
   return new Response(JSON.stringify({ events }), {
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})
 
-export async function POST(
+export const POST = safeRoute(async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -164,4 +165,4 @@ export async function POST(
     status: 201,
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})

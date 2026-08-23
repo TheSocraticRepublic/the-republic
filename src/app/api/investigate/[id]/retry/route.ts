@@ -4,10 +4,7 @@ import { getDb } from '@/lib/db'
 import { investigations } from '@/lib/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
 import { triggerBriefingGeneration } from '@/lib/investigation/trigger-generation'
-
-interface RouteContext {
-  params: Promise<{ id: string }>
-}
+import { safeRoute } from '@/lib/api/safe-route'
 
 /**
  * POST /api/investigate/[id]/retry
@@ -20,7 +17,7 @@ interface RouteContext {
  * Rate-limited with the same tight limit as the creation route.
  * Returns 202 { id } — generation runs in the background.
  */
-export async function POST(request: NextRequest, { params }: RouteContext) {
+export const POST = safeRoute(async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -119,4 +116,4 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     status: 202,
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})

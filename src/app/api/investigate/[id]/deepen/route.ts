@@ -8,8 +8,9 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { streamText, generateText } from 'ai'
 import { eq, and, sql } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function POST(
+export const POST = safeRoute(async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -110,7 +111,7 @@ export async function POST(
   })
 
   return result.toTextStreamResponse()
-}
+})
 
 // Background player extraction
 async function extractPlayers(

@@ -9,6 +9,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
 import { eq, and, desc, asc } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
+import { safeRoute } from '@/lib/api/safe-route'
 
 // The valid materialTypes the campaign system can generate (subset of the DB enum)
 const SUPPORTED_MATERIAL_TYPES = new Set([
@@ -21,7 +22,7 @@ const SUPPORTED_MATERIAL_TYPES = new Set([
 ])
 
 // POST: Generate a campaign material spec
-export async function POST(
+export const POST = safeRoute(async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -312,4 +313,4 @@ export async function POST(
     }),
     { status: 201, headers: { 'Content-Type': 'application/json' } }
   )
-}
+})
