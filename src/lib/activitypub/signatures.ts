@@ -132,6 +132,11 @@ export async function verifyHttpSignature(opts: {
       return false
     }
 
+    if (method === 'POST' && body !== undefined && !signedHeaders.includes('digest')) {
+      console.warn('[ap/verify] rejected: POST with body but "digest" not in signed-header set')
+      return false
+    }
+
     const parsed = new URL(url)
     const requestTarget = `${method.toLowerCase()} ${parsed.pathname}${parsed.search}`
 
