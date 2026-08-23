@@ -3,8 +3,9 @@ import { sendMagicCode } from '@/lib/auth/magic-code'
 import { checkRateLimit, checkGlobalSendCodeLimit } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/api/ip'
 import { checkCsrfOrigin } from '@/lib/api/csrf'
+import { safeRoute } from '@/lib/api/safe-route'
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   try {
     const csrfReject = checkCsrfOrigin(request)
     if (csrfReject) return csrfReject
@@ -50,4 +51,4 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-}
+})

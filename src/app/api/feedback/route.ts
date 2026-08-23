@@ -2,13 +2,14 @@ import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { feedback } from '@/lib/db/schema'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 
 const VALID_FEEDBACK_TYPES = ['bug', 'suggestion'] as const
 type FeedbackType = (typeof VALID_FEEDBACK_TYPES)[number]
 
 const MAX_DESCRIPTION_LENGTH = 5000
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -85,4 +86,4 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
     })
   }
-}
+})

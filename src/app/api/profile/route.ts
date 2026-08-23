@@ -10,6 +10,7 @@ import {
 } from '@/lib/profile/validation'
 import { checkRateLimit, checkTightRateLimit } from '@/lib/rate-limit'
 import { generateActorKeyPair } from '@/lib/activitypub/keys'
+import { safeRoute } from '@/lib/api/safe-route'
 
 // Postgres unique violation code
 const PG_UNIQUE_VIOLATION = '23505'
@@ -18,7 +19,7 @@ function isPgError(err: unknown): err is { code: string } {
   return typeof err === 'object' && err !== null && 'code' in err
 }
 
-export async function GET(request: NextRequest) {
+export const GET = safeRoute(async function GET(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -46,9 +47,9 @@ export async function GET(request: NextRequest) {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   })
-}
+})
 
-export async function POST(request: NextRequest) {
+export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -148,9 +149,9 @@ export async function POST(request: NextRequest) {
     }
     throw err
   }
-}
+})
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = safeRoute(async function PATCH(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -258,4 +259,4 @@ export async function PATCH(request: NextRequest) {
     }
     throw err
   }
-}
+})
