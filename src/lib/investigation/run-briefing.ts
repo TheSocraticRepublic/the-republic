@@ -381,6 +381,7 @@ export async function runBriefingGeneration({
 
       if (updated.length === 0) {
         console.warn('[run-briefing] stale nonce, skipping persist', investigationId)
+        return
       }
 
       if (updated.length > 0) {
