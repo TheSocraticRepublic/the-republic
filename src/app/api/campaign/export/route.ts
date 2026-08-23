@@ -138,7 +138,7 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
-}
+})
 
 /**
  * Convert a Node.js ReadableStream to a Web ReadableStream for Next.js Response.
@@ -166,4 +166,4 @@ function nodeReadableToWebReadable(
       }
     },
   })
-})
+}
