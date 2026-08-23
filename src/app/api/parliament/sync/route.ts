@@ -1,10 +1,9 @@
 import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
-import { parliamentSyncLog, credentialEvents } from '@/lib/db/schema'
+import { parliamentSyncLog } from '@/lib/db/schema'
 import { syncParliamentData } from '@/lib/parliament/sync'
 import { CURRENT_PARLIAMENT_SESSION } from '@/lib/parliament/constants'
-import { eq, sql } from 'drizzle-orm'
-import { MODERATION_THRESHOLD } from '@/lib/credentials'
+import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
 import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
@@ -24,19 +23,15 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  // Gate: only users with sufficient credential weight can trigger sync
-  const db = getDb()
-  const [weightResult] = await db
-    .select({ total: sql<number>`COALESCE(SUM(${credentialEvents.weight}), 0)` })
-    .from(credentialEvents)
-    .where(eq(credentialEvents.userId, userId))
-
-  if ((weightResult?.total ?? 0) < MODERATION_THRESHOLD) {
+  const { isModerator } = await checkModeratorAccess(userId)
+  if (!isModerator) {
     return new Response(
       JSON.stringify({ error: 'Insufficient credential weight to trigger sync' }),
       { status: 403, headers: { 'Content-Type': 'application/json' } }
     )
   }
+
+  const db = getDb()
 
   let body: { session?: string } = {}
   try {
