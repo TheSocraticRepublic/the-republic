@@ -8,6 +8,7 @@ import { streamText } from 'ai'
 import { eq, asc } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 import { safeRoute } from '@/lib/api/safe-route'
+import { cachedSystem } from '@/lib/ai/cache'
 
 const MAX_CONTENT_CHARS = 100_000
 
@@ -105,7 +106,7 @@ export const POST = safeRoute(async function handler(request: NextRequest) {
   // Stream the analysis
   const result = streamText({
     model: anthropic(MODEL),
-    system: ORACLE_SYSTEM_PROMPT,
+    system: cachedSystem(ORACLE_SYSTEM_PROMPT),
     messages: [{ role: 'user', content: userMessage }],
     maxOutputTokens: 4096,
     onFinish: async ({ text }) => {

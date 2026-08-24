@@ -8,6 +8,7 @@ import { streamText } from 'ai'
 import { eq, desc } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 import { safeRoute } from '@/lib/api/safe-route'
+import { cachedSystem } from '@/lib/ai/cache'
 
 const MAX_DOCUMENT_CHARS = 60_000
 
@@ -137,7 +138,7 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
   // Stream Mirror response
   const result = streamText({
     model: anthropic(MODEL),
-    system: MIRROR_SYSTEM_PROMPT,
+    system: cachedSystem(MIRROR_SYSTEM_PROMPT),
     messages: [{ role: 'user', content: userMessage }],
     maxOutputTokens: 4096,
   })

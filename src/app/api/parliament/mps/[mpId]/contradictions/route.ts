@@ -18,6 +18,7 @@ import { eq, and, desc } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 import { CURRENT_PARLIAMENT_SESSION as CURRENT_SESSION } from '@/lib/parliament/constants'
 import { safeRoute } from '@/lib/api/safe-route'
+import { cachedSystem } from '@/lib/ai/cache'
 
 interface Speech {
   url: string
@@ -145,7 +146,7 @@ export const POST = safeRoute(async function POST(
   try {
     const { text } = await generateText({
       model: anthropic(MODEL),
-      system: CONTRADICTION_SYSTEM_PROMPT,
+      system: cachedSystem(CONTRADICTION_SYSTEM_PROMPT),
       messages: [{ role: 'user', content: userMessage }],
       maxOutputTokens: 2048,
     })

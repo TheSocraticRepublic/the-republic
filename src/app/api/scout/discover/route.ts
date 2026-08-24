@@ -11,6 +11,7 @@ import { streamText } from 'ai'
 import { eq } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 import { safeRoute } from '@/lib/api/safe-route'
+import { cachedSystem } from '@/lib/ai/cache'
 
 /**
  * Build the search results context block for prompt injection.
@@ -226,7 +227,7 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
   // Stream Scout response
   const result = streamText({
     model: anthropic(MODEL),
-    system: systemPrompt,
+    system: cachedSystem(systemPrompt),
     messages: [{ role: 'user', content: userMessage }],
     maxOutputTokens: 4096,
   })

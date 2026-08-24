@@ -17,6 +17,7 @@ import { eq, and, desc } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 import { CURRENT_PARLIAMENT_SESSION as CURRENT_SESSION } from '@/lib/parliament/constants'
 import { safeRoute } from '@/lib/api/safe-route'
+import { cachedSystem } from '@/lib/ai/cache'
 
 export const POST = safeRoute(async function POST(
   request: NextRequest,
@@ -107,7 +108,7 @@ export const POST = safeRoute(async function POST(
 
   const result = streamText({
     model: anthropic(MODEL),
-    system: MP_PATTERN_SYSTEM_PROMPT,
+    system: cachedSystem(MP_PATTERN_SYSTEM_PROMPT),
     messages: [
       {
         role: 'user',

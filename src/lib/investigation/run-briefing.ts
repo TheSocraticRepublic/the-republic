@@ -36,6 +36,7 @@ import { generateText } from 'ai'
 import { eq, sql, desc } from 'drizzle-orm'
 import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
 import { MODEL } from '@/lib/ai/model'
+import { cachedSystem } from '@/lib/ai/cache'
 
 type Db = ReturnType<typeof getDb>
 
@@ -92,7 +93,7 @@ async function analyzeVoteRelevance(
 
   const { text } = await generateText({
     model: anthropic(MODEL),
-    system: VOTE_RELEVANCE_SYSTEM_PROMPT,
+    system: cachedSystem(VOTE_RELEVANCE_SYSTEM_PROMPT),
     messages: [{ role: 'user', content: userMessage }],
     maxOutputTokens: 2048,
     abortSignal: AbortSignal.timeout(120_000),
@@ -339,7 +340,7 @@ export async function runBriefingGeneration({
     // --- Model call (non-streaming, 240s abort) ---
     let genResult = await generateText({
       model: anthropic(MODEL),
-      system: systemPrompt,
+      system: cachedSystem(systemPrompt),
       messages: [{ role: 'user', content: userMessage }],
       maxOutputTokens: 4096,
       abortSignal: AbortSignal.timeout(240_000),
@@ -349,7 +350,7 @@ export async function runBriefingGeneration({
     if (genResult.finishReason === 'length') {
       genResult = await generateText({
         model: anthropic(MODEL),
-        system: systemPrompt,
+        system: cachedSystem(systemPrompt),
         messages: [{ role: 'user', content: userMessage }],
         maxOutputTokens: 8192,
         abortSignal: AbortSignal.timeout(240_000),

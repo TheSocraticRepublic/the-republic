@@ -10,6 +10,7 @@ import { generateText } from 'ai'
 import { eq, and, desc, asc } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 import { safeRoute } from '@/lib/api/safe-route'
+import { cachedSystem } from '@/lib/ai/cache'
 
 // The valid materialTypes the campaign system can generate (subset of the DB enum)
 const SUPPORTED_MATERIAL_TYPES = new Set([
@@ -202,7 +203,7 @@ export const POST = safeRoute(async function POST(
   try {
     let genResult = await generateText({
       model: anthropic(MODEL),
-      system: systemPrompt,
+      system: cachedSystem(systemPrompt),
       messages: [{ role: 'user', content: userMessage }],
       maxOutputTokens: 2048,
     })
@@ -211,7 +212,7 @@ export const POST = safeRoute(async function POST(
     if (genResult.finishReason === 'length') {
       genResult = await generateText({
         model: anthropic(MODEL),
-        system: systemPrompt,
+        system: cachedSystem(systemPrompt),
         messages: [{ role: 'user', content: userMessage }],
         maxOutputTokens: 4096,
       })
@@ -248,7 +249,7 @@ export const POST = safeRoute(async function POST(
     try {
       const { text: retryText } = await generateText({
         model: anthropic(MODEL),
-        system: systemPrompt,
+        system: cachedSystem(systemPrompt),
         messages: [
           { role: 'user', content: userMessage },
           {

@@ -11,6 +11,7 @@ import { streamText } from 'ai'
 import { eq } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 import { safeRoute } from '@/lib/api/safe-route'
+import { cachedSystem } from '@/lib/ai/cache'
 
 export const POST = safeRoute(async function POST(
   request: NextRequest,
@@ -66,7 +67,7 @@ export const POST = safeRoute(async function POST(
 
   const result = streamText({
     model: anthropic(MODEL),
-    system: BILL_SUMMARY_SYSTEM_PROMPT,
+    system: cachedSystem(BILL_SUMMARY_SYSTEM_PROMPT),
     messages: [
       {
         role: 'user',

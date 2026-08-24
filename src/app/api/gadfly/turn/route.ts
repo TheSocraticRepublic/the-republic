@@ -8,6 +8,7 @@ import { streamText, generateText } from 'ai'
 import { eq, and, asc, desc, sql } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 import { safeRoute } from '@/lib/api/safe-route'
+import { cachedSystem } from '@/lib/ai/cache'
 
 const MAX_DOCUMENT_CHARS = 50_000
 
@@ -187,7 +188,7 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
   // 6. Stream the Gadfly response
   const result = streamText({
     model: anthropic(MODEL),
-    system: systemPrompt,
+    system: cachedSystem(systemPrompt),
     messages: conversationHistory,
     maxOutputTokens: 4096,
   })
@@ -223,7 +224,7 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
     try {
       const insightResult = await generateText({
         model: anthropic(MODEL),
-        system: 'You are a brief classifier. Respond with exactly one sentence starting with the insight, or respond with exactly "NONE".',
+        system: cachedSystem('You are a brief classifier. Respond with exactly one sentence starting with the insight, or respond with exactly "NONE".'),
         messages: [
           {
             role: 'user',

@@ -16,6 +16,7 @@ import { streamText } from 'ai'
 import { eq, asc, desc, and } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 import { safeRoute } from '@/lib/api/safe-route'
+import { cachedSystem } from '@/lib/ai/cache'
 
 const ACTION_TYPE_LABELS: Record<string, string> = {
   fippa_request: 'FIPPA Request',
@@ -230,7 +231,7 @@ Produce a complete, fileable document. Do not include explanatory preamble — g
   // 6. Stream and update action on finish
   const result = streamText({
     model: anthropic(MODEL),
-    system: buildLeverPrompt(jurisdictionModule!),
+    system: cachedSystem(buildLeverPrompt(jurisdictionModule!)),
     messages: [{ role: 'user', content: userMessage }],
     maxOutputTokens: 4096,
     onFinish: async ({ text }) => {

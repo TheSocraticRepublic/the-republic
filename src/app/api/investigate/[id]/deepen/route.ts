@@ -9,6 +9,7 @@ import { streamText, generateText } from 'ai'
 import { eq, and, sql } from 'drizzle-orm'
 import { MODEL } from '@/lib/ai/model'
 import { safeRoute } from '@/lib/api/safe-route'
+import { cachedSystem } from '@/lib/ai/cache'
 
 export const POST = safeRoute(async function POST(
   request: NextRequest,
@@ -81,7 +82,7 @@ export const POST = safeRoute(async function POST(
   // Stream historical context
   const result = streamText({
     model: anthropic(MODEL),
-    system: LENS_CONTEXT_SYSTEM_PROMPT,
+    system: cachedSystem(LENS_CONTEXT_SYSTEM_PROMPT),
     messages: [{
       role: 'user',
       content: `Investigation concern: ${investigation.concern}\n\nJurisdiction: ${investigation.jurisdictionName || 'Not specified'}\n\nBriefing analysis:\n${investigation.briefingText}`,
@@ -121,7 +122,7 @@ async function extractPlayers(
 ) {
   const { text } = await generateText({
     model: anthropic(MODEL),
-    system: PLAYER_EXTRACTION_SYSTEM_PROMPT,
+    system: cachedSystem(PLAYER_EXTRACTION_SYSTEM_PROMPT),
     messages: [{
       role: 'user',
       content: briefingText,
