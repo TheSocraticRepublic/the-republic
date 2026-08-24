@@ -14,6 +14,8 @@ import { POST } from '@/app/api/parliament/lookup/route'
  * forum-flag-route-gate.test.ts).
  */
 
+const dummyCtx = { params: Promise.resolve({}) }
+
 function postReq(
   body: unknown,
   opts: { userId?: string | null; url?: string; rawBody?: string } = {}
@@ -37,12 +39,12 @@ describe('POST /api/parliament/lookup', () => {
   })
 
   it('rejects unauthenticated requests before touching the body', async () => {
-    const res = await POST(postReq({ postalCode: 'V8B 0A1' }, { userId: null }))
+    const res = await POST(postReq({ postalCode: 'V8B 0A1' }, { userId: null }), dummyCtx)
     expect(res.status).toBe(401)
   })
 
   it('rejects invalid JSON bodies', async () => {
-    const res = await POST(postReq(undefined, { rawBody: 'not json' }))
+    const res = await POST(postReq(undefined, { rawBody: 'not json' }), dummyCtx)
     expect(res.status).toBe(400)
     const data = await res.json()
     expect(data.error).toBe('Invalid JSON')
@@ -53,14 +55,14 @@ describe('POST /api/parliament/lookup', () => {
       {},
       { url: 'http://localhost/api/parliament/lookup?postalCode=V8B0A1' }
     )
-    const res = await POST(req)
+    const res = await POST(req, dummyCtx)
     expect(res.status).toBe(400)
     const data = await res.json()
     expect(data.error).toBe('postalCode is required')
   })
 
   it('rejects an invalid Canadian postal code from the body', async () => {
-    const res = await POST(postReq({ postalCode: 'not-a-code' }))
+    const res = await POST(postReq({ postalCode: 'not-a-code' }), dummyCtx)
     expect(res.status).toBe(400)
     const data = await res.json()
     expect(data.error).toBe('Invalid Canadian postal code')

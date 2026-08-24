@@ -34,14 +34,14 @@ describe('FORUM-1 route gate — /api/forum/*', () => {
   it('POST /api/forum/threads denies when the flag is off', async () => {
     delete process.env.FORUM_ENABLED
     const { POST } = await import('@/app/api/forum/threads/route')
-    const res = await POST(req())
+    const res = await POST(req(), params({}))
     expect(res.status).toBe(404)
   })
 
   it('GET /api/forum/threads denies when the flag is off', async () => {
     delete process.env.FORUM_ENABLED
     const { GET } = await import('@/app/api/forum/threads/route')
-    const res = await GET(req())
+    const res = await GET(req(), params({}))
     expect(res.status).toBe(404)
   })
 
@@ -76,14 +76,14 @@ describe('FORUM-1 route gate — /api/forum/*', () => {
   it('POST /api/forum/reports denies when the flag is off', async () => {
     delete process.env.FORUM_ENABLED
     const { POST } = await import('@/app/api/forum/reports/route')
-    const res = await POST(req())
+    const res = await POST(req(), params({}))
     expect(res.status).toBe(404)
   })
 
   it('GET /api/forum/reports denies when the flag is off', async () => {
     delete process.env.FORUM_ENABLED
     const { GET } = await import('@/app/api/forum/reports/route')
-    const res = await GET(req())
+    const res = await GET(req(), params({}))
     expect(res.status).toBe(404)
   })
 
@@ -97,7 +97,7 @@ describe('FORUM-1 route gate — /api/forum/*', () => {
   it('POST /api/forum/moderate denies when the flag is off', async () => {
     delete process.env.FORUM_ENABLED
     const { POST } = await import('@/app/api/forum/moderate/route')
-    const res = await POST(req())
+    const res = await POST(req(), params({}))
     expect(res.status).toBe(404)
   })
 })
