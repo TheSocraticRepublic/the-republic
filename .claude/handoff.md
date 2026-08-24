@@ -19,20 +19,32 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 ## Owed right now
 
+- **Production audit required before merge.** 31 commits on `marvin/the-republic-charter`
+  (f3d8962..eaba813) — register drain, 3 relays, safeRoute sweep, prompt caching. The
+  project's last audit grade is F; a fresh `/production` audit is the gate. The coordinator
+  has proposed this to Lee.
+
+- **Migration 0012 — production DB apply post-audit.** Three DDL changes (generationNonce
+  column, turnIndex unique constraint with renumber, patternAnalysis nullable). File at
+  `drizzle/migrations/0012_nonce_turn_unique_contradictions.sql`. Apply via the custom
+  runner against the session-mode pooler. The renumber CTE is idempotent; re-run is safe.
+
 - **Branch protection (C2) — needs Lee's own GitHub account.** Settings → Branches → Add rule for `main`:
   - Required status check: `ci`
   - Require up-to-date branches
   - Include administrators
 
-  Trade-off: every merge goes through a PR. Direct push stops. CI is green on main (`68f4dac`).
   The constraint behind this is in `DECISIONS.md` → Operating constraints.
 
-- **What's next runs off the private issue register**, not this file and not ROADMAP's `next`.
-  Read `~/marvin/state/the-republic-issue-register.md` first. In order: Section D/E triage
-  (~28 Fable/Opus findings never severity-rated against the code; **BUG-F2**, bill summaries from
-  title-only metadata, is the highest-priority civic-honesty item), Section A remaining
-  (5 live unowned items, R-A3 through R-A7), Section F (forum pre-launch list, gated behind
-  `FORUM_ENABLED`), then Batch D candidates — performance (revalidate, prompt caching, RAG race), Node 20 EOL, Sentry source maps, safeRoute sweep.
+- **SENTRY_AUTH_TOKEN env var (OBS-1).** Code is complete (`withSentryConfig` already
+  correct in `next.config.ts`). Only the env var is missing — needs Sentry dashboard +
+  Netlify dashboard access (Lee/ops).
+
+- **Register status.** §D/E triaged and drained (triage at `.refresh/triage-2026-08-23.md`,
+  gitignored). §A drained (4 fixed, R-A7 deferred — design decision). §F stays queued
+  behind FORUM_ENABLED. 6 findings deferred with reason (see ROADMAP `next`). Register
+  is no longer the source of open work — the remaining items are Lee-owned ops or
+  practitioner-needed (JURIS-2).
 
 ## Open questions awaiting Lee
 
@@ -55,6 +67,17 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-08-23
+**Register drain — charter adopted, 28 findings triaged, all addressed (31 commits)**
+
+Charter adopted from Lee-corrected draft (`f3d8962`). Full §D/E triage: 28 findings rated against actual code — 1 CRITICAL (BUG-F2 bill summary fabrication), 1 high (O-11 gadfly persistence), 19 medium, 7 low. Triage file at `.refresh/triage-2026-08-23.md` (gitignored).
+
+15 findings fixed directly across security (SEC-F8 AP digest, SEC-F13 gadfly IDOR), correctness (BUG-F2, BUG-F18, BUG-F21, BUG-F22, BUG-F32), civic-honesty (R-A4 tie styling, R-A5 error states, R-A6 IDOR, R-A3 rate limit), and operability (O-11 after(), O-16 sync decay, O-13 bill navigation). 3 migration-shaped fixes via critic-gated relay: BUG-F15/F28 generationNonce (stale-run fence), DATA-F3 turnIndex unique (renumber-not-delete, preserving insight markers), BUG-F17 contradictions nullable + patterns cache guard. Batch D: PERF-1 ISR revalidation (5 public pages), NODE-1 Node 22. SAFE-1: safeRoute sweep (35 routes, Razor class-level 65/65 verification). PERF-2: prompt caching (cachedSystem helper, 19 call sites, single-block byte-equivalent).
+
+6 findings deferred with reason: SEC-F10 (CSP enforce parked), SEC-F12/BUG-F6 (dead peer-review feature), O-17 (re-ingest normalization), O-18 (Mirror staleness UI), R-A7 (lens panel trigger — design decision). OBS-1 is code-complete, only env var missing (Lee/ops).
+
+All Razor-gated (0 CRITICAL across every review). Fable critic gate on all 3 relay plans. 830 tests, 0 lint errors, build clean. Deploy-gated: fresh `/production` audit required.
 
 ### 2026-08-21
 Hand-off restructured by lifetime, per the MARVIN convention and the Fern reference implementation (`fern 91b4db1`): standing decisions extracted to `.claude/DECISIONS.md`, deferrals consolidated into the ROADMAP's Parking Lot, this file cut to the volatile layer. The trigger was a near-miss of the same family as Fern's — an untracked `.claude/handoff.local-2026-08-07.md` was found on 2026-08-20 sitting beside the newer tracked hand-off at the same path, 17 commits behind, holding the only copy of several standing gates. Both files were unioned into the new structure; nothing was dropped.
