@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import {
   THREAD_TITLE_MAX,
@@ -11,6 +11,7 @@ import {
 
 function NewThreadForm() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const investigationId = searchParams.get('investigationId')
 
   const [title, setTitle] = useState('')
@@ -59,7 +60,7 @@ function NewThreadForm() {
       }
 
       const data = await res.json()
-      window.location.href = `/forum/${data.thread.id}`
+      router.push(`/forum/${data.thread.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
       setSubmitting(false)

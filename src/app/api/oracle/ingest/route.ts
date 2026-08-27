@@ -7,6 +7,7 @@ import { chunkDocument } from '@/lib/documents/chunker'
 import { generateEmbeddings } from '@/lib/ai/embeddings'
 import { eq } from 'drizzle-orm'
 import { safeRoute } from '@/lib/api/safe-route'
+import { logEvent } from '@/lib/log'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
@@ -126,7 +127,7 @@ export const POST = safeRoute(async function handler(request: NextRequest) {
     // Log embedding outcome (when a key is configured; one line, counts only)
     const embeddedCount = embeddings.filter((e) => e !== null).length
     if (process.env.VOYAGE_API_KEY) {
-      console.log(`[embeddings] document=${doc.id} embedded=${embeddedCount}/${chunks.length}`)
+      logEvent('document_embedded', { documentId: doc.id, embedded: embeddedCount, total: chunks.length })
     }
 
     // Insert chunks with their embeddings (null where embedding failed)

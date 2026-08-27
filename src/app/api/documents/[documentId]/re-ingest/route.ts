@@ -102,8 +102,8 @@ export const POST = safeRoute(async function POST(
   try {
     result = await reIngestDocument(documentId, db)
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Re-ingestion failed'
-    return new Response(JSON.stringify({ error: message }), {
+    console.error('[re-ingest] failed for document', documentId, err instanceof Error ? err.message : err)
+    return new Response(JSON.stringify({ error: 'Re-ingestion failed' }), {
       status: 502,
       headers: { 'Content-Type': 'application/json' },
     })

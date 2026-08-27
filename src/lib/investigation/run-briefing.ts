@@ -13,6 +13,7 @@
  *   - Atomic completion guard: AND briefing_completed_at IS NULL AND status='generating'
  */
 
+import { logEvent } from '@/lib/log'
 import { getDb } from '@/lib/db'
 import {
   investigations,
@@ -401,7 +402,7 @@ export async function runBriefingGeneration({
     // A failure here MUST NOT flip a complete row to failed.
     // The atomic guard above is a second backstop, but belt-and-suspenders.
     try {
-      console.log('[shadows] fired investigation=', investigationId)
+      logEvent('shadow_detection_started', { investigationId })
       const detected = await detectShadows(investigationId, db)
 
       if (detected.length > 0) {
@@ -425,13 +426,9 @@ export async function runBriefingGeneration({
           )
         }
 
-        console.log(
-          '[shadows] investigation=', investigationId,
-          'inserted=', fresh.length,
-          'skipped=', detected.length - fresh.length
-        )
+        logEvent('shadow_detection_completed', { investigationId, inserted: fresh.length, skipped: detected.length - fresh.length })
       } else {
-        console.log('[shadows] investigation=', investigationId, 'inserted=0 skipped=0')
+        logEvent('shadow_detection_completed', { investigationId, inserted: 0, skipped: 0 })
       }
     } catch (shadowErr) {
       // Intentionally swallowed — post-completion step must never flip status

@@ -24,7 +24,7 @@ function withTimeout<T>(work: Promise<T>, ms: number, label: string): Promise<T>
   ])
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const checks: Record<string, CheckState> = {}
   let healthy = true
 
@@ -86,12 +86,15 @@ export async function GET() {
     healthy = false
   }
 
+  const isAuthenticated = !!request.headers.get('x-user-id')
+  const includeChecks = !healthy || isAuthenticated
+
   return NextResponse.json(
     {
       status: healthy ? 'ok' : 'degraded',
-      checks,
       timestamp: new Date().toISOString(),
       version: APP_VERSION,
+      ...(includeChecks ? { checks } : {}),
     },
     { status: healthy ? 200 : 503 }
   )

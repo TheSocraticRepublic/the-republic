@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 
 type Step = 'email' | 'code'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
@@ -64,7 +66,9 @@ export default function LoginPage() {
         throw new Error(message)
       }
 
-      window.location.href = '/investigate'
+      // Full reload so server components re-read the fresh session cookie
+      router.push('/investigate')
+      router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {

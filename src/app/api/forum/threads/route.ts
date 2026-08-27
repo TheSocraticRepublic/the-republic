@@ -19,6 +19,7 @@ import { getOrCreateActorKeys } from '@/lib/activitypub/keys'
 import { deliverActivity, buildKeyId } from '@/lib/activitypub/delivery'
 import { threadToArticle, wrapInCreate } from '@/lib/activitypub/activity'
 import { isForumEnabled, forumDisabledResponse } from '@/lib/forum/flag'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
 
 export const POST = safeRoute(async function POST(request: NextRequest) {
@@ -242,6 +243,14 @@ export const GET = safeRoute(async function GET(request: NextRequest) {
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { success } = await checkRateLimit(`forum-threads:${userId}`)
+  if (!success) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
   }

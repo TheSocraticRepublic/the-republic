@@ -5,6 +5,9 @@ export const LOGGABLE_EVENTS = [
   'credential_award',
   'archive_creation',
   'permanence_promotion',
+  'shadow_detection_started',
+  'shadow_detection_completed',
+  'document_embedded',
 ] as const
 
 export const PROHIBITED_LOGGING = [

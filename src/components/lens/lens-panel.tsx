@@ -81,16 +81,21 @@ export function LensPanel({
   const deepenStarted = useRef(false)
   const pollCountRef = useRef(0)
 
-  // 1. Stream historical context from POST /api/investigate/[id]/deepen
+  // 1a. Seed from persisted context prop when available
+  useEffect(() => {
+    if (lensContextText) {
+      setHistoricalContent(lensContextText)
+    }
+  }, [lensContextText])
+
+  // 1b. Stream historical context from POST /api/investigate/[id]/deepen
+  //     Runs once per mount; skipped when persisted context already exists.
   useEffect(() => {
     if (deepenStarted.current) return
     deepenStarted.current = true
 
-    // If persisted context exists, render it instantly without re-streaming
-    if (lensContextText) {
-      setHistoricalContent(lensContextText)
-      return
-    }
+    // If persisted context exists, the seed effect above handles it
+    if (lensContextText) return
 
     const controller = new AbortController()
 
@@ -133,6 +138,10 @@ export function LensPanel({
     return () => {
       controller.abort()
     }
+    // Stream fires once per mount, guarded by deepenStarted ref. Adding
+    // lensContextText here would abort an in-flight stream when the prop
+    // arrives late — the seed effect (1a) handles that case instead.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [investigationId])
 
   // Derive seeded question: DB-persisted prop takes priority, parsed from stream as fallback

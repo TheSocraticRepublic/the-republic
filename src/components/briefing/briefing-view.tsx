@@ -1802,7 +1802,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, palette }: { onOpenCampaign?: 
 
 // ---- Main component ----
 
-export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, onOpenLens, onOpenCampaign, onOpenGadfly, onScrollToQuestions }: BriefingViewProps) {
+export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, onOpenLens: _onOpenLens, onOpenCampaign, onOpenGadfly, onScrollToQuestions }: BriefingViewProps) {
   const sections = useMemo(() => parseSections(text), [text])
   const docTitle = useMemo(() => extractTitle(text), [text])
   const hasSections = sections.length > 0

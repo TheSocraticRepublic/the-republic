@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare, Shield, Vote, Heart, ScrollText } from 'lucide-react'
 import { FeedbackDialog } from '@/components/layout/feedback-dialog'
 import { clsx } from 'clsx'
@@ -52,6 +52,7 @@ interface SidebarProps {
 
 export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant = 'sidebar', onNavigate }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [instrumentsOpen, setInstrumentsOpen] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollDown, setCanScrollDown] = useState(false)
@@ -489,13 +490,22 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
         <button
           onClick={async () => {
             await fetch('/api/auth/signout', { method: 'POST' })
-            window.location.href = '/login'
+            // Full reload so server components clear the stale session
+            router.push('/login')
+            router.refresh()
           }}
           className={`flex w-full items-center gap-2.5 rounded-lg px-3 ${isDrawer ? 'py-3' : 'py-2'} text-sm text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary`}
         >
           <LogOut size={14} strokeWidth={1.75} />
           Sign out
         </button>
+        <Link
+          href="/privacy"
+          className="block px-3 pt-2 text-2xs text-text-faint transition-colors hover:text-text-muted"
+          onClick={onNavigate}
+        >
+          Privacy
+        </Link>
       </div>
     </nav>
   )

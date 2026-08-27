@@ -196,39 +196,47 @@ export async function buildArchiveBundle(
     .from(forumThreads)
     .where(eq(forumThreads.investigationId, investigationId))
 
-  const bundleThreads: ArchiveBundleThread[] = await Promise.all(
-    rawThreads.map(async (thread) => {
-      const posts = await db
+  // Fetch all visible posts for these threads in a single query (avoids N+1)
+  const threadIds = rawThreads.map((t) => t.id)
+  const allPosts = threadIds.length > 0
+    ? await db
         .select({
           id: forumPosts.id,
+          threadId: forumPosts.threadId,
           content: forumPosts.content,
           status: forumPosts.status,
           createdAt: forumPosts.createdAt,
         })
         .from(forumPosts)
-        .where(
-          and(
-            eq(forumPosts.threadId, thread.id),
-            eq(forumPosts.status, 'visible')
-          )
-        )
+        .where(and(inArray(forumPosts.threadId, threadIds), eq(forumPosts.status, 'visible')))
+        .orderBy(forumPosts.createdAt, forumPosts.id)
+    : []
 
-      return {
-        id: thread.id,
-        title: thread.title,
-        // Use actual visible post count rather than the cached counter, which
-        // may include hidden/removed posts not present in the bundle.
-        postCount: posts.length,
-        status: thread.status,
-        posts: posts.map((p) => ({
-          id: p.id,
-          content: p.content,
-          status: p.status,
-          createdAt: p.createdAt.toISOString(),
-        })),
-      }
-    })
-  )
+  // Group posts by thread
+  const postsByThread = new Map<string, typeof allPosts>()
+  for (const post of allPosts) {
+    const existing = postsByThread.get(post.threadId) ?? []
+    existing.push(post)
+    postsByThread.set(post.threadId, existing)
+  }
+
+  const bundleThreads: ArchiveBundleThread[] = rawThreads.map((thread) => {
+    const posts = postsByThread.get(thread.id) ?? []
+    return {
+      id: thread.id,
+      title: thread.title,
+      // Use actual visible post count rather than the cached counter, which
+      // may include hidden/removed posts not present in the bundle.
+      postCount: posts.length,
+      status: thread.status,
+      posts: posts.map((p) => ({
+        id: p.id,
+        content: p.content,
+        status: p.status,
+        createdAt: p.createdAt.toISOString(),
+      })),
+    }
+  })
 
   // Fetch peer reviews — reviewer IDs stripped for privacy
   const rawReviews = await db
