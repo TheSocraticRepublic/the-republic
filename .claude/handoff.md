@@ -19,12 +19,16 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 ## Owed right now
 
-- **Production audit required before merge.** 31 commits on `marvin/the-republic-charter`
-  (f3d8962..eaba813) — register drain, 3 relays, safeRoute sweep, prompt caching. The
-  project's last audit grade is F; a fresh `/production` audit is the gate. The coordinator
-  has proposed this to Lee.
+- **Production audit COMPLETE (2026-08-26): grade C, score 48, 0 FAIL / 26 WARN.** Report
+  at `~/marvin/state/production-audits/the-republic-2026-08-26.md`. All 18 FAILs from the
+  Aug-6 F-grade audit are closed. The branch is shippable. Remediation relay plan is in
+  the report (11 files, 6 steps). Ledger updated with `branch_audited: marvin/the-republic-audit`.
 
-- **Migration 0012 — production DB apply post-audit.** Three DDL changes (generationNonce
+- **Merge to main + deploy.** The session branch (`marvin/the-republic-audit` at `92161ed`)
+  has 32 commits ahead of main (charter, register drain, 3 relays, safeRoute, prompt caching).
+  Merge requires Lee's go-ahead per the brief's authority constraints.
+
+- **Migration 0012 — production DB apply post-merge.** Three DDL changes (generationNonce
   column, turnIndex unique constraint with renumber, patternAnalysis nullable). File at
   `drizzle/migrations/0012_nonce_turn_unique_contradictions.sql`. Apply via the custom
   runner against the session-mode pooler. The renumber CTE is idempotent; re-run is safe.
@@ -39,12 +43,6 @@ in this project has already been ruled on, usually for a reason that is not obvi
 - **SENTRY_AUTH_TOKEN env var (OBS-1).** Code is complete (`withSentryConfig` already
   correct in `next.config.ts`). Only the env var is missing — needs Sentry dashboard +
   Netlify dashboard access (Lee/ops).
-
-- **Register status.** §D/E triaged and drained (triage at `.refresh/triage-2026-08-23.md`,
-  gitignored). §A drained (4 fixed, R-A7 deferred — design decision). §F stays queued
-  behind FORUM_ENABLED. 6 findings deferred with reason (see ROADMAP `next`). Register
-  is no longer the source of open work — the remaining items are Lee-owned ops or
-  practitioner-needed (JURIS-2).
 
 ## Open questions awaiting Lee
 
@@ -67,6 +65,13 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-08-26
+**Production audit — grade C, score 48, 0 FAIL / 26 WARN / 59 PASS**
+
+Full 7-specialist audit (Ted, Razor, Jen, Quinn, Dao, Petra, Charity) against the merged session branch at `92161ed`. Every FAIL from the Aug-6 F-grade audit is closed. Three specialist findings verified as false by the orchestrator: Ted's "zero tests" (63 test files exist in `tests/unit/`, Ted searched only `src/`), Ted's "lint not installed" (worktree artifact), and Charity's "missing sentry.client.config.ts" (client Sentry is configured via `src/instrumentation-client.ts` with full PII scrubbing).
+
+26 WARNs are cleanup debt: CSP divergence (netlify.toml enforcing vs middleware report-only — contradicts DECISIONS.md), PRIVACY.md stale vs in-app page (Open North missing, date 2 months behind), Netlify undisclosed as processor, hardcoded hex in 4 votes components, no skip-to-content link, and DB schema hygiene (timestamps, CHECK constraints, polymorphic FK orphans). Full report at `~/marvin/state/production-audits/the-republic-2026-08-26.md`. Ledger updated with `branch_audited`.
 
 ### 2026-08-23
 **Register drain — charter adopted, 28 findings triaged, all addressed (31 commits)**
