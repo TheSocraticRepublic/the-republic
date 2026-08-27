@@ -9,22 +9,31 @@
 --    OR jurisdictional_accuracy NOT BETWEEN 1 AND 5;
 -- If non-zero, investigate before applying.
 
+BEGIN;
+
+ALTER TABLE peer_reviews DROP CONSTRAINT IF EXISTS chk_factual_accuracy;
 ALTER TABLE peer_reviews
   ADD CONSTRAINT chk_factual_accuracy
     CHECK (factual_accuracy BETWEEN 1 AND 5);
 
+ALTER TABLE peer_reviews DROP CONSTRAINT IF EXISTS chk_source_quality;
 ALTER TABLE peer_reviews
   ADD CONSTRAINT chk_source_quality
     CHECK (source_quality BETWEEN 1 AND 5);
 
+ALTER TABLE peer_reviews DROP CONSTRAINT IF EXISTS chk_missing_context;
 ALTER TABLE peer_reviews
   ADD CONSTRAINT chk_missing_context
     CHECK (missing_context BETWEEN 1 AND 5);
 
+ALTER TABLE peer_reviews DROP CONSTRAINT IF EXISTS chk_strategic_effectiveness;
 ALTER TABLE peer_reviews
   ADD CONSTRAINT chk_strategic_effectiveness
     CHECK (strategic_effectiveness BETWEEN 1 AND 5);
 
+ALTER TABLE peer_reviews DROP CONSTRAINT IF EXISTS chk_jurisdictional_accuracy;
 ALTER TABLE peer_reviews
   ADD CONSTRAINT chk_jurisdictional_accuracy
     CHECK (jurisdictional_accuracy BETWEEN 1 AND 5);
+
+COMMIT;
