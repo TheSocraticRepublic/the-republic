@@ -30,7 +30,7 @@ export default function PrivacyPage() {
         >
           Privacy Policy
         </h1>
-        <p className="mt-0.5 text-xs text-text-muted">Last updated 2026-08-13</p>
+        <p className="mt-0.5 text-xs text-text-muted">Last updated 2026-08-26</p>
       </header>
 
       <p className="text-sm leading-relaxed text-text-secondary">
@@ -136,7 +136,7 @@ export default function PrivacyPage() {
         <p>
           Your account, investigations, documents, posts, and credentials live in a PostgreSQL
           database hosted in the <strong className="text-text-primary">United States</strong>{' '}
-          (Supabase, us-east-2). The processors above (Anthropic, Voyage, Resend, Sentry, Upstash)
+          (Supabase, us-east-2). The processors above (Anthropic, Voyage, Resend, Sentry, Netlify, Upstash)
           are also US-based. Open North is based in Canada.
         </p>
         <p>
