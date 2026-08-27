@@ -25,27 +25,7 @@ interface Player {
   context: string | null
 }
 
-const LIGHT_MARGIN = {
-  bg: '#f5f4f3',
-  cardBg: '#ffffff',
-  cardBgHover: '#eeece8',
-  border: '#e0ddd9',
-  text: '#1c1917',
-  secondary: '#44403c',
-  muted: '#78716c',
-  faint: '#a8a29e',
-}
-
-const DARK_MARGIN = {
-  bg: '#18181b',
-  cardBg: '#1e1e20',
-  cardBgHover: '#27272a',
-  border: 'rgba(255,255,255,0.1)',
-  text: '#f4f4f5',
-  secondary: '#d4d4d8',
-  muted: '#a1a1aa',
-  faint: '#71717a',
-}
+// Island tokens consumed via CSS custom properties (globals.css).
 
 interface LensPanelProps {
   investigationId: string
@@ -68,7 +48,6 @@ export function LensPanel({
   onOpenGadfly,
   darkMode = false,
 }: LensPanelProps) {
-  const palette = darkMode ? DARK_MARGIN : LIGHT_MARGIN
   const [players, setPlayers] = useState<Player[]>([])
   const [historicalContent, setHistoricalContent] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
@@ -237,10 +216,10 @@ export function LensPanel({
 
   return (
     <div
-      className="rounded-xl overflow-hidden max-w-3xl mx-auto"
+      className={`rounded-xl overflow-hidden max-w-3xl mx-auto${darkMode ? ' dark-island' : ''}`}
       style={{
-        backgroundColor: palette.bg,
-        border: `1px solid ${palette.border}`,
+        backgroundColor: 'var(--color-island-bg)',
+        border: `1px solid var(--color-island-border)`,
         borderTop: '2px solid var(--accent-gadfly)',
         padding: 'clamp(24px, 4vw, 32px)',
       }}
@@ -264,7 +243,7 @@ export function LensPanel({
       <section>
         <p
           className="mb-4 text-3xs font-semibold uppercase"
-          style={{ color: palette.faint }}
+          style={{ color: 'var(--color-island-faint)' }}
         >
           Key Players
         </p>
@@ -272,16 +251,16 @@ export function LensPanel({
           <div
             className="rounded-xl px-5 py-4"
             style={{
-              border: `1px solid ${palette.border}`,
-              backgroundColor: palette.cardBg,
+              border: `1px solid var(--color-island-border)`,
+              backgroundColor: 'var(--color-island-card)',
             }}
           >
             <div className="flex items-center gap-2">
               <span
                 className="h-1.5 w-1.5 rounded-full animate-pulse"
-                style={{ backgroundColor: palette.faint }}
+                style={{ backgroundColor: 'var(--color-island-faint)' }}
               />
-              <p className="text-xs" style={{ color: palette.faint }}>Identifying players from the briefing</p>
+              <p className="text-xs" style={{ color: 'var(--color-island-faint)' }}>Identifying players from the briefing</p>
             </div>
           </div>
         ) : (
@@ -327,9 +306,9 @@ export function LensPanel({
         {deepenError ? (
           <div
             className="rounded-2xl p-8"
-            style={{ backgroundColor: darkMode ? palette.cardBg : '#f8f6f3' }}
+            style={{ backgroundColor: 'var(--color-island-card)' }}
           >
-            <p className="text-sm" style={{ color: palette.muted }}>
+            <p className="text-sm" style={{ color: 'var(--color-island-muted)' }}>
               Could not load historical context. Refresh to try again.
             </p>
           </div>

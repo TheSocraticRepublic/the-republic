@@ -37,7 +37,7 @@ export function LandingHeader() {
       className={`fixed top-0 z-50 flex w-full items-center justify-between px-8 py-5 transition-all duration-300 ${
         scrolled
           ? overLight
-            ? 'bg-[#FAFAF9]/80 backdrop-blur-md border-b border-border'
+            ? 'bg-island-bg/80 backdrop-blur-md border-b border-border'
             : 'bg-surface-0/80 backdrop-blur-md border-b border-border'
           : 'bg-transparent'
       }`}

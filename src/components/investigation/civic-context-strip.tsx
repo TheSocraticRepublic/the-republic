@@ -17,6 +17,7 @@ interface CivicContextStripProps {
   archiveStatus: string | null
   expanded: Section | null
   onExpand: (section: Section | null) => void
+  darkMode?: boolean
 }
 
 interface VoteSummary {
@@ -51,7 +52,7 @@ const ACCENTS: Record<Section, string> = {
   votes: 'var(--accent-oracle)',
   discussion: 'var(--accent-gadfly)',
   reviews: 'var(--accent-mirror)',
-  archive: '#78716c',
+  archive: 'var(--color-island-muted)',
 }
 
 function getArchiveMetric(status: string | null): string {
@@ -69,6 +70,7 @@ export function CivicContextStrip({
   archiveStatus,
   expanded,
   onExpand,
+  darkMode = false,
 }: CivicContextStripProps) {
   const [voteSummary, setVoteSummary] = useState<VoteSummary | null>(null)
   const [discussionSummary, setDiscussionSummary] = useState<DiscussionSummary | null>(null)
@@ -208,7 +210,7 @@ export function CivicContextStrip({
   ]
 
   return (
-    <div className="mx-auto max-w-3xl" style={{ marginTop: '2.5rem' }}>
+    <div className={`mx-auto max-w-3xl${darkMode ? ' dark-island' : ''}`} style={{ marginTop: '2.5rem' }}>
       {/* Card strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {cards.map((card) => {
@@ -222,19 +224,19 @@ export function CivicContextStrip({
               onClick={() => handleCardClick(card.section)}
               className="text-left rounded-lg transition-colors duration-150"
               style={{
-                backgroundColor: isActive ? `${accent}08` : '#fafaf9',
-                border: `1px solid #e7e5e4`,
-                borderBottom: isActive ? `2px solid ${accent}` : '1px solid #e7e5e4',
+                backgroundColor: isActive ? `color-mix(in srgb, ${accent} 3%, transparent)` : 'var(--color-island-bg)',
+                border: `1px solid var(--color-island-border)`,
+                borderBottom: isActive ? `2px solid ${accent}` : '1px solid var(--color-island-border)',
                 padding: '0.75rem 1rem',
                 cursor: 'pointer',
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.backgroundColor = '#f5f4f2'
+                  e.currentTarget.style.backgroundColor = 'var(--color-island-hover)'
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = isActive ? `${accent}08` : '#fafaf9'
+                e.currentTarget.style.backgroundColor = isActive ? `color-mix(in srgb, ${accent} 3%, transparent)` : 'var(--color-island-bg)'
               }}
             >
               <p
@@ -243,7 +245,7 @@ export function CivicContextStrip({
                   fontWeight: 600,
                   textTransform: 'uppercase',
                   letterSpacing: '0.12em',
-                  color: '#78716c',
+                  color: 'var(--color-island-muted)',
                   margin: 0,
                 }}
               >
@@ -253,7 +255,7 @@ export function CivicContextStrip({
                 style={{
                   fontSize: '14px',
                   fontWeight: 600,
-                  color: '#1c1917',
+                  color: 'var(--color-island-text)',
                   margin: '4px 0 0 0',
                   lineHeight: 1.3,
                 }}
@@ -264,7 +266,7 @@ export function CivicContextStrip({
                 <p
                   style={{
                     fontSize: '10px',
-                    color: '#a8a29e',
+                    color: 'var(--color-island-faint)',
                     margin: '2px 0 0 0',
                   }}
                 >
@@ -292,7 +294,7 @@ export function CivicContextStrip({
                 fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '0.12em',
-                color: '#78716c',
+                color: 'var(--color-island-muted)',
                 margin: 0,
               }}
             >
@@ -302,7 +304,7 @@ export function CivicContextStrip({
               href={`/forum?investigation=${investigationId}`}
               style={{
                 fontSize: '12px',
-                color: '#78716c',
+                color: 'var(--color-island-muted)',
                 textDecoration: 'underline',
                 textUnderlineOffset: '2px',
               }}
@@ -321,7 +323,7 @@ export function CivicContextStrip({
                   className="block text-center py-2"
                   style={{
                     fontSize: '12px',
-                    color: '#78716c',
+                    color: 'var(--color-island-muted)',
                   }}
                 >
                   View all {discussionSummary.threads.length} discussions
@@ -332,11 +334,11 @@ export function CivicContextStrip({
             <div
               className="rounded-xl px-5 py-6 text-center"
               style={{
-                border: '1px solid #e7e5e4',
-                backgroundColor: '#fafaf9',
+                border: '1px solid var(--color-island-border)',
+                backgroundColor: 'var(--color-island-bg)',
               }}
             >
-              <p style={{ fontSize: '14px', color: '#78716c', margin: 0 }}>
+              <p style={{ fontSize: '14px', color: 'var(--color-island-muted)', margin: 0 }}>
                 This investigation hasn’t reached the forum yet.
               </p>
               <p style={{ marginTop: '6px' }}>
@@ -344,7 +346,7 @@ export function CivicContextStrip({
                   href={`/forum/new?investigationId=${investigationId}`}
                   style={{
                     fontSize: '12px',
-                    color: '#57534e',
+                    color: 'var(--color-island-secondary)',
                     textDecoration: 'underline',
                     textUnderlineOffset: '2px',
                   }}
@@ -368,8 +370,8 @@ export function CivicContextStrip({
           <div
             className="rounded-xl px-5 py-4"
             style={{
-              border: '1px solid #e7e5e4',
-              backgroundColor: '#fafaf9',
+              border: '1px solid var(--color-island-border)',
+              backgroundColor: 'var(--color-island-bg)',
             }}
           >
             <div className="flex items-center justify-between gap-4">
@@ -380,7 +382,7 @@ export function CivicContextStrip({
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.12em',
-                    color: '#78716c',
+                    color: 'var(--color-island-muted)',
                     margin: 0,
                   }}
                 >
@@ -393,7 +395,7 @@ export function CivicContextStrip({
                       href={`/archive/${investigationId}`}
                       style={{
                         fontSize: '12px',
-                        color: '#78716c',
+                        color: 'var(--color-island-muted)',
                         textDecoration: 'underline',
                         textUnderlineOffset: '2px',
                       }}
@@ -405,7 +407,7 @@ export function CivicContextStrip({
                   <p
                     style={{
                       fontSize: '12px',
-                      color: '#a8a29e',
+                      color: 'var(--color-island-faint)',
                       marginTop: '4px',
                     }}
                   >

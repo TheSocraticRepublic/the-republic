@@ -121,6 +121,7 @@ export function InvestigationPage({
           archiveStatus={archiveStatus}
           expanded={civicExpanded}
           onExpand={setCivicExpanded}
+          darkMode={islandDarkMode}
         />
       </section>
 

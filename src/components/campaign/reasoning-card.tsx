@@ -7,41 +7,8 @@ import { hasCampaignPdfTemplate } from '@/lib/pdf/types'
 import { InfographicPreview } from '@/components/campaign/infographic-preview'
 import type { CampaignMaterial } from '@/lib/campaign/schemas'
 
-const LIGHT_RC = {
-  border: '#e0ddd9',
-  headerBg: 'color-mix(in srgb, var(--accent-lever) 5%, transparent)',
-  headerBorder: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)',
-  titleColor: '#292524',
-  specBg: '#faf9f7',
-  specBorder: 'rgba(0,0,0,0.06)',
-  reasoningBg: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)',
-  textColor: '#44403c',
-  mutedColor: '#78716c',
-  faintColor: '#a8a29e',
-  buttonBg: 'rgba(0,0,0,0.05)',
-  buttonBorder: 'rgba(0,0,0,0.08)',
-  buttonColor: '#78716c',
-  popoverBg: '#fafaf9',
-  popoverBorder: '#e7e5e4',
-}
-
-const DARK_RC = {
-  border: 'rgba(255,255,255,0.1)',
-  headerBg: 'color-mix(in srgb, var(--accent-lever) 8%, transparent)',
-  headerBorder: 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
-  titleColor: '#f4f4f5',
-  specBg: '#18181b',
-  specBorder: 'rgba(255,255,255,0.06)',
-  reasoningBg: 'color-mix(in srgb, var(--accent-lever) 10%, transparent)',
-  textColor: '#d4d4d8',
-  mutedColor: '#a1a1aa',
-  faintColor: '#71717a',
-  buttonBg: 'rgba(255,255,255,0.06)',
-  buttonBorder: 'rgba(255,255,255,0.1)',
-  buttonColor: '#a1a1aa',
-  popoverBg: '#1e1e20',
-  popoverBorder: 'rgba(255,255,255,0.1)',
-}
+// Island tokens consumed via CSS custom properties (globals.css).
+// Dark overrides come from .dark-island scope class on the root element.
 
 interface ReasoningCardProps {
   materialId?: string
@@ -78,7 +45,7 @@ function InfographicView({ spec }: { spec: Record<string, unknown> }) {
             className="rounded-md px-2.5 py-1 text-3xs font-semibold uppercase transition-colors"
             style={{
               backgroundColor: tab === t ? 'color-mix(in srgb, var(--accent-lever) 10%, transparent)' : 'transparent',
-              color: tab === t ? 'var(--accent-lever)' : '#a8a29e',
+              color: tab === t ? 'var(--accent-lever)' : 'var(--color-island-faint)',
               border: tab === t ? '1px solid color-mix(in srgb, var(--accent-lever) 20%, transparent)' : '1px solid transparent',
             }}
           >
@@ -94,21 +61,21 @@ function InfographicView({ spec }: { spec: Record<string, unknown> }) {
               key={i}
               className="flex items-start justify-between gap-4 rounded-lg px-3 py-2.5"
               style={{
-                backgroundColor: dp.emphasis ? 'color-mix(in srgb, var(--accent-lever) 7%, transparent)' : 'rgba(0,0,0,0.04)',
+                backgroundColor: dp.emphasis ? 'color-mix(in srgb, var(--accent-lever) 7%, transparent)' : 'var(--color-island-veil)',
                 border: dp.emphasis ? '1px solid color-mix(in srgb, var(--accent-lever) 18%, transparent)' : '1px solid transparent',
               }}
             >
-              <span className="text-sm" style={{ color: '#44403c' }}>{dp.label}</span>
+              <span className="text-sm" style={{ color: 'var(--color-island-secondary)' }}>{dp.label}</span>
               <span
                 className="text-sm font-semibold flex-shrink-0"
-                style={{ color: dp.emphasis ? 'var(--accent-lever)' : '#292524' }}
+                style={{ color: dp.emphasis ? 'var(--accent-lever)' : 'var(--color-island-body)' }}
               >
                 {String(dp.value)}
               </span>
             </div>
           ))}
           {!!spec.callToAction && (
-            <p className="mt-3 text-xs font-medium" style={{ color: '#78716c' }}>
+            <p className="mt-3 text-xs font-medium" style={{ color: 'var(--color-island-muted)' }}>
               Call to action: {spec.callToAction as string}
             </p>
           )}
@@ -126,15 +93,15 @@ function FactSheetView({ spec }: { spec: Record<string, unknown> }) {
   return (
     <div className="space-y-4">
       {!!spec.headline && (
-        <p className="text-sm font-semibold leading-snug" style={{ color: '#292524' }}>
+        <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--color-island-body)' }}>
           {spec.headline as string}
         </p>
       )}
       <div className="space-y-3">
         {keyFindings.map((kf, i) => (
           <div key={i} className="space-y-1">
-            <p className="text-sm leading-snug" style={{ color: '#292524' }}>{kf.finding}</p>
-            <p className="text-xs leading-relaxed" style={{ color: '#78716c' }}>
+            <p className="text-sm leading-snug" style={{ color: 'var(--color-island-body)' }}>{kf.finding}</p>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-island-muted)' }}>
               {kf.evidence}
             </p>
           </div>
@@ -153,22 +120,22 @@ function SocialPostView({ spec }: { spec: Record<string, unknown> }) {
         <div
           key={i}
           className="rounded-lg p-3 space-y-2"
-          style={{ backgroundColor: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}
+          style={{ backgroundColor: 'var(--color-island-veil)', border: '1px solid var(--color-island-veil-border)' }}
         >
           <div className="flex items-center justify-between">
             <span
               className="text-3xs font-semibold uppercase"
-              style={{ color: '#a8a29e' }}
+              style={{ color: 'var(--color-island-faint)' }}
             >
               {v.tone}
             </span>
-            <span className="text-2xs font-medium" style={{ color: '#a8a29e' }}>
+            <span className="text-2xs font-medium" style={{ color: 'var(--color-island-faint)' }}>
               {v.characterCount} chars
             </span>
           </div>
-          <p className="text-sm leading-relaxed" style={{ color: '#292524' }}>{v.text}</p>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-island-body)' }}>{v.text}</p>
           {v.hashtags?.length > 0 && (
-            <p className="text-xs" style={{ color: '#78716c' }}>
+            <p className="text-xs" style={{ color: 'var(--color-island-muted)' }}>
               {v.hashtags.map((h) => `#${h}`).join(' ')}
             </p>
           )}
@@ -187,7 +154,7 @@ function TalkingPointsSummaryView({ spec }: { spec: Record<string, unknown> }) {
         <div
           key={i}
           className="flex items-start gap-2.5 rounded-lg px-3 py-2.5"
-          style={{ backgroundColor: 'rgba(0,0,0,0.04)' }}
+          style={{ backgroundColor: 'var(--color-island-veil)' }}
         >
           <span
             className="mt-0.5 flex-shrink-0 text-xs font-semibold tabular-nums"
@@ -195,7 +162,7 @@ function TalkingPointsSummaryView({ spec }: { spec: Record<string, unknown> }) {
           >
             {i + 1}
           </span>
-          <p className="text-sm leading-snug" style={{ color: '#292524' }}>{p.claim}</p>
+          <p className="text-sm leading-snug" style={{ color: 'var(--color-island-body)' }}>{p.claim}</p>
         </div>
       ))}
     </div>
@@ -230,19 +197,19 @@ function TimelineView({ spec }: { spec: Record<string, unknown> }) {
                 backgroundColor: item.kind === 'deadline' && (item as typeof deadlines[0]).critical
                   ? 'var(--accent-lever)'
                   : item.kind === 'deadline'
-                  ? '#a8a29e'
-                  : '#78716c',
+                  ? 'var(--color-island-faint)'
+                  : 'var(--color-island-muted)',
               }}
             />
             {i < allItems.length - 1 && (
-              <div className="w-px flex-1 mt-1" style={{ backgroundColor: 'rgba(0,0,0,0.08)', minHeight: '12px' }} />
+              <div className="w-px flex-1 mt-1" style={{ backgroundColor: 'var(--color-island-veil-border)', minHeight: '12px' }} />
             )}
           </div>
           <div className="pb-2">
-            <p className="text-2xs font-medium" style={{ color: '#a8a29e' }}>{item.date}</p>
-            <p className="text-sm" style={{ color: '#292524' }}>{item.event}</p>
+            <p className="text-2xs font-medium" style={{ color: 'var(--color-island-faint)' }}>{item.date}</p>
+            <p className="text-sm" style={{ color: 'var(--color-island-body)' }}>{item.event}</p>
             {item.significance && (
-              <p className="text-xs" style={{ color: '#78716c' }}>{item.significance}</p>
+              <p className="text-xs" style={{ color: 'var(--color-island-muted)' }}>{item.significance}</p>
             )}
           </div>
         </div>
@@ -266,26 +233,26 @@ function ComparisonView({ spec }: { spec: Record<string, unknown> }) {
           <p className="text-3xs font-semibold uppercase mb-1" style={{ color: 'var(--accent-lever)' }}>
             Current — {subject.jurisdiction}
           </p>
-          <p className="text-sm" style={{ color: '#292524' }}>{subject.policy}</p>
+          <p className="text-sm" style={{ color: 'var(--color-island-body)' }}>{subject.policy}</p>
         </div>
       )}
       {alternatives.map((alt, i) => (
         <div
           key={i}
           className="rounded-lg px-3 py-2.5"
-          style={{ backgroundColor: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}
+          style={{ backgroundColor: 'var(--color-island-veil)', border: '1px solid var(--color-island-veil-border)' }}
         >
-          <p className="text-3xs font-semibold uppercase mb-1" style={{ color: '#a8a29e' }}>
+          <p className="text-3xs font-semibold uppercase mb-1" style={{ color: 'var(--color-island-faint)' }}>
             {alt.jurisdiction}
           </p>
-          <p className="text-sm" style={{ color: '#292524' }}>{alt.policy}</p>
+          <p className="text-sm" style={{ color: 'var(--color-island-body)' }}>{alt.policy}</p>
           {alt.outcome && (
-            <p className="text-xs mt-1" style={{ color: '#78716c' }}>{alt.outcome}</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-island-muted)' }}>{alt.outcome}</p>
           )}
         </div>
       ))}
       {!!spec.argumentFromExistence && (
-        <p className="text-xs leading-relaxed pt-1" style={{ color: '#78716c' }}>
+        <p className="text-xs leading-relaxed pt-1" style={{ color: 'var(--color-island-muted)' }}>
           {spec.argumentFromExistence as string}
         </p>
       )}
@@ -309,7 +276,7 @@ function SpecView({ materialType, spec }: { materialType: string; spec: Record<s
       return <ComparisonView spec={spec} />
     default:
       return (
-        <pre className="text-xs overflow-auto whitespace-pre-wrap" style={{ color: '#44403c' }}>
+        <pre className="text-xs overflow-auto whitespace-pre-wrap" style={{ color: 'var(--color-island-secondary)' }}>
           {JSON.stringify(spec, null, 2)}
         </pre>
       )
@@ -317,7 +284,6 @@ function SpecView({ materialType, spec }: { materialType: string; spec: Record<s
 }
 
 export function ReasoningCard({ materialId, materialType, content, reasoning, title, darkMode = false }: ReasoningCardProps) {
-  const rc = darkMode ? DARK_RC : LIGHT_RC
   const [copied, setCopied] = useState<string | false>(false)
   const [socialCopied, setSocialCopied] = useState<string | null>(null)
   const [showClaudeHint, setShowClaudeHint] = useState(false)
@@ -475,15 +441,15 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
 
   return (
     <div
-      className="rounded-2xl overflow-hidden"
-      style={{ border: `1px solid ${rc.border}` }}
+      className={`rounded-2xl overflow-hidden${darkMode ? ' dark-island' : ''}`}
+      style={{ border: `1px solid var(--color-island-border)` }}
     >
       {/* Header */}
       <div
         className="px-6 py-4 flex items-center justify-between border-b"
         style={{
-          backgroundColor: rc.headerBg,
-          borderColor: rc.headerBorder,
+          backgroundColor: 'color-mix(in srgb, var(--accent-lever) 5%, transparent)',
+          borderColor: 'color-mix(in srgb, var(--accent-lever) 12%, transparent)',
         }}
       >
         <div>
@@ -493,7 +459,7 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
           >
             {label}
           </p>
-          <p className="mt-0.5 text-sm font-medium" style={{ color: rc.titleColor }}>{title}</p>
+          <p className="mt-0.5 text-sm font-medium" style={{ color: 'var(--color-island-body)' }}>{title}</p>
         </div>
 
         {/* Export actions */}
@@ -502,9 +468,9 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
             onClick={handleCopy}
             className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
             style={{
-              backgroundColor: rc.buttonBg,
-              color: rc.buttonColor,
-              border: `1px solid ${rc.buttonBorder}`,
+              backgroundColor: 'var(--color-island-veil)',
+              color: 'var(--color-island-muted)',
+              border: `1px solid var(--color-island-veil-border)`,
             }}
           >
             {copied || 'Copy JSON'}
@@ -567,9 +533,9 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
                 onClick={() => handleCopySocial('twitter')}
                 className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                 style={{
-                  backgroundColor: rc.buttonBg,
-                  color: rc.buttonColor,
-                  border: `1px solid ${rc.buttonBorder}`,
+                  backgroundColor: 'var(--color-island-veil)',
+                  color: 'var(--color-island-muted)',
+                  border: `1px solid var(--color-island-veil-border)`,
                 }}
               >
                 {socialCopied === 'twitter' ? 'Copied' : socialCopied === 'failed' ? 'Failed' : 'Copy for X'}
@@ -578,9 +544,9 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
                 onClick={() => handleCopySocial('instagram')}
                 className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                 style={{
-                  backgroundColor: rc.buttonBg,
-                  color: rc.buttonColor,
-                  border: `1px solid ${rc.buttonBorder}`,
+                  backgroundColor: 'var(--color-island-veil)',
+                  color: 'var(--color-island-muted)',
+                  border: `1px solid var(--color-island-veil-border)`,
                 }}
               >
                 {socialCopied === 'instagram' ? 'Copied' : socialCopied === 'failed' ? 'Failed' : 'Copy for Instagram'}
@@ -605,23 +571,23 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
               <div
                 className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl p-4 shadow-lg"
                 style={{
-                  backgroundColor: rc.popoverBg,
-                  border: `1px solid ${rc.popoverBorder}`,
+                  backgroundColor: 'var(--color-island-bg)',
+                  border: `1px solid var(--color-island-border)`,
                 }}
               >
                 <p className="text-3xs font-semibold uppercase mb-2" style={{ color: 'var(--accent-oracle)' }}>
                   Render in Claude Artifacts
                 </p>
-                <ol className="space-y-1.5 text-xs leading-relaxed" style={{ color: rc.textColor }}>
+                <ol className="space-y-1.5 text-xs leading-relaxed" style={{ color: 'var(--color-island-secondary)' }}>
                   <li>1. Click <strong>Copy JSON</strong> above to copy your spec</li>
                   <li>2. Open <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--accent-oracle)' }}>claude.ai</a> in a new tab</li>
-                  <li>3. Use the prompt template from <code className="rounded px-1 py-0.5 text-2xs font-medium" style={{ backgroundColor: 'rgba(0,0,0,0.06)', color: '#292524' }}>docs/claude-artifacts-template.md</code></li>
+                  <li>3. Use the prompt template from <code className="rounded px-1 py-0.5 text-2xs font-medium" style={{ backgroundColor: 'var(--color-island-veil-border)', color: 'var(--color-island-body)' }}>docs/claude-artifacts-template.md</code></li>
                   <li>4. Paste the template prompt, then your JSON at the end</li>
                 </ol>
                 <button
                   onClick={() => setShowClaudeHint(false)}
                   className="mt-3 text-2xs font-medium"
-                  style={{ color: rc.faintColor }}
+                  style={{ color: 'var(--color-island-faint)' }}
                 >
                   Dismiss
                 </button>
@@ -637,8 +603,8 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
         <div
           className="h-full px-6 py-6 border-b sm:border-b-0 sm:border-r min-h-[180px]"
           style={{
-            backgroundColor: rc.specBg,
-            borderColor: rc.specBorder,
+            backgroundColor: 'var(--color-island-card)',
+            borderColor: 'var(--color-island-veil-border)',
           }}
         >
           <p className="section-heading">Generated Spec</p>
@@ -648,12 +614,12 @@ export function ReasoningCard({ materialId, materialType, content, reasoning, ti
         {/* Right: Reasoning */}
         <div
           className="h-full px-6 py-6 min-h-[180px]"
-          style={{ backgroundColor: rc.reasoningBg }}
+          style={{ backgroundColor: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)' }}
         >
           <p className="section-heading">Why This Framing</p>
           <p
             className="text-sm leading-relaxed whitespace-pre-wrap"
-            style={{ color: rc.textColor }}
+            style={{ color: 'var(--color-island-secondary)' }}
           >
             {reasoning}
           </p>

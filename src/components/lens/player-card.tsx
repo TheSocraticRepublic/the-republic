@@ -12,39 +12,7 @@ export interface RelatedPlayer {
   role: string
 }
 
-const LIGHT_CARD = {
-  bg: '#ffffff',
-  bgHover: '#f5f4f2',
-  bgExpanded: '#eeece8',
-  border: '#e0ddd9',
-  text: '#1c1917',
-  secondary: '#44403c',
-  muted: '#78716c',
-  faint: '#a8a29e',
-  roleBg: '#ffffff',
-  roleBorder: '#e0ddd9',
-  trackRecordBg: '#ffffff',
-  connectionBg: '#ffffff',
-  connectionBorder: '#e0ddd9',
-  divider: 'rgba(28, 25, 23, 0.06)',
-}
-
-const DARK_CARD = {
-  bg: '#1e1e20',
-  bgHover: '#27272a',
-  bgExpanded: '#27272a',
-  border: 'rgba(255,255,255,0.1)',
-  text: '#f4f4f5',
-  secondary: '#d4d4d8',
-  muted: '#a1a1aa',
-  faint: '#71717a',
-  roleBg: '#27272a',
-  roleBorder: 'rgba(255,255,255,0.1)',
-  trackRecordBg: '#18181b',
-  connectionBg: '#18181b',
-  connectionBorder: 'rgba(255,255,255,0.1)',
-  divider: 'rgba(255, 255, 255, 0.06)',
-}
+// Island tokens consumed via CSS custom properties (globals.css).
 
 interface PlayerCardProps {
   name: string
@@ -61,29 +29,29 @@ interface PlayerCardProps {
 
 const PLAYER_TYPE_STYLES: Record<string, { color: string; bg: string; border: string }> = {
   company: {
-    color: '#a3a3a3',
-    bg: 'rgba(163,163,163,0.08)',
-    border: 'rgba(163,163,163,0.18)',
+    color: 'var(--island-role-company)',
+    bg: 'color-mix(in srgb, var(--island-role-company) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--island-role-company) 18%, transparent)',
   },
   official: {
-    color: '#60a5fa',
-    bg: 'rgba(96,165,250,0.08)',
-    border: 'rgba(96,165,250,0.18)',
+    color: 'var(--island-role-official)',
+    bg: 'color-mix(in srgb, var(--island-role-official) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--island-role-official) 18%, transparent)',
   },
   agency: {
-    color: '#22d3ee',
-    bg: 'rgba(34,211,238,0.08)',
-    border: 'rgba(34,211,238,0.18)',
+    color: 'var(--island-role-agency)',
+    bg: 'color-mix(in srgb, var(--island-role-agency) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--island-role-agency) 18%, transparent)',
   },
   organization: {
-    color: '#4ade80',
-    bg: 'rgba(74,222,128,0.08)',
-    border: 'rgba(74,222,128,0.18)',
+    color: 'var(--island-role-organization)',
+    bg: 'color-mix(in srgb, var(--island-role-organization) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--island-role-organization) 18%, transparent)',
   },
   rights_holder: {
-    color: '#f59e0b',
-    bg: 'rgba(245,158,11,0.08)',
-    border: 'rgba(245,158,11,0.18)',
+    color: 'var(--island-role-rights-holder)',
+    bg: 'color-mix(in srgb, var(--island-role-rights-holder) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--island-role-rights-holder) 18%, transparent)',
   },
 }
 
@@ -127,27 +95,26 @@ export function PlayerCard({
   const styles = PLAYER_TYPE_STYLES[playerType] ?? PLAYER_TYPE_STYLES.company
   const isRightsHolder = playerType === 'rights_holder'
   const links = EXTERNAL_LINKS[playerType] ?? []
-  const p = darkMode ? DARK_CARD : LIGHT_CARD
 
   return (
     <div
       className={`flex flex-col gap-3 rounded-xl p-5 flex-shrink-0 transition-all duration-150 ${
         onToggle ? 'cursor-pointer' : ''
-      } ${expanded ? 'sm:col-span-2' : ''}`}
+      } ${expanded ? 'sm:col-span-2' : ''}${darkMode ? ' dark-island' : ''}`}
       style={{
-        border: `1px solid ${p.border}`,
+        border: `1px solid var(--color-island-border)`,
         borderLeft: isRightsHolder
-          ? '3px solid #f59e0b'
-          : `1px solid ${p.border}`,
-        backgroundColor: expanded ? p.bgExpanded : p.bg,
+          ? '3px solid var(--island-role-rights-holder)'
+          : `1px solid var(--color-island-border)`,
+        backgroundColor: expanded ? 'var(--color-island-hover)' : 'var(--color-island-bg)',
         width: expanded ? '100%' : '260px',
         minWidth: '220px',
       }}
       onMouseEnter={(e) => {
-        if (onToggle && !expanded) e.currentTarget.style.backgroundColor = p.bgHover
+        if (onToggle && !expanded) e.currentTarget.style.backgroundColor = 'var(--color-island-hover)'
       }}
       onMouseLeave={(e) => {
-        if (onToggle) e.currentTarget.style.backgroundColor = expanded ? p.bgExpanded : p.bg
+        if (onToggle) e.currentTarget.style.backgroundColor = expanded ? 'var(--color-island-hover)' : 'var(--color-island-bg)'
       }}
       onClick={onToggle}
     >
@@ -155,7 +122,7 @@ export function PlayerCard({
       <div className="flex items-start justify-between gap-2">
         <p
           className="text-sm font-semibold leading-snug"
-          style={{ color: p.text }}
+          style={{ color: 'var(--color-island-text)' }}
         >
           {name}
         </p>
@@ -163,7 +130,7 @@ export function PlayerCard({
           <span
             className="text-2xs font-medium mt-0.5 flex-shrink-0 transition-transform duration-150"
             style={{
-              color: p.muted,
+              color: 'var(--color-island-muted)',
               transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
             }}
           >
@@ -187,9 +154,9 @@ export function PlayerCard({
         <span
           className="rounded-md px-2 py-0.5 text-2xs font-medium"
           style={{
-            color: p.muted,
-            backgroundColor: p.roleBg,
-            border: `1px solid ${p.roleBorder}`,
+            color: 'var(--color-island-muted)',
+            backgroundColor: 'var(--color-island-white)',
+            border: `1px solid var(--color-island-card-border)`,
           }}
         >
           {formatRole(role)}
@@ -198,7 +165,7 @@ export function PlayerCard({
 
       {/* Context text */}
       {(context || description) && (
-        <p className="text-sm leading-relaxed" style={{ color: p.secondary }}>
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--color-island-secondary)' }}>
           {context || description}
         </p>
       )}
@@ -207,13 +174,13 @@ export function PlayerCard({
       {expanded && (
         <div
           className="mt-2 space-y-4 border-t pt-4"
-          style={{ borderColor: p.divider }}
+          style={{ borderColor: 'var(--color-island-veil)' }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Track Record */}
           {appearances && appearances.length > 0 && (
             <div>
-              <p className="text-3xs font-semibold uppercase mb-2" style={{ color: p.faint }}>
+              <p className="text-3xs font-semibold uppercase mb-2" style={{ color: 'var(--color-island-faint)' }}>
                 Track Record
               </p>
               <div className="space-y-2">
@@ -221,17 +188,17 @@ export function PlayerCard({
                   <div
                     key={a.investigationId}
                     className="rounded-lg px-3 py-2"
-                    style={{ backgroundColor: p.trackRecordBg }}
+                    style={{ backgroundColor: 'var(--color-island-card)' }}
                   >
-                    <p className="text-xs leading-snug" style={{ color: p.secondary }}>
+                    <p className="text-xs leading-snug" style={{ color: 'var(--color-island-secondary)' }}>
                       {a.concern}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-2xs font-medium" style={{ color: p.faint }}>
+                      <span className="text-2xs font-medium" style={{ color: 'var(--color-island-faint)' }}>
                         {formatRole(a.role)}
                       </span>
                       {a.jurisdictionName && (
-                        <span className="text-2xs font-medium" style={{ color: p.faint }}>
+                        <span className="text-2xs font-medium" style={{ color: 'var(--color-island-faint)' }}>
                           {a.jurisdictionName}
                         </span>
                       )}
@@ -245,7 +212,7 @@ export function PlayerCard({
           {/* Connections */}
           {relatedPlayers && relatedPlayers.length > 0 && (
             <div>
-              <p className="text-3xs font-semibold uppercase mb-2" style={{ color: p.faint }}>
+              <p className="text-3xs font-semibold uppercase mb-2" style={{ color: 'var(--color-island-faint)' }}>
                 Connections
               </p>
               <div className="flex flex-wrap gap-2">
@@ -256,15 +223,15 @@ export function PlayerCard({
                       key={rp.playerId}
                       className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1"
                       style={{
-                        backgroundColor: p.connectionBg,
-                        border: `1px solid ${p.connectionBorder}`,
+                        backgroundColor: 'var(--color-island-card)',
+                        border: `1px solid var(--color-island-card-border)`,
                       }}
                     >
                       <span
                         className="h-1.5 w-1.5 rounded-full flex-shrink-0"
                         style={{ backgroundColor: rpStyles.color }}
                       />
-                      <span className="text-xs" style={{ color: p.secondary }}>{rp.name}</span>
+                      <span className="text-xs" style={{ color: 'var(--color-island-secondary)' }}>{rp.name}</span>
                     </span>
                   )
                 })}
@@ -275,7 +242,7 @@ export function PlayerCard({
           {/* External links */}
           {links.length > 0 && (
             <div>
-              <p className="text-3xs font-semibold uppercase mb-2" style={{ color: p.faint }}>
+              <p className="text-3xs font-semibold uppercase mb-2" style={{ color: 'var(--color-island-faint)' }}>
                 External Records
               </p>
               <div className="flex flex-wrap gap-2">
@@ -286,7 +253,7 @@ export function PlayerCard({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs underline underline-offset-2 transition-colors"
-                    style={{ color: p.muted }}
+                    style={{ color: 'var(--color-island-muted)' }}
                   >
                     {link.label} →
                   </a>
@@ -299,7 +266,7 @@ export function PlayerCard({
           {(!appearances || appearances.length === 0) &&
             (!relatedPlayers || relatedPlayers.length === 0) &&
             links.length === 0 && (
-              <p className="text-xs" style={{ color: p.faint }}>
+              <p className="text-xs" style={{ color: 'var(--color-island-faint)' }}>
                 No additional intelligence available for this entity.
               </p>
             )}

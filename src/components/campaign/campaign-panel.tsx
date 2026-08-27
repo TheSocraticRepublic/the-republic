@@ -8,27 +8,7 @@ import { ReasoningCard } from './reasoning-card'
 import { OutcomeTracker } from './outcome-tracker'
 import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 
-const LIGHT_MARGIN = {
-  bg: '#f5f4f3',
-  cardBg: '#ffffff',
-  cardBgHover: '#eeece8',
-  border: '#e0ddd9',
-  text: '#1c1917',
-  secondary: '#44403c',
-  muted: '#78716c',
-  faint: '#a8a29e',
-}
-
-const DARK_MARGIN = {
-  bg: '#18181b',
-  cardBg: '#1e1e20',
-  cardBgHover: '#27272a',
-  border: 'rgba(255,255,255,0.1)',
-  text: '#f4f4f5',
-  secondary: '#d4d4d8',
-  muted: '#a1a1aa',
-  faint: '#71717a',
-}
+// Island tokens consumed via CSS custom properties (globals.css).
 
 interface CampaignPanelProps {
   investigationId: string
@@ -57,7 +37,6 @@ interface FiledAction {
 }
 
 export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _j, darkMode = false }: CampaignPanelProps) {
-  const palette = darkMode ? DARK_MARGIN : LIGHT_MARGIN
   const [materials, setMaterials] = useState<SavedMaterial[]>([])
   const [activeMaterialType, setActiveMaterialType] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -141,10 +120,10 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
 
   return (
     <div
-      className="rounded-xl overflow-hidden max-w-3xl mx-auto"
+      className={`rounded-xl overflow-hidden max-w-3xl mx-auto${darkMode ? ' dark-island' : ''}`}
       style={{
-        backgroundColor: palette.bg,
-        border: `1px solid ${palette.border}`,
+        backgroundColor: 'var(--color-island-bg)',
+        border: `1px solid var(--color-island-border)`,
         borderTop: '2px solid var(--accent-lever)',
         padding: 'clamp(24px, 4vw, 32px)',
       }}
@@ -176,8 +155,8 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                 key={type}
                 className="space-y-3"
                 style={{
-                  backgroundColor: palette.cardBg,
-                  border: `1px solid ${palette.border}`,
+                  backgroundColor: 'var(--color-island-card)',
+                  border: `1px solid var(--color-island-border)`,
                   borderTop: '2px solid var(--accent-lever)',
                   borderRadius: '12px',
                   padding: '20px',
@@ -185,10 +164,10 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold" style={{ color: palette.text }}>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--color-island-text)' }}>
                       {MATERIAL_TYPE_LABELS[type]}
                     </p>
-                    <p className="text-xs leading-relaxed" style={{ color: palette.muted }}>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--color-island-muted)' }}>
                       {MATERIAL_TYPE_DESCRIPTIONS[type]}
                     </p>
                   </div>
@@ -237,7 +216,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
         <div className="space-y-3">
           <p
             className="text-3xs font-semibold uppercase"
-            style={{ color: palette.faint }}
+            style={{ color: 'var(--color-island-faint)' }}
           >
             Available
           </p>
@@ -263,7 +242,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
       {/* Cross-arm: File as FIPPA request when fact_sheet or talking_points exist */}
       {materials.some((m) => m.materialType === 'fact_sheet' || m.materialType === 'talking_points') && (
         <div className="space-y-3">
-          <p className="text-3xs font-semibold uppercase" style={{ color: palette.faint }}>
+          <p className="text-3xs font-semibold uppercase" style={{ color: 'var(--color-island-faint)' }}>
             Civic Actions
           </p>
           <CrossArmActions
@@ -284,7 +263,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                 <div
                   key={action.id}
                   className="flex items-center gap-2 rounded-lg px-3 py-1.5"
-                  style={{ backgroundColor: palette.cardBg }}
+                  style={{ backgroundColor: 'var(--color-island-card)' }}
                 >
                   <span
                     className="inline-block h-1.5 w-1.5 rounded-full"
@@ -295,7 +274,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                           : 'var(--accent-gadfly)',
                     }}
                   />
-                  <span className="text-xs truncate flex-1" style={{ color: palette.secondary }}>
+                  <span className="text-xs truncate flex-1" style={{ color: 'var(--color-island-secondary)' }}>
                     {action.title}
                   </span>
                   <span
@@ -319,15 +298,15 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
       {/* Loading skeleton */}
       {loading && (
         <div className="space-y-2">
-          <div className="h-4 w-1/3 rounded animate-pulse" style={{ backgroundColor: palette.cardBgHover }} />
-          <div className="h-4 w-2/3 rounded animate-pulse" style={{ backgroundColor: palette.cardBgHover }} />
+          <div className="h-4 w-1/3 rounded animate-pulse" style={{ backgroundColor: 'var(--color-island-hover)' }} />
+          <div className="h-4 w-2/3 rounded animate-pulse" style={{ backgroundColor: 'var(--color-island-hover)' }} />
         </div>
       )}
 
       {/* Generated materials */}
       {materials.length > 0 && (
         <section className="space-y-6">
-          <p className="text-3xs font-semibold uppercase" style={{ color: palette.faint }}>
+          <p className="text-3xs font-semibold uppercase" style={{ color: 'var(--color-island-faint)' }}>
             Generated Materials
           </p>
           {materials.map((material) => (

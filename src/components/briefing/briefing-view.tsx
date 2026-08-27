@@ -29,45 +29,8 @@ interface BriefingViewProps {
   onScrollToQuestions?: () => void
 }
 
-// ---- Palette (light / dark island themes) ----
-
-const LIGHT_PALETTE = {
-  bg: '#fafaf9',
-  text: '#1c1917',
-  secondary: '#44403c',
-  body: '#292524',
-  muted: '#78716c',
-  faint: '#a8a29e',
-  border: '#e7e5e4',
-  cardBg: '#f5f4f3',
-  cardBorder: '#e0ddd9',
-  white: '#ffffff',
-  warmLift: '#fffdf8',
-  // Oracle teal accents -- arm colors that work in both modes
-  evidenceCalloutBg: 'rgba(8,145,178,0.04)',
-  evidenceCalloutBorder: 'rgba(8,145,178,0.3)',
-  pullQuoteBorder: 'rgba(8,145,178,0.25)',
-}
-
-const DARK_PALETTE = {
-  bg: '#111113',
-  text: '#f4f4f5',
-  secondary: '#d4d4d8',
-  body: '#d4d4d8',
-  muted: '#a1a1aa',
-  faint: '#71717a',
-  border: 'rgba(255,255,255,0.08)',
-  cardBg: '#18181b',
-  cardBorder: 'rgba(255,255,255,0.15)',
-  white: '#1e1e20',
-  warmLift: '#141416',
-  // Oracle teal accents -- slightly higher opacity on dark surfaces
-  evidenceCalloutBg: 'rgba(8,145,178,0.08)',
-  evidenceCalloutBorder: 'rgba(8,145,178,0.3)',
-  pullQuoteBorder: 'rgba(8,145,178,0.25)',
-}
-
-type Palette = typeof LIGHT_PALETTE
+// Island tokens consumed via CSS custom properties (globals.css).
+// Dark overrides come from .dark-island scope class on the root element.
 
 interface ParsedSection {
   heading: string
@@ -172,11 +135,10 @@ function getSectionAccentColor(heading: string): string | null {
 function SectionHeader({
   heading,
   color,
-  palette,
 }: {
   heading: string
   color?: string
-  palette: Palette
+  
 }) {
   const accentColor = getSectionAccentColor(heading)
 
@@ -195,7 +157,7 @@ function SectionHeader({
       )}
       <h3
         className="text-3xs font-semibold uppercase"
-        style={{ color: color ?? palette.muted }}
+        style={{ color: color ?? 'var(--color-island-muted)' }}
       >
         {heading}
       </h3>
@@ -350,12 +312,11 @@ export function preprocessBlocks(content: string): BlockElement[] {
 
 function ProseSection({
   content,
-  palette,
   oracleSerif,
   showInsightCallouts,
 }: {
   content: string
-  palette: Palette
+  
   oracleSerif?: boolean
   showInsightCallouts?: boolean
 }) {
@@ -381,7 +342,7 @@ function ProseSection({
               width: '40%',
               margin: '24px auto',
               height: '1px',
-              backgroundColor: palette.border,
+              backgroundColor: 'var(--color-island-border)',
             }}
           />
         )
@@ -396,7 +357,7 @@ function ProseSection({
             aria-hidden="true"
             style={{
               border: 'none',
-              borderTop: `1px solid ${palette.border}`,
+              borderTop: `1px solid var(--color-island-border)`,
               margin: '24px 0',
             }}
           />
@@ -413,7 +374,7 @@ function ProseSection({
               fontWeight: 700,
               textTransform: 'uppercase' as const,
               letterSpacing: '0.06em',
-              color: palette.muted,
+              color: 'var(--color-island-muted)',
               marginTop: i === 0 ? '0' : '24px',
               marginBottom: '4px',
             }}
@@ -427,8 +388,8 @@ function ProseSection({
         elements.push(
           <ul key={i} className="space-y-1.5 pl-0">
             {block.items.map((item, j) => (
-              <li key={j} className="flex items-start gap-2" style={{ fontSize: '15px', lineHeight: '1.6', color: palette.secondary }}>
-                <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: palette.faint }} />
+              <li key={j} className="flex items-start gap-2" style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--color-island-secondary)' }}>
+                <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: 'var(--color-island-faint)' }} />
                 <span>{renderInline(item)}</span>
               </li>
             ))}
@@ -447,11 +408,11 @@ function ProseSection({
             <div key={i}>
               <span
                 className="block font-semibold uppercase tracking-wider"
-                style={{ fontSize: '11px', color: palette.muted }}
+                style={{ fontSize: '11px', color: 'var(--color-island-muted)' }}
               >
                 {boldFieldMatch[1]}
               </span>
-              <p className="mt-0.5" style={{ ...baseFont, color: palette.body }}>
+              <p className="mt-0.5" style={{ ...baseFont, color: 'var(--color-island-body)' }}>
                 {renderInline(boldFieldMatch[2])}
               </p>
             </div>
@@ -469,9 +430,9 @@ function ProseSection({
                 fontStyle: 'italic',
                 fontSize: '18px',
                 lineHeight: '1.5',
-                color: palette.secondary,
+                color: 'var(--color-island-secondary)',
                 paddingLeft: '24px',
-                borderLeft: `2px solid ${palette.pullQuoteBorder}`,
+                borderLeft: `2px solid color-mix(in srgb, var(--color-island-accent-oracle) 25%, transparent)`,
                 margin: '24px 0',
                 maxWidth: '55ch',
               }}
@@ -495,7 +456,7 @@ function ProseSection({
                 margin: '4px 0',
               }}
             >
-              <p className="whitespace-pre-wrap" style={{ ...baseFont, color: palette.body, margin: 0, fontStyle: 'italic' }}>
+              <p className="whitespace-pre-wrap" style={{ ...baseFont, color: 'var(--color-island-body)', margin: 0, fontStyle: 'italic' }}>
                 {renderInline(para)}
               </p>
             </div>
@@ -509,14 +470,14 @@ function ProseSection({
             <div
               key={i}
               style={{
-                borderLeft: `3px solid ${palette.evidenceCalloutBorder}`,
-                backgroundColor: palette.evidenceCalloutBg,
+                borderLeft: `3px solid color-mix(in srgb, var(--color-island-accent-oracle) 30%, transparent)`,
+                backgroundColor: 'color-mix(in srgb, var(--color-island-accent-oracle) 6%, transparent)',
                 padding: '16px',
                 borderRadius: '0 8px 8px 0',
                 margin: '16px 0',
               }}
             >
-              <p className="whitespace-pre-wrap" style={{ ...baseFont, color: palette.body, margin: 0 }}>
+              <p className="whitespace-pre-wrap" style={{ ...baseFont, color: 'var(--color-island-body)', margin: 0 }}>
                 {renderInline(para)}
               </p>
             </div>
@@ -531,7 +492,7 @@ function ProseSection({
           : {}
 
         elements.push(
-          <p key={i} className="whitespace-pre-wrap" style={{ ...baseFont, ...leadFont, color: palette.body }}>
+          <p key={i} className="whitespace-pre-wrap" style={{ ...baseFont, ...leadFont, color: 'var(--color-island-body)' }}>
             {renderInline(para)}
           </p>
         )
@@ -602,11 +563,11 @@ function parsePlayers(content: string): PlayerData[] {
   return players
 }
 
-function PlayersSection({ content, palette }: { content: string; palette: Palette }) {
+function PlayersSection({ content }: { content: string }) {
   const players = parsePlayers(content)
 
   if (players.length === 0) {
-    return <ProseSection content={content} palette={palette} />
+    return <ProseSection content={content} />
   }
 
   return (
@@ -617,8 +578,8 @@ function PlayersSection({ content, palette }: { content: string; palette: Palett
           <div
             key={i}
             style={{
-              backgroundColor: palette.cardBg,
-              border: `1px solid ${palette.cardBorder}`,
+              backgroundColor: 'var(--color-island-card)',
+              border: `1px solid var(--color-island-card-border)`,
               borderLeft: `2px solid ${roleColor}`,
               borderRadius: '12px',
               padding: '16px 20px',
@@ -630,7 +591,7 @@ function PlayersSection({ content, palette }: { content: string; palette: Palett
                 style={{
                   fontSize: '14px',
                   fontWeight: 600,
-                  color: palette.text,
+                  color: 'var(--color-island-text)',
                 }}
               >
                 {player.name}
@@ -661,7 +622,7 @@ function PlayersSection({ content, palette }: { content: string; palette: Palett
                   fontFamily: '"Inter", system-ui, sans-serif',
                   fontSize: '14px',
                   lineHeight: '1.5',
-                  color: palette.secondary,
+                  color: 'var(--color-island-secondary)',
                   marginTop: '8px',
                   marginBottom: 0,
                 }}
@@ -677,7 +638,7 @@ function PlayersSection({ content, palette }: { content: string; palette: Palett
                   fontFamily: '"Inter", system-ui, sans-serif',
                   fontSize: '13px',
                   lineHeight: '1.5',
-                  color: palette.muted,
+                  color: 'var(--color-island-muted)',
                   marginTop: '8px',
                   marginBottom: 0,
                 }}
@@ -753,11 +714,11 @@ function parseJurisdictions(content: string): JurisdictionData[] {
   return jurisdictions
 }
 
-function ComparisonSection({ content, palette }: { content: string; palette: Palette }) {
+function ComparisonSection({ content }: { content: string }) {
   const jurisdictions = parseJurisdictions(content)
 
   if (jurisdictions.length === 0) {
-    return <ProseSection content={content} palette={palette} />
+    return <ProseSection content={content} />
   }
 
   return (
@@ -766,8 +727,8 @@ function ComparisonSection({ content, palette }: { content: string; palette: Pal
         <div
           key={i}
           style={{
-            backgroundColor: palette.cardBg,
-            border: `1px solid ${palette.cardBorder}`,
+            backgroundColor: 'var(--color-island-card)',
+            border: `1px solid var(--color-island-card-border)`,
             borderLeft: '2px solid var(--accent-mirror)',
             borderRadius: '12px',
             padding: '16px 20px',
@@ -778,7 +739,7 @@ function ComparisonSection({ content, palette }: { content: string; palette: Pal
             style={{
               fontSize: '14px',
               fontWeight: 600,
-              color: palette.text,
+              color: 'var(--color-island-text)',
               display: 'block',
               marginBottom: '12px',
             }}
@@ -797,13 +758,13 @@ function ComparisonSection({ content, palette }: { content: string; palette: Pal
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.08em',
-                    color: palette.muted,
+                    color: 'var(--color-island-muted)',
                     marginBottom: '4px',
                   }}
                 >
                   WHAT THEY DID
                 </span>
-                <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary, margin: 0 }}>
+                <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
                   {jur.whatTheyDid}
                 </p>
               </div>
@@ -819,13 +780,13 @@ function ComparisonSection({ content, palette }: { content: string; palette: Pal
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.08em',
-                    color: palette.muted,
+                    color: 'var(--color-island-muted)',
                     marginBottom: '4px',
                   }}
                 >
                   WHY IT MATTERS
                 </span>
-                <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary, margin: 0 }}>
+                <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
                   {jur.whyItMatters}
                 </p>
               </div>
@@ -841,13 +802,13 @@ function ComparisonSection({ content, palette }: { content: string; palette: Pal
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.08em',
-                    color: palette.muted,
+                    color: 'var(--color-island-muted)',
                     marginBottom: '4px',
                   }}
                 >
                   OUTCOME
                 </span>
-                <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary, margin: 0 }}>
+                <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
                   {jur.outcome}
                 </p>
               </div>
@@ -935,11 +896,10 @@ function AccessBadge({ level }: { level: AccessLevel }) {
 
 function DocumentCard({
   block,
-  palette,
   isPrimary = false,
 }: {
   block: string
-  palette: Palette
+  
   isPrimary?: boolean
 }) {
   const fields = parseDocumentFields(block)
@@ -975,9 +935,9 @@ function DocumentCard({
     return (
       <div
         className="rounded-xl p-5"
-        style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.cardBorder}` }}
+        style={{ backgroundColor: 'var(--color-island-card)', border: `1px solid var(--color-island-card-border)` }}
       >
-        <p className="whitespace-pre-wrap" style={{ fontSize: '16px', lineHeight: '1.7', color: palette.body }}>
+        <p className="whitespace-pre-wrap" style={{ fontSize: '16px', lineHeight: '1.7', color: 'var(--color-island-body)' }}>
           {renderInline(block)}
         </p>
       </div>
@@ -990,8 +950,8 @@ function DocumentCard({
       <div
         className="rounded-xl p-5"
         style={{
-          backgroundColor: palette.warmLift,
-          border: `1px solid ${palette.cardBorder}`,
+          backgroundColor: 'var(--color-island-warm-lift)',
+          border: `1px solid var(--color-island-card-border)`,
           borderLeft: '3px solid rgba(176,136,200,0.5)',
         }}
       >
@@ -1013,7 +973,7 @@ function DocumentCard({
                 fontSize: '14px',
                 fontWeight: 700,
                 lineHeight: '1.4',
-                color: palette.text,
+                color: 'var(--color-island-text)',
                 textDecoration: 'underline',
                 textDecorationThickness: '1px',
                 textUnderlineOffset: '3px',
@@ -1050,11 +1010,11 @@ function DocumentCard({
               <div key={i}>
                 <span
                   className="block font-semibold uppercase tracking-[0.08em]"
-                  style={{ fontSize: '10px', color: palette.muted, marginBottom: '4px' }}
+                  style={{ fontSize: '10px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
                 >
                   {field.label}
                 </span>
-                <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary }}>
+                <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)' }}>
                   {renderInline(field.value)}
                 </p>
               </div>
@@ -1065,18 +1025,18 @@ function DocumentCard({
         {howToFindField && (
           <div
             style={{
-              borderTop: `1px solid ${palette.border}`,
+              borderTop: `1px solid var(--color-island-border)`,
               marginTop: '16px',
               paddingTop: '12px',
             }}
           >
             <span
               className="block font-semibold uppercase tracking-[0.08em]"
-              style={{ fontSize: '10px', color: palette.faint }}
+              style={{ fontSize: '10px', color: 'var(--color-island-faint)' }}
             >
               How to find it
             </span>
-            <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: palette.muted }}>
+            <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: 'var(--color-island-muted)' }}>
               {renderInline(howToFindField.value)}
             </p>
           </div>
@@ -1090,7 +1050,7 @@ function DocumentCard({
   return (
     <div
       className="rounded-xl p-5"
-      style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.cardBorder}` }}
+      style={{ backgroundColor: 'var(--color-island-card)', border: `1px solid var(--color-island-card-border)` }}
     >
       {/* Header row — flexWrap for responsive */}
       <div
@@ -1109,7 +1069,7 @@ function DocumentCard({
               fontSize: '14px',
               fontWeight: 700,
               lineHeight: '1.4',
-              color: palette.text,
+              color: 'var(--color-island-text)',
               textDecoration: 'underline',
               textDecorationThickness: '1px',
               textUnderlineOffset: '3px',
@@ -1129,11 +1089,11 @@ function DocumentCard({
             <div key={i}>
               <span
                 className="block font-semibold uppercase tracking-[0.08em]"
-                style={{ fontSize: '10px', color: palette.muted, marginBottom: '4px' }}
+                style={{ fontSize: '10px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
               >
                 {field.label}
               </span>
-              <p style={{ fontSize: '14px', lineHeight: '1.5', color: palette.secondary }}>
+              <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)' }}>
                 {renderInline(field.value)}
               </p>
             </div>
@@ -1142,14 +1102,14 @@ function DocumentCard({
       )}
 
       {howToFindField && (
-        <div style={{ borderTop: `1px solid ${palette.border}`, marginTop: '16px', paddingTop: '12px' }}>
+        <div style={{ borderTop: `1px solid var(--color-island-border)`, marginTop: '16px', paddingTop: '12px' }}>
           <span
             className="block font-semibold uppercase tracking-[0.08em]"
-            style={{ fontSize: '10px', color: palette.faint }}
+            style={{ fontSize: '10px', color: 'var(--color-island-faint)' }}
           >
             How to find it
           </span>
-          <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: palette.muted }}>
+          <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: 'var(--color-island-muted)' }}>
             {renderInline(howToFindField.value)}
           </p>
         </div>
@@ -1160,18 +1120,18 @@ function DocumentCard({
 
 // ---- What Governs This section renderer (two-tier) ----
 
-function WhatGovernsSection({ content, palette }: { content: string; palette: Palette }) {
+function WhatGovernsSection({ content }: { content: string }) {
   const blocks = splitDocumentBlocks(content)
   const hasCards = blocks.some((b) => parseDocumentFields(b).length > 0)
 
   if (!hasCards) {
-    return <ProseSection content={content} palette={palette} />
+    return <ProseSection content={content} />
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {blocks.map((block, j) => (
-        <DocumentCard key={j} block={block} palette={palette} isPrimary={j === 0} />
+        <DocumentCard key={j} block={block} isPrimary={j === 0} />
       ))}
     </div>
   )
@@ -1222,7 +1182,7 @@ function extractFippaLetter(content: string): { before: string; letter: string; 
 
 // ---- FIPPA letter card (light surface, Inter body) ----
 
-function FippaLetterCard({ letter, palette }: { letter: string; palette: Palette }) {
+function FippaLetterCard({ letter }: { letter: string }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = useCallback(async () => {
@@ -1249,8 +1209,8 @@ function FippaLetterCard({ letter, palette }: { letter: string; palette: Palette
     <div
       className="rounded-xl overflow-hidden"
       style={{
-        backgroundColor: palette.white,
-        border: `1px solid ${palette.border}`,
+        backgroundColor: 'var(--color-island-white)',
+        border: `1px solid var(--color-island-border)`,
         borderTop: '2px solid var(--accent-lever)',
       }}
     >
@@ -1278,7 +1238,7 @@ function FippaLetterCard({ letter, palette }: { letter: string; palette: Palette
               lineHeight: '1',
               backgroundColor: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)',
               border: '1px solid color-mix(in srgb, var(--accent-lever) 15%, transparent)',
-              color: palette.muted,
+              color: 'var(--color-island-muted)',
             }}
           >
             <Download size={11} strokeWidth={2} />
@@ -1295,7 +1255,7 @@ function FippaLetterCard({ letter, palette }: { letter: string; palette: Palette
               border: copied
                 ? '1px solid color-mix(in srgb, var(--accent-mirror) 25%, transparent)'
                 : '1px solid color-mix(in srgb, var(--accent-lever) 15%, transparent)',
-              color: copied ? 'var(--accent-mirror)' : palette.muted,
+              color: copied ? 'var(--accent-mirror)' : 'var(--color-island-muted)',
             }}
           >
             {copied ? (
@@ -1319,8 +1279,8 @@ function FippaLetterCard({ letter, palette }: { letter: string; palette: Palette
         style={{
           fontSize: '13px',
           lineHeight: '1.6',
-          color: palette.muted,
-          borderBottom: `1px dashed ${palette.border}`,
+          color: 'var(--color-island-muted)',
+          borderBottom: `1px dashed var(--color-island-border)`,
         }}
       >
         This is a formal request under the Freedom of Information and Protection of Privacy Act. You can copy and send this directly to the public body named above.
@@ -1336,7 +1296,7 @@ function FippaLetterCard({ letter, palette }: { letter: string; palette: Palette
             fontFamily: '"Inter", system-ui, sans-serif',
             fontSize: '14px',
             lineHeight: '1.65',
-            color: palette.body,
+            color: 'var(--color-island-body)',
           }}
         >
           {letter}
@@ -1348,25 +1308,25 @@ function FippaLetterCard({ letter, palette }: { letter: string; palette: Palette
 
 // ---- Civic Actions section renderer ----
 
-function CivicActionsSection({ content, palette }: { content: string; palette: Palette }) {
+function CivicActionsSection({ content }: { content: string }) {
   const fippa = extractFippaLetter(content)
 
   if (!fippa) {
-    return <ProseSection content={content} palette={palette} />
+    return <ProseSection content={content} />
   }
 
   return (
     <div className="space-y-5">
-      {fippa.before && <ProseSection content={fippa.before} palette={palette} />}
-      <FippaLetterCard letter={fippa.letter} palette={palette} />
-      {fippa.after && <ProseSection content={fippa.after} palette={palette} />}
+      {fippa.before && <ProseSection content={fippa.before} />}
+      <FippaLetterCard letter={fippa.letter} />
+      {fippa.after && <ProseSection content={fippa.after} />}
     </div>
   )
 }
 
 // ---- Questions section renderer (Gadfly gold, light surface) ----
 
-function QuestionsSection({ content, palette }: { content: string; palette: Palette }) {
+function QuestionsSection({ content }: { content: string }) {
   const lines = content.split('\n').filter((l) => l.trim())
   const questions: string[] = []
 
@@ -1380,7 +1340,7 @@ function QuestionsSection({ content, palette }: { content: string; palette: Pale
   }
 
   if (questions.length === 0) {
-    return <ProseSection content={content} palette={palette} />
+    return <ProseSection content={content} />
   }
 
   return (
@@ -1391,7 +1351,7 @@ function QuestionsSection({ content, palette }: { content: string; palette: Pale
           fontFamily: '"Source Serif 4", Georgia, serif',
           fontStyle: 'italic',
           fontSize: '15px',
-          color: palette.muted,
+          color: 'var(--color-island-muted)',
           marginBottom: '20px',
         }}
       >
@@ -1418,7 +1378,7 @@ function QuestionsSection({ content, palette }: { content: string; palette: Pale
             </span>
             <p
               className="font-medium"
-              style={{ fontSize: '16px', lineHeight: '1.55', color: palette.text }}
+              style={{ fontSize: '16px', lineHeight: '1.55', color: 'var(--color-island-text)' }}
             >
               {renderInline(q)}
             </p>
@@ -1431,11 +1391,11 @@ function QuestionsSection({ content, palette }: { content: string; palette: Pale
 
 // ---- Limitations section renderer ----
 
-function LimitationsSection({ content, palette, darkMode }: { content: string; palette: Palette; darkMode?: boolean }) {
+function LimitationsSection({ content, darkMode }: { content: string; darkMode?: boolean }) {
   return (
     <div
       style={{
-        borderTop: `2px solid ${palette.cardBorder}`,
+        borderTop: `2px solid var(--color-island-card-border)`,
         marginTop: '32px',
         paddingTop: '24px',
       }}
@@ -1444,22 +1404,22 @@ function LimitationsSection({ content, palette, darkMode }: { content: string; p
         role="note"
         style={{
           // Use cardBg on dark mode (warmLift is invisible on dark)
-          backgroundColor: darkMode ? palette.cardBg : 'rgba(120,113,108,0.04)',
-          border: `1px solid ${palette.cardBorder}`,
-          borderLeft: `3px solid ${palette.faint}`,
+          backgroundColor: darkMode ? 'var(--color-island-card)' : 'rgba(120,113,108,0.04)',
+          border: `1px solid var(--color-island-card-border)`,
+          borderLeft: `3px solid var(--color-island-faint)`,
           borderRadius: '0 8px 8px 0',
           padding: '16px 20px',
         }}
       >
         <div
           className="font-semibold uppercase tracking-[0.1em]"
-          style={{ fontSize: '10px', color: palette.faint, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          style={{ fontSize: '10px', color: 'var(--color-island-faint)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          <EyeOff size={14} strokeWidth={1.75} style={{ color: palette.faint }} />
+          <EyeOff size={14} strokeWidth={1.75} style={{ color: 'var(--color-island-faint)' }} />
           What This Analysis Cannot See
         </div>
-        <div style={{ fontSize: '15px', lineHeight: '1.6', color: palette.muted }}>
-          <ProseSection content={content} palette={palette} />
+        <div style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--color-island-muted)' }}>
+          <ProseSection content={content} />
         </div>
       </div>
     </div>
@@ -1468,7 +1428,7 @@ function LimitationsSection({ content, palette, darkMode }: { content: string; p
 
 // ---- Inline Gadfly action (after Oracle section) ----
 
-function InlineGadflyAction({ onOpenGadfly, palette }: { onOpenGadfly?: () => void; palette: Palette }) {
+function InlineGadflyAction({ onOpenGadfly }: { onOpenGadfly?: () => void }) {
   const actionClassName = "inline-flex items-center gap-1.5 rounded-lg font-semibold transition-all duration-150 hover:opacity-90"
   const actionStyle = {
     padding: '7px 14px',
@@ -1482,9 +1442,9 @@ function InlineGadflyAction({ onOpenGadfly, palette }: { onOpenGadfly?: () => vo
   return (
     <div
       className="action-button mt-5 pt-5 flex items-center justify-between gap-4"
-      style={{ borderTop: `1px solid ${palette.border}` }}
+      style={{ borderTop: `1px solid var(--color-island-border)` }}
     >
-      <span style={{ fontSize: '13px', lineHeight: '1', color: palette.muted }}>
+      <span style={{ fontSize: '13px', lineHeight: '1', color: 'var(--color-island-muted)' }}>
         Have more questions about this?
       </span>
       {onOpenGadfly ? (
@@ -1513,7 +1473,7 @@ function InlineGadflyAction({ onOpenGadfly, palette }: { onOpenGadfly?: () => vo
 
 // ---- Executive card (nav + action hub — concern text removed per spec 3.3) ----
 
-function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions, palette }: { sections: ParsedSection[]; onOpenCampaign?: () => void; onScrollToQuestions?: () => void; palette: Palette }) {
+function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions }: { sections: ParsedSection[]; onOpenCampaign?: () => void; onScrollToQuestions?: () => void }) {
   // Key findings: all section headings except concern, context, and limitations
   const findingHeadings = sections
     .map((s) => s.heading)
@@ -1561,8 +1521,8 @@ function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions, palette 
     <div
       style={{
         marginBottom: '40px',
-        borderBottom: `2px solid ${palette.border}`,
-        backgroundColor: palette.warmLift,
+        borderBottom: `2px solid var(--color-island-border)`,
+        backgroundColor: 'var(--color-island-warm-lift)',
         borderRadius: '12px',
         // spec 3.3: padding 20/24/24/24
         padding: '20px 24px 24px 24px',
@@ -1574,16 +1534,16 @@ function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions, palette 
         <>
           <div
             className="font-semibold uppercase tracking-[0.1em]"
-            style={{ fontSize: '11px', color: palette.muted, marginBottom: '12px' }}
+            style={{ fontSize: '11px', color: 'var(--color-island-muted)', marginBottom: '12px' }}
           >
             Key Areas
           </div>
           <ul className="space-y-2 list-none p-0">
             {findingHeadings.map((heading, i) => (
-              <li key={i} className="flex items-start gap-2.5" style={{ fontSize: '14px', lineHeight: '1.5', color: palette.body }}>
+              <li key={i} className="flex items-start gap-2.5" style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-body)' }}>
                 <span
                   className="flex-shrink-0 rounded-full"
-                  style={{ width: '6px', height: '6px', backgroundColor: palette.faint, marginTop: '6px' }}
+                  style={{ width: '6px', height: '6px', backgroundColor: 'var(--color-island-faint)', marginTop: '6px' }}
                 />
                 {heading}
               </li>
@@ -1643,11 +1603,11 @@ function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions, palette 
 
 // ---- Section divider ----
 
-function SectionDivider({ palette }: { palette: Palette }) {
+function SectionDivider() {
   return (
     <div
       style={{
-        borderTop: `1px solid ${palette.border}`,
+        borderTop: `1px solid var(--color-island-border)`,
         margin: '32px 0',
       }}
     />
@@ -1704,7 +1664,7 @@ const EXPERT_LINKS = [
   },
 ]
 
-function GoDeeper({ onOpenCampaign, onOpenGadfly, palette }: { onOpenCampaign?: () => void; onOpenGadfly?: () => void; palette: Palette }) {
+function GoDeeper({ onOpenCampaign, onOpenGadfly }: { onOpenCampaign?: () => void; onOpenGadfly?: () => void }) {
   // Map arm names to callbacks for arms that support in-page panels
   const armCallbacks: Record<string, (() => void) | undefined> = {
     Gadfly: onOpenGadfly,
@@ -1712,10 +1672,10 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, palette }: { onOpenCampaign?: 
   }
 
   return (
-    <div style={{ marginTop: '40px', paddingTop: '32px', borderTop: `1px solid ${palette.border}` }}>
+    <div style={{ marginTop: '40px', paddingTop: '32px', borderTop: `1px solid var(--color-island-border)` }}>
       <p
         className="font-semibold uppercase tracking-[0.1em]"
-        style={{ fontSize: '11px', color: palette.faint, marginBottom: '16px' }}
+        style={{ fontSize: '11px', color: 'var(--color-island-faint)', marginBottom: '16px' }}
       >
         Want to go deeper?
       </p>
@@ -1754,7 +1714,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, palette }: { onOpenCampaign?: 
                     fontSize: '9px',
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.1em',
-                    color: palette.faint,
+                    color: 'var(--color-island-faint)',
                     marginTop: '1px',
                   }}
                 >
@@ -1762,7 +1722,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, palette }: { onOpenCampaign?: 
                 </span>
                 <span
                   className="leading-snug"
-                  style={{ fontSize: '11px', color: palette.muted, marginTop: '4px' }}
+                  style={{ fontSize: '11px', color: 'var(--color-island-muted)', marginTop: '4px' }}
                 >
                   {link.tagline}
                 </span>
@@ -1806,17 +1766,16 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
   const sections = useMemo(() => parseSections(text), [text])
   const docTitle = useMemo(() => extractTitle(text), [text])
   const hasSections = sections.length > 0
-  const palette = darkMode ? DARK_PALETTE : LIGHT_PALETTE
 
   // Raw streaming before first section
   if (isStreaming && !hasSections) {
     return (
       <article
-        className={`content-island${darkMode ? ' content-island--dark' : ''}`}
+        className={`content-island${darkMode ? ' content-island--dark dark-island' : ''}`}
         style={{
           position: 'relative',
-          backgroundColor: palette.bg,
-          color: palette.text,
+          backgroundColor: 'var(--color-island-bg)',
+          color: 'var(--color-island-text)',
           maxWidth: '672px',
           margin: '0 auto',
           padding: '40px',
@@ -1836,7 +1795,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               borderRadius: '9999px',
               padding: '6px',
               backgroundColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
-              color: palette.muted,
+              color: 'var(--color-island-muted)',
               border: 'none',
               cursor: 'pointer',
               display: 'flex',
@@ -1850,22 +1809,22 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         )}
         <p
           className="whitespace-pre-wrap"
-          style={{ fontSize: '16px', lineHeight: '1.7', color: palette.secondary }}
+          style={{ fontSize: '16px', lineHeight: '1.7', color: 'var(--color-island-secondary)' }}
         >
           {text}
         </p>
-        <span className="mt-1 inline-block h-4 w-0.5 animate-pulse" style={{ backgroundColor: palette.muted }} />
+        <span className="mt-1 inline-block h-4 w-0.5 animate-pulse" style={{ backgroundColor: 'var(--color-island-muted)' }} />
       </article>
     )
   }
 
   return (
     <article
-      className={`content-island${darkMode ? ' content-island--dark' : ''}`}
+      className={`content-island${darkMode ? ' content-island--dark dark-island' : ''}`}
       style={{
         position: 'relative',
-        backgroundColor: palette.bg,
-        color: palette.text,
+        backgroundColor: 'var(--color-island-bg)',
+        color: 'var(--color-island-text)',
         maxWidth: '672px',
         margin: '0 auto',
         padding: 'clamp(32px, 5vw, 40px) clamp(20px, 5vw, 40px)',
@@ -1885,7 +1844,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
             borderRadius: '9999px',
             padding: '6px',
             backgroundColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
-            color: palette.muted,
+            color: 'var(--color-island-muted)',
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
@@ -1907,7 +1866,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               fontWeight: 600,
               textTransform: 'uppercase' as const,
               letterSpacing: '0.1em',
-              color: palette.muted,
+              color: 'var(--color-island-muted)',
               marginBottom: '8px',
             }}
           >
@@ -1919,7 +1878,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               fontSize: '22px',
               fontWeight: 700,
               lineHeight: '1.3',
-              color: palette.text,
+              color: 'var(--color-island-text)',
               maxWidth: '60ch',
               margin: 0,
             }}
@@ -1930,7 +1889,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
       )}
 
       {/* Executive card — always first when we have sections */}
-      {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onScrollToQuestions={onScrollToQuestions} palette={palette} />}
+      {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onScrollToQuestions={onScrollToQuestions} />}
 
       {sections.map((section, i) => {
         const headingLower = section.heading.toLowerCase()
@@ -1942,9 +1901,9 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         if (headingLower.includes('context') || headingLower.includes('your concern')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider palette={palette} />}
-              <SectionHeader heading={section.heading} palette={palette} />
-              <ProseSection content={section.content} palette={palette} />
+              {showDivider && <SectionDivider />}
+              <SectionHeader heading={section.heading} />
+              <ProseSection content={section.content} />
             </div>
           )
         }
@@ -1953,9 +1912,9 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         if (headingLower.includes('what governs') || headingLower.includes('governs this')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider palette={palette} />}
-              <SectionHeader heading="What Governs This" palette={palette} />
-              <WhatGovernsSection content={section.content} palette={palette} />
+              {showDivider && <SectionDivider />}
+              <SectionHeader heading="What Governs This" />
+              <WhatGovernsSection content={section.content} />
             </div>
           )
         }
@@ -1964,9 +1923,9 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         if (headingLower.includes('key players')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider palette={palette} />}
-              <SectionHeader heading="Key Players" palette={palette} />
-              <PlayersSection content={section.content} palette={palette} />
+              {showDivider && <SectionDivider />}
+              <SectionHeader heading="Key Players" />
+              <PlayersSection content={section.content} />
             </div>
           )
         }
@@ -1975,11 +1934,11 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         if (headingLower.includes('public record') || headingLower.includes('record shows')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider palette={palette} />}
-              <SectionHeader heading="What the Public Record Shows" palette={palette} />
+              {showDivider && <SectionDivider />}
+              <SectionHeader heading="What the Public Record Shows" />
               {/* oracleSerif=false per spec 3.1 — analytical journalism reads cleaner in Inter */}
-              <ProseSection content={section.content} palette={palette} showInsightCallouts />
-              <InlineGadflyAction onOpenGadfly={onOpenGadfly} palette={palette} />
+              <ProseSection content={section.content} showInsightCallouts />
+              <InlineGadflyAction onOpenGadfly={onOpenGadfly} />
             </div>
           )
         }
@@ -1988,9 +1947,9 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         if (headingLower.includes('what you can do') || headingLower.includes('you can do')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider palette={palette} />}
-              <SectionHeader heading="What You Can Do" color="var(--accent-lever)" palette={palette} />
-              <CivicActionsSection content={section.content} palette={palette} />
+              {showDivider && <SectionDivider />}
+              <SectionHeader heading="What You Can Do" color="var(--accent-lever)" />
+              <CivicActionsSection content={section.content} />
             </div>
           )
         }
@@ -1999,9 +1958,9 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         if (headingLower.includes('other places') || headingLower.includes('how other')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider palette={palette} />}
-              <SectionHeader heading="How Other Places Handle This" palette={palette} />
-              <ComparisonSection content={section.content} palette={palette} />
+              {showDivider && <SectionDivider />}
+              <SectionHeader heading="How Other Places Handle This" />
+              <ComparisonSection content={section.content} />
             </div>
           )
         }
@@ -2014,15 +1973,15 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               id="questions-section"
               style={{
                 // spec 3.4: bg → cardBg (warmLift is invisible on dark)
-                backgroundColor: palette.cardBg,
+                backgroundColor: 'var(--color-island-card)',
                 borderRadius: '12px',
                 padding: '24px',
                 // spec 3.2: remove rogue marginTop:16px
               }}
             >
-              {showDivider && <SectionDivider palette={palette} />}
-              <SectionHeader heading="Questions Worth Asking" color="var(--accent-gadfly)" palette={palette} />
-              <QuestionsSection content={section.content} palette={palette} />
+              {showDivider && <SectionDivider />}
+              <SectionHeader heading="Questions Worth Asking" color="var(--accent-gadfly)" />
+              <QuestionsSection content={section.content} />
             </div>
           )
         }
@@ -2031,8 +1990,8 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         if (headingLower.includes('cannot see') || headingLower.includes('limitations')) {
           return (
             <div key={i}>
-              {showDivider && <SectionDivider palette={palette} />}
-              <LimitationsSection content={section.content} palette={palette} darkMode={darkMode} />
+              {showDivider && <SectionDivider />}
+              <LimitationsSection content={section.content} darkMode={darkMode} />
             </div>
           )
         }
@@ -2040,9 +1999,9 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         // --- Fallback ---
         return (
           <div key={i}>
-            {showDivider && <SectionDivider palette={palette} />}
-            <SectionHeader heading={section.heading} palette={palette} />
-            <ProseSection content={section.content} palette={palette} />
+            {showDivider && <SectionDivider />}
+            <SectionHeader heading={section.heading} />
+            <ProseSection content={section.content} />
           </div>
         )
       })}
@@ -2050,12 +2009,12 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
       {isStreaming && (
         <span
           className="mt-2 inline-block h-4 w-0.5 animate-pulse"
-          style={{ backgroundColor: palette.muted }}
+          style={{ backgroundColor: 'var(--color-island-muted)' }}
         />
       )}
 
       {/* Go Deeper footer — only when streaming is complete */}
-      {!isStreaming && hasSections && <GoDeeper onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} palette={palette} />}
+      {!isStreaming && hasSections && <GoDeeper onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} />}
     </article>
   )
 }
