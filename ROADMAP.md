@@ -208,6 +208,11 @@ Named elsewhere and not yet scheduled:
 - Postal code cache TTL — requires schema migration + scheduled job wiring; cache is small, postal codes are semi-public
 - Consent version record — requires schema migration + UI for policy-update acknowledgment; better done as part of a deliberate PIPEDA compliance pass
 
+### Deferred from 2026-08-27 audit remediation (pass 2)
+
+- 32 moderate/low npm vulns — all transitive via @irys/sdk + drizzle-kit/esbuild (dev-only); no non-breaking fix exists
+- Unbounded all-jurisdictions query in run-briefing.ts — advisory; 3 jurisdictions currently, scales linearly
+
 ## Reference
 
 - `.claude/plans/opencave-design-program.md` — active program charters (July 2026, local)
