@@ -67,6 +67,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
   const votesActive = pathname === '/votes' || pathname.startsWith('/votes/')
   const profileActive = pathname === '/profile' || pathname.startsWith('/profile/')
   const moderationActive = pathname === '/forum/moderation' || pathname.startsWith('/forum/moderation/')
+  const foundationsActive = pathname === '/foundations'
   const isModerator = effectiveWeight >= 10
 
   // Scroll-fade affordance: the nav region can overflow at common viewport
@@ -407,19 +408,35 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
           <Link
             href="/foundations"
             onClick={onNavigate}
-            className={`group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm text-text-muted transition-all duration-150 hover:bg-surface-3 hover:text-text-secondary`}
+            aria-current={foundationsActive ? 'page' : undefined}
+            className={clsx(
+              `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
+              foundationsActive
+                ? 'bg-surface-3 text-text-primary'
+                : 'text-text-muted hover:bg-surface-3 hover:text-text-secondary'
+            )}
           >
-            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-border transition-all duration-150 group-hover:bg-surface-1 group-hover:border-border-strong">
+            <span className={clsx(
+              'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border transition-all duration-150',
+              foundationsActive
+                ? 'bg-surface-1 border-border-strong shadow-sm'
+                : 'border-border group-hover:bg-surface-1 group-hover:border-border-strong'
+            )}>
               <ScrollText
                 size={14}
                 strokeWidth={1.75}
-                className="text-text-muted group-hover:text-text-secondary"
+                className={clsx(
+                  foundationsActive ? 'text-text-primary' : 'text-text-muted group-hover:text-text-secondary'
+                )}
               />
             </span>
             <span className="flex flex-col">
               <span className="font-medium leading-tight">Foundations</span>
               <span className="text-2xs font-medium text-text-faint leading-tight">The groundwork</span>
             </span>
+            {foundationsActive && (
+              <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
+            )}
           </Link>
         </div>
         {/* Scroll-fade "more below" cue — inert (and invisible) unless the

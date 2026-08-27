@@ -16,7 +16,7 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   )
   response.headers.set(
     'Content-Security-Policy-Report-Only',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.supabase.co https://o4511430500810752.ingest.us.sentry.io; frame-ancestors 'none'"
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://o4511430500810752.ingest.us.sentry.io; frame-ancestors 'none'"
   )
   return response
 }

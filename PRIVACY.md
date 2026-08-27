@@ -113,6 +113,13 @@ needs to do its job:
 - **Resend** — your email address is sent to Resend to deliver your sign-in code.
 - **Sentry** — error monitoring. Request bodies, cookies, auth headers, and your email/IP are
   stripped from every report before it is sent; session replay is disabled.
+- **Open North (Represent API)** — when you enter your postal code to look up your Member
+  of Parliament, it is sent to Open North's Represent API to resolve your federal riding and
+  elected representative. The postal code is transmitted in the request URL. Open North is a
+  Canadian non-profit; their privacy policy is at opennorth.ca.
+- **Netlify** — US-based hosting provider. All HTTP requests to Open Cave are processed by
+  Netlify's infrastructure, which handles IP addresses and request metadata as part of normal
+  web serving. Netlify's privacy policy governs their handling of this data.
 - **Upstash** — a Redis service used only to rate-limit requests and block abuse and
   cost-attacks. It receives your IP address (and, for some limits, your account ID) as a
   rate-limit key plus a short-lived counter — never your content, searches, or which pages you
@@ -226,4 +233,4 @@ access requests within 30 days. We require nothing beyond an email to use the to
 Questions about privacy or data handling: open an issue on the public repository or reach
 out through the forum. We will respond.
 
-Last updated: 2026-06-28
+Last updated: 2026-08-27

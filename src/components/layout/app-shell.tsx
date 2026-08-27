@@ -18,6 +18,13 @@ export function AppShell({ children, userEmail, displayName, effectiveWeight }: 
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-surface-0 md:flex-row">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-lg focus:bg-surface-2 focus:px-4 focus:py-2 focus:text-text-primary focus:ring-2 focus:ring-accent-oracle"
+      >
+        Skip to content
+      </a>
+
       {/* Mobile header */}
       <div className="flex items-center justify-between border-b border-border bg-surface-2 px-4 py-3 md:hidden">
         <button
@@ -69,7 +76,7 @@ export function AppShell({ children, userEmail, displayName, effectiveWeight }: 
       </div>
 
       {/* Main content */}
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main id="main-content" className="flex flex-1 flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto">
           {children}
         </div>

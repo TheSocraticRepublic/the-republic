@@ -9,17 +9,15 @@ import {
 import type { CampaignMaterial } from '@/lib/campaign/schemas'
 import { esc, safeHref, errorPage, PRINT_CSP } from '@/lib/campaign/print-utils'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { safeRoute } from '@/lib/api/safe-route'
 import * as Sentry from '@sentry/nextjs'
-
-interface RouteContext {
-  params: Promise<{ materialId: string }>
-}
 
 /**
  * GET /api/campaign/[materialId]/print
  * Returns a print-ready HTML page for a campaign material.
  */
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export const GET = safeRoute(async (request: NextRequest, context: { params: Promise<{ materialId: string }> }) => {
+  const { params } = context
   const printHeaders = {
     'Content-Type': 'text/html; charset=utf-8',
     'Content-Security-Policy': PRINT_CSP,
@@ -86,7 +84,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     status: 200,
     headers: printHeaders,
   })
-}
+})
 
 // ---------------------------------------------------------------------------
 // Material type renderers

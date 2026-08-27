@@ -8,6 +8,10 @@ type RouteHandler = (
   context: RouteContext
 ) => Promise<Response>
 
+// When structured logging is adopted, integrate src/lib/privacy/logging-policy.ts
+// here — its isLoggable() and isProhibited() guards enforce which event types
+// may be logged (see PRIVACY.md for the policy rationale).
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function safeRoute(handler: (...args: any[]) => Promise<Response>): RouteHandler {
   return async (request, context) => {

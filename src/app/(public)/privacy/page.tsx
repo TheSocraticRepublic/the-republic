@@ -110,6 +110,11 @@ export default function PrivacyPage() {
             non-profit; their privacy policy is at opennorth.ca.
           </li>
           <li>
+            <strong className="text-text-primary">Netlify.</strong> US-based hosting provider. All
+            HTTP requests to Open Cave are processed by Netlify&apos;s infrastructure, which
+            handles IP addresses and request metadata as part of normal web serving.
+          </li>
+          <li>
             <strong className="text-text-primary">Upstash.</strong> A Redis service used only to
             rate-limit requests and stop abuse and cost-attacks. It receives your IP address (and,
             for some limits, your account ID) as a rate-limit key plus a short-lived counter —
