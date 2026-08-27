@@ -70,17 +70,17 @@ export function VoteExplanation({ voteId, existingExplanation }: VoteExplanation
   return (
     <div
       className="rounded-2xl p-8"
-      style={{ backgroundColor: '#f8f6f3' }}
+      style={{ backgroundColor: 'var(--color-island-bg)' }}
     >
       <div className="mb-4 flex items-center justify-between">
         <p
           className="text-3xs font-semibold uppercase"
-          style={{ color: '#a8a29e' }}
+          style={{ color: 'var(--color-island-muted)' }}
         >
           What This Vote Means
         </p>
         {isStreaming && (
-          <span className="flex items-center gap-1.5 text-2xs font-medium" style={{ color: '#a8a29e' }}>
+          <span className="flex items-center gap-1.5 text-2xs font-medium" style={{ color: 'var(--color-island-muted)' }}>
             <Loader2 size={10} className="animate-spin" />
             Analyzing
           </span>
