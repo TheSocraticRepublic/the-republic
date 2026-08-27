@@ -376,10 +376,11 @@ function OutcomeForm({
     >
       {/* Description */}
       <div className="space-y-1">
-        <label className="text-3xs font-semibold uppercase text-text-muted">
+        <label htmlFor="outcome-description" className="text-3xs font-semibold uppercase text-text-muted">
           What happened?
         </label>
         <textarea
+          id="outcome-description"
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder="Describe the outcome..."
@@ -391,10 +392,11 @@ function OutcomeForm({
 
       {/* Date picker */}
       <div className="space-y-1">
-        <label className="text-3xs font-semibold uppercase text-text-muted">
+        <label htmlFor="outcome-date" className="text-3xs font-semibold uppercase text-text-muted">
           Date (optional)
         </label>
         <input
+          id="outcome-date"
           type="date"
           value={outcomeDate}
           onChange={(e) => onOutcomeDateChange(e.target.value)}
@@ -405,16 +407,17 @@ function OutcomeForm({
 
       {/* Satisfaction 1-5 stars */}
       <div className="space-y-1">
-        <label className="text-3xs font-semibold uppercase text-text-muted">
+        <label id="outcome-satisfaction-label" className="text-3xs font-semibold uppercase text-text-muted">
           Satisfaction (optional)
         </label>
-        <div className="flex gap-1">
+        <div className="flex gap-1" role="group" aria-labelledby="outcome-satisfaction-label">
           {[1, 2, 3, 4, 5].map((n) => (
             <button
               key={n}
               onClick={() => onSatisfactionChange(satisfaction === n ? 0 : n)}
               className="p-0.5 transition-colors focus-visible:outline-none"
               type="button"
+              aria-label={`${n} of 5`}
             >
               <Star
                 size={16}

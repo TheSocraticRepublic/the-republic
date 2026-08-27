@@ -410,6 +410,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
+            aria-label="Edit document text"
             className="w-full resize-none bg-transparent px-6 py-5 text-sm leading-relaxed text-text-secondary outline-none"
             style={{
               fontFamily: '"SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace',

@@ -52,6 +52,7 @@ export function ThreadFilters({
         onChange={(e) => handleChange('jurisdiction', e.target.value)}
         className={selectClass}
         style={{ colorScheme: 'dark' }}
+        aria-label="Filter by jurisdiction"
       >
         <option value="">All jurisdictions</option>
         {jurisdictions.map((j) => (
@@ -66,6 +67,7 @@ export function ThreadFilters({
         onChange={(e) => handleChange('category', e.target.value)}
         className={selectClass}
         style={{ colorScheme: 'dark' }}
+        aria-label="Filter by category"
       >
         <option value="">All categories</option>
         {CONCERN_CATEGORIES.map((cat) => (

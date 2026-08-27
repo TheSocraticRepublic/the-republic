@@ -205,6 +205,7 @@ export function IssueTimeline({ investigationId, events, onEventAdded, darkMode 
             onChange={(e) => setFormTitle(e.target.value)}
             className="w-full rounded-lg border px-3 py-2 text-xs bg-transparent focus:outline-none"
             style={{ borderColor: tl.border, color: tl.text }}
+            aria-label="Event title"
           />
           <div className="flex gap-2">
             <input
@@ -213,12 +214,14 @@ export function IssueTimeline({ investigationId, events, onEventAdded, darkMode 
               onChange={(e) => setFormDate(e.target.value)}
               className="flex-1 rounded-lg border px-3 py-2 text-xs bg-transparent focus:outline-none"
               style={{ borderColor: tl.border, color: tl.text }}
+              aria-label="Event date"
             />
             <select
               value={formType}
               onChange={(e) => setFormType(e.target.value)}
               className="flex-1 rounded-lg border px-3 py-2 text-xs bg-transparent focus:outline-none"
               style={{ borderColor: tl.border, color: tl.text }}
+              aria-label="Event type"
             >
               <option value="deadline">Deadline</option>
               <option value="meeting">Meeting</option>
@@ -234,6 +237,7 @@ export function IssueTimeline({ investigationId, events, onEventAdded, darkMode 
             rows={2}
             className="w-full rounded-lg border px-3 py-2 text-xs bg-transparent focus:outline-none resize-none"
             style={{ borderColor: tl.border, color: tl.text }}
+            aria-label="Event description"
           />
           <div className="flex items-center gap-2 justify-end">
             <button
