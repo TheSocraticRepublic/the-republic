@@ -24,7 +24,7 @@ function withTimeout<T>(work: Promise<T>, ms: number, label: string): Promise<T>
   ])
 }
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   const checks: Record<string, CheckState> = {}
   let healthy = true
 
