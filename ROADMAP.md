@@ -201,6 +201,13 @@ Named elsewhere and not yet scheduled:
 - JURIS-2 — AB/ON FOI citation practitioner review
 - D4 "The Athenians" — illustration variant selection
 
+### Deferred from 2026-08-26 audit remediation
+
+- Sentry alert rules — dashboard configuration, not a code change (Lee/ops)
+- Structured logging / adopt pino — medium-term refactor, not proportionate to audit gate
+- Postal code cache TTL — requires schema migration + scheduled job wiring; cache is small, postal codes are semi-public
+- Consent version record — requires schema migration + UI for policy-update acknowledgment; better done as part of a deliberate PIPEDA compliance pass
+
 ## Reference
 
 - `.claude/plans/opencave-design-program.md` — active program charters (July 2026, local)
