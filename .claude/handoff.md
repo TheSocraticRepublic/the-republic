@@ -19,14 +19,15 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 ## Owed right now
 
-- **Production audit COMPLETE (2026-08-26): grade C, score 48, 0 FAIL / 26 WARN.** Report
-  at `~/marvin/state/production-audits/the-republic-2026-08-26.md`. All 18 FAILs from the
-  Aug-6 F-grade audit are closed. The branch is shippable. Remediation relay plan is in
-  the report (11 files, 6 steps). Ledger updated with `branch_audited: marvin/the-republic-audit`.
+- **Post-remediation re-audit COMPLETE (2026-08-26): grade C, score 30, 0 FAIL / 35 WARN
+  (deduplicated).** 18 of the original 26 WARNs closed. WARN count rose under deeper
+  specialist scrutiny (Jen: 11 on unmigrated light-surface hex + a11y; Dao: 7 operational).
+  Report at `~/marvin/state/production-audits/the-republic-2026-08-26-remediation.md`.
+  Relay ledger: `republic-warn-remediation-b1` → complete, Razor 0 CRITICAL.
 
-- **Merge to main + deploy.** The session branch (`marvin/the-republic-audit` at `92161ed`)
-  has 32 commits ahead of main (charter, register drain, 3 relays, safeRoute, prompt caching).
-  Merge requires Lee's go-ahead per the brief's authority constraints.
+- **Merge to main + deploy.** The session branch (`marvin/the-republic-audit` at `a974442`)
+  has 40 commits ahead of main. Merge requires Lee's go-ahead per the brief's authority
+  constraints. Migrations 0012-0014 must be applied to prod DB post-merge (pg_dump first).
 
 - **Migration 0012 — production DB apply post-merge.** Three DDL changes (generationNonce
   column, turnIndex unique constraint with renumber, patternAnalysis nullable). File at
