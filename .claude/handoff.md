@@ -67,6 +67,19 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 
 ## Log (newest first)
 
+### 2026-08-26 (remediation session)
+**Remediation relay + re-audit — grade C, score 30, 0 FAIL / 35 WARN (deduplicated)**
+
+Remediated 18 of the 26 WARNs from the first audit via two Razor-gated relay batches (Batch 1: CSP, privacy, safeRoute, a11y, token migration, next/image, loading screens, npm audit fix — 23 files; Batch 2: timestamp migration 0013, CHECK constraints 0014 — 3 files). Critic gate: Opus (Fable rate-limited, sanctioned fallback). All Razor reviews 0 CRITICAL.
+
+Re-audit with full 7-specialist panel found 35 deduplicated WARNs (up from 26) because coverage expanded: Jen surfaced ~130 hardcoded hex across 6 unmigrated light-surface components (civic-context-strip, reasoning-card, campaign-panel, lens-panel, player-card, briefing-view) + 4 missing loading screens + 4 unlabeled form controls; Dao surfaced operational gaps (no updatedAt triggers, migration lock risk, hard-cascade deletion). All are cleanup debt or standing decisions. 0 FAIL.
+
+**Migrations 0012, 0013, 0014 are all file-only — none applied to production.**
+
+Relay ledger: `republic-warn-remediation-b1` + `republic-warn-remediation-b2`, both complete. Production ledger: `the-republic-2026-08-26-remediation` with `branch_audited: marvin/the-republic-audit`.
+
+**Pattern to name:** three sessions tonight (opencanopy, republic ×2) nearly lost provable work because ledger writes were skipped at relay close. The production-ledger entry and per-relay relay-ledger entries must be written before parking — a report without a ledger entry is invisible to the deploy gate.
+
 ### 2026-08-26
 **Production audit — grade C, score 48, 0 FAIL / 26 WARN / 59 PASS**
 
