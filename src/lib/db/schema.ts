@@ -282,10 +282,10 @@ export const magicCodes = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     email: text('email').notNull(),
     code: text('code').notNull(),
-    expiresAt: timestamp('expires_at').notNull(),
-    usedAt: timestamp('used_at'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
     attempts: integer('attempts').default(0).notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index('magic_codes_email_idx').on(t.email)]
 )
@@ -293,8 +293,8 @@ export const magicCodes = pgTable(
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   email: text('email').notNull().unique(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  lastLoginAt: timestamp('last_login_at'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
 })
 
 // investigations is defined before documents so that documents can FK to it
@@ -312,16 +312,16 @@ export const investigations = pgTable(
     jurisdictionName: text('jurisdiction_name'),
     policyArea: policyAreaEnum('policy_area'),
     briefingText: text('briefing_text'),
-    briefingCompletedAt: timestamp('briefing_completed_at'),
-    lensOpenedAt: timestamp('lens_opened_at'),
+    briefingCompletedAt: timestamp('briefing_completed_at', { withTimezone: true }),
+    lensOpenedAt: timestamp('lens_opened_at', { withTimezone: true }),
     lensContextText: text('lens_context_text'),
-    lensCompletedAt: timestamp('lens_completed_at'),
+    lensCompletedAt: timestamp('lens_completed_at', { withTimezone: true }),
     gadflySeededQuestion: text('gadfly_seeded_question'),
     postalCode: text('postal_code'),
     federalMpId: uuid('federal_mp_id').references(() => federalMps.id, {
       onDelete: 'set null',
     }),
-    campaignOpenedAt: timestamp('campaign_opened_at'),
+    campaignOpenedAt: timestamp('campaign_opened_at', { withTimezone: true }),
     concernCategory: text('concern_category'),
     environmentalReviewType: text('environmental_review_type'),
     status: investigationStatusEnum('status').notNull().default('generating'),
@@ -330,14 +330,14 @@ export const investigations = pgTable(
     failureReason: text('failure_reason'),
     // preservedAt: timestamp when this investigation was submitted for archiving.
     // Named preservedAt (not archivedAt) to avoid collision with investigationStatusEnum.archived.
-    preservedAt: timestamp('preserved_at'),
+    preservedAt: timestamp('preserved_at', { withTimezone: true }),
     // generationStartedAt: set when status transitions to 'generating'. Used by the
     // scheduled reaper and render-time reaper to detect stuck rows. Keyed on this
     // (not createdAt) so a retried row — with an old createdAt — isn't reaped instantly.
     generationNonce: uuid('generation_nonce'),
     generationStartedAt: timestamp('generation_started_at', { withTimezone: true }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('investigations_user_id_idx').on(t.userId),
@@ -367,8 +367,8 @@ export const documents = pgTable(
       () => investigations.id,
       { onDelete: 'set null' }
     ),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('documents_user_id_idx').on(t.userId),
@@ -389,7 +389,7 @@ export const documentChunks = pgTable(
     sectionHeading: text('section_heading'),
     embedding: vector('embedding', 1024),
     tokenCount: integer('token_count'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('chunks_document_id_idx').on(t.documentId),
@@ -412,7 +412,7 @@ export const analyses = pgTable(
     questionsToAsk: jsonb('questions_to_ask'),
     model: text('model'),
     promptVersion: text('prompt_version'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index('analyses_document_id_idx').on(t.documentId)]
 )
@@ -430,7 +430,7 @@ export const crossReferences = pgTable(
     relationshipType: crossReferenceTypeEnum('relationship_type').notNull(),
     description: text('description'),
     confidence: real('confidence'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('xref_source_doc_idx').on(t.sourceDocId),
@@ -458,8 +458,8 @@ export const gadflySessions = pgTable(
       () => investigations.id,
       { onDelete: 'set null' }
     ),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('gadfly_sessions_user_id_idx').on(t.userId),
@@ -480,7 +480,7 @@ export const gadflyTurns = pgTable(
     content: text('content').notNull(),
     questionType: gadflyQuestionTypeEnum('question_type'),
     turnIndex: integer('turn_index').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('gadfly_turns_session_id_idx').on(t.sessionId),
@@ -500,7 +500,7 @@ export const insightMarkers = pgTable(
       .references(() => gadflySessions.id, { onDelete: 'cascade' }),
     insight: text('insight').notNull(),
     category: text('category'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('insight_markers_session_id_idx').on(t.sessionId),
@@ -531,8 +531,8 @@ export const leverActions = pgTable(
       () => investigations.id,
       { onDelete: 'set null' }
     ),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('lever_actions_user_id_idx').on(t.userId),
@@ -555,7 +555,7 @@ export const jurisdictions = pgTable(
     annualBudget: numeric('annual_budget'),
     dataPortalUrl: text('data_portal_url'),
     fippaBody: text('fippa_body'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('jurisdictions_country_idx').on(t.country),
@@ -576,8 +576,8 @@ export const jurisdictionPolicies = pgTable(
     embedding: vector('embedding', 1024),
     sourceUrl: text('source_url'),
     implementedDate: date('implemented_date'),
-    lastVerifiedAt: timestamp('last_verified_at').defaultNow().notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    lastVerifiedAt: timestamp('last_verified_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('jp_jurisdiction_id_idx').on(t.jurisdictionId),
@@ -597,7 +597,7 @@ export const policyOutcomes = pgTable(
     measureDate: date('measure_date').notNull(),
     sourceUrl: text('source_url').notNull(),
     notes: text('notes'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('policy_outcomes_policy_id_idx').on(t.policyId),
@@ -616,7 +616,7 @@ export const scoutSources = pgTable(
     title: text('title'),
     snippet: text('snippet'),
     verified: boolean('verified').notNull().default(false),
-    cachedAt: timestamp('cached_at').defaultNow().notNull(),
+    cachedAt: timestamp('cached_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('scout_sources_jurisdiction_idx').on(t.jurisdictionName),
@@ -634,8 +634,8 @@ export const players = pgTable(
       onDelete: 'set null',
     }),
     metadata: jsonb('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('players_name_idx').on(t.name),
@@ -656,7 +656,7 @@ export const investigationPlayers = pgTable(
       .references(() => players.id, { onDelete: 'cascade' }),
     role: investigationPlayerRoleEnum('role').notNull(),
     context: text('context'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('inv_players_investigation_idx').on(t.investigationId),
@@ -686,8 +686,8 @@ export const campaignMaterials = pgTable(
     format: campaignMaterialFormatEnum('format').notNull().default('json'),
     metadata: jsonb('metadata'),
     status: campaignMaterialStatusEnum('status').notNull().default('draft'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('campaign_materials_investigation_idx').on(t.investigationId),
@@ -726,8 +726,8 @@ export const regulatoryProcesses = pgTable(
     commentSubmissionUrl: text('comment_submission_url'),
     registryUrl: text('registry_url'),
     metadata: jsonb('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('reg_processes_investigation_idx').on(t.investigationId),
@@ -755,7 +755,7 @@ export const issueTracking = pgTable(
     eventDate: date('event_date').notNull(),
     reminderSent: boolean('reminder_sent').notNull().default(false),
     status: issueStatusEnum('status').notNull().default('upcoming'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('issue_tracking_investigation_idx').on(t.investigationId),
@@ -785,7 +785,7 @@ export const investigationOutcomes = pgTable(
     // A CHECK (satisfaction >= 1 AND satisfaction <= 5) constraint should be added in migration SQL.
     satisfaction: smallint('satisfaction'),
     lessonsLearned: text('lessons_learned'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('inv_outcomes_investigation_idx').on(t.investigationId),
@@ -812,9 +812,9 @@ export const userProfiles = pgTable(
     apHandle: text('ap_handle').unique(),
     bio: text('bio'),
     avatarUrl: text('avatar_url'),
-    displayNameChangedAt: timestamp('display_name_changed_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    displayNameChangedAt: timestamp('display_name_changed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('user_profiles_user_id_idx').on(t.userId),
@@ -842,7 +842,7 @@ export const actorKeys = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     publicKeyPem: text('public_key_pem').notNull(),
     privateKeyPem: text('private_key_pem').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index('actor_keys_user_id_idx').on(t.userId)]
 )
@@ -860,7 +860,7 @@ export const remoteFollowers = pgTable(
     actorInbox: text('actor_inbox').notNull(),
     sharedInbox: text('shared_inbox'),
     displayName: text('display_name'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('remote_followers_user_id_idx').on(t.userId),
@@ -886,9 +886,9 @@ export const forumThreads = pgTable(
     status: threadStatusEnum('status').notNull().default('open'),
     pinned: boolean('pinned').notNull().default(false),
     postCount: integer('post_count').notNull().default(0),
-    lastPostAt: timestamp('last_post_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    lastPostAt: timestamp('last_post_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('forum_threads_author_id_idx').on(t.authorId),
@@ -913,10 +913,10 @@ export const forumPosts = pgTable(
       onDelete: 'set null',
     }),
     content: text('content').notNull(),
-    editedAt: timestamp('edited_at'),
+    editedAt: timestamp('edited_at', { withTimezone: true }),
     status: postStatusEnum('status').notNull().default('visible'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('forum_posts_thread_id_idx').on(t.threadId),
@@ -940,8 +940,8 @@ export const peerReviews = pgTable(
     strategicEffectiveness: smallint('strategic_effectiveness').notNull(),
     jurisdictionalAccuracy: smallint('jurisdictional_accuracy').notNull(),
     summary: text('summary'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('peer_reviews_investigation_id_idx').on(t.investigationId),
@@ -996,9 +996,9 @@ export const contentReports = pgTable(
     reviewedBy: uuid('reviewed_by').references(() => users.id, {
       onDelete: 'set null',
     }),
-    reviewedAt: timestamp('reviewed_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('content_reports_reporter_id_idx').on(t.reporterId),
@@ -1028,7 +1028,7 @@ export const moderationActions = pgTable(
       () => contentReports.id,
       { onDelete: 'set null' }
     ),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('moderation_actions_moderator_id_idx').on(t.moderatorId),
@@ -1052,7 +1052,7 @@ export const credentialEvents = pgTable(
     sourceId: uuid('source_id'),
     sourceType: credentialSourceEnum('source_type'),
     description: text('description'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('credential_events_user_id_idx').on(t.userId),
@@ -1076,14 +1076,14 @@ export const archiveRecords = pgTable(
     ipfsCid: text('ipfs_cid'),
     arweaveTxId: text('arweave_tx_id'),
     contentHash: text('content_hash'),
-    preservedAt: timestamp('preserved_at'),
-    permanenceAt: timestamp('permanence_at'),
+    preservedAt: timestamp('preserved_at', { withTimezone: true }),
+    permanenceAt: timestamp('permanence_at', { withTimezone: true }),
     metadata: jsonb('metadata'),
     jurisdictionName: text('jurisdiction_name'),
     policyArea: text('policy_area'),
     concernCategory: text('concern_category'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     uniqueIndex('archive_records_investigation_id_unique_idx').on(t.investigationId),
@@ -1109,7 +1109,7 @@ export const documentVersions = pgTable(
     ),
     diffSummary: text('diff_summary'),
     changeType: documentChangeTypeEnum('change_type').notNull(),
-    detectedAt: timestamp('detected_at').defaultNow().notNull(),
+    detectedAt: timestamp('detected_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('document_versions_document_id_idx').on(t.documentId),
@@ -1126,7 +1126,7 @@ export const archiveAccessLog = pgTable(
       .references(() => archiveRecords.id, { onDelete: 'cascade' }),
     accessType: archiveAccessTypeEnum('access_type').notNull(),
     // No userId column — privacy-respecting access log
-    accessedAt: timestamp('accessed_at').defaultNow().notNull(),
+    accessedAt: timestamp('accessed_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index('archive_access_log_record_id_idx').on(t.archiveRecordId)]
 )
@@ -1144,8 +1144,8 @@ export const shadowAlerts = pgTable(
     referenceInvestigationIds: text('reference_investigation_ids').array(),
     // confidence: float4, matches existing crossReferences pattern
     confidence: real('confidence').notNull(),
-    dismissedAt: timestamp('dismissed_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    dismissedAt: timestamp('dismissed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index('shadow_alerts_investigation_id_idx').on(t.investigationId)]
 )
@@ -1180,14 +1180,14 @@ export const governanceProposals = pgTable(
     body: text('body').notNull(),
     proposalType: proposalTypeEnum('proposal_type').notNull(),
     status: proposalStatusEnum('status').notNull().default('draft'),
-    votingOpens: timestamp('voting_opens'),
-    votingCloses: timestamp('voting_closes'),
+    votingOpens: timestamp('voting_opens', { withTimezone: true }),
+    votingCloses: timestamp('voting_closes', { withTimezone: true }),
     // quorumThreshold: valid range is [0, 1]. Cannot be enforced via Drizzle CHECK
     // constraint — application-layer validation is required before persisting.
     quorumThreshold: real('quorum_threshold'),
     metadata: jsonb('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('proposals_author_id_idx').on(t.authorId),
@@ -1207,7 +1207,7 @@ export const governanceVotes = pgTable(
     choice: voteChoiceEnum('choice').notNull(),
     weight: real('weight').notNull(),
     rawCredentialWeight: real('raw_credential_weight').notNull(),
-    votedAt: timestamp('voted_at').defaultNow().notNull(),
+    votedAt: timestamp('voted_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     uniqueIndex('votes_proposal_voter_unique_idx').on(t.proposalId, t.voterId),
@@ -1225,7 +1225,7 @@ export const governanceConfig = pgTable(
     updatedBy: uuid('updated_by').references(() => users.id, {
       onDelete: 'set null',
     }),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index('governance_config_updated_by_idx').on(t.updatedBy)]
 )
@@ -1258,9 +1258,9 @@ export const federalMps = pgTable(
     photoUrl: text('photo_url'),
     active: boolean('active').notNull().default(true),
     metadata: jsonb('metadata'),
-    lastSyncedAt: timestamp('last_synced_at').defaultNow().notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('federal_mps_riding_province_idx').on(t.ridingProvince),
@@ -1288,9 +1288,9 @@ export const federalBills = pgTable(
     aiSummary: text('ai_summary'),
     aiSummaryPromptVersion: text('ai_summary_prompt_version'),
     metadata: jsonb('metadata'),
-    lastSyncedAt: timestamp('last_synced_at').defaultNow().notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     uniqueIndex('federal_bills_session_number_idx').on(t.session, t.number),
@@ -1318,8 +1318,8 @@ export const federalVotes = pgTable(
     }),
     aiExplanation: text('ai_explanation'),
     aiExplanationPromptVersion: text('ai_explanation_prompt_version'),
-    lastSyncedAt: timestamp('last_synced_at').defaultNow().notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     uniqueIndex('federal_votes_session_number_idx').on(t.session, t.number),
@@ -1339,7 +1339,7 @@ export const federalMpBallots = pgTable(
       .notNull()
       .references(() => federalMps.id, { onDelete: 'cascade' }),
     ballot: mpBallotEnum('ballot').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     uniqueIndex('federal_mp_ballots_vote_mp_idx').on(t.voteId, t.mpId),
@@ -1358,8 +1358,8 @@ export const mpVotingPatterns = pgTable(
     patternAnalysis: text('pattern_analysis'),
     contradictions: jsonb('contradictions'),
     promptVersion: text('prompt_version').notNull(),
-    generatedAt: timestamp('generated_at').defaultNow().notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    generatedAt: timestamp('generated_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     uniqueIndex('mp_voting_patterns_mp_session_idx').on(t.mpId, t.session),
@@ -1376,7 +1376,7 @@ export const postalCodeCache = pgTable(
     }),
     ridingName: text('riding_name'),
     metadata: jsonb('metadata'),
-    cachedAt: timestamp('cached_at').defaultNow().notNull(),
+    cachedAt: timestamp('cached_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('postal_code_cache_postal_code_idx').on(t.postalCode),
@@ -1394,9 +1394,9 @@ export const parliamentSyncLog = pgTable(
     recordsUpserted: integer('records_upserted'),
     errors: jsonb('errors'),
     durationMs: integer('duration_ms'),
-    startedAt: timestamp('started_at').defaultNow().notNull(),
-    completedAt: timestamp('completed_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    startedAt: timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index('parliament_sync_log_type_idx').on(t.syncType),
@@ -1415,7 +1415,7 @@ export const investigationVotes = pgTable(
       .notNull()
       .references(() => federalVotes.id, { onDelete: 'cascade' }),
     relevanceExplanation: text('relevance_explanation'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     uniqueIndex('investigation_votes_inv_vote_idx').on(
