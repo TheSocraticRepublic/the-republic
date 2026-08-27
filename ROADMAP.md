@@ -115,7 +115,7 @@ light paper reading surfaces, landing journey dark → light. No user theme togg
 | Phase | Mission | Size |
 |-------|---------|------|
 | **P1 — True North** | The C→B push. Ops (Lee/dashboard): :5432→:6543 pooler switch (runbook + rollback first — prior 06-19 outage attached), branch protection, DATABASE_URL GHA secret + sync-parliament cron, Upstash/secrets/Sentry-routing/PITR confirms. Deferred engineering tail (06-28-cleanup audit): safeRoute sweep (~37 routes), middleware→proxy rename, auth-route tests, reap-investigations auth, CSP nonce, actor_keys envelope encryption (before AP federation goes live), PIPEDA export endpoint, migration-runner branch dry-run + `_custom_migrations` bootstrap, briefing double-safeRoute extraction, token-drift stragglers. | S/M |
-| **P2 — First Light in Production** | The first real civic outcome: verify Voyage/semantic retrieval + shadow-trigger on prod, then one real investigation end-to-end: concern → briefing → Gadfly → FOI filed → outcome tracked → credential awarded. | S |
+| **P2 — First Light in Production** | **TOP PRIORITY once current remediation closes (Lee, 2026-08-27).** The first real civic outcome: verify Voyage/semantic retrieval + shadow-trigger on prod, then one real investigation end-to-end: concern → briefing → Gadfly → FOI filed → outcome tracked → credential awarded. | S |
 
 ### Sequence
 

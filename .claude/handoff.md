@@ -41,9 +41,7 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
   The constraint behind this is in `DECISIONS.md` → Operating constraints.
 
-- **SENTRY_AUTH_TOKEN env var (OBS-1).** Code is complete (`withSentryConfig` already
-  correct in `next.config.ts`). Only the env var is missing — needs Sentry dashboard +
-  Netlify dashboard access (Lee/ops).
+- ~~**SENTRY_AUTH_TOKEN env var (OBS-1).**~~ Lee handling directly (2026-08-27).
 
 ## Open questions awaiting Lee
 
