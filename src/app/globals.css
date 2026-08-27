@@ -59,14 +59,21 @@
   --color-mirror: var(--accent-mirror);
   --color-votes: var(--accent-votes);
 
-  /* Content island — light surface for briefing document */
-  --color-island-bg: #fafaf9;
-  --color-island-text: #1c1917;
-  --color-island-secondary: #44403c;
-  --color-island-muted: #78716c;
-  --color-island-border: #e7e5e4;
-  --color-island-card: #f5f4f3;
-  --color-island-card-border: #e0ddd9;
+  /* Content island — var-indirection so .dark-island can override */
+  --color-island-bg: var(--island-bg);
+  --color-island-text: var(--island-text);
+  --color-island-secondary: var(--island-secondary);
+  --color-island-body: var(--island-body);
+  --color-island-muted: var(--island-muted);
+  --color-island-faint: var(--island-faint);
+  --color-island-border: var(--island-border);
+  --color-island-card: var(--island-card);
+  --color-island-card-border: var(--island-card-border);
+  --color-island-white: var(--island-white);
+  --color-island-warm-lift: var(--island-warm-lift);
+  --color-island-hover: var(--island-hover);
+  --color-island-veil: var(--island-veil);
+  --color-island-veil-border: var(--island-veil-border);
 
   /* Typography — font families injected by next/font via CSS variables */
   --font-display: var(--font-fraunces), "Palatino Linotype", Georgia, serif;
@@ -116,6 +123,28 @@
   --status-warning: #8E3F07;   /* 5.41:1 on light S2, 4.91:1 on light S3 */
   --status-neutral: #5C5650;   /* 5.34:1 on light S2, 4.84:1 on light S3 */
 
+  /* Island tokens — light (paper) defaults */
+  --island-bg: #fafaf9;
+  --island-text: #1c1917;
+  --island-secondary: #44403c;
+  --island-body: #292524;
+  --island-muted: #78716c;
+  --island-faint: #a8a29e;
+  --island-border: #e7e5e4;
+  --island-card: #f5f4f3;
+  --island-card-border: #e0ddd9;
+  --island-white: #ffffff;
+  --island-warm-lift: #fffdf8;
+  --island-hover: #eeece8;
+  --island-veil: rgba(0, 0, 0, 0.05);
+  --island-veil-border: rgba(0, 0, 0, 0.08);
+  --island-accent-oracle: #0891B2;
+  --island-role-company: #57534e;
+  --island-role-official: #2563eb;
+  --island-role-agency: #0e7490;
+  --island-role-organization: #047857;
+  --island-role-rights-holder: #b45309;
+
   color-scheme: light;
 }
 
@@ -149,7 +178,7 @@
   color-scheme: dark;
 }
 
-/* Dark island — focused-attention overlay (Gadfly, etc.) */
+/* Dark island — focused-attention overlay (Gadfly, etc.) + dark island tokens */
 .dark-island {
   --surface-0: #090909;
   --surface-1: #111113;
@@ -175,6 +204,28 @@
   --status-danger:  #f87171;   /* lift from #ef4444 — 6.40:1 S2, 5.38:1 S3 */
   --status-warning: #f59e0b;   /* keep — 8.25:1 S2 */
   --status-neutral: #a1a1aa;   /* lift from #737373 — 6.91:1 S2, 5.81:1 S3 */
+
+  /* Island token overrides for dark reading surfaces */
+  --island-bg: #111113;
+  --island-text: #f4f4f5;
+  --island-secondary: #d4d4d8;
+  --island-body: #d4d4d8;
+  --island-muted: #a1a1aa;
+  --island-faint: #71717a;
+  --island-border: rgba(255, 255, 255, 0.08);
+  --island-card: #18181b;
+  --island-card-border: rgba(255, 255, 255, 0.1);
+  --island-white: #1e1e20;
+  --island-warm-lift: #141416;
+  --island-hover: #27272a;
+  --island-veil: rgba(255, 255, 255, 0.06);
+  --island-veil-border: rgba(255, 255, 255, 0.1);
+  --island-accent-oracle: #89B4C8;
+  --island-role-company: #a3a3a3;
+  --island-role-official: #60a5fa;
+  --island-role-agency: #22d3ee;
+  --island-role-organization: #4ade80;
+  --island-role-rights-holder: #f59e0b;
 
   color-scheme: dark;
 }
