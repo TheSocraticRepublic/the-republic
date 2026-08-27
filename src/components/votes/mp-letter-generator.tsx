@@ -71,17 +71,17 @@ export function MpLetterGenerator({
     return (
       <div
         className="rounded-2xl p-8"
-        style={{ backgroundColor: '#f8f6f3' }}
+        style={{ backgroundColor: 'var(--color-island-bg)' }}
       >
         <div className="mb-4 flex items-center justify-between">
           <p
             className="text-3xs font-semibold uppercase"
-            style={{ color: '#a8a29e' }}
+            style={{ color: 'var(--color-island-muted)' }}
           >
             Letter to {mpName}
           </p>
           {isStreaming && (
-            <span className="flex items-center gap-1.5 text-2xs font-medium" style={{ color: '#a8a29e' }}>
+            <span className="flex items-center gap-1.5 text-2xs font-medium" style={{ color: 'var(--color-island-muted)' }}>
               <Loader2 size={10} className="animate-spin" />
               Writing
             </span>
@@ -89,7 +89,7 @@ export function MpLetterGenerator({
         </div>
         <div
           className="whitespace-pre-wrap font-mono"
-          style={{ color: '#292524', fontSize: '13px', lineHeight: '1.8' }}
+          style={{ color: 'var(--color-island-text)', fontSize: '13px', lineHeight: '1.8' }}
         >
           {letter}
         </div>

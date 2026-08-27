@@ -105,7 +105,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
           className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
           style={{
             backgroundColor: 'rgba(0,0,0,0.05)',
-            color: '#78716c',
+            color: 'var(--color-island-muted)',
             border: '1px solid rgba(0,0,0,0.08)',
           }}
         >
@@ -117,7 +117,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
           className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
           style={{
             backgroundColor: 'rgba(0,0,0,0.05)',
-            color: '#78716c',
+            color: 'var(--color-island-muted)',
             border: '1px solid rgba(0,0,0,0.08)',
           }}
         >
@@ -134,11 +134,11 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
       <div
         ref={nodeRef}
         style={{
-          backgroundColor: '#fafaf9',
+          backgroundColor: 'var(--color-island-bg)',
           borderRadius: '16px',
           padding: '32px',
           maxWidth: '600px',
-          border: '1px solid #e7e5e4',
+          border: '1px solid var(--color-island-border)',
         }}
       >
         {/* Title block */}
@@ -159,7 +159,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
             style={{
               fontSize: '22px',
               fontWeight: 800,
-              color: '#1c1917',
+              color: 'var(--color-island-text)',
               lineHeight: 1.2,
               marginBottom: spec.subtitle ? '6px' : 0,
             }}
@@ -167,7 +167,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
             {spec.title}
           </h2>
           {spec.subtitle && (
-            <p style={{ fontSize: '13px', color: '#78716c', lineHeight: 1.4 }}>
+            <p style={{ fontSize: '13px', color: 'var(--color-island-muted)', lineHeight: 1.4 }}>
               {spec.subtitle}
             </p>
           )}
@@ -182,7 +182,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
                 fontWeight: 700,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: '#a8a29e',
+                color: 'var(--color-island-muted)',
                 marginBottom: '12px',
               }}
             >
@@ -191,7 +191,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {spec.dataPoints.map((dp, i) => {
                 const barPct = toBarWidth(dp.value, max)
-                const accent = dp.emphasis ? 'var(--accent-lever)' : '#78716c'
+                const accent = dp.emphasis ? 'var(--accent-lever)' : 'var(--color-island-muted)'
                 const barBg = dp.emphasis ? 'color-mix(in srgb, var(--accent-lever) 15%, transparent)' : 'rgba(0,0,0,0.06)'
                 return (
                   <div key={i}>
@@ -203,7 +203,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
                         marginBottom: '4px',
                       }}
                     >
-                      <span style={{ fontSize: '12px', color: '#292524', fontWeight: dp.emphasis ? 600 : 400 }}>
+                      <span style={{ fontSize: '12px', color: 'var(--color-island-text)', fontWeight: dp.emphasis ? 600 : 400 }}>
                         {dp.label}
                       </span>
                       <span
@@ -236,7 +236,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
                         }}
                       />
                     </div>
-                    <p style={{ fontSize: '10px', color: '#a8a29e', marginTop: '2px' }}>{dp.source}</p>
+                    <p style={{ fontSize: '10px', color: 'var(--color-island-muted)', marginTop: '2px' }}>{dp.source}</p>
                   </div>
                 )
               })}
@@ -253,7 +253,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
                 fontWeight: 700,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: '#a8a29e',
+                color: 'var(--color-island-muted)',
                 marginBottom: '12px',
               }}
             >
@@ -272,7 +272,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
                 <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-lever)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Before
                 </p>
-                <p style={{ fontSize: '12px', color: '#44403c', lineHeight: 1.45 }}>{spec.comparison.before}</p>
+                <p style={{ fontSize: '12px', color: 'var(--color-island-secondary)', lineHeight: 1.45 }}>{spec.comparison.before}</p>
               </div>
               <div
                 style={{
@@ -286,11 +286,11 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
                 <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-mirror)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   After
                 </p>
-                <p style={{ fontSize: '12px', color: '#44403c', lineHeight: 1.45 }}>{spec.comparison.after}</p>
+                <p style={{ fontSize: '12px', color: 'var(--color-island-secondary)', lineHeight: 1.45 }}>{spec.comparison.after}</p>
               </div>
             </div>
             {spec.comparison.source && (
-              <p style={{ fontSize: '10px', color: '#a8a29e', marginTop: '6px' }}>
+              <p style={{ fontSize: '10px', color: 'var(--color-island-muted)', marginTop: '6px' }}>
                 Source: {spec.comparison.source}
               </p>
             )}
@@ -306,7 +306,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
                 fontWeight: 700,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: '#a8a29e',
+                color: 'var(--color-island-muted)',
                 marginBottom: '12px',
               }}
             >
@@ -332,8 +332,8 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
                     )}
                   </div>
                   <div style={{ paddingBottom: '12px' }}>
-                    <p style={{ fontSize: '10px', color: '#a8a29e', fontWeight: 600 }}>{item.date}</p>
-                    <p style={{ fontSize: '12px', color: '#292524' }}>{item.event}</p>
+                    <p style={{ fontSize: '10px', color: 'var(--color-island-muted)', fontWeight: 600 }}>{item.date}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--color-island-text)' }}>{item.event}</p>
                   </div>
                 </div>
               ))}
@@ -353,7 +353,7 @@ export function InfographicPreview({ spec }: InfographicPreviewProps) {
           <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-lever)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
             Call to Action
           </p>
-          <p style={{ fontSize: '13px', fontWeight: 600, color: '#292524', lineHeight: 1.4 }}>
+          <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-island-text)', lineHeight: 1.4 }}>
             {spec.callToAction}
           </p>
         </div>

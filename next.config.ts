@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [{ hostname: 'openparliament.ca' }],
+  },
   // The PDF fonts in src/lib/pdf/fonts/ are read from disk at render time via
   // path.join(process.cwd(), ...), not imported as modules — so Next's module
   // tracing cannot see them and would prune them from the serverless bundle.

@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { PartyBadge, PARTY_COLORS } from './party-badge'
 
 interface MpProfileCardProps {
@@ -32,11 +33,14 @@ export function MpProfileCard({
       <div className="flex items-start gap-5">
         {/* Photo */}
         {photoUrl ? (
-          <img
+          <Image
             src={photoUrl}
             alt={name}
+            width={64}
+            height={64}
             className="h-16 w-16 rounded-full object-cover flex-shrink-0"
             style={{ border: '2px solid var(--border)' }}
+            loading="lazy"
           />
         ) : (
           <div

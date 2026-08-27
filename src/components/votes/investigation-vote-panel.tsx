@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { VoteBadge } from './vote-badge'
 import { PartyBadge } from './party-badge'
@@ -86,7 +87,7 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
           }}
         >
           {mp.photoUrl ? (
-            <img src={mp.photoUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+            <Image src={mp.photoUrl} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" loading="lazy" />
           ) : (
             <div
               className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold"

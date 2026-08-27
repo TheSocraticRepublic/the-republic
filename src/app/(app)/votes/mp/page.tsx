@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { getDb } from '@/lib/db'
 import { federalMps } from '@/lib/db/schema'
@@ -65,11 +66,13 @@ export default async function AllMPsPage() {
               }}
             >
               {mp.photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- external MP photo; next/image needs remotePatterns config (tracked as a perf follow-up)
-                <img
+                <Image
                   src={mp.photoUrl}
                   alt=""
+                  width={36}
+                  height={36}
                   className="h-9 w-9 rounded-full object-cover flex-shrink-0"
+                  loading="lazy"
                 />
               ) : (
                 <div
