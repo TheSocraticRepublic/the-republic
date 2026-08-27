@@ -86,15 +86,12 @@ export async function GET(request: Request) {
     healthy = false
   }
 
-  const isAuthenticated = !!request.headers.get('x-user-id')
-  const includeChecks = !healthy || isAuthenticated
-
   return NextResponse.json(
     {
       status: healthy ? 'ok' : 'degraded',
       timestamp: new Date().toISOString(),
       version: APP_VERSION,
-      ...(includeChecks ? { checks } : {}),
+      ...(!healthy ? { checks } : {}),
     },
     { status: healthy ? 200 : 503 }
   )
