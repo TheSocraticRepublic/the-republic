@@ -3,7 +3,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [{ hostname: 'openparliament.ca' }],
+    remotePatterns: [{ protocol: 'https', hostname: 'openparliament.ca' }],
   },
   // The PDF fonts in src/lib/pdf/fonts/ are read from disk at render time via
   // path.join(process.cwd(), ...), not imported as modules — so Next's module

@@ -233,4 +233,4 @@ access requests within 30 days. We require nothing beyond an email to use the to
 Questions about privacy or data handling: open an issue on the public repository or reach
 out through the forum. We will respond.
 
-Last updated: 2026-08-27
+Last updated: 2026-08-26

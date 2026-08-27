@@ -72,7 +72,6 @@ export default async function AllMPsPage() {
                   width={36}
                   height={36}
                   className="h-9 w-9 rounded-full object-cover flex-shrink-0"
-                  loading="lazy"
                 />
               ) : (
                 <div

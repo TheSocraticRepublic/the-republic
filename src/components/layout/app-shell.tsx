@@ -20,7 +20,7 @@ export function AppShell({ children, userEmail, displayName, effectiveWeight }: 
     <div className="flex h-screen flex-col overflow-hidden bg-surface-0 md:flex-row">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-lg focus:bg-surface-2 focus:px-4 focus:py-2 focus:text-text-primary focus:ring-2 focus:ring-accent-oracle"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-lg focus:bg-surface-2 focus:px-4 focus:py-2 focus:text-text-primary focus:ring-2 focus:ring-oracle"
       >
         Skip to content
       </a>

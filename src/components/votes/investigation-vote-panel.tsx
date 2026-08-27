@@ -87,7 +87,7 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
           }}
         >
           {mp.photoUrl ? (
-            <Image src={mp.photoUrl} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" loading="lazy" />
+            <Image src={mp.photoUrl} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
           ) : (
             <div
               className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold"

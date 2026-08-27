@@ -40,7 +40,6 @@ export function MpProfileCard({
             height={64}
             className="h-16 w-16 rounded-full object-cover flex-shrink-0"
             style={{ border: '2px solid var(--border)' }}
-            loading="lazy"
           />
         ) : (
           <div
