@@ -65,6 +65,15 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 
 ## Log (newest first)
 
+### 2026-08-27 (remediation pass 2)
+**Grade B achieved — score 76, 0 FAIL / 12 WARN / 7 RULED**
+
+Three relay batches (Batch 3→2→1, execution order per plan): Batch 3 code+API hygiene (lint, logEvent, error leak, health gate, forum rate limit, privacy link, archive N+1 — 14 files), Batch 2 loading screens + a11y labels (8 files), Batch 1 island token architecture (globals.css var-indirection + `.dark-island` merge + 8 component files migrated — 11 files). Razor PASS (0 CRITICAL, 1 WARNING fixed: dead isAuthenticated branch). All 13 targeted WARNs from pass-2 plan verified closed by re-audit.
+
+Relay ledger: `republic-warn-remediation-pass2` → complete. Production ledger: `the-republic-2026-08-27-pass2` with grade B, `branch_audited: marvin/the-republic-audit`.
+
+Trend: F → C → C → **B** (76). 23 WARNs net reduction across two remediation passes.
+
 ### 2026-08-26 (remediation session)
 **Remediation relay + re-audit — grade C, score 30, 0 FAIL / 35 WARN (deduplicated)**
 
