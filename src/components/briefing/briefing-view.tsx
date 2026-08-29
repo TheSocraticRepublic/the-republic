@@ -8,6 +8,7 @@ import {
   MessageCircleQuestion,
   FileText,
   GitCompareArrows,
+  Search,
   Copy,
   Check,
   Download,
@@ -1664,12 +1665,23 @@ const EXPERT_LINKS = [
   },
 ]
 
-function GoDeeper({ onOpenCampaign, onOpenGadfly }: { onOpenCampaign?: () => void; onOpenGadfly?: () => void }) {
-  // Map arm names to callbacks for arms that support in-page panels
+const LENS_LINK = {
+  arm: 'Lens',
+  archetype: 'THE EXAMINER',
+  tagline: 'Who is involved. What came before.',
+  href: '',
+  icon: Search,
+  color: 'var(--accent-oracle)',
+  border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
+}
+
+function GoDeeper({ onOpenCampaign, onOpenGadfly, onOpenLens }: { onOpenCampaign?: () => void; onOpenGadfly?: () => void; onOpenLens?: () => void }) {
   const armCallbacks: Record<string, (() => void) | undefined> = {
     Gadfly: onOpenGadfly,
     Lever: onOpenCampaign,
+    Lens: onOpenLens,
   }
+  const links = onOpenLens ? [...EXPERT_LINKS, LENS_LINK] : EXPERT_LINKS
 
   return (
     <div style={{ marginTop: '40px', paddingTop: '32px', borderTop: `1px solid var(--color-island-border)` }}>
@@ -1680,7 +1692,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly }: { onOpenCampaign?: () => voi
         Want to go deeper?
       </p>
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-        {EXPERT_LINKS.map((link) => {
+        {links.map((link) => {
           const Icon = link.icon
           const callback = armCallbacks[link.arm]
           const cardClassName = "link-card flex items-center gap-3 rounded-[10px] transition-opacity duration-150 hover:opacity-85"
@@ -1762,7 +1774,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly }: { onOpenCampaign?: () => voi
 
 // ---- Main component ----
 
-export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, onOpenLens: _onOpenLens, onOpenCampaign, onOpenGadfly, onScrollToQuestions }: BriefingViewProps) {
+export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, onOpenLens, onOpenCampaign, onOpenGadfly, onScrollToQuestions }: BriefingViewProps) {
   const sections = useMemo(() => parseSections(text), [text])
   const docTitle = useMemo(() => extractTitle(text), [text])
   const hasSections = sections.length > 0
@@ -2014,7 +2026,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
       )}
 
       {/* Go Deeper footer — only when streaming is complete */}
-      {!isStreaming && hasSections && <GoDeeper onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} />}
+      {!isStreaming && hasSections && <GoDeeper onOpenCampaign={onOpenCampaign} onOpenGadfly={onOpenGadfly} onOpenLens={onOpenLens} />}
     </article>
   )
 }
