@@ -26,13 +26,9 @@ in this project has already been ruled on, usually for a reason that is not obvi
   Relay ledger: `republic-warn-remediation-b1` → complete, Razor 0 CRITICAL.
 
 - **Merge to main + deploy.** The session branch (`marvin/the-republic-audit` at `a974442`)
-  has 40 commits ahead of main. Merge requires Lee's go-ahead per the brief's authority
-  constraints. Migrations 0012-0014 must be applied to prod DB post-merge (pg_dump first).
-
-- **Migration 0012 — production DB apply post-merge.** Three DDL changes (generationNonce
-  column, turnIndex unique constraint with renumber, patternAnalysis nullable). File at
-  `drizzle/migrations/0012_nonce_turn_unique_contradictions.sql`. Apply via the custom
-  runner against the session-mode pooler. The renumber CTE is idempotent; re-run is safe.
+  has 40+ commits ahead of main. Merge requires Lee's go-ahead per the brief's authority
+  constraints. ~~Migrations 0012-0014 must be applied to prod DB post-merge~~ — all applied
+  via runner at 2026-08-29 03:09 UTC (verified: `_custom_migrations` tracks all 14).
 
 - **Branch protection (C2) — needs Lee's own GitHub account.** Settings → Branches → Add rule for `main`:
   - Required status check: `ci`
@@ -64,6 +60,17 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-08-29 (investigation completion fixes)
+**Investigation completion poller fixes + schema state verified.**
+
+Relay (investigation-completion-fixes, Simple tier, Razor PASS 0 findings): 3 fixes in 2 files — (1) GeneratingPoller watchdog: 5-second timer after router.refresh() forces window.location.reload() if the component is still mounted (fixes the blank-page-on-completion bug Lee hit today), (2) HARD_STOP_MS: derived from STUCK_GENERATION_THRESHOLD_MINUTES (12 min, matches the server-side reaper) and moved after the fetch so terminal responses at the boundary aren't discarded, (3) disclaimer copy: "under a minute" → "a few minutes" (Lee's ruling).
+
+Schema state: all 14 migrations (0001-0014) verified applied to production Supabase via _custom_migrations table. 0012/0013/0014 applied at 2026-08-29 03:09 UTC by the runner. Lee's investigation dcb6073e completed successfully today with generation_nonce populated. The ROADMAP's claim that 0013/0014 were unapplied was stale — corrected. Deploy requirements simplified to merge-to-main only.
+
+Browser reproduction of the blank-page bug was blocked: permission classifier denied auth token injection (cookies and curl with JWT), dev server first-compile latency timed out Chrome DevTools navigation. Root cause was traced structurally from the code: router.refresh() was the single recovery mechanism with no fallback. The watchdog fix addresses this regardless of the specific runtime failure.
+
+**Next:** Merge + deploy (Lee approval required per brief authority). The owed migration item is closed.
 
 ### 2026-08-27 (remediation pass 2)
 **Grade B achieved — score 76, 0 FAIL / 12 WARN / 7 RULED**
