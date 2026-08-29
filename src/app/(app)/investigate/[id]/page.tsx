@@ -75,7 +75,7 @@ export default async function InvestigationDetailPage({ params }: PageProps) {
             />
             <p className="text-sm font-medium text-text-primary">Generating your investigation…</p>
             <p className="mt-0.5 text-xs text-text-faint max-w-sm">
-              Your briefing is being prepared. This usually takes under a minute.
+              Your briefing is being prepared. This usually takes a few minutes.
               The page will update automatically when it&apos;s ready.
             </p>
             <GeneratingPoller investigationId={id} />
