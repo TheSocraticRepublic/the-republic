@@ -187,6 +187,39 @@ executing on a fresh CI or DR environment, run a full install:
 npm install   # or: npm ci  (without --omit=dev)
 ```
 
+## Data backup (pg_dump)
+
+The two-step procedure above reproduces the *schema*. It does not recover *data*. The
+project runs on the Supabase free tier with no PITR, so the only data backup is a dump
+taken by hand. Take one before every migration that writes production, and periodically
+otherwise.
+
+Production runs PostgreSQL 17 (17.6 as of 2026-08-29). A local `pg_dump` older than 17
+aborts with "server version mismatch", so run the dump from the official `postgres:17`
+image. `--network host` is required because the truly-direct host
+(`db.<ref>.supabase.co`) is IPv6-only and Docker's default bridge has no IPv6; the
+operator's machine resolves it, Netlify does not (see "Connection architecture").
+
+```bash
+cd ~/Projects/the-republic
+export DATABASE_URL="$(grep '^DATABASE_URL=' .env.local | cut -d= -f2-)"   # the direct :5432 URL in .env.local
+docker run --rm --network host -e DATABASE_URL -v "$HOME":/out postgres:17 \
+  pg_dump "$DATABASE_URL" --no-owner --no-privileges -Fc -f /out/republic-$(date +%F).dump
+```
+
+Expect a custom-format file of a few megabytes (3.2 MB on 2026-08-29). Copy it off the
+machine the same day; a backup on the laptop that holds the credentials is not a backup.
+Home: Google Drive `10_Misc / The Republic (Open Cave) / db-backups` (folder id
+`1dCGJJw3WBZSsiQ2hbGe75WQR3jqJsYxo`), e.g.
+`gws drive +upload ~/republic-$(date +%F).dump --parent 1dCGJJw3WBZSsiQ2hbGe75WQR3jqJsYxo`. Restore with `pg_restore --no-owner --no-privileges -d "$TARGET_URL"
+<file>` from the same image, against a Supabase project that already has Steps 1-2 applied
+(the dump carries data and structure, but the Supabase-managed roles and `auth` schema
+must exist first).
+
+Note: an agent session cannot take this dump. The auto-mode classifier blocks agent-side
+connections to the production database (read-only included); the operator runs the
+command in their own shell.
+
 ## Deploy rollback
 
 If a production deploy introduces a regression, roll back as follows:
