@@ -75,7 +75,7 @@ describe('Lever prompt', () => {
       's. 4',
       's. 6',
       's. 7',
-      's. 75(5)(a)',
+      's. 75(5)(b)',
       's. 52',
     ]
     for (const citation of citations) {
@@ -126,11 +126,11 @@ const mockJurisdictionModule: JurisdictionModule = {
       rightOfAccess: 's. 4',
       dutyToAssist: 's. 6',
       timeLimit: { section: 's. 7', days: 30 },
-      feeWaiver: 's. 75(5)(a)',
+      feeWaiver: 's. 75(5)(b)',
       review: 's. 52',
     },
     letterTemplate: '',
-    responseTimeline: '30 calendar days',
+    responseTimeline: '30 days, not counting Saturdays or holidays, per Schedule 1',
   },
   concernCategories: [],
   publicBodies: [],
@@ -197,8 +197,8 @@ describe('Briefing prompt', () => {
     expect(prompt).toContain('FOI FRAMEWORK: FIPPA')
     expect(prompt).toContain('Freedom of Information and Protection of Privacy Act, RSBC 1996, c. 165')
     expect(prompt).toContain('s. 4')
-    expect(prompt).toContain('s. 7 (30 calendar days)')
-    expect(prompt).toContain('s. 75(5)(a)')
+    expect(prompt).toContain('s. 7 (30 days, not counting Saturdays or holidays, per Schedule 1)')
+    expect(prompt).toContain('s. 75(5)(b)')
     expect(prompt).toContain('s. 52')
   })
 

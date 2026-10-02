@@ -19,11 +19,11 @@ export interface FOIFramework {
     rightOfAccess: string // 's. 4'
     dutyToAssist: string // 's. 6'
     timeLimit: { section: string; days: number }
-    feeWaiver?: string // 's. 75(5)(a)'
+    feeWaiver?: string // 's. 75(5)(b)'
     review?: string // 's. 52'
   }
   letterTemplate: string // Template with {placeholders}
-  responseTimeline: string // '30 calendar days'
+  responseTimeline: string // '30 days, not counting Saturdays or holidays, per Schedule 1'
 }
 
 export interface AssessmentFramework {

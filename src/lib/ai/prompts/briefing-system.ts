@@ -1,6 +1,7 @@
 import type { JurisdictionModule, FOIFramework } from '@/lib/jurisdictions/types'
+import { bcFoiFramework } from '@/lib/jurisdictions/bc/foi-framework'
 
-export const BRIEFING_PROMPT_VERSION = '0.4.0'
+export const BRIEFING_PROMPT_VERSION = '0.4.1'
 
 // --- Prompt Segments ---
 
@@ -25,7 +26,7 @@ CRITICAL RULES:
 2. ${foiAbbrev} citations are TEMPLATE-BASED ONLY. Use exactly these citations — never improvise legal references:
    - Right of access: ${foi.fullCitation}, ${foi.sections.rightOfAccess}
    - Duty to assist: ${foi.sections.dutyToAssist}
-   - Time limit: ${foi.sections.timeLimit.section} (${foi.sections.timeLimit.days} calendar days)
+   - Time limit: ${foi.sections.timeLimit.section} (${foi.responseTimeline})
    - Fee waiver: ${foi.sections.feeWaiver ?? 'N/A'} — public interest fee waiver
    - Review: ${foi.sections.review ?? 'N/A'} — right to request review by the Information and Privacy Commissioner${unverifiedNote}
 3. Mirror comparisons must acknowledge uncertainty. When you cannot verify a statistic, say so. Only cite real jurisdictions with real policies.
@@ -107,7 +108,7 @@ Pursuant to ${foi.sections.rightOfAccess} of the ${foi.fullCitation} (${foiAbbre
 
 [Specific, numbered list of records requested]
 
-Pursuant to ${foi.sections.dutyToAssist}, I ask that you assist me in identifying records that fall within the scope of this request. Pursuant to ${foi.sections.timeLimit.section}, please respond within ${foi.sections.timeLimit.days} calendar days.
+Pursuant to ${foi.sections.dutyToAssist}, I ask that you assist me in identifying records that fall within the scope of this request. Pursuant to ${foi.sections.timeLimit.section}, please respond within ${foi.responseTimeline}.
 
 ${foi.sections.feeWaiver ? `I request a fee waiver pursuant to ${foi.sections.feeWaiver} on the grounds that disclosure of these records is in the public interest, as [specific justification relevant to this concern].` : ''}
 
@@ -147,20 +148,8 @@ The Gadfly never answers its own questions. These questions are not rhetorical. 
 }
 
 // BC-defaulted core prompt for backward compat
-const BC_FOI: FOIFramework = {
-  name: 'FIPPA',
-  fullCitation: 'Freedom of Information and Protection of Privacy Act, RSBC 1996, c. 165',
-  verified: true,
-  sections: {
-    rightOfAccess: 's. 4',
-    dutyToAssist: 's. 6',
-    timeLimit: { section: 's. 7', days: 30 },
-    feeWaiver: 's. 75(5)(a)',
-    review: 's. 52',
-  },
-  letterTemplate: '',
-  responseTimeline: '30 calendar days',
-}
+// Single source of truth: a hand-copied framework here once drifted from the module.
+const BC_FOI: FOIFramework = bcFoiFramework
 
 const BRIEFING_CORE_PROMPT = buildCorePrompt(BC_FOI, 'British Columbia')
 
@@ -223,7 +212,7 @@ function buildFOISection(foi: JurisdictionModule['foiFramework']): string {
 Citation: ${foi.fullCitation}
 - Right of access: ${foi.sections.rightOfAccess}
 - Duty to assist: ${foi.sections.dutyToAssist}
-- Time limit: ${foi.sections.timeLimit.section} (${foi.sections.timeLimit.days} calendar days)
+- Time limit: ${foi.sections.timeLimit.section} (${foi.responseTimeline})
 ${foi.sections.feeWaiver ? `- Fee waiver: ${foi.sections.feeWaiver}` : ''}
 ${foi.sections.review ? `- Review: ${foi.sections.review}` : ''}
 Response timeline: ${foi.responseTimeline}`

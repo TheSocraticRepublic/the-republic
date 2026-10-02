@@ -59,7 +59,7 @@ Under [Full Act Name], [Citation], s. X(1), I request access to the following re
 {records_description}
 
 ...`,                                        // Must contain {records_description}
-  responseTimeline: '30 calendar days',      // Human-readable timeline
+  responseTimeline: '30 days',                // Human-readable, in the Act's own day rule
 }
 ```
 

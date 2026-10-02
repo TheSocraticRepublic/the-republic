@@ -1,4 +1,5 @@
 import type { JurisdictionModule } from '@/lib/jurisdictions/types'
+import { bcFoiFramework } from '@/lib/jurisdictions/bc/foi-framework'
 
 export const SCOUT_PROMPT_VERSION = '0.3.0'
 
@@ -71,20 +72,8 @@ const bcModule: JurisdictionModule = {
   id: 'bc',
   name: 'British Columbia',
   country: 'Canada',
-  foiFramework: {
-    name: 'FIPPA',
-    fullCitation: 'Freedom of Information and Protection of Privacy Act, RSBC 1996, c. 165',
-    verified: true,
-    sections: {
-      rightOfAccess: 's. 4',
-      dutyToAssist: 's. 6',
-      timeLimit: { section: 's. 7', days: 30 },
-      feeWaiver: 's. 75(5)(a)',
-      review: 's. 52',
-    },
-    letterTemplate: '',
-    responseTimeline: '30 calendar days',
-  },
+  // Single source of truth: a hand-copied framework here once drifted from the module.
+  foiFramework: bcFoiFramework,
   concernCategories: [],
   publicBodies: [],
   portals: {},
