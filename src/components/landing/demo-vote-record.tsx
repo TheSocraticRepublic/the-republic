@@ -7,19 +7,25 @@ export function DemoVoteRecord() {
         boxShadow: '0 0 80px rgba(250,250,249,0.18), 0 24px 60px rgba(20,18,14,0.35)',
       }}
       data-scroll-fade
-      aria-label="Example vote record from Open Cave"
+      role="figure"
+      aria-label="Illustrative example vote record. Not a real MP or vote."
     >
+      {/* The MP, riding, bill and quote are invented. Never put a real
+          person's name on a demo record: this card sits on the public landing. */}
       <div className="px-6 py-5">
+        <p className="mb-3 text-2xs font-medium uppercase tracking-wider text-text-muted">
+          Illustrative example · not a real MP or vote
+        </p>
         <div className="flex items-start justify-between gap-4">
           <div>
             <p
               className="text-sm font-semibold text-text-primary"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              Mark Strahl
+              Dana Whitlock
             </p>
             <p className="mt-0.5 text-xs text-text-muted">
-              MP for Chilliwack-Hope
+              MP for Cedar Ridge–Upper Fraser
             </p>
           </div>
           <span
