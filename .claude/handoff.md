@@ -39,6 +39,8 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - ~~**SENTRY_AUTH_TOKEN env var (OBS-1).**~~ Lee handling directly (2026-08-27).
 
+- Open Cave UI and filings remediation plan, revision 2, WRITTEN and awaiting Lee's approval: .claude/plans/buzzing-discovering-robin.md, with the r1 critic beside it (buzzing-discovering-robin-critic.md). The r2 re-review has NOT run. Next session: get Lee's yes, rename the r1 critic file, run astra on revision 2, then /relay.
+
 ## Open questions awaiting Lee
 
 | Question | Why it matters | Raised |
@@ -52,6 +54,7 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | Illustration variant selection (D4 Athenians) | Cameo set vs. other variants for the drawn archetype illustrations | Since D3 hand-off |
 | ~~Pooler switch window (P1)~~ *(closed — the switch shipped 2026-07-15)* | Needs a low-traffic window, Lee's call | Since 2026-07-09 |
 | Rotation / history scrub for the Supabase account identifiers | The pseudonymous account address and project ref have been in public tracked history since `1e3841a` (2026-08-16). Either that is accepted, or it needs a rotation + scrub decision. | 2026-08-21 |
+| Approve the Open Cave UI and filings remediation plan (revision 2, folding the astra critic's r1: 12 FAIL, 5 CONCERN)? On approval the r1 review is renamed -critic-r1.md and astra re-reviews revision 2 before Batch 0; any r2 FAIL stops the relay and comes back to you before code is written. | The plan has waited at the approval prompt since 2026-10-02; nothing in it can start without your yes. | 2026-10-02 |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
 2026-07-16 hand-off). SEC-1, FORUM-1's cosmetic gate, Relay 1, Relay 2 and Relay 3 are all
@@ -60,6 +63,10 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-05 -- republic session closed for a context reset (saved by marvin session-d09d2c)
+
+Lee closed every window to reset context. The session had sat at the plan-approval prompt since 2026-10-02, in plan mode, so marvin session-d09d2c saved it: the plan and its r1 critic copied from ~/.claude/plans into .claude/plans/, the approval recorded as an open question, and branch marvin/republic pushed to origin for the first time.
 
 ### 2026-08-29 (investigation completion fixes)
 **Investigation completion poller fixes + schema state verified.**
