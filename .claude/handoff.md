@@ -28,11 +28,13 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - ~~**SENTRY_AUTH_TOKEN env var (OBS-1).**~~ Lee handling directly (2026-08-27).
 
-- **Plan r2 critic, then the relay.** Lee approved all 20 batches of the Open Cave UI and filings plan on 2026-10-05. The plan pair is tracked in marvin at `~/marvin/state/plans/republic-ui-filings-2026-10/` (plan `republic-ui-filings.md`, r1 critic `republic-ui-filings-critic-r1.md`). The r2 critic is written beside it as `republic-ui-filings-critic.md` (astra, Fable fallback). Any r2 FAIL stops the relay and goes back to Lee before code is written. The `~/.claude/plans/buzzing-discovering-robin*` originals stay in place.
-
-- **CI red on main since 2026-10-02.** The `npm audit --audit-level=high` step fails: 1 critical (`next` itself, patch available), 12 high. One Razor-gated dependency batch; its deploy waits for Lee's yes.
-
 - **R3-R9 and one evidence correction for DECISIONS.md.** Draft wording at `.claude/drafts/decisions-r3-r9.md`, filed to Lee through the coordinator on 2026-10-07 as one decision. It is written through `update-decisions.mjs` only after his yes, never auto-written.
+
+- **CI dependency batch: relay `republic-ci-green-deps`, PARKED at Stage 1.** Branch `relay/ci-green-deps` (pushed; head `c8e8ffb`, worktree `../relay-republic-ci-green-deps`). Plan `~/.claude/plans/republic-ci-green-2026-10.md` is r7-dependency-only, cut from r6 by the coordinator's decision. Critics r1-r6 sit beside it, and the r6 critic is a FAIL whose gating findings all fall in the excised release sections. The waiver is recorded in the pack. Done: exact trial2 lock promoted (hash verified before and after `npm ci`), CI workflow hardened, all local gates green (830 tests, build, both audits). Owed: (1) add the `audit-ci.jsonc` comments, verbatim from r6 §2 (`republic-ci-green-2026-10-r6.md`); (2) run the 5 negative controls; (3) a final test run; then Razor, a draft PR for CI (never merge to main: Netlify may auto-publish), and the deploy DECISION NEEDED naming the current Netlify deploy id as rollback. Release mechanics go to the Parking Lot with r6's findings verbatim. Evidence: `~/.claude/plans/republic-ci-green-2026-10-evidence/`; candidate copies in `~/.local/share/marvin/private/republic-ci-candidate/`.
+
+- **UI and filings plan r3 written, critic NOT run.** It is at `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md` (28 batches plus setup; folds all of r2's 16 verdicts). The r2 FAIL critic is renamed `-critic-r2.md`. Astra refused on the Codex usage limit, and the Fable fallback was stopped at the park. Next: run the critic (astra after reset). Even on PASS, Batch 0 code waits for Lee's answer to the r3-on-PASS card. A live security finding (2026-10-07) is in the private issue register, and S1 is its fix.
+
+- **Findings inventory and audit artifacts** are private, in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/` (moved out of `/tmp`). It holds 120 findings with r3 dispositions.
 
 ## Open questions awaiting Lee
 
@@ -48,6 +50,8 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | ~~Pooler switch window (P1)~~ *(closed — the switch shipped 2026-07-15)* | Needs a low-traffic window, Lee's call | Since 2026-07-09 |
 | Rotation / history scrub for the Supabase account identifiers | The pseudonymous account address and project ref have been in public tracked history since `1e3841a` (2026-08-16). Either that is accepted, or it needs a rotation + scrub decision. | 2026-08-21 |
 | Approve the Open Cave UI and filings remediation plan (revision 2, folding the astra critic's r1: 12 FAIL, 5 CONCERN)? On approval the r1 review is renamed -critic-r1.md and astra re-reviews revision 2 before Batch 0; any r2 FAIL stops the relay and comes back to you before code is written. (resolved 2026-10-07) | The plan has waited at the approval prompt since 2026-10-02; nothing in it can start without your yes. | 2026-10-02 |
+| Approve the R3-R9 plus evidence-correction wording for DECISIONS.md (draft at .claude/drafts/decisions-r3-r9.md)? | Six UI batches build on these rulings; it's an append-only file in a public repo | 2026-10-07 |
+| If UI plan r3's critic passes, may it proceed under your 2026-10-05 twenty-batch approval (same findings, regrouped into 28 smaller batches, plus Q0 harness, S1 security and privacy, G1 Gadfly)? | The plan's own rule sends any re-review FAIL back to you; r2 failed | 2026-10-07 |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
 2026-07-16 hand-off). SEC-1, FORUM-1's cosmetic gate, Relay 1, Relay 2 and Relay 3 are all
@@ -56,6 +60,12 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-07 (parked on quota line, session marvin/republic-r2)
+
+Parked on the coordinator's instruction when the weekly quota hit Lee's 97% line. The CI plan went through six astra rounds; the dependency evidence is strong and the remaining FAILs were release choreography, so the coordinator cut it to r7-dependency-only and relayed it. Ted is parked mid-batch with the gates green. UI r3 is written but unreviewed. The private issue register gained SEC-UI-1, DEP-2 and TEST-1. No Lee rulings this session, so nothing was written to DECISIONS.md.
+
+**Next:** finish relay `republic-ci-green-deps` from Stage 1 (see Owed), then the UI r3 critic.
 
 ### 2026-10-07 (structure pass, session marvin/republic-r2)
 
