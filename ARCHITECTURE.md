@@ -126,7 +126,7 @@ src/
     ├── privacy/                # Logging policy
     ├── landing/                # Landing page hooks and data
     ├── timeline/               # Event timeline merge logic
-    ├── api/                    # safeRoute wrapper (uncaught errors → Sentry)
+    ├── api/safe-route.ts       # safeRoute wrapper (uncaught errors → Sentry + generic 500); wraps every API route except /api/health
     ├── ai/model.ts             # Single source of truth for the AI model ID
     ├── ai/voyage.ts            # Voyage embeddings client (graceful-off, script-safe)
     ├── ai/search-chunks.ts     # Per-user semantic retrieval over document chunks
@@ -151,11 +151,28 @@ An investigation is the top-level container for a citizen's inquiry. It holds do
 
 **Mirror** (`src/app/api/mirror/` + `src/lib/ai/prompts/mirror-system.ts`) — Cross-jurisdiction comparison. Finds what other provinces or municipalities have done with the same policy problem. Only cites real jurisdictions with real data — enforced by seeding the prompt with a DB-verified jurisdiction reference block; the streamed output itself is not post-validated (a known gap: model compliance, not code, keeps fabricated jurisdictions out).
 
+**Briefing generation lifecycle.** Generation runs server-side
+(`src/lib/investigation/run-briefing.ts`) and is fenced by a per-run
+`generation_nonce` (migration 0012): a run whose nonce no longer matches the
+row stops early and cannot overwrite a newer run. A reaper marks a run stuck
+after `STUCK_GENERATION_THRESHOLD_MINUTES` (12, `src/lib/investigation/constants.ts`).
+On the page, `GeneratingPoller` polls `/api/investigate/[id]/status`; on a
+terminal status it calls `router.refresh()` and, if it is still mounted 5
+seconds later, forces a full reload (the 2026-08-29 fix for a blank page on
+completion). Its hard stop is derived from the same 12-minute threshold, so
+client and reaper agree on when a run has failed.
+
 ### The Lens
 
 **Gadfly** (`src/lib/ai/`, `src/app/(app)/gadfly/`) — Socratic sessions over documents. The Gadfly asks questions and never answers them. This is enforced at the prompt level: the system prompt instructs the model to respond with a question in every turn, and to refuse to answer its own questions. The constraint is a feature, not a limitation.
 
 **Players** — Visual map of actors in an investigation. Types: `company`, `official`, `agency`, `organization`, `rights_holder`. Roles: `beneficiary`, `decision_maker`, `affected`, `proponent`, `regulator`, `rights_holder`, `title_holder`.
+
+**Lens panel** (`src/components/lens/lens-panel.tsx`) — opened from the
+briefing's Go Deeper section beside Gadfly and Lever (R-A7, 2026-08-28). The
+entry renders only when `investigation-page.tsx` passes `onOpenLens`, which it
+does for the investigation's author; non-authors see the Go Deeper grid
+without it.
 
 **Context** — Event timeline tracking for an investigation. Stores events with dates, sources, and relevance to the investigation.
 
@@ -315,6 +332,25 @@ limiting, so a forged request cannot even consume budget. The matcher is
 deliberately left alone — routing auth routes through `withAuth` would redirect
 them to `/login`.
 
+## Schema and Migrations
+
+Drizzle's journal tracks only `0000_baseline_schema.sql`; every later change
+is hand-authored SQL in `drizzle/migrations/000N_*.sql`, applied in order by
+`scripts/apply-custom-migrations.ts` and recorded in `_custom_migrations`, so a
+re-run is idempotent. All fourteen (0001-0014) are applied in production,
+verified 2026-08-29. The three added since 2026-08-16:
+
+- **0012** `nonce_turn_unique_contradictions`: `generation_nonce` on
+  investigations (the stale-run fence above), a unique gadfly turn index
+  (turns renumbered, not deleted), contradictions nullable.
+- **0013** `timestamps_withtz`: timestamps moved to `timestamptz`.
+- **0014** `peer_review_checks`: CHECK constraints on peer reviews, in a
+  transaction with idempotency guards.
+
+Migration tooling reads `DIRECT_DATABASE_URL` (the `:5432` session pooler);
+the app reads the `:6543` transaction pooler. Backup and restore:
+`drizzle/DR.md`.
+
 ## AI Integration
 
 All AI calls go through Vercel AI SDK (`ai`, `@ai-sdk/anthropic`). Responses stream to the client via the AI SDK's streaming utilities.
@@ -331,10 +367,9 @@ Tailwind CSS 4 with CSS custom properties (`src/app/globals.css`). Theme doctrin
 **dark where you work, light where you read.** The app chrome (nav, panels,
 forms, cards) is dark by default, with no user toggle. Long-form reading
 surfaces (the briefing document, legal/FOI text) get a light "paper"
-treatment from a light palette applied inside the reading component
-(`LIGHT_PALETTE` in `briefing-view.tsx`) plus the `.content-island` grain —
-not a theme class (`.dark-island` is a separate dark overlay, used by the
-Gadfly sheet). Sustained reading is more legible on light backgrounds even
+treatment from the island tokens plus the `.content-island` grain — not a
+theme class (`.dark-island` is a separate dark overlay, used by the Gadfly
+sheet). Sustained reading is more legible on light backgrounds even
 inside a dark app. The landing page is the one
 surface that travels dark → light as you scroll, via `.light-scope` — it
 opens in the cave (dark) and ends in daylight (light), matching its own
@@ -347,6 +382,18 @@ utility classes (`bg-surface-0`, `text-text-primary`, etc.). `inline` carries
 the `var()` reference into the generated utility itself, so it resolves at
 the point of use — which is what makes `.dark-island` and `.light-scope`
 work as *nested* overrides rather than only affecting inline `style=` usage.
+
+**Island tokens** (since 2026-08-27). Reading surfaces draw from one set of
+`--island-*` variables (paper, ink, secondary/body/muted/faint text, borders,
+cards, veils, the paper accent and player-role colours), exposed to Tailwind
+as `--color-island-*` through `@theme inline`. `:root` declares the light
+paper values; `.dark-island` redeclares the same names with dark values. A
+component never chooses a palette in JS: the briefing's in-component dark
+toggle adds `content-island--dark dark-island` to its root and the same
+utilities resolve dark. Components on the island (briefing, Lens, campaign,
+civic-context strip, the Votes reading panels) use `island-*` utilities, never
+a literal hex. The earlier `LIGHT_PALETTE` / `DARK_PALETTE` objects in
+`briefing-view.tsx` are gone.
 
 Cave arm colors (`--accent-scout`, `--accent-oracle`, `--accent-gadfly`,
 `--accent-lever`, `--accent-mirror`, `--accent-votes`) are semantic tokens —
@@ -393,7 +440,7 @@ These coexist with the current investigation-first flow (`/investigations`, `/in
 
 **Why magic code auth?** No password database to breach. No OAuth dependency on a corporate identity provider. Citizens don't need a Google or Apple account to participate.
 
-**Why template-based FOI citations?** AI models hallucinate statutory section numbers. A wrong section number produces a letter that the FOI coordinator can legally ignore. The templates are verified by practitioners. The constraint is not an engineering choice — it's a legal requirement for the tool to be useful.
+**Why template-based FOI citations?** AI models hallucinate statutory section numbers. A wrong section number produces a letter that the FOI coordinator can legally ignore. A `verified` flag alone does not make a citation correct: the BC module was marked verified while citing the wrong fee-waiver ground and day rule, corrected against bclaws on 2026-10-02 (`c80dcfe`). AB and ON citations are unverified until a practitioner reviews them (JURIS-2). The constraint is not an engineering choice — it's a legal requirement for the tool to be useful.
 
 **Why credentials decay?** A credential earned five years ago and never refreshed by continued participation should not carry the same weight as one maintained through active engagement. The decay function is not punitive — it reflects the reality that civic participation is ongoing, not a one-time achievement.
 
