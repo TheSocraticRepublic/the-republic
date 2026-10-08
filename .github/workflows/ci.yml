@@ -31,17 +31,33 @@ jobs:
         # synthetic merge commit: parent 1 is the base, parent 2 is the PR head.
         # Parent SHAs come from the commit header, so a depth-1 checkout is enough.
         # The lockfile was generated and verified with npm 10.9.4; fail on any other.
+        # Every read is captured into a variable first so a failed git call fails the step.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          echo "provenance: head=$(git rev-parse HEAD)"
-          n=0
-          for p in $(git cat-file -p HEAD | sed -n 's/^parent //p'); do
-            n=$((n + 1))
-            echo "provenance: parent${n}=${p}"
-          done
-          echo "provenance: node=$(node --version) npm=$(npm --version)"
-          if [ "$(npm --version)" != "10.9.4" ]; then
-            echo "provenance: npm $(npm --version) is not the pinned 10.9.4" >&2
+          sha=$(git rev-parse HEAD)
+          if ! [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "checkout-provenance: HEAD is not a 40-hex sha: '$sha'" >&2
+            exit 1
+          fi
+          header=$(git cat-file -p HEAD)
+          parent_list=()
+          while IFS= read -r line; do
+            case "$line" in
+              "parent "*) parent_list+=("${line#parent }") ;;
+              "") break ;;
+            esac
+          done <<< "$header"
+          node_v=$(node -v)
+          npm_v=$(npm -v)
+          echo "checkout-provenance: sha=${sha} parents=${parent_list[*]:-} node=${node_v} npm=${npm_v} event=${EVENT_NAME}"
+          if [ "$npm_v" != "10.9.4" ]; then
+            echo "checkout-provenance: npm ${npm_v} is not the pinned 10.9.4" >&2
+            exit 1
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "${#parent_list[@]}" -ne 2 ]; then
+            echo "checkout-provenance: pull_request run must test the merge commit (2 parents), got ${#parent_list[@]}" >&2
             exit 1
           fi
 
