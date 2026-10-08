@@ -1,5 +1,14 @@
 {
   "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
+  // Blocks on high and critical. One exception: one advisory on the one npm-reported path.
+  // Owner: Lee. Review by 2027-01-05, or sooner if this path or advisory changes.
+  // Reason: GHSA-vfj7-8cjw-p6xm (braces <=3.0.3, stack-exhaustion DoS, availability only) reaches
+  // the tree only through ESLint's file globbing; no fixed braces exists; the only offered fix is a
+  // Next 14 downgrade. Absent from the production tree; CI holds no application credentials.
+  // Known limit: audit-ci paths follow npm's vulnerable-effects graph, so a new consumer of the
+  // same hoisted braces is not a new path. If it is a production consumer, the separate
+  // `npm audit --omit=dev` step fails; a dev-only consumer shares this exception's threat class.
+  // Authority: the 2026-10-07 brief, "audit step narrowed with a written reason per package".
   "high": true,
   "report-type": "important",
   "show-not-found": true,
