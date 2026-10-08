@@ -36,6 +36,18 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **UI and filings plan r3: astra critic FAIL (2026-10-08), back with Lee.** 10 FAIL, 6 CONCERN; the review is at `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings-critic.md`. Headlines: S1's proposed redirect helper would turn `/.//x` into `//x`; the Q0 harness can't run the Supabase migrations on a plain pgvector image as written; final/filed immutability rests on read-then-write PATCH paths; the export guarantees contradict each other. The plan's stop rule applies. No Batch 0 until Lee answers.
 
+- **Razor notes on the CI batch (no fix owed; carry forward).** **N1:** the CI pins node 22.22.1, which predates the 22.22.2 security release and differs from Netlify's floating `NODE_VERSION=22` (22.23.3 at review); review it with the next dependency batch (Parking Lot). **N2:** Next 16.3.1 changed how `headers()` reads the request, and identity reaches handlers through the middleware's `x-user-id`. The local production smoke passed 11/11; Lee's signed-in check after deploy is still a release condition. **N3:** audit-ci's path exception would let a new dev-only consumer of the same hoisted `braces` through until the 2027-01-05 review (documented in `audit-ci.jsonc`; register DEP-2). **N4:** `event-stream` 4.0.1 enters the dev tree through audit-ci; it is clean (the compromised release was 3.3.6).
+
+- **Where everything lives (for a cold start).**
+  - **CI plan:** `~/.claude/plans/republic-ci-green-2026-10.md` (r7). Critics r1-r6 are beside it, with r6 kept as `-r6.md`.
+  - **CI evidence:** `~/.claude/plans/republic-ci-green-2026-10-evidence/`, including `PROVENANCE.txt` and `n2-smoke.mjs`.
+  - **Relay pack and reports:** `~/marvin/state/relay/republic-ci-green-deps-*`.
+  - **Relay worktree:** `~/.local/share/marvin/worktrees/the-republic/relay-republic-ci-green-deps`. Remove it after the deploy decision.
+  - **UI plan r3 and critics r1-r3:** `~/marvin/state/plans/republic-ui-filings-2026-10/`.
+  - **Private UI audit artifacts and the 120-finding inventory:** `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/`. `cookies.txt` (mode 600) is a production audit-account session; delete it once a local harness exists.
+  - **Issue register entries** SEC-UI-1 (the live open redirect in profile setup), DEP-2 and TEST-1 are in `~/marvin/state/the-republic-issue-register.md`.
+  - **The `gh` account:** the active one is not the repo owner. Use `GH_TOKEN=$(gh auth token --user TheSocraticRepublic)` per command, and never `gh auth switch`, which is global.
+
 ## Open questions awaiting Lee
 
 | Question | Why it matters | Raised |
