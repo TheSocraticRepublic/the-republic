@@ -19,17 +19,6 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 ## Owed right now
 
-- **Post-remediation re-audit COMPLETE (2026-08-26): grade C, score 30, 0 FAIL / 35 WARN
-  (deduplicated).** 18 of the original 26 WARNs closed. WARN count rose under deeper
-  specialist scrutiny (Jen: 11 on unmigrated light-surface hex + a11y; Dao: 7 operational).
-  Report at `~/marvin/state/production-audits/the-republic-2026-08-26-remediation.md`.
-  Relay ledger: `republic-warn-remediation-b1` → complete, Razor 0 CRITICAL.
-
-- **Merge to main + deploy.** The session branch (`marvin/the-republic-audit` at `a974442`)
-  has 40+ commits ahead of main. Merge requires Lee's go-ahead per the brief's authority
-  constraints. ~~Migrations 0012-0014 must be applied to prod DB post-merge~~ — all applied
-  via runner at 2026-08-29 03:09 UTC (verified: `_custom_migrations` tracks all 14).
-
 - **Branch protection (C2) — needs Lee's own GitHub account.** Settings → Branches → Add rule for `main`:
   - Required status check: `ci`
   - Require up-to-date branches
@@ -38,6 +27,12 @@ in this project has already been ruled on, usually for a reason that is not obvi
   The constraint behind this is in `DECISIONS.md` → Operating constraints.
 
 - ~~**SENTRY_AUTH_TOKEN env var (OBS-1).**~~ Lee handling directly (2026-08-27).
+
+- **Plan r2 critic, then the relay.** Lee approved all 20 batches of the Open Cave UI and filings plan on 2026-10-05. The plan pair is tracked in marvin at `~/marvin/state/plans/republic-ui-filings-2026-10/` (plan `republic-ui-filings.md`, r1 critic `republic-ui-filings-critic-r1.md`). The r2 critic is written beside it as `republic-ui-filings-critic.md` (astra, Fable fallback). Any r2 FAIL stops the relay and goes back to Lee before code is written. The `~/.claude/plans/buzzing-discovering-robin*` originals stay in place.
+
+- **CI red on main since 2026-10-02.** The `npm audit --audit-level=high` step fails: 1 critical (`next` itself, patch available), 12 high. One Razor-gated dependency batch; its deploy waits for Lee's yes.
+
+- **R3-R9 and one evidence correction for DECISIONS.md.** Draft wording at `.claude/drafts/decisions-r3-r9.md`, filed to Lee through the coordinator on 2026-10-07 as one decision. It is written through `update-decisions.mjs` only after his yes, never auto-written.
 
 ## Open questions awaiting Lee
 
@@ -52,6 +47,7 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | Illustration variant selection (D4 Athenians) | Cameo set vs. other variants for the drawn archetype illustrations | Since D3 hand-off |
 | ~~Pooler switch window (P1)~~ *(closed — the switch shipped 2026-07-15)* | Needs a low-traffic window, Lee's call | Since 2026-07-09 |
 | Rotation / history scrub for the Supabase account identifiers | The pseudonymous account address and project ref have been in public tracked history since `1e3841a` (2026-08-16). Either that is accepted, or it needs a rotation + scrub decision. | 2026-08-21 |
+| Approve the Open Cave UI and filings remediation plan (revision 2, folding the astra critic's r1: 12 FAIL, 5 CONCERN)? On approval the r1 review is renamed -critic-r1.md and astra re-reviews revision 2 before Batch 0; any r2 FAIL stops the relay and comes back to you before code is written. (resolved 2026-10-07) | The plan has waited at the approval prompt since 2026-10-02; nothing in it can start without your yes. | 2026-10-02 |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
 2026-07-16 hand-off). SEC-1, FORUM-1's cosmetic gate, Relay 1, Relay 2 and Relay 3 are all
@@ -60,6 +56,21 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-07 (structure pass, session marvin/republic-r2)
+
+Docs brought up to the 2026-10 state ahead of the CI batch and the UI and filings relay.
+
+- **ROADMAP:** `current` and `next` rewritten (they described 2026-08-07 and 2026-08-29). Shipped entries added for 08-26, 08-27, 08-28, 08-29, 10-01 and 10-02. Parking Lot: the §D/E triage line struck as done 2026-08-23; the plan's seven deferrals indexed, with their detail section copied verbatim.
+- **Owed rows closed as done:** "Post-remediation re-audit COMPLETE (2026-08-26)" was a status and not owed work. Pass 2 then reached grade B on 2026-08-27. "Merge to main + deploy" is done: `marvin/the-republic-audit` merged to main in August, and main through at least `5ec2bd8` is live. The superseded "plan r2 awaiting approval" row was replaced by the critic-then-relay row, since Lee approved all 20 batches on 2026-10-05.
+- **Plan approval question resolved:** Lee approved the whole plan on 2026-10-05, overriding the strategist's three-batch recommendation. The plan pair moved to `~/marvin/state/plans/republic-ui-filings-2026-10/` (marvin `21acc775`).
+- **Branches:** `marvin/republic` fast-forwarded into this session branch (its one commit only saved the approval prompt). Deleted as superseded: local `marvin/session-1921aa` (tip `2074c6c`, PRIV-2 B1 shipped on main as `c6b8af0`); `origin/marvin/session-27cd20` (tip `a79d15a`, June design phases A-D and audit remediation, on main as `4f9b5aa`, `77bc0aa`, `3400a63`, `a355d38`, `4f05e6b`, `f166d03`); `origin/relay/audit-remediation-r1` (tip `2b0a1c2`, one research doc, byte-identical at `~/marvin/content/reference/the-republic/civic-impact-strategy-2026-07.md`). Kept: `relay/permission-allowlist` (2 ahead). It adds a `.claude/settings.json` permission allow-list from MARVIN's permission-architecture relay (2026-08-28), and a project session does not merge permission settings.
+
+**Next:** CI dependency batch, then the r2 critic.
+
+### 2026-10-05 -- republic session closed for a context reset (saved by marvin session-d09d2c)
+
+Lee closed every window to reset context. The session had sat at the plan-approval prompt since 2026-10-02, in plan mode, so marvin session-d09d2c saved it: the plan and its r1 critic copied from ~/.claude/plans into .claude/plans/, the approval recorded as an open question, and branch marvin/republic pushed to origin for the first time.
 
 ### 2026-08-29 (investigation completion fixes)
 **Investigation completion poller fixes + schema state verified.**
