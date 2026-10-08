@@ -30,11 +30,11 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **R3-R9 and one evidence correction for DECISIONS.md.** Draft wording at `.claude/drafts/decisions-r3-r9.md`, filed to Lee through the coordinator on 2026-10-07 as one decision. It is written through `update-decisions.mjs` only after his yes, never auto-written.
 
-- **CI dependency batch: relay `republic-ci-green-deps`, PARKED at Stage 1.** Branch `relay/ci-green-deps` (pushed; head `c8e8ffb`, worktree `../relay-republic-ci-green-deps`). Plan `~/.claude/plans/republic-ci-green-2026-10.md` is r7-dependency-only, cut from r6 by the coordinator's decision. Critics r1-r6 sit beside it, and the r6 critic is a FAIL whose gating findings all fall in the excised release sections. The waiver is recorded in the pack. Done: exact trial2 lock promoted (hash verified before and after `npm ci`), CI workflow hardened, all local gates green (830 tests, build, both audits). Owed: (1) add the `audit-ci.jsonc` comments, verbatim from r6 §2 (`republic-ci-green-2026-10-r6.md`); (2) run the 5 negative controls; (3) a final test run; then Razor, a draft PR for CI (never merge to main: Netlify may auto-publish), and the deploy DECISION NEEDED naming the current Netlify deploy id as rollback. Release mechanics go to the Parking Lot with r6's findings verbatim. Evidence: `~/.claude/plans/republic-ci-green-2026-10-evidence/`; candidate copies in `~/.local/share/marvin/private/republic-ci-candidate/`.
-
-- **UI and filings plan r3 written, critic NOT run.** It is at `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md` (28 batches plus setup; folds all of r2's 16 verdicts). The r2 FAIL critic is renamed `-critic-r2.md`. Astra refused on the Codex usage limit, and the Fable fallback was stopped at the park. Next: run the critic (astra after reset). Even on PASS, Batch 0 code waits for Lee's answer to the r3-on-PASS card. A live security finding (2026-10-07) is in the private issue register, and S1 is its fix.
-
 - **Findings inventory and audit artifacts** are private, in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/` (moved out of `/tmp`). It holds 120 findings with r3 dispositions.
+
+- **CI dependency batch: merged to the session branch, not deployed.** Relay `republic-ci-green-deps` is closed as `merged`: Razor PASS with 0 CRITICAL (W1 fixed in `1a92cbe` and re-checked). Merge `8a2abfe` is on `marvin/republic-r2`. CI is green on draft PR #4 (relay head `c71f06f`, run 37769886169, attempt 1, every step success, provenance line parent 2 = `c71f06f`). **Do not merge PR #4 or main without Lee's yes:** Netlify auto-builds main, so a merge is a deploy. The deploy decision is filed; rollback target is the current production deploy `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which reinstates the affected `next` 16.3.0. Release conditions: Lee's signed-in check on the audit account (Razor N2: the identity path through `x-user-id` after the Next 16.3.1 headers change; the local production smoke passed 11/11) and his answer on the non-owner export test gap (TEST-1).
+
+- **UI and filings plan r3: astra critic FAIL (2026-10-08), back with Lee.** 10 FAIL, 6 CONCERN; the review is at `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings-critic.md`. Headlines: S1's proposed redirect helper would turn `/.//x` into `//x`; the Q0 harness can't run the Supabase migrations on a plain pgvector image as written; final/filed immutability rests on read-then-write PATCH paths; the export guarantees contradict each other. The plan's stop rule applies. No Batch 0 until Lee answers.
 
 ## Open questions awaiting Lee
 
@@ -60,6 +60,12 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-08 (resumed after the weekly reset)
+
+The CI relay finished: Ted wrote the `audit-ci.jsonc` reasons, all five negative controls failed as they should, and Razor gave WARNING (W1) that was fixed and re-checked to PASS. Locally, the build, all 830 tests and both audits pass, and a production-mode runtime smoke passed 11/11 (forged `x-user-id` never reaches a handler, a valid JWT reaches the handler, CSRF rejects missing and hostile origins). The branch is merged into the session branch at `8a2abfe`. CI is green on draft PR #4, its first green run since 2026-08-29. The UI r3 critic came back FAIL. Netlify confirmed to auto-build main (`stop_builds: false`).
+
+**Next:** Lee's answers on the deploy card, the R3-R9 wording, and the UI r3 path.
 
 ### 2026-10-07 (parked on quota line, session marvin/republic-r2)
 
