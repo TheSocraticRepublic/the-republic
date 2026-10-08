@@ -1,7 +1,7 @@
 ---
 status: current
 current: "**2026-10 state.** Live at opencave.ca, graded B (score 76, 0 FAIL / 12 WARN / 7 RULED, re-audit 2026-08-27), 830 tests. Deployed through at least `5ec2bd8` (2026-10-01; the labelled fictional demo MP is live). **CI red on main since 2026-10-02:** the `npm audit --audit-level=high` step fails (1 critical in `next` itself, 12 high; last green CI on main 2026-08-29). **P2 First Light has never fired.** The 2026-10-02 UI review (four Jen auditors, Opus extra-high, 60 captures, one real investigation and FOI draft on a test account) found that filings cannot be filed as produced: print collapses to raw markdown, the PDF carries two letterheads and no page numbers, and the model writes the recipient address. Its 20-batch remediation plan (revision 2, folding the astra r1 critic: 12 FAIL, 5 CONCERN) was approved in full by Lee on 2026-10-05; the r2 critic has not run. Charter done-criterion (2) is open on both halves: `main` is unprotected and citizen data has no backup regime (DECISIONS → Operating constraints). Plan of record: `~/marvin/state/activation-plans/2026-10-portfolio/the-republic.md`."
-next: "**Session `marvin/republic-r2` (2026-10-07), in order:** (1) docs structure pass (this frontmatter, shipped entries, Parking Lot, hand-off, branches; R3-R9 DECISIONS wording batched to Lee); (2) CI green: one dependency batch (`next` to the patched release, non-breaking `npm audit fix`, the `eslint-config-next` chain bumped or the audit step narrowed with a written reason per package), Razor, deploy on Lee's yes; (3) astra critic on plan r2 (Fable fallback), then `/relay` in order 0 → A1 → A2 → A3 → B1 → B2 → B3 → C1 → C2 → C3 → C4 → D1 → D2 → D3 → D4 → E1 → E2 → E3 → F1 → F2 → F3, Razor on every batch, Jen on anything a citizen sees. Plan: `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md`. **P2 First Light is top priority (Lee, 2026-08-27):** once the A-series makes the letter fileable, Lee files one real request as citizen zero. Handoff: `.claude/handoff.md`."
+next: "**Session `marvin/republic-r2` (2026-10-08):** (1) docs structure pass: done (`6314fd6`). (2) CI dependency batch: relay `republic-ci-green-deps` merged to the session branch (next 16.3.8, audit-ci path-scoped exception, CI hardening; Razor PASS 0 CRITICAL; local production smoke 11/11). The deploy waits for Lee (DECISION NEEDED), and main is NOT merged because Netlify may auto-publish it. (3) UI and filings plan r3: astra critic FAIL (2026-10-08), back to Lee per the plan's stop rule; no Batch 0. **Charter gates (charter gate):** P2 First Light (Lee, citizen zero, top priority 2026-08-27); citizen-data backup regime and branch protection on main (both Lee-gated). Handoff: `.claude/handoff.md`."
 testing: null
 pinned: true
 shipped:
@@ -212,6 +212,10 @@ Named elsewhere and not yet scheduled:
 - Google Fonts references on the print pages (`print-utils.ts`)
 - JURIS-2 — AB/ON FOI citation practitioner review
 - D4 "The Athenians" — illustration variant selection
+- Release mechanics for dependency deploys (publish boundary, post-deploy checks, containment) — see Deferred from republic-ci-green-deps
+- `next` 16.4.0 (minor) — deferred from the 2026-10-07 CI batch
+- Authenticated post-deploy checks need a session that can sign in; owner Lee
+- Node 22.22.1 CI pin predates the 22.22.2 security release and differs from Netlify's floating NODE_VERSION=22 — review with the next dependency batch
 - Lever writer redesign (template assembly) — see Deferred from the 2026-10-02 UI and filings plan
 - Structured briefing output (JSON per section)
 - AB and ON FIPPA templates (the JURIS-2 human review)
@@ -229,7 +233,7 @@ Named elsewhere and not yet scheduled:
 
 ### Deferred from 2026-08-27 audit remediation (pass 2)
 
-- 32 moderate/low npm vulns — all transitive via @irys/sdk + drizzle-kit/esbuild (dev-only); no non-breaking fix exists
+- ~~32 moderate/low npm vulns~~ re-measured 2026-10-08 after `republic-ci-green-deps`: full tree 26 moderate / 20 low; production tree 18 moderate / 20 low; 0 high, 0 critical in production. One dev-only high (braces, GHSA-vfj7-8cjw-p6xm) is allow-listed on one path in `audit-ci.jsonc`, review by 2027-01-05, owner Lee
 - Unbounded all-jurisdictions query in run-briefing.ts — advisory; 3 jurisdictions currently, scales linearly
 
 ### Deferred from the 2026-10-02 UI and filings plan
@@ -250,6 +254,23 @@ Written verbatim from `~/marvin/state/plans/republic-ui-filings-2026-10/republic
 - **Votes on the landing** (arm station plus chip, landing-public L17).
 - **Briefing mobile sticky section bar** (reading-surfaces F-P1-5).
 - **CSP walk checklist** additions: allowlisted links, grain, new fonts.
+
+### Deferred from republic-ci-green-deps (2026-10-08)
+
+Why: the CI plan was cut to the dependency change alone (r7) on the coordinator's decision; every r6 gating FAIL fell in the release choreography, which is Lee's to approve. The r6 critic's gating findings and must-fix list, verbatim (`~/.claude/plans/republic-ci-green-2026-10-critic.md`):
+
+> 3. Completeness — FAIL [GATING]: promotion lacks an enforceable publish-before-check boundary, a main-push evidence procedure, and an executable pending-decision completion state; specify these transitions (F3, F8).
+> 5. Security — FAIL [GATING]: “sets no Redis, Sentry” does not remove inherited variables, and the environment guard runs only after the build; isolate the environment and run the guard before build and boot (F4).
+> 6. Failure modes — FAIL [GATING]: “Immediately apply” containment has no branch for a failed/hung containment command or failed verification; bound those operations and pre-authorize a concrete failure response (F5).
+> 7. Change safety — FAIL [GATING]: the promised maintenance response is undermined by an unforced redirect, production promotion does not preserve the validated deploy identity, and the restore target is captured too late in the stated sequence; repair and rehearse the recovery protocol (F2, F3).
+> 9. Verifiability — FAIL [GATING]: audit negative controls are meaningful, but the new smoke harness has no adversarial controls and the referenced PR evidence recipe cannot certify a main push unchanged; add harness controls and a separate promotion recipe (F3, F7).
+>
+> 1. **P0:** Correct maintenance routing, isolate/pin its deployment configuration, promote verified immutable content, and define bounded containment-failure behavior (F2, F5).
+> 2. **P0:** Establish the actual publish interlock, capture rollback identity before triggers, and define exact-main-commit evidence separately from PR evidence (F3).
+> 3. **P0:** Guard and isolate the environment before both build and runtime (F4).
+> 4. **P1:** Fix candidate-baseline checking and inventory binding; add negative controls for smoke assertions/process cleanup (F1, F7).
+> 5. **P1:** Bound authenticated release checks, distinguish pending decisions from session completion, serialize release ownership, and verify the observation/handoff mechanism (F8, F10, F11).
+> 6. **P2:** Correct runtime blast radius, enumerate maintenance artifacts, and link all concrete deferrals to the Parking Lot (F6, F9).
 
 ## Reference
 
