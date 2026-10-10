@@ -244,6 +244,42 @@ deliberately *not* a live API call — a per-ping third-party request would spen
 quota and make our own liveness signal depend on someone else's uptime. The name
 is chosen so it cannot be misread as proof that delivery works.
 
+## Continuous Integration
+
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request
+into it. Its order: provenance, `npm ci`, lint, typecheck, tests, the design
+token lint, then two dependency audits. It does not run `next build`, so a build
+break reaches Netlify's deploy step before anything else sees it. The build and a
+runtime smoke are parked under "Release mechanics for dependency deploys".
+
+The workflow holds read-only repository permissions, and checkout does not
+persist credentials. The **provenance** step prints the tested sha, its parents,
+and the node, npm and event in use. It fails unless npm is exactly 10.9.4, the
+version that generated the lock. On a pull request it also requires the two-parent
+merge commit, so the run demonstrably tested the PR head merged onto `main`. The
+parents are read from `git cat-file -p HEAD`, because a depth-1 checkout has
+none to walk.
+
+Node is pinned to `22.22.1` in CI while `netlify.toml` floats `NODE_VERSION = "22"`.
+CI and production can therefore run different Node patch releases. The gap is
+known (Parking Lot) and is reviewed with the next dependency batch.
+
+**Two audits, deliberately split.**
+
+- `npm audit --omit=dev --audit-level=high` covers everything that ships and has
+  no allow-list.
+- `audit-ci --config audit-ci.jsonc` covers the whole tree at high and critical.
+  It carries one path-scoped exception: the `braces` advisory reached only through
+  ESLint's file globbing. The reason, owner and review date are in the file.
+
+The exception is keyed to the npm-reported path. A new consumer of the same
+hoisted package is therefore not a new path to audit-ci, which is why the
+production audit stays a separate step with no exceptions.
+
+When the registry is unreachable, both steps exit 1 with a tool-failure message
+rather than an advisory. Read the log before treating a red audit as a new
+advisory.
+
 ## The Vote Tracker
 
 Federal legislator accountability (`src/lib/parliament/`, `/votes` routes, `/api/parliament`). Data comes from openparliament.ca (MPs, votes, bills, ballots) and the Represent API (postal code → riding → MP). Vote, bill, and MP data is synced into local tables via `/api/parliament/sync`; postal-code lookups call the Represent API at request time. AI features (bill summaries, vote explanations, voting-pattern analysis, said-X-voted-Y contradiction detection) are versioned by prompt and cached in the database. Letter generation routes through the Lever. Investigations can attach relevant votes via postal code on the concern form.

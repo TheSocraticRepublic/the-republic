@@ -73,6 +73,12 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 
 ## Log (newest first)
 
+### 2026-10-10 (fleet unpaused, ungated pass, session marvin/republic-r2)
+
+Checked what the four cards with Lee (the Oct 2 rulings, proceeding on a passing plan, revision 4 or a cut, merge to main) leave ungated. The Assignment 0 done-whens hold on the pushed branch. ARCHITECTURE.md gained a Continuous Integration section: the provenance step, the Node pin gap against Netlify, the two audits and why they are split. The other candidates belong to the gated UI plan: the LIGHT_PALETTE drift in CLAUDE.md and globals.css is in its D1, and the non-owner export test (TEST-1) is in its harness ownership checks. Nothing else is ungated.
+
+**Next:** Lee's answers on cards 14-17.
+
 ### 2026-10-08 (resumed after the weekly reset)
 
 The CI relay finished: Ted wrote the `audit-ci.jsonc` reasons, all five negative controls failed as they should, and Razor gave WARNING (W1) that was fixed and re-checked to PASS. Locally, the build, all 830 tests and both audits pass, and a production-mode runtime smoke passed 11/11 (forged `x-user-id` never reaches a handler, a valid JWT reaches the handler, CSRF rejects missing and hostile origins). The branch is merged into the session branch at `8a2abfe`. CI is green on draft PR #4, its first green run since 2026-08-29. The UI r3 critic came back FAIL. Netlify confirmed to auto-build main (`stop_builds: false`).
