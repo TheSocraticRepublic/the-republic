@@ -30,8 +30,6 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **Findings inventory and audit artifacts** are private, in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/` (moved out of `/tmp`). It holds 120 findings with r3 dispositions.
 
-- **CI dependency batch: merged to the session branch, not deployed.** Relay `republic-ci-green-deps` is closed as `merged`: Razor PASS with 0 CRITICAL (W1 fixed in `1a92cbe` and re-checked). Merge `8a2abfe` is on `marvin/republic-r2`. CI is green on draft PR #4 (relay head `c71f06f`, run 37769886169, attempt 1, every step success, provenance line parent 2 = `c71f06f`). **Do not merge PR #4 or main without Lee's yes:** Netlify auto-builds main, so a merge is a deploy. The deploy decision is filed; rollback target is the current production deploy `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which reinstates the affected `next` 16.3.0. Release conditions: Lee's signed-in check on the audit account (Razor N2: the identity path through `x-user-id` after the Next 16.3.1 headers change; the local production smoke passed 11/11) and his answer on the non-owner export test gap (TEST-1).
-
 - **Razor notes on the CI batch (no fix owed; carry forward).** **N1:** the CI pins node 22.22.1, which predates the 22.22.2 security release and differs from Netlify's floating `NODE_VERSION=22` (22.23.3 at review); review it with the next dependency batch (Parking Lot). **N2:** Next 16.3.1 changed how `headers()` reads the request, and identity reaches handlers through the middleware's `x-user-id`. The local production smoke passed 11/11; Lee's signed-in check after deploy is still a release condition. **N3:** audit-ci's path exception would let a new dev-only consumer of the same hoisted `braces` through until the 2027-01-05 review (documented in `audit-ci.jsonc`; register DEP-2). **N4:** `event-stream` 4.0.1 enters the dev tree through audit-ci; it is clean (the compromised release was 3.3.6).
 
 - **Where everything lives (for a cold start).**
@@ -45,6 +43,8 @@ in this project has already been ruled on, usually for a reason that is not obvi
   - **The `gh` account:** the active one is not the repo owner. Use `GH_TOKEN=$(gh auth token --user TheSocraticRepublic)` per command, and never `gh auth switch`, which is global.
 
 - - **UI and filings plan r4 written (2026-10-11), waiting for its astra review.** Lee, 2026-10-11, through the coordinator: "go ahead with the 20 opencave batches". The three-batch cut is declined: write r4 folding all 16 r3 points, and once it passes review, Batch 0 onward proceeds under his 2026-10-05 approval, with every deploy still waiting for his yes. Astra is used because it wrote the 16 points, so its PASS is what shows they are closed. That choice is the coordinator's reasoning, not Lee's wording. Codex's 5-hour window was full, so the review runs after the 17:40 reset; if Codex refuses for any other reason, Fable takes it. r3 is frozen as `republic-ui-filings-r3.md` and its review as `-critic-r3.md`, beside the plan in `~/marvin/state/plans/republic-ui-filings-2026-10/`. On a FAIL, the stop rule applies (DECISION NEEDED, nothing built). The narrowed guarantee for legacy final and filed letters is asked on the first A-series release card.
+
+- - **Build-checks fix is live (2026-10-11); Lee owes two follow-ups.** Main is `fa16447` (PR #5), Netlify deploy `6acc1bbeb27b4900083c30a8`; the rollback target is `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which brings back the affected `next` 16.3.0. (1) **One sign-in on the live site with the audit account**, to confirm sign-in still works after the framework change. Next 16.3.1 changed how request headers are read, and identity reaches handlers through the middleware's `x-user-id` (Razor N2). The local production smoke passed 11/11, but no signed-in check has run on production. (2) **The untested non-owner export case:** no test exports one account's letter while signed in as another, on two real accounts (register TEST-1). Lee accepts the gap or closes it; UI plan r4 covers it on the local harness in A4. Sentry has no project in the org, so it is no post-deploy signal (OBS-1).
 
 ## Open questions awaiting Lee
 
@@ -70,6 +70,19 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-11 (build-checks fix deployed, session marvin/republic-r2)
+
+Lee approved card 17 through the coordinator: "go ahead and merge the Republic build checks".
+
+- **What merged.** PR #4's branch also carried two unrelated docs commits, so the four code commits were cherry-picked onto main as `release/ci-build-checks` (PR #5), byte-identical to the reviewed relay head (lock sha `1280473f…`). CI went green on the PR (run 38184313344, every step success), then merged as `fa16447`.
+- **The rollback target** was read before the merge and again just before it: `6ac01a4ef8c65100089a3faa` at `c80dcfe`.
+- **Deploy and checks.** Netlify published `6acc1bbeb27b4900083c30a8` at `fa16447` at 23:30 UTC. `/`, `/login`, `/privacy`, `/foundations`, `/archive` and `/api/health` (`ok`) all return 200, and protected routes redirect to login. CI on main is green (run 38184443202), the first green run since 2026-08-29.
+- **Not checked: a briefing page.** Briefings need sign-in, which is Lee's follow-up.
+- **Found:** `/icon` redirects signed-out visitors to login. It did the same on the previous deploy, so it is pre-existing; parked.
+- **Cleanup.** PR #4 is closed as superseded; the relay and release worktrees are removed; main is merged back into the session branch (`7da303e`); the ledger entry is `shipped`.
+
+**Next:** the UI plan r4 astra review, on the coordinator's go after 17:40.
 
 ### 2026-10-11 (plan r4, session marvin/republic-r2)
 
