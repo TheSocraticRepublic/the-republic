@@ -6,19 +6,60 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 22.22.1
           cache: npm
+
+      - name: Provenance
+        # Records exactly what was tested. On a pull_request run HEAD is the
+        # synthetic merge commit: parent 1 is the base, parent 2 is the PR head.
+        # Parent SHAs come from the commit header, so a depth-1 checkout is enough.
+        # The lockfile was generated and verified with npm 10.9.4; fail on any other.
+        # Every read is captured into a variable first so a failed git call fails the step.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          sha=$(git rev-parse HEAD)
+          if ! [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "checkout-provenance: HEAD is not a 40-hex sha: '$sha'" >&2
+            exit 1
+          fi
+          header=$(git cat-file -p HEAD)
+          parent_list=()
+          while IFS= read -r line; do
+            case "$line" in
+              "parent "*) parent_list+=("${line#parent }") ;;
+              "") break ;;
+            esac
+          done <<< "$header"
+          node_v=$(node -v)
+          npm_v=$(npm -v)
+          echo "checkout-provenance: sha=${sha} parents=${parent_list[*]:-} node=${node_v} npm=${npm_v} event=${EVENT_NAME}"
+          if [ "$npm_v" != "10.9.4" ]; then
+            echo "checkout-provenance: npm ${npm_v} is not the pinned 10.9.4" >&2
+            exit 1
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "${#parent_list[@]}" -ne 2 ]; then
+            echo "checkout-provenance: pull_request run must test the merge commit (2 parents), got ${#parent_list[@]}" >&2
+            exit 1
+          fi
 
       - name: Install dependencies
         run: npm ci
@@ -35,8 +76,12 @@ jobs:
       - name: Design token lint
         run: ./scripts/lint-design-tokens.sh
 
-      - name: Security audit
-        # Gate on 'high' — confirmed clean (npm audit --audit-level=high exits 0 on 2026-06-28).
-        # All current findings are moderate or low severity via @irys/sdk transitive deps
-        # (dynamically imported, gated behind ENABLE_ARWEAVE, off in production).
-        run: npm audit --audit-level=high
+      - name: Production dependency audit
+        # Blocking on high or critical in anything that ships. No allow-list here.
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Full dependency audit (allow-listed)
+        # Blocking on high or critical across the whole tree, dev included.
+        # Exceptions live in audit-ci.jsonc, each with a written reason,
+        # an owner and a review date.
+        run: npx --no-install audit-ci --config audit-ci.jsonc
