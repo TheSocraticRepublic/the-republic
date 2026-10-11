@@ -28,8 +28,6 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - ~~**SENTRY_AUTH_TOKEN env var (OBS-1).**~~ Lee handling directly (2026-08-27).
 
-- **R3-R9 and one evidence correction for DECISIONS.md.** Draft wording at `.claude/drafts/decisions-r3-r9.md`, filed to Lee through the coordinator on 2026-10-07 as one decision. It is written through `update-decisions.mjs` only after his yes, never auto-written.
-
 - **Findings inventory and audit artifacts** are private, in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/` (moved out of `/tmp`). It holds 120 findings with r3 dispositions.
 
 - **CI dependency batch: merged to the session branch, not deployed.** Relay `republic-ci-green-deps` is closed as `merged`: Razor PASS with 0 CRITICAL (W1 fixed in `1a92cbe` and re-checked). Merge `8a2abfe` is on `marvin/republic-r2`. CI is green on draft PR #4 (relay head `c71f06f`, run 37769886169, attempt 1, every step success, provenance line parent 2 = `c71f06f`). **Do not merge PR #4 or main without Lee's yes:** Netlify auto-builds main, so a merge is a deploy. The deploy decision is filed; rollback target is the current production deploy `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which reinstates the affected `next` 16.3.0. Release conditions: Lee's signed-in check on the audit account (Razor N2: the identity path through `x-user-id` after the Next 16.3.1 headers change; the local production smoke passed 11/11) and his answer on the non-owner export test gap (TEST-1).
@@ -62,7 +60,7 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | ~~Pooler switch window (P1)~~ *(closed — the switch shipped 2026-07-15)* | Needs a low-traffic window, Lee's call | Since 2026-07-09 |
 | Rotation / history scrub for the Supabase account identifiers | The pseudonymous account address and project ref have been in public tracked history since `1e3841a` (2026-08-16). Either that is accepted, or it needs a rotation + scrub decision. | 2026-08-21 |
 | Approve the Open Cave UI and filings remediation plan (revision 2, folding the astra critic's r1: 12 FAIL, 5 CONCERN)? On approval the r1 review is renamed -critic-r1.md and astra re-reviews revision 2 before Batch 0; any r2 FAIL stops the relay and comes back to you before code is written. (resolved 2026-10-07) | The plan has waited at the approval prompt since 2026-10-02; nothing in it can start without your yes. | 2026-10-02 |
-| Approve the R3-R9 plus evidence-correction wording for DECISIONS.md (draft at .claude/drafts/decisions-r3-r9.md)? | Six UI batches build on these rulings; it's an append-only file in a public repo | 2026-10-07 |
+| Approve the R3-R9 plus evidence-correction wording for DECISIONS.md (draft at .claude/drafts/decisions-r3-r9.md)? (resolved 2026-10-11) | Six UI batches build on these rulings; it's an append-only file in a public repo | 2026-10-07 |
 | If UI plan r3's critic passes, may it proceed under your 2026-10-05 twenty-batch approval (same findings, regrouped into 28 smaller batches, plus Q0 harness, S1 security and privacy, G1 Gadfly)? | The plan's own rule sends any re-review FAIL back to you; r2 failed | 2026-10-07 |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
@@ -72,6 +70,12 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-11 (Oct 2 rulings recorded, session marvin/republic-r2)
+
+Lee approved the Oct 2 design rulings card as written (coordinator pane, 2026-10-11). The seven Open Cave rulings (R3-R9: government-only links, warm surfaces, plain white filings, Fraunces wordmark, tested privacy address, static grain, honest gated Forum) and the 'verified'-label evidence correction are now in DECISIONS.md through the writer, dated 2026-10-11, each noting it was ruled 2026-10-02. The draft file is removed as superseded. Cards 15-17 (plan re-review path, fourth revision or the cut, CI merge to main) are still open.
+
+**Next:** Lee's answers on cards 15-17.
 
 ### 2026-10-10 (fleet unpaused, ungated pass, session marvin/republic-r2)
 
