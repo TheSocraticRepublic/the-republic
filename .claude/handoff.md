@@ -32,8 +32,6 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **CI dependency batch: merged to the session branch, not deployed.** Relay `republic-ci-green-deps` is closed as `merged`: Razor PASS with 0 CRITICAL (W1 fixed in `1a92cbe` and re-checked). Merge `8a2abfe` is on `marvin/republic-r2`. CI is green on draft PR #4 (relay head `c71f06f`, run 37769886169, attempt 1, every step success, provenance line parent 2 = `c71f06f`). **Do not merge PR #4 or main without Lee's yes:** Netlify auto-builds main, so a merge is a deploy. The deploy decision is filed; rollback target is the current production deploy `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which reinstates the affected `next` 16.3.0. Release conditions: Lee's signed-in check on the audit account (Razor N2: the identity path through `x-user-id` after the Next 16.3.1 headers change; the local production smoke passed 11/11) and his answer on the non-owner export test gap (TEST-1).
 
-- **UI and filings plan r3: astra critic FAIL (2026-10-08), back with Lee.** 10 FAIL, 6 CONCERN; the review is at `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings-critic.md`. Headlines: S1's proposed redirect helper would turn `/.//x` into `//x`; the Q0 harness can't run the Supabase migrations on a plain pgvector image as written; final/filed immutability rests on read-then-write PATCH paths; the export guarantees contradict each other. The plan's stop rule applies. No Batch 0 until Lee answers.
-
 - **Razor notes on the CI batch (no fix owed; carry forward).** **N1:** the CI pins node 22.22.1, which predates the 22.22.2 security release and differs from Netlify's floating `NODE_VERSION=22` (22.23.3 at review); review it with the next dependency batch (Parking Lot). **N2:** Next 16.3.1 changed how `headers()` reads the request, and identity reaches handlers through the middleware's `x-user-id`. The local production smoke passed 11/11; Lee's signed-in check after deploy is still a release condition. **N3:** audit-ci's path exception would let a new dev-only consumer of the same hoisted `braces` through until the 2027-01-05 review (documented in `audit-ci.jsonc`; register DEP-2). **N4:** `event-stream` 4.0.1 enters the dev tree through audit-ci; it is clean (the compromised release was 3.3.6).
 
 - **Where everything lives (for a cold start).**
@@ -45,6 +43,8 @@ in this project has already been ruled on, usually for a reason that is not obvi
   - **Private UI audit artifacts and the 120-finding inventory:** `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/`. `cookies.txt` (mode 600) is a production audit-account session; delete it once a local harness exists.
   - **Issue register entries** SEC-UI-1 (the live open redirect in profile setup), DEP-2 and TEST-1 are in `~/marvin/state/the-republic-issue-register.md`.
   - **The `gh` account:** the active one is not the repo owner. Use `GH_TOKEN=$(gh auth token --user TheSocraticRepublic)` per command, and never `gh auth switch`, which is global.
+
+- - **UI and filings plan r4 written (2026-10-11), waiting for its astra review.** Lee, 2026-10-11, through the coordinator: "go ahead with the 20 opencave batches". The three-batch cut is declined: write r4 folding all 16 r3 points, and once it passes review, Batch 0 onward proceeds under his 2026-10-05 approval, with every deploy still waiting for his yes. Astra is used because it wrote the 16 points, so its PASS is what shows they are closed. That choice is the coordinator's reasoning, not Lee's wording. Codex's 5-hour window was full, so the review runs after the 17:40 reset; if Codex refuses for any other reason, Fable takes it. r3 is frozen as `republic-ui-filings-r3.md` and its review as `-critic-r3.md`, beside the plan in `~/marvin/state/plans/republic-ui-filings-2026-10/`. On a FAIL, the stop rule applies (DECISION NEEDED, nothing built). The narrowed guarantee for legacy final and filed letters is asked on the first A-series release card.
 
 ## Open questions awaiting Lee
 
@@ -61,7 +61,7 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | Rotation / history scrub for the Supabase account identifiers | The pseudonymous account address and project ref have been in public tracked history since `1e3841a` (2026-08-16). Either that is accepted, or it needs a rotation + scrub decision. | 2026-08-21 |
 | Approve the Open Cave UI and filings remediation plan (revision 2, folding the astra critic's r1: 12 FAIL, 5 CONCERN)? On approval the r1 review is renamed -critic-r1.md and astra re-reviews revision 2 before Batch 0; any r2 FAIL stops the relay and comes back to you before code is written. (resolved 2026-10-07) | The plan has waited at the approval prompt since 2026-10-02; nothing in it can start without your yes. | 2026-10-02 |
 | Approve the R3-R9 plus evidence-correction wording for DECISIONS.md (draft at .claude/drafts/decisions-r3-r9.md)? (resolved 2026-10-11) | Six UI batches build on these rulings; it's an append-only file in a public repo | 2026-10-07 |
-| If UI plan r3's critic passes, may it proceed under your 2026-10-05 twenty-batch approval (same findings, regrouped into 28 smaller batches, plus Q0 harness, S1 security and privacy, G1 Gadfly)? | The plan's own rule sends any re-review FAIL back to you; r2 failed | 2026-10-07 |
+| If UI plan r3's critic passes, may it proceed under your 2026-10-05 twenty-batch approval (same findings, regrouped into 28 smaller batches, plus Q0 harness, S1 security and privacy, G1 Gadfly)? (resolved 2026-10-11) | The plan's own rule sends any re-review FAIL back to you; r2 failed | 2026-10-07 |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
 2026-07-16 hand-off). SEC-1, FORUM-1's cosmetic gate, Relay 1, Relay 2 and Relay 3 are all
@@ -70,6 +70,21 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-11 (plan r4, session marvin/republic-r2)
+
+Lee answered cards 15 and 16 through the coordinator: "go ahead with the 20 opencave batches". Plan r4 is written. It is self-contained and folds all 16 points of the r3 review:
+- the redirect helper returns the checked absolute URL;
+- every content and status write is a compare-and-set;
+- letters carry a recorded format, and legacy text is never split;
+- FIPPA generation refuses an unknown jurisdiction instead of defaulting to BC;
+- only checked directory addresses can be inserted;
+- the local harness gets a Supabase shim, a BYPASSRLS app role, a local-only TLS rule, a Redis REST endpoint and an AI stub;
+- the carried concern is bound to one tab's login handoff.
+
+The private findings inventory now uses the r4 batch IDs. Card 17 (CI merge to main) is still open.
+
+**Next:** the astra review after the Codex reset.
 
 ### 2026-10-11 (Oct 2 rulings recorded, session marvin/republic-r2)
 
