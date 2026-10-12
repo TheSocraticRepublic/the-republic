@@ -292,6 +292,29 @@ describe('text contrast, .dark (app chrome)', () => {
     expect(cold).toEqual([])
   })
 
+  it('an engine without relative colour syntax paints plain S0, declared first and outside the guard', () => {
+    // Every [data-arm] background declaration in compiled order, with the @supports conditions around it.
+    const decls: { value: string; conds: string[]; layer: string | null }[] = []
+    compiled.walkDecls('background', (d) => {
+      let owner = d.parent as Container | undefined
+      while (owner && owner.type !== 'rule' && owner.type !== 'root') owner = owner.parent as Container | undefined
+      if (!owner || owner.type !== 'rule' || (owner as Rule).selector !== '[data-arm]') return
+      const conds: string[] = []
+      for (let p = d.parent as Container | undefined; p && p.type !== 'root'; p = p.parent as Container | undefined)
+        if (p.type === 'atrule' && (p as AtRule).name === 'supports') conds.push((p as AtRule).params)
+      decls.push({ value: d.value, conds, layer: layerOf(d) })
+    })
+    expect(decls.length).toBeGreaterThan(1)
+    expect(decls[0]).toEqual({ value: 'var(--surface-0)', conds: [], layer: null })
+    // Simulate the engine: it skips any @supports that needs `oklch(from ...)` and drops any
+    // declaration whose value uses it. What survives, last wins.
+    const survivors = decls.filter((d) => !d.conds.some((c) => c.includes('oklch(from')) && !d.value.includes('oklch(from'))
+    expect(survivors.at(-1)?.value).toBe('var(--surface-0)')
+    // A supporting engine reaches the mix.
+    expect(decls.at(-1)?.value).toContain('color-mix(in oklch, oklch(from var(--surface-0) l c h)')
+    expect(decls.at(-1)?.conds.some((c) => c.includes('oklch(from red l c h)'))).toBe(true)
+  })
+
   it('the warmth check sees both failures: the sRGB grey Oracle, and OKLCH with S0 hue left powerless', () => {
     const v = scopeVars('.dark')
     const s0 = hexVar(v, '--surface-0')

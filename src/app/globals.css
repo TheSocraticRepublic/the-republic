@@ -570,12 +570,21 @@ body {
  * near neutral (C 0.003) that Chromium treats its converted hue as powerless and
  * takes the accent's hue whole (measured: Oracle h 228, Scout 312). Writing S0
  * through `oklch(from ... l c h)` makes its hue explicit, so it is interpolated.
- * A browser without relative colour syntax drops this declaration and keeps
- * the plain S0 fallback, which is warm too.
+ * Fallback: engines without relative colour syntax (Chrome 111-118, Firefox
+ * 113-127, Safari 16.2-17.x) skip the @supports block and paint plain S0, which
+ * is warm. The guard is explicit because Tailwind's own generated fallback for
+ * a color-mix() is the first argument, here the relative colour itself, which
+ * those engines would drop too, leaving the room transparent.
  */
 [data-arm] {
-  background: color-mix(in oklch, oklch(from var(--surface-0) l c h) 96%, var(--arm-tint) 4%);
+  background: var(--surface-0);
   min-height: 100vh;
+}
+
+@supports (color: oklch(from red l c h)) {
+  [data-arm] {
+    background: color-mix(in oklch, oklch(from var(--surface-0) l c h) 96%, var(--arm-tint) 4%);
+  }
 }
 
 .section-heading {
