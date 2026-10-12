@@ -43,12 +43,12 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **A-series LIVE since 2026-10-12 17:48:49Z; Lee's look check owed.** Main `b9d9139` (PR #7, merge commit), Netlify deploy `6acd1d516cdac21aab7e88f4`; D_prev / rollback target `6acc1bbeb27b4900083c30a8` at `fa16447`. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-12-a-series.md`. Lee's standing authority for this release: restore D_prev without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route, or his look check), then `git revert -m 1 b9d9139` on main through a PR. The look-check steps are in `~/marvin/state/relay/republic-ui-a-series-release-card.md` ("After promotion"). PR #6 closed as superseded. Still open with Lee: the privacy contact address (S1's held wording returns with it; Razor S1b N1-N3 in the Parking Lot).
 
-- **Cold start for the next batch (B2).**
-  1. Read the plan's "### B2", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether B1 has UI (Jen, opus xhigh, after Razor).
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-b1-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-b2`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-b2 --stage implement --batch 1 --step B2`; `git worktree add -b relay/ui-b2-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
+- **Cold start for the next batch (B3a).**
+  1. Read the plan's "### B3a", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether B3a has UI (Jen, opus xhigh, after Razor).
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-b2-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-b3a`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-b3a --stage implement --batch 1 --step B3a`; `git worktree add -b relay/ui-b3a-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
   4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only.
-  5. Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
+  5. Harness runs: clear `.next/cache` first (a stale turbopack cache served old CSS in B1). Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
   6. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
 
 ## Open questions awaiting Lee
@@ -74,6 +74,7 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | Old letters: accept that final and filed letters written before this work keep their guidance notes inside the letter (drafts get a notice and can be edited)? (a, recommended) accept; (b) build a citizen-marked split, about one more batch (resolved 2026-10-12) | Takes effect with the A-series release; final and filed letters can't be edited and no automatic split is safe | 2026-10-12 (plan Decision 2) |
 | Rollback authority for the A-series release: may the session restore the current deploy (6acc1bbe at fa16447) without asking if a named post-release check fails (health or signed-out probe, a new server error on a touched route in the first 30 minutes, or your look check)? (resolved 2026-10-12) | Without it, a failed check leaves a broken release live while you are reached | 2026-10-12 (plan Decision 3) |
 | Which inbox should Open Cave's privacy and security contact name? (a) publish a monitored email on the TheSocraticRepublic GitHub profile; (b) name an address for the page directly. The S1 wording, reviewed and held, returns with your answer; SECURITY.md is fixed in the same change. | Live today, the privacy page sends requests to a public GitHub issue or the gated forum, with no warning against posting personal details, and SECURITY.md points at a profile email that doesn't exist | 2026-10-12 (S1, carried past the A-series release) |
+| Has anyone posted in the live Forum? Razor found that while the Forum is gated, a signed-in user who knows a thread's address can still read its title, post text and author id (live since before this work; the old 404 leaked the same in its page source). The fix is merged on the session branch. (a) If real posts exist: release the gate fix on its own as soon as it is ready, same checks and rollback as the A-series. (b) If the Forum is empty or holds only test posts: ship it with the next B-series release. | Decides whether a fix for a live content exposure waits for the B-series release; the session has no read path to production data to check | 2026-10-12 (Razor W1, relay republic-ui-b2) |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
 2026-07-16 hand-off). SEC-1, FORUM-1's cosmetic gate, Relay 1, Relay 2 and Relay 3 are all
@@ -82,6 +83,13 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 — B2 merged to the session branch (`111c185`)
+
+- **What it does:** instruments above the fold and first in the drawer, Fraunces wordmark with no tagline, footer identity without email, a sticky 44px drawer close, one-line arm descriptions, session-aware 404s per route group, and the honest gated Forum page with a link into the app.
+- **Found and fixed:** a live Forum gate leak (gated Forum pages ran server-side and sent thread content to signed-in users); the middleware now rewrites every `/forum` path to `/forum-opens-later` while gated. Razor probed 56 path spellings; nothing reached a Forum query.
+- **Review:** Razor W1 fixed and re-checked; Jen's six concerns adopted (two regressions); the plan's Forum sentence kept verbatim. Leftovers in the Parking Lot (Next.js dynamic-route 404s, malformed-escape 500s, no browser test runner).
+- **Next:** B3a. Lee owes the A-series look check and the Forum-posts question.
 
 ### 2026-10-12 — B1 merged to the session branch (`310b100`)
 
