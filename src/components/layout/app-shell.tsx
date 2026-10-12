@@ -8,16 +8,19 @@ import { Sidebar } from './sidebar'
 
 interface AppShellProps {
   children: React.ReactNode
-  userEmail?: string
+  // No email: the shell shows the display name only, and the email is not
+  // even sent to the client (app-arms P2-16, Razor N1).
   displayName?: string
   effectiveWeight?: number
 }
 
-export function AppShell({ children, userEmail, displayName, effectiveWeight }: AppShellProps) {
+export function AppShell({ children, displayName, effectiveWeight }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-surface-0 md:flex-row">
+    // h-dvh, not h-screen: on iOS Safari 100vh is the toolbar-collapsed
+    // height, which put the bottom of every page under the toolbar (mobile P2-13).
+    <div className="flex h-dvh flex-col overflow-hidden bg-surface-0 md:flex-row">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-lg focus:bg-surface-2 focus:px-4 focus:py-2 focus:text-text-primary focus:ring-2 focus:ring-oracle"
@@ -25,44 +28,48 @@ export function AppShell({ children, userEmail, displayName, effectiveWeight }: 
         Skip to content
       </a>
 
-      {/* Mobile header */}
-      <div className="flex items-center justify-between border-b border-border bg-surface-2 px-4 py-3 md:hidden">
-        <button
-          onClick={() => setDrawerOpen(true)}
-          aria-label="Open navigation"
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-3 hover:text-text-primary"
-        >
-          <Menu size={20} strokeWidth={1.75} />
-        </button>
-        <Link href="/">
-          <span
-            className="text-base font-bold tracking-tight text-text-primary"
-          >
-            Open Cave
-          </span>
-        </Link>
-        <div className="w-10" />
-      </div>
-
-      {/* Mobile drawer */}
       <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
+        {/* Mobile header: a landmark, and its menu button is the dialog's own
+            trigger, so it exposes aria-expanded and aria-haspopup (mobile P2-3). */}
+        <header className="flex items-center justify-between border-b border-border bg-surface-2 px-3 py-2 md:hidden">
+          <Dialog.Trigger asChild>
+            <button
+              type="button"
+              aria-label="Open navigation"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-3 hover:text-text-primary"
+            >
+              <Menu size={20} strokeWidth={1.75} />
+            </button>
+          </Dialog.Trigger>
+          {/* Wordmark (R6): Fraunces, no tagline. */}
+          <Link href="/" className="flex min-h-11 items-center px-2">
+            <span className="font-display text-lg font-semibold tracking-[-0.01em] text-text-primary">
+              Open Cave
+            </span>
+          </Link>
+          <div className="w-11" aria-hidden="true" />
+        </header>
+
+        {/* Mobile drawer. No enter/exit animation classes: the animate-in
+            plugin they needed was never installed, so they did nothing
+            (mobile P2-15). The drawer appears instantly. */}
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 md:hidden" />
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 md:hidden" />
           <Dialog.Content
-            className="fixed inset-y-0 left-0 z-50 w-72 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left md:hidden"
+            className="fixed inset-y-0 left-0 z-50 w-72 shadow-2xl md:hidden"
             aria-label="Navigation menu"
           >
             <Dialog.Title className="sr-only">Navigation menu</Dialog.Title>
             <Dialog.Description className="sr-only">
               Site navigation and account links
             </Dialog.Description>
-            <Dialog.Close aria-label="Close navigation" className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
+            {/* 44px, seated inside the sidebar's sticky 60px wordmark band (Jen C3). */}
+            <Dialog.Close aria-label="Close navigation" className="absolute right-2 top-2 z-20 flex h-11 w-11 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
               <X size={16} strokeWidth={2} />
             </Dialog.Close>
             <Sidebar
               variant="drawer"
               onNavigate={() => setDrawerOpen(false)}
-              userEmail={userEmail}
               displayName={displayName}
               effectiveWeight={effectiveWeight}
             />
@@ -72,7 +79,7 @@ export function AppShell({ children, userEmail, displayName, effectiveWeight }: 
 
       {/* Desktop sidebar */}
       <div className="hidden md:flex md:flex-shrink-0">
-        <Sidebar userEmail={userEmail} displayName={displayName} effectiveWeight={effectiveWeight} />
+        <Sidebar displayName={displayName} effectiveWeight={effectiveWeight} />
       </div>
 
       {/* Main content */}
