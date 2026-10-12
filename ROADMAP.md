@@ -226,6 +226,11 @@ Named elsewhere and not yet scheduled:
 - Votes on the landing
 - Briefing mobile sticky section bar
 - CSP walk checklist additions: allowlisted links, grain, new fonts
+- Tagged (accessible) PDFs — see Deferred from the UI and filings plan r4
+- Date-format unification across exports — see Deferred from the UI and filings plan r4
+- Oracle editorialising in model output — see Deferred from the UI and filings plan r4
+- Gadfly gold on public pages (look decision for Lee) — see Deferred from the UI and filings plan r4
+- "Usually ready in N minutes" on Investigate (needs Lee's production figure) — see Deferred from the UI and filings plan r4
 
 ### Deferred from 2026-08-26 audit remediation
 
@@ -257,6 +262,16 @@ Written verbatim from `~/marvin/state/plans/republic-ui-filings-2026-10/republic
 - **Votes on the landing** (arm station plus chip, landing-public L17).
 - **Briefing mobile sticky section bar** (reading-surfaces F-P1-5).
 - **CSP walk checklist** additions: allowlisted links, grain, new fonts.
+
+### Deferred from the UI and filings plan r4 (2026-10-11)
+
+Written in Batch 0 of `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md` (r4.1). Each reason is from the plan and the private findings inventory.
+
+- **Tagged PDFs** (reading-surfaces Q3-a). `@react-pdf/renderer` has no tagging support, so FOI and campaign PDFs stay untagged. Screen readers get the screen and print versions.
+- **Date-format unification across exports** (reading-surfaces RS-P2-6). It belongs to the Lever writer's content contract, which is parked, not to rendering.
+- **Oracle editorialising in model output** (app-arms Q6-b). A prompt-owner change to the Oracle's system prompt, outside a UI relay.
+- **Gadfly gold on public pages** (landing-public L11). A look-and-feel decision for Lee; the rest of L11 (Foundations H1 matching its nav label) ships in F3.
+- **"Usually ready in N minutes" on Investigate** (C1). It needs the median of `briefing_completed_at − created_at` over real investigations, and the session has no read path to production data. Omitted until Lee supplies the figure.
 
 ### Deferred from republic-ci-green-deps (2026-10-08)
 

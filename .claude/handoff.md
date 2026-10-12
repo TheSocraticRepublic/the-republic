@@ -42,9 +42,9 @@ in this project has already been ruled on, usually for a reason that is not obvi
   - **Issue register entries** SEC-UI-1 (the live open redirect in profile setup), DEP-2 and TEST-1 are in `~/marvin/state/the-republic-issue-register.md`.
   - **The `gh` account:** the active one is not the repo owner. Use `GH_TOKEN=$(gh auth token --user TheSocraticRepublic)` per command, and never `gh auth switch`, which is global.
 
-- - **UI and filings plan r4 written (2026-10-11), waiting for its astra review.** Lee, 2026-10-11, through the coordinator: "go ahead with the 20 opencave batches". The three-batch cut is declined: write r4 folding all 16 r3 points, and once it passes review, Batch 0 onward proceeds under his 2026-10-05 approval, with every deploy still waiting for his yes. Astra is used because it wrote the 16 points, so its PASS is what shows they are closed. That choice is the coordinator's reasoning, not Lee's wording. Codex's 5-hour window was full, so the review runs after the 17:40 reset; if Codex refuses for any other reason, Fable takes it. r3 is frozen as `republic-ui-filings-r3.md` and its review as `-critic-r3.md`, beside the plan in `~/marvin/state/plans/republic-ui-filings-2026-10/`. On a FAIL, the stop rule applies (DECISION NEEDED, nothing built). The narrowed guarantee for legacy final and filed letters is asked on the first A-series release card.
-
 - - **Build-checks fix is live (2026-10-11); Lee owes two follow-ups.** Main is `fa16447` (PR #5), Netlify deploy `6acc1bbeb27b4900083c30a8`; the rollback target is `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which brings back the affected `next` 16.3.0. (1) **One sign-in on the live site with the audit account**, to confirm sign-in still works after the framework change. Next 16.3.1 changed how request headers are read, and identity reaches handlers through the middleware's `x-user-id` (Razor N2). The local production smoke passed 11/11, but no signed-in check has run on production. (2) **The untested non-owner export case:** no test exports one account's letter while signed in as another, on two real accounts (register TEST-1). Lee accepts the gap or closes it; UI plan r4 covers it on the local harness in A4. Sentry has no project in the org, so it is no post-deploy signal (OBS-1).
+
+- - **UI and filings plan r4.1: gate open; relay under way from Q0a.** The Fable critic (Lee, 2026-10-11: "go ahead and use Fable instead of Astra for now. Always opt to change models instead of impeding work to wait for resets per se.") returned CONCERN, no FAIL: all 16 r3 points closed, 14 outright and 2 with residue. Its 9 must-fix items are folded as r4.1 without another round. The review is `republic-ui-filings-critic.md` beside the plan in `~/marvin/state/plans/republic-ui-filings-2026-10/`. Batch 0 is done (Parking Lot entries written). Every release waits for Lee's yes, and the legacy-letter question goes on the first A-series release card. The machine is short of memory: one worker at a time, and no build under 4 GB available.
 
 ## Open questions awaiting Lee
 
@@ -70,6 +70,22 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-11 (plan r4 gate open, session marvin/republic-r2)
+
+The Fable critic on r4 returned CONCERN, no FAIL. It reproduced S1's redirect fix in Node and verified every harness premise against the code. Its must-fix items are folded as r4.1:
+- QA tooling (Playwright, axe, Lighthouse, jsdom, testing-library, `.tsx` tests) in Q0a;
+- the Origin and Secure-cookie constraints and the superuser `vector` extension in Q0b;
+- react-pdf oversize-token chunking and global hyphenation in A4;
+- release content defined as `origin/main..S`;
+- Sentry removed as a signal (no project exists);
+- the province always shown and confirmed;
+- finalising blocked on an unclean split;
+- hash re-baselining.
+
+Batch 0 wrote five Parking Lot entries.
+
+**Next:** relay Q0a.
 
 ### 2026-10-11 (build-checks fix deployed, session marvin/republic-r2)
 
