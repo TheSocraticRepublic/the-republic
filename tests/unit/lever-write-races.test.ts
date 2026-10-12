@@ -286,7 +286,11 @@ async function withRowLock(
 
 // ---------------------------------------------------------------------------
 
-describe.skipIf(!HARNESS_UP)('A2 write integrity (QA harness)', () => {
+const SUITE_TITLE = HARNESS_UP
+  ? 'A2 write integrity (QA harness)'
+  : 'A2 write integrity: SKIPPED, the QA harness is not running (QA_REQUIRE_HARNESS=1 makes this a failure)'
+
+describe.skipIf(!HARNESS_UP)(SUITE_TITLE, () => {
   beforeAll(async () => {
     db1 = postgres(QA_DATABASE_URL, { max: 1, onnotice: () => {} })
     db2 = postgres(QA_DATABASE_URL, { max: 1, onnotice: () => {} })
