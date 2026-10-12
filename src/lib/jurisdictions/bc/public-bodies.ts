@@ -3,11 +3,15 @@ import type { PublicBody } from '../types'
 /*
  * Evidence fields (sourceUrl, checkedOn, sourceQuote) are set only on entries
  * whose FOI address was read from the linked gov.bc.ca page on the date given;
- * sourceQuote is that page's text, verbatim. Every other entry is unchecked:
- * the address is unconfirmed and must not be presented as checked.
+ * sourceQuote is that page's text, verbatim, with " / " standing for each line
+ * break the page prints (the page has no commas in the address). Every other
+ * entry is unchecked: the address is unconfirmed and must not be presented as
+ * checked.
  *
  * The four checked provincial entries all point at FOI Operations, which the
- * FOI FAQ names as "the FOI service provider for B.C. government ministries".
+ * FOI FAQ names as "the FOI service provider for B.C. government ministries";
+ * the quote is the FAQ's FOI Operations contact block. (The general FOI page
+ * prints the same box only as the address for fee cheques, so it is not used.)
  * The Environmental Assessment Office stays unchecked: its PO Box 9426 is its
  * general mailing address, and no page says who handles its FOI requests.
  * Municipal entries are unchecked (parked).
@@ -25,9 +29,9 @@ export const bcPublicBodies: PublicBody[] = [
     foiAddress: 'FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC V8W 9K1',
     jurisdiction: 'bc-provincial',
     sourceUrl:
-      'https://www2.gov.bc.ca/gov/content/governments/about-the-bc-government/open-government/open-information/freedom-of-information',
+      'https://www2.gov.bc.ca/gov/content/governments/about-the-bc-government/open-government/open-information/freedom-of-information/foi-faq',
     checkedOn: '2026-10-12',
-    sourceQuote: 'FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC, V8W 9K1',
+    sourceQuote: 'FOI Operations / PO Box 9569 / Stn Prov Govt / Victoria BC V8W 9K1',
   },
   { name: 'Metro Vancouver', foiAddress: 'FOI Coordinator, Metro Vancouver, 4730 Kingsway, Burnaby, BC V5H 0C6', jurisdiction: 'metro-vancouver' },
   { name: 'Resort Municipality of Whistler', foiAddress: 'FOI Coordinator, Resort Municipality of Whistler, 4325 Blackcomb Way, Whistler, BC V8E 0X5', jurisdiction: 'whistler' },
@@ -40,7 +44,7 @@ export const bcPublicBodies: PublicBody[] = [
     sourceUrl:
       'https://www2.gov.bc.ca/gov/content/governments/about-the-bc-government/open-government/open-information/freedom-of-information/foi-faq',
     checkedOn: '2026-10-12',
-    sourceQuote: 'FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC V8W 9K1',
+    sourceQuote: 'FOI Operations / PO Box 9569 / Stn Prov Govt / Victoria BC V8W 9K1',
   },
   {
     name: 'BC Ministry of Energy, Mines and Low Carbon Innovation',
@@ -49,7 +53,7 @@ export const bcPublicBodies: PublicBody[] = [
     sourceUrl:
       'https://www2.gov.bc.ca/gov/content/governments/about-the-bc-government/open-government/open-information/freedom-of-information/foi-faq',
     checkedOn: '2026-10-12',
-    sourceQuote: 'FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC V8W 9K1',
+    sourceQuote: 'FOI Operations / PO Box 9569 / Stn Prov Govt / Victoria BC V8W 9K1',
   },
   {
     name: 'BC Ministry of Forests',
@@ -58,7 +62,7 @@ export const bcPublicBodies: PublicBody[] = [
     sourceUrl:
       'https://www2.gov.bc.ca/gov/content/governments/about-the-bc-government/open-government/open-information/freedom-of-information/foi-faq',
     checkedOn: '2026-10-12',
-    sourceQuote: 'FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC V8W 9K1',
+    sourceQuote: 'FOI Operations / PO Box 9569 / Stn Prov Govt / Victoria BC V8W 9K1',
   },
   { name: 'City of Kamloops', foiAddress: 'FOI Coordinator, City of Kamloops, 7 Victoria Street W, Kamloops, BC V2C 1A2', jurisdiction: 'kamloops' },
   { name: 'City of Nanaimo', foiAddress: 'FOI Coordinator, City of Nanaimo, 455 Wallace Street, Nanaimo, BC V9R 5J6', jurisdiction: 'nanaimo' },

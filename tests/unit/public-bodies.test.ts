@@ -80,10 +80,30 @@ function isBcGovernmentUrl(url: string): boolean {
   return parsed.protocol === 'https:' && (parsed.hostname === 'gov.bc.ca' || parsed.hostname.endsWith('.gov.bc.ca'))
 }
 
-const FOI_PAGE =
-  'https://www2.gov.bc.ca/gov/content/governments/about-the-bc-government/open-government/open-information/freedom-of-information'
-const FOI_FAQ = `${FOI_PAGE}/foi-faq`
+const FOI_FAQ =
+  'https://www2.gov.bc.ca/gov/content/governments/about-the-bc-government/open-government/open-information/freedom-of-information/foi-faq'
 const FOI_OPERATIONS = 'FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC V8W 9K1'
+/** The FAQ's FOI Operations contact block, verbatim; " / " stands for its line breaks. */
+const FOI_OPERATIONS_QUOTE = 'FOI Operations / PO Box 9569 / Stn Prov Govt / Victoria BC V8W 9K1'
+
+/**
+ * Every unchecked BC entry's address, pinned as it stands: an unchecked
+ * address is unconfirmed, so any edit to one must be deliberate.
+ */
+const UNCHECKED_ADDRESSES: Record<string, string> = {
+  'City of Vancouver': 'FOI Coordinator, City of Vancouver, 453 W 12th Ave, Vancouver, BC V5Y 1V4',
+  'City of Victoria': 'FOI Coordinator, City of Victoria, 1 Centennial Square, Victoria, BC V8W 1P6',
+  'City of Surrey': 'FOI Coordinator, City of Surrey, 13450 104th Ave, Surrey, BC V3T 1V8',
+  'District of Squamish': 'FOI Coordinator, District of Squamish, P.O. Box 310, Squamish, BC V8B 0A3',
+  'City of Kelowna': 'FOI Coordinator, City of Kelowna, 1435 Water St, Kelowna, BC V1Y 1J4',
+  'District of North Vancouver': 'FOI Coordinator, District of North Vancouver, 355 W Queens Rd, North Vancouver, BC V7N 4N5',
+  'Metro Vancouver': 'FOI Coordinator, Metro Vancouver, 4730 Kingsway, Burnaby, BC V5H 0C6',
+  'Resort Municipality of Whistler': 'FOI Coordinator, Resort Municipality of Whistler, 4325 Blackcomb Way, Whistler, BC V8E 0X5',
+  'City of Burnaby': 'FOI Coordinator, City of Burnaby, 4949 Canada Way, Burnaby, BC V5G 1M2',
+  'BC Environmental Assessment Office': 'FOI Coordinator, Environmental Assessment Office, PO Box 9426 Stn Prov Govt, Victoria, BC V8W 9V1',
+  'City of Kamloops': 'FOI Coordinator, City of Kamloops, 7 Victoria Street W, Kamloops, BC V2C 1A2',
+  'City of Nanaimo': 'FOI Coordinator, City of Nanaimo, 455 Wallace Street, Nanaimo, BC V9R 5J6',
+}
 
 const CHECKED_NAMES = [
   'Province of British Columbia',
@@ -129,19 +149,27 @@ describe('BC_PUBLIC_BODIES evidence (A3)', () => {
   })
 
   it('records the source page, date and quote for each checked entry', () => {
-    expect(entry('Province of British Columbia')).toMatchObject({
-      foiAddress: FOI_OPERATIONS,
-      sourceUrl: FOI_PAGE,
-      checkedOn: '2026-10-12',
-      sourceQuote: 'FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC, V8W 9K1',
-    })
-    for (const name of CHECKED_NAMES.slice(1)) {
+    for (const name of CHECKED_NAMES) {
       expect(entry(name), name).toMatchObject({
         foiAddress: FOI_OPERATIONS,
         sourceUrl: FOI_FAQ,
         checkedOn: '2026-10-12',
-        sourceQuote: FOI_OPERATIONS,
+        sourceQuote: FOI_OPERATIONS_QUOTE,
       })
+    }
+  })
+
+  it('normalisation treats the quote\'s line-break slashes like any other punctuation', () => {
+    expect(normaliseAddress(FOI_OPERATIONS_QUOTE)).toBe('foi operations box 9569 stn prov govt victoria bc v8w 9k1')
+    expect(normaliseAddress(FOI_OPERATIONS_QUOTE)).toBe(normaliseAddress(FOI_OPERATIONS))
+    expect(isCheckedEntry({ ...entry('BC Ministry of Forests'), sourceQuote: FOI_OPERATIONS_QUOTE })).toBe(true)
+  })
+
+  it('every unchecked entry keeps its address exactly as pinned', () => {
+    const unchecked = BC_PUBLIC_BODIES.filter((b) => !isCheckedEntry(b))
+    expect(unchecked.map((b) => b.name).sort()).toEqual(Object.keys(UNCHECKED_ADDRESSES).sort())
+    for (const body of unchecked) {
+      expect(body.foiAddress, body.name).toBe(UNCHECKED_ADDRESSES[body.name])
     }
   })
 

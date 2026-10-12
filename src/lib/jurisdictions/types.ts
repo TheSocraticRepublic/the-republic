@@ -86,7 +86,7 @@ export interface PublicBody {
   sourceUrl?: string
   /** The date that page was read, as YYYY-MM-DD. */
   checkedOn?: string
-  /** The address exactly as that page prints it. */
+  /** The address exactly as that page prints it, with " / " for each line break. */
   sourceQuote?: string
 }
 
