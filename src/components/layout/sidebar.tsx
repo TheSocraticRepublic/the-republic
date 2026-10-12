@@ -42,9 +42,11 @@ const arms = [
   },
 ]
 
-// The active dot sits out of flow (app-arms P1-1, step 1), in the row's pr-6
+// The active dot sits out of flow (app-arms P1-1, step 1), in the row's pr-5
 // gutter, so a row never reflows or wraps when it becomes the current page.
-const ACTIVE_DOT = 'absolute right-3 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full'
+// pr-5 with gap-2.5 keeps the text column at 130px, wide enough that
+// "New Investigation" (127px in Instrument Sans 600 14px) stays on one line.
+const ACTIVE_DOT = 'absolute right-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full'
 
 interface SidebarProps {
   // No email prop: the shell shows the display name only (app-arms P2-16).
@@ -142,7 +144,7 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
             onClick={onNavigate}
             aria-current={investigateActive ? 'page' : undefined}
             className={clsx(
-              `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm transition-all duration-150`,
+              `group relative flex items-center gap-2.5 rounded-lg pl-3 pr-5 ${linkPy} text-sm transition-all duration-150`,
               investigateActive
                 ? 'bg-surface-3 text-text-primary'
                 : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -179,7 +181,7 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
             onClick={onNavigate}
             aria-current={investigationsActive ? 'page' : undefined}
             className={clsx(
-              `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm transition-all duration-150`,
+              `group relative flex items-center gap-2.5 rounded-lg pl-3 pr-5 ${linkPy} text-sm transition-all duration-150`,
               investigationsActive
                 ? 'bg-surface-3 text-text-primary'
                 : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -217,7 +219,7 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
               src/lib/forum/flag.ts and is untouched. */}
           <span
             data-nav="forum"
-            className={`flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm cursor-not-allowed`}
+            className={`flex items-center gap-2.5 rounded-lg pl-3 pr-5 ${linkPy} text-sm cursor-not-allowed`}
           >
             <span
               className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-border"
@@ -240,7 +242,7 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
             onClick={onNavigate}
             aria-current={votesActive ? 'page' : undefined}
             className={clsx(
-              `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm transition-all duration-150`,
+              `group relative flex items-center gap-2.5 rounded-lg pl-3 pr-5 ${linkPy} text-sm transition-all duration-150`,
               votesActive
                 ? 'text-text-primary'
                 : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -287,7 +289,7 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
               onClick={onNavigate}
               aria-current={moderationActive ? 'page' : undefined}
               className={clsx(
-                `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm transition-all duration-150`,
+                `group relative flex items-center gap-2.5 rounded-lg pl-3 pr-5 ${linkPy} text-sm transition-all duration-150`,
                 moderationActive
                   ? 'bg-surface-3 text-text-primary'
                   : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -355,7 +357,7 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
                       onClick={onNavigate}
                       aria-current={isActive ? 'page' : undefined}
                       className={clsx(
-                        `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${armPy} text-sm transition-all duration-150`,
+                        `group relative flex items-center gap-2.5 rounded-lg pl-3 pr-5 ${armPy} text-sm transition-all duration-150`,
                         isActive
                           ? 'text-text-primary'
                           : 'text-text-muted hover:bg-surface-3 hover:text-text-secondary'
@@ -405,7 +407,7 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
             onClick={onNavigate}
             aria-current={foundationsActive ? 'page' : undefined}
             className={clsx(
-              `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm transition-all duration-150`,
+              `group relative flex items-center gap-2.5 rounded-lg pl-3 pr-5 ${linkPy} text-sm transition-all duration-150`,
               foundationsActive
                 ? 'bg-surface-3 text-text-primary'
                 : 'text-text-muted hover:bg-surface-3 hover:text-text-secondary'
