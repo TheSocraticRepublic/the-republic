@@ -124,6 +124,7 @@ export function LetterPaper({ content, letterFormat, status }: LetterPaperProps)
 const BLOCK_CLASS = 'min-h-[1.5em] whitespace-pre-wrap [overflow-wrap:anywhere]'
 /** A hanging indent: wrapped lines of an item align after its prefix, which stays in the text. */
 const ITEM_STYLE = { paddingLeft: '1.5em', textIndent: '-1.5em' } as const
+const PREFIX_STYLE = { display: 'inline-block', minWidth: '1.5em', textIndent: 0 } as const
 
 function PaperBlock({ block }: { block: Block }) {
   switch (block.kind) {
@@ -149,7 +150,8 @@ function PaperBlock({ block }: { block: Block }) {
     case 'numbered':
       return (
         <p className={BLOCK_CLASS} style={ITEM_STYLE}>
-          {blockPrefix(block)}
+          {/* The prefix box grows with its content (min-width), so "100. " never overflows. */}
+          <span style={PREFIX_STYLE}>{blockPrefix(block)}</span>
           <Inlines inlines={block.inlines} />
         </p>
       )

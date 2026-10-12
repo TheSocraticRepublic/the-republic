@@ -476,6 +476,7 @@ function fippaPrintPage(title: string, content: string, letterFormat: unknown, s
   }
   /* Hanging indent: wrapped lines of an item align after its prefix. */
   .lb-item { padding-left: 1.5em; text-indent: -1.5em; }
+  .lb-item .lb-prefix { display: inline-block; min-width: 1.5em; text-indent: 0; }
   /* A rule is a 1px hairline centred in its line; the element's text stays empty. */
   .lb-rule { position: relative; }
   .lb-rule::before {

@@ -59,6 +59,11 @@ describe('LetterPaper', () => {
     const item = Array.from(doc.querySelectorAll('[data-letter-text] p')).find((p) => p.textContent?.startsWith('1. '))!
     expect((item as HTMLElement).style.paddingLeft).toBe('1.5em')
     expect((item as HTMLElement).style.textIndent).toBe('-1.5em')
+    const prefix = item.querySelector('span') as HTMLElement
+    expect(prefix.textContent).toBe('1. ')
+    expect(prefix.style.display).toBe('inline-block')
+    expect(prefix.style.minWidth).toBe('1.5em')
+    expect(prefix.style.width).toBe('')
   })
 
   it('paper ink is fixed #1C1917 on #FFFFFF, full-bleed below 640px', () => {

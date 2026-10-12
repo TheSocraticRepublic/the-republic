@@ -455,7 +455,7 @@ export function blocksToHtml(blocks: Block[]): string {
           return '<p class="lb lb-rule"></p>'
         case 'bullet':
         case 'numbered':
-          return `<p class="lb lb-item">${escapeHtml(blockPrefix(b))}${inlinesToHtml(b.inlines)}</p>`
+          return `<p class="lb lb-item"><span class="lb-prefix">${escapeHtml(blockPrefix(b))}</span>${inlinesToHtml(b.inlines)}</p>`
         case 'line':
           return b.inlines.length === 0
             ? '<p class="lb lb-blank"></p>'

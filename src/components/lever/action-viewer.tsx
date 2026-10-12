@@ -208,7 +208,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   return (
     <div className="space-y-4">
       {/* Controls row */}
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2 sm:items-center">
         {/* Status badge */}
         <span
           className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium"
