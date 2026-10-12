@@ -127,8 +127,60 @@ function parsePpm(b: Buffer, scale: number): Raster {
  * Pixels that are not pure white (#FFFFFF) outside every text item's glyph
  * box (baseline-relative, descender to ascender), each expanded by `padPx`.
  */
-export function nonWhiteOutsideText(r: Raster, page: PdfPage, padPx = 2): { x: number; y: number; rgb: number[] }[] {
+/** A horizontal box to mask, in points from the page's left and bottom edges. */
+export interface PdfBox {
+  x0: number
+  x1: number
+  bottom: number
+  top: number
+}
+
+/**
+ * Hairline rules drawn across a measure: pixel rows in which every pixel from
+ * x0 to x1 (points) is non-white and light grey (a rule's antialiased ink, never
+ * text), grouped into bands. Each band comes back as a box in points.
+ */
+export function findRuleBands(r: Raster, x0: number, x1: number): PdfBox[] {
+  const a = Math.ceil(x0 * r.scale) + 1
+  const b = Math.floor(x1 * r.scale) - 1
+  const rows: number[] = []
+  for (let y = 0; y < r.height; y++) {
+    let all = true
+    for (let x = a; x <= b && all; x++) {
+      const o = (y * r.width + x) * 3
+      const [R, G, B] = [r.data[o], r.data[o + 1], r.data[o + 2]]
+      all = R < 255 && R >= 120 && Math.abs(R - G) < 24 && Math.abs(G - B) < 24
+    }
+    if (all) rows.push(y)
+  }
+  const bands: PdfBox[] = []
+  for (const y of rows) {
+    const last = bands[bands.length - 1]
+    const pageH = r.height / r.scale
+    const top = pageH - y / r.scale
+    const bottom = pageH - (y + 1) / r.scale
+    if (last && Math.abs(last.bottom - top) < 1.5 / r.scale) last.bottom = bottom
+    else bands.push({ x0, x1, top, bottom })
+  }
+  return bands
+}
+
+export function nonWhiteOutsideText(
+  r: Raster,
+  page: PdfPage,
+  padPx = 2,
+  boxes: PdfBox[] = []
+): { x: number; y: number; rgb: number[] }[] {
   const masked = new Uint8Array(r.width * r.height)
+  for (const box of boxes) {
+    const y0 = Math.floor((page.height - box.top) * r.scale) - padPx
+    const y1 = Math.ceil((page.height - box.bottom) * r.scale) + padPx
+    for (let y = Math.max(0, y0); y <= Math.min(r.height - 1, y1); y++) {
+      for (let x = Math.max(0, Math.floor(box.x0 * r.scale) - padPx); x <= Math.min(r.width - 1, Math.ceil(box.x1 * r.scale) + padPx); x++) {
+        masked[y * r.width + x] = 1
+      }
+    }
+  }
   for (const it of page.items) {
     if (!it.str) continue
     const x0 = Math.floor(it.x * r.scale) - padPx

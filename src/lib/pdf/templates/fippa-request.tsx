@@ -70,6 +70,8 @@ export const PDF_PAPER = {
   ground: '#FFFFFF',
   ink: '#1C1917',
   placeholderInk: '#92400E',
+  /** The rule's hairline ink: the same as screen and print. */
+  rule: '#A8A29E',
   fontSize: 12,
   lineHeight: 1.5,
   /** 1 inch. */
@@ -81,6 +83,8 @@ export const PDF_FALLBACK_NOTE = 'Shown as plain text.'
 export const PDF_EMPTY_LETTER_NOTE = 'This letter part is empty.'
 
 const LINE_PT = PDF_PAPER.fontSize * PDF_PAPER.lineHeight
+/** The rule's hairline, points. */
+export const RULE_WIDTH = 0.5
 /** US Letter is 612pt wide; the text measure is what the side margins leave. */
 export const BODY_MEASURE = 612 - 2 * PDF_PAPER.margin
 const PREFIX_MIN = 18
@@ -197,6 +201,8 @@ const styles = StyleSheet.create({
   prefix: { flexShrink: 0, minWidth: 18 },
   itemBody: { flex: 1 },
   blank: { height: LINE_PT },
+  rule: { height: LINE_PT },
+  ruleLine: { marginTop: (LINE_PT - RULE_WIDTH) / 2, borderTopWidth: RULE_WIDTH, borderTopColor: PDF_PAPER.rule },
   strong: { fontWeight: 600 },
   em: { fontStyle: 'italic' },
   placeholder: { color: PDF_PAPER.placeholderInk },
@@ -313,10 +319,13 @@ function PdfBlock({ block, placeholders, m }: { block: Block; placeholders: bool
     case 'heading':
       return <PdfLine inlines={block.inlines} style={styles.heading} placeholders={placeholders} m={{ ...m, bold: true }} />
     case 'rule':
-      // An empty line, as its projection is "". Unlike the screen, the PDF
-      // draws no hairline: its pages are tested to be pure white outside the
-      // glyphs, and nothing but the letter's own text is drawn on them.
-      return <View style={styles.blank} />
+      // A 0.5pt hairline across the measure, centred in its 18pt line, in the
+      // screen's and print's ink (Jen C4). It has no text: its projection is "".
+      return (
+        <View style={styles.rule}>
+          <View style={styles.ruleLine} />
+        </View>
+      )
     case 'bullet':
     case 'numbered': {
       const prefix = blockPrefix(block)

@@ -31,6 +31,7 @@ import * as path from 'node:path'
 import { JSDOM as UntypedJSDOM } from 'jsdom'
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { renderLeverPdf } from '@/lib/pdf/render'
+import { parseLetter } from '@/lib/lever/letter-blocks'
 import { loadLetterMetrics, estimateRenderCost, RENDER_COST_LIMIT, BODY_MEASURE } from '@/lib/pdf/templates/fippa-request'
 import { FOOTER_BAND_TOP, FOOTER_BAND_BOTTOM } from '@/lib/pdf/primitives'
 import { PUBLIC_BODY_DIRECTORY, resolveRecipient, type RecipientResolution } from '@/lib/lever/public-body'
@@ -42,6 +43,7 @@ import {
   hasPdftoppm,
   rasterise,
   nonWhiteOutsideText,
+  findRuleBands,
   type PdfRead,
   type PdfPage,
   type PdfItem,
@@ -59,6 +61,7 @@ import {
   TYPOGRAPHY_LETTER,
   LONG_GUIDANCE_LETTER,
   MARKER_FIRST_LINE,
+  BLOCK_CONSTRUCTS,
   type LetterFixture,
 } from '../fixtures/letters'
 
@@ -442,15 +445,22 @@ describe.skipIf(!PDFTOPPM)(
   PDFTOPPM ? 'FIPPA PDF: pure white page' : 'FIPPA PDF: pure white page SKIPPED (no pdftoppm)',
   () => {
     it.each(
-      [...SEEDED_LETTER_FIXTURES, TYPOGRAPHY_LETTER, LONG_TOKEN_LETTER, MARKER_FIRST_LINE].map((fx) => [fx.id, fx] as const)
+      [...SEEDED_LETTER_FIXTURES, TYPOGRAPHY_LETTER, LONG_TOKEN_LETTER, MARKER_FIRST_LINE, BLOCK_CONSTRUCTS].map((fx) => [fx.id, fx] as const)
     )(
       '%s: every pixel outside the glyph boxes is #FFFFFF, on every page',
       async (_id, fx) => {
         const { buf, pdf } = await renderFixture(fx)
         const rasters = rasterise(buf, 50)
         expect(rasters.length).toBe(pdf.pages.length)
+        let ruleBands = 0
         rasters.forEach((r, k) => {
-          const bad = nonWhiteOutsideText(r, pdf.pages[k], 2)
+          // A markdown rule's hairline is the letter's own mark (Jen C4): its
+          // box is masked like a glyph box, and there must be exactly one per
+          // rule the letter has.
+          const rules = findRuleBands(r, 72, 540)
+          ruleBands += rules.length
+          for (const band of rules) expect(band.top - band.bottom, 'a hairline, not a fill').toBeLessThan(2.5)
+          const bad = nonWhiteOutsideText(r, pdf.pages[k], 2, rules)
           expect(bad.slice(0, 3), `page ${k + 1}: ${bad.length} non-white pixels`).toEqual([])
           // The test is not vacuous: the glyphs themselves are inked (a 9 pt
           // footer alone is antialiased grey at 50 dpi, so any non-white counts).
@@ -458,6 +468,9 @@ describe.skipIf(!PDFTOPPM)(
           for (let o = 0; o < r.data.length; o += 3) if (r.data[o] < 230) dark++
           expect(dark, `page ${k + 1} has ink`).toBeGreaterThan(0)
         })
+        const parsed = parseLetter(fx.content, fx.format)
+        const expectedRules = [...parsed.letter, ...(parsed.guidance ?? [])].filter((b) => b.kind === 'rule').length
+        expect(ruleBands, 'one hairline per rule').toBe(expectedRules)
       },
       30_000
     )
