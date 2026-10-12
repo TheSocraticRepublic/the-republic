@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, User, MessageSquare, Shield, Vote, Heart, ScrollText } from 'lucide-react'
+import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, MessageSquare, Shield, Vote, Heart, ScrollText } from 'lucide-react'
 import { FeedbackDialog } from '@/components/layout/feedback-dialog'
 import { clsx } from 'clsx'
 import { useState, useEffect, useRef } from 'react'
@@ -42,18 +42,24 @@ const arms = [
   },
 ]
 
+// The active dot sits out of flow (app-arms P1-1, step 1), in the row's pr-6
+// gutter, so a row never reflows or wraps when it becomes the current page.
+const ACTIVE_DOT = 'absolute right-3 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full'
+
 interface SidebarProps {
-  userEmail?: string
+  // No email prop: the shell shows the display name only (app-arms P2-16).
+  // The email belongs on /profile, not on every screen share.
   displayName?: string
   effectiveWeight?: number
   variant?: 'sidebar' | 'drawer'
   onNavigate?: () => void
 }
 
-export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant = 'sidebar', onNavigate }: SidebarProps) {
+export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar', onNavigate }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [instrumentsOpen, setInstrumentsOpen] = useState(true)
+  const navRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollDown, setCanScrollDown] = useState(false)
 
@@ -93,34 +99,50 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
     }
   }, [instrumentsOpen, isModerator])
 
+  // Keep the current page's row in view (app-arms P1-1, step 6). On mount and
+  // on every route change. 'nearest' does nothing when the row is already
+  // visible, so this never jumps a list the citizen has scrolled themselves
+  // unless the route changed. jsdom has no scrollIntoView, hence the guard.
+  useEffect(() => {
+    const current = navRef.current?.querySelector<HTMLElement>('[aria-current="page"]')
+    current?.scrollIntoView?.({ block: 'nearest' })
+  }, [pathname])
+
   return (
-    <nav className={clsx(
-      'flex h-full flex-col bg-surface-2',
-      variant === 'sidebar' && 'w-56 border-r border-border',
-    )}>
-      {/* Wordmark */}
-      <div className="px-5 py-6">
-        <Link href="/" className="block" onClick={onNavigate}>
-          <span
-            className="text-xl font-bold tracking-tight text-text-primary"
-          >
+    <nav
+      ref={navRef}
+      aria-label="Main"
+      className={clsx(
+        'flex h-full flex-col bg-surface-2',
+        variant === 'sidebar' && 'w-56 border-r border-border',
+        // Drawer (mobile P1-2): ONE scroller, the whole nav. No nested
+        // scroll region, no fixed blocks below it eating the phone's height.
+        isDrawer && 'overflow-y-auto overscroll-contain',
+      )}
+    >
+      {/* Wordmark (R6): Fraunces, no tagline. Same treatment as the landing. */}
+      <div className={clsx('px-5', isDrawer ? 'py-4' : 'py-5')}>
+        <Link href="/" className="inline-block" onClick={onNavigate}>
+          <span className="font-display text-xl font-semibold tracking-[-0.01em] text-text-primary">
             Open Cave
           </span>
         </Link>
-        <p className="mt-0.5 text-3xs font-semibold text-text-muted uppercase">
-          Civic AI
-        </p>
       </div>
 
-      <div className="relative flex-1 min-h-0">
-        <div ref={scrollRef} className="h-full px-3 space-y-1 overflow-y-auto">
+      <div className={clsx('relative', !isDrawer && 'flex-1 min-h-0')}>
+        {/* pt-1: the 2px-offset focus ring of the first row was clipped by
+            this scroll box's top edge (app-arms P2-10). */}
+        <div
+          ref={scrollRef}
+          className={clsx('px-3 pt-1 pb-3 space-y-1', !isDrawer && 'h-full overflow-y-auto')}
+        >
           {/* New Investigation — primary entry point */}
           <Link
             href="/investigate"
             onClick={onNavigate}
             aria-current={investigateActive ? 'page' : undefined}
             className={clsx(
-              `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
+              `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm transition-all duration-150`,
               investigateActive
                 ? 'bg-surface-3 text-text-primary'
                 : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -147,7 +169,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
               <span className="text-2xs font-medium text-text-faint leading-tight">Start here</span>
             </span>
             {investigateActive && (
-              <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
+              <span aria-hidden="true" className={clsx(ACTIVE_DOT, 'bg-text-secondary')} />
             )}
           </Link>
 
@@ -157,7 +179,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             onClick={onNavigate}
             aria-current={investigationsActive ? 'page' : undefined}
             className={clsx(
-              `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
+              `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm transition-all duration-150`,
               investigationsActive
                 ? 'bg-surface-3 text-text-primary'
                 : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -184,14 +206,18 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
               <span className="text-2xs font-medium text-text-faint leading-tight">Your history</span>
             </span>
             {investigationsActive && (
-              <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
+              <span aria-hidden="true" className={clsx(ACTIVE_DOT, 'bg-text-secondary')} />
             )}
           </Link>
 
-          {/* Forum — coming soon */}
+          {/* Forum — coming soon (R9). Visible at readable contrast while the
+              gate is off: no opacity dimming (it took the row below 2:1). The
+              words "Coming soon" carry the disabled meaning, for every reader,
+              not a mouse-only title. The gate itself lives in
+              src/lib/forum/flag.ts and is untouched. */}
           <span
-            className={`group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm opacity-40 cursor-not-allowed`}
-            title="Forum — coming soon"
+            data-nav="forum"
+            className={`flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm cursor-not-allowed`}
           >
             <span
               className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-border"
@@ -214,7 +240,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             onClick={onNavigate}
             aria-current={votesActive ? 'page' : undefined}
             className={clsx(
-              `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
+              `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm transition-all duration-150`,
               votesActive
                 ? 'text-text-primary'
                 : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -229,13 +255,16 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
                   : 'border-border group-hover:bg-surface-1 group-hover:border-border-strong'
               )}
             >
+              {/* Tinted at rest like the instruments (app-arms Q2-a): its
+                  active state already uses the accent. */}
               <Vote
                 size={14}
                 strokeWidth={1.75}
-                style={votesActive ? { color: 'var(--accent-votes)' } : undefined}
-                className={clsx(
-                  !votesActive && 'text-text-muted group-hover:text-text-secondary'
-                )}
+                style={{
+                  color: votesActive
+                    ? 'var(--accent-votes)'
+                    : 'color-mix(in srgb, var(--accent-votes) 62%, transparent)',
+                }}
               />
             </span>
             <span className="flex flex-col">
@@ -244,7 +273,8 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             </span>
             {votesActive && (
               <span
-                className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0"
+                aria-hidden="true"
+                className={ACTIVE_DOT}
                 style={{ backgroundColor: 'var(--accent-votes)' }}
               />
             )}
@@ -257,7 +287,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
               onClick={onNavigate}
               aria-current={moderationActive ? 'page' : undefined}
               className={clsx(
-                `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
+                `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm transition-all duration-150`,
                 moderationActive
                   ? 'bg-surface-3 text-text-primary'
                   : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
@@ -284,47 +314,10 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
                 <span className="text-2xs font-medium text-text-faint leading-tight">Review reports</span>
               </span>
               {moderationActive && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
+                <span aria-hidden="true" className={clsx(ACTIVE_DOT, 'bg-text-secondary')} />
               )}
             </Link>
           )}
-
-          {/* Profile */}
-          <Link
-            href="/profile"
-            onClick={onNavigate}
-            aria-current={profileActive ? 'page' : undefined}
-            className={clsx(
-              `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
-              profileActive
-                ? 'bg-surface-3 text-text-primary'
-                : 'text-text-secondary hover:bg-surface-3 hover:text-text-primary'
-            )}
-          >
-            <span
-              className={clsx(
-                'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 border',
-                profileActive
-                  ? 'bg-surface-1 border-border-strong shadow-sm'
-                  : 'border-border group-hover:bg-surface-1 group-hover:border-border-strong'
-              )}
-            >
-              <User
-                size={14}
-                strokeWidth={1.75}
-                className={clsx(
-                  profileActive ? 'text-text-primary' : 'text-text-muted group-hover:text-text-secondary'
-                )}
-              />
-            </span>
-            <span className="flex flex-col">
-              <span className="font-semibold leading-tight">Profile</span>
-              <span className="text-2xs font-medium text-text-faint leading-tight">Your identity</span>
-            </span>
-            {profileActive && (
-              <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
-            )}
-          </Link>
 
           {/* Divider */}
           <div className="mx-3 my-3 h-px bg-border" />
@@ -349,60 +342,61 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
               />
             </button>
 
-            {instrumentsOpen && (
-              <ul id="instruments-list" className="mt-0.5 space-y-0.5">
-                {arms.map((arm) => {
-                  const isActive = pathname.startsWith(arm.href)
-                  const Icon = arm.icon
-                  return (
-                    <li key={arm.name}>
-                      <Link
-                        href={arm.href}
-                        onClick={onNavigate}
-                        aria-current={isActive ? 'page' : undefined}
+            {/* Collapsing hides the list; it stays mounted so the toggle's
+                aria-controls always points at a real element (mobile P2-7). */}
+            <ul id="instruments-list" hidden={!instrumentsOpen} className="mt-0.5 space-y-0.5">
+              {arms.map((arm) => {
+                const isActive = pathname.startsWith(arm.href)
+                const Icon = arm.icon
+                return (
+                  <li key={arm.name}>
+                    <Link
+                      href={arm.href}
+                      onClick={onNavigate}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={clsx(
+                        `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${armPy} text-sm transition-all duration-150`,
+                        isActive
+                          ? 'text-text-primary'
+                          : 'text-text-muted hover:bg-surface-3 hover:text-text-secondary'
+                      )}
+                      style={isActive ? { backgroundColor: `color-mix(in srgb, var(--accent-${arm.name.toLowerCase()}) 8%, transparent)` } : undefined}
+                    >
+                      <span
                         className={clsx(
-                          `group flex items-center gap-3 rounded-lg px-3 ${armPy} text-sm transition-all duration-150`,
-                          isActive
-                            ? 'text-text-primary'
-                            : 'text-text-muted hover:bg-surface-3 hover:text-text-secondary'
+                          'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150',
+                          isActive ? 'bg-surface-1 shadow-sm' : 'group-hover:bg-surface-1'
                         )}
-                        style={isActive ? { backgroundColor: `color-mix(in srgb, var(--accent-${arm.name.toLowerCase()}) 8%, transparent)` } : undefined}
                       >
+                        {/* Resting-state accent tint (was flat text-muted) so the five instruments read as color-coded at rest, not only when active. Jen: confirm treatment. */}
+                        <Icon
+                          size={15}
+                          strokeWidth={1.75}
+                          style={{
+                            color: isActive
+                              ? `var(--accent-${arm.name.toLowerCase()})`
+                              : `color-mix(in srgb, var(--accent-${arm.name.toLowerCase()}) 62%, transparent)`,
+                          }}
+                        />
+                      </span>
+                      <span className="flex flex-col">
+                        <span className="font-medium leading-tight">{arm.name}</span>
+                        <span className="text-2xs font-medium text-text-muted leading-tight">
+                          {arm.description}
+                        </span>
+                      </span>
+                      {isActive && (
                         <span
-                          className={clsx(
-                            'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150',
-                            isActive ? 'bg-surface-1 shadow-sm' : 'group-hover:bg-surface-1'
-                          )}
-                        >
-                          {/* Resting-state accent tint (was flat text-muted) so the five instruments read as color-coded at rest, not only when active. Jen: confirm treatment. */}
-                          <Icon
-                            size={15}
-                            strokeWidth={1.75}
-                            style={{
-                              color: isActive
-                                ? `var(--accent-${arm.name.toLowerCase()})`
-                                : `color-mix(in srgb, var(--accent-${arm.name.toLowerCase()}) 62%, transparent)`,
-                            }}
-                          />
-                        </span>
-                        <span className="flex flex-col">
-                          <span className="font-medium leading-tight">{arm.name}</span>
-                          <span className="text-2xs font-medium text-text-muted leading-none">
-                            {arm.description}
-                          </span>
-                        </span>
-                        {isActive && (
-                          <span
-                            className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: `var(--accent-${arm.name.toLowerCase()})` }}
-                          />
-                        )}
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
+                          aria-hidden="true"
+                          className={ACTIVE_DOT}
+                          style={{ backgroundColor: `var(--accent-${arm.name.toLowerCase()})` }}
+                        />
+                      )}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
           </div>
 
           {/* Foundations — the philosophical groundwork */}
@@ -411,7 +405,7 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             onClick={onNavigate}
             aria-current={foundationsActive ? 'page' : undefined}
             className={clsx(
-              `group flex items-center gap-3 rounded-lg px-3 ${linkPy} text-sm transition-all duration-150`,
+              `group relative flex items-center gap-3 rounded-lg pl-3 pr-6 ${linkPy} text-sm transition-all duration-150`,
               foundationsActive
                 ? 'bg-surface-3 text-text-primary'
                 : 'text-text-muted hover:bg-surface-3 hover:text-text-secondary'
@@ -436,57 +430,71 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
               <span className="text-2xs font-medium text-text-faint leading-tight">The groundwork</span>
             </span>
             {foundationsActive && (
-              <span className="ml-auto h-1.5 w-1.5 rounded-full flex-shrink-0 bg-text-secondary" />
+              <span aria-hidden="true" className={clsx(ACTIVE_DOT, 'bg-text-secondary')} />
             )}
           </Link>
+
+          {/* Beta + support: the last thing in the scroll region (app-arms
+              P1-1 step 5, mobile P1-2), so the scope disclosure stays but no
+              longer costs fixed height. Both links are 44px tall (mobile
+              P2-16); the Report-a-bug trigger lives in FeedbackDialog, so its
+              height is set from here. */}
+          <div data-nav="beta" className="mt-3 rounded-lg border border-border bg-surface-3/50 px-3 pt-3 pb-1">
+            <p className="text-3xs font-semibold uppercase text-text-faint">
+              Beta
+            </p>
+            <p className="mt-1 text-2xs font-medium leading-relaxed text-text-muted">
+              Testing civic issues in BC, Alberta, and Ontario, with an environmental focus.
+            </p>
+            <a
+              href="https://ko-fi.com/toasted40013"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 flex min-h-11 items-center gap-1.5 text-2xs font-medium text-text-muted transition-colors hover:text-text-secondary"
+            >
+              <Heart size={11} strokeWidth={1.75} />
+              Support this project
+            </a>
+            <div className="[&>button]:min-h-11 [&>button]:w-full">
+              <FeedbackDialog />
+            </div>
+          </div>
         </div>
         {/* Scroll-fade "more below" cue — inert (and invisible) unless the
-            nav region actually overflows, so it never dims real content. */}
-        <div
-          aria-hidden="true"
-          className={clsx(
-            'pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-surface-2 to-transparent transition-opacity duration-150',
-            canScrollDown ? 'opacity-100' : 'opacity-0'
-          )}
-        />
-      </div>
-
-      {/* Beta + support */}
-      <div className="mx-3 rounded-lg border border-border bg-surface-3/50 px-3 py-3">
-        <p className="text-3xs font-semibold uppercase text-text-faint">
-          Beta
-        </p>
-        <p className="mt-1 text-2xs font-medium leading-relaxed text-text-muted">
-          Testing civic issues in BC, Alberta, and Ontario, with an environmental focus.
-        </p>
-        <a
-          href="https://ko-fi.com/toasted40013"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2 flex items-center gap-1.5 text-2xs font-medium text-text-muted transition-colors hover:text-text-secondary"
-        >
-          <Heart size={11} strokeWidth={1.75} />
-          Support this project
-        </a>
-        <div className="mt-2">
-          <FeedbackDialog />
-        </div>
-      </div>
-
-      {/* User / sign out */}
-      <div className="border-t border-border px-3 py-4">
-        {(displayName || userEmail) && (
-          <div className="mb-2 px-3">
-            {displayName ? (
-              <ProfileBadge displayName={displayName} size="sm" />
-            ) : null}
-            {userEmail && (
-              <p className="truncate text-2xs font-medium text-text-muted mt-1">
-                {userEmail}
-              </p>
+            nav region actually overflows, so it never dims real content.
+            Sidebar only: the drawer has no inner scroller to fade. */}
+        {!isDrawer && (
+          <div
+            aria-hidden="true"
+            className={clsx(
+              'pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-surface-2 to-transparent transition-opacity duration-150',
+              canScrollDown ? 'opacity-100' : 'opacity-0'
             )}
-          </div>
+          />
         )}
+      </div>
+
+      {/* Account. The identity is the way to /profile (the Profile row is
+          gone: it duplicated this block), and it shows the display name only,
+          never the email (app-arms P1-1 step 3, P2-16). In the drawer every
+          row is 44px (mobile P2-16); it scrolls with the rest of the nav. */}
+      <div className="border-t border-border px-3 py-3">
+        <Link
+          href="/profile"
+          onClick={onNavigate}
+          aria-current={profileActive ? 'page' : undefined}
+          className={clsx(
+            'flex items-center rounded-lg px-3 transition-colors hover:bg-surface-3',
+            isDrawer ? 'min-h-11' : 'py-2',
+            profileActive && 'bg-surface-3',
+          )}
+        >
+          {displayName ? (
+            <ProfileBadge displayName={displayName} size="sm" />
+          ) : (
+            <span className="text-sm font-medium text-text-secondary">Your profile</span>
+          )}
+        </Link>
         <button
           onClick={async () => {
             await fetch('/api/auth/signout', { method: 'POST' })
@@ -494,14 +502,20 @@ export function Sidebar({ userEmail, displayName, effectiveWeight = 0, variant =
             router.push('/login')
             router.refresh()
           }}
-          className={`flex w-full items-center gap-2.5 rounded-lg px-3 ${isDrawer ? 'py-3' : 'py-2'} text-sm text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary`}
+          className={clsx(
+            'flex w-full items-center gap-2.5 rounded-lg px-3 text-sm text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary',
+            isDrawer ? 'min-h-11' : 'py-2',
+          )}
         >
           <LogOut size={14} strokeWidth={1.75} />
           Sign out
         </button>
         <Link
           href="/privacy"
-          className="block px-3 pt-2 text-2xs text-text-faint transition-colors hover:text-text-muted"
+          className={clsx(
+            'flex items-center rounded-lg px-3 text-2xs text-text-faint transition-colors hover:text-text-muted',
+            isDrawer ? 'min-h-11' : 'py-1.5',
+          )}
           onClick={onNavigate}
         >
           Privacy
