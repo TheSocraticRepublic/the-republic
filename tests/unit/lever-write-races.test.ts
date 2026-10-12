@@ -740,13 +740,13 @@ describe.skipIf(!HARNESS_UP)(SUITE_TITLE, () => {
   })
 
   describe('fix pass: resolved investigation province, other-province bodies, briefing gate, filing transaction, body bound', () => {
-    async function investigationFor(jurisdictionName: string, opts: { briefing?: string; resolvedFrom?: string } = {}) {
+    async function investigationFor(jurisdictionName: string, opts: { briefing?: string; lens?: string; resolvedFrom?: string } = {}) {
       const [inv] = await db1<{ id: string }[]>`
-        insert into investigations (user_id, concern, jurisdiction_name, jurisdiction_id, briefing_text, status)
+        insert into investigations (user_id, concern, jurisdiction_name, jurisdiction_id, briefing_text, lens_context_text, status)
         values (
           ${OWNER.id}, 'Synthetic QA concern CONCERN-KEPT', ${jurisdictionName},
           ${opts.resolvedFrom ? db1`(select id from jurisdictions where name = ${opts.resolvedFrom} limit 1)` : null},
-          ${opts.briefing ?? null}, 'complete')
+          ${opts.briefing ?? null}, ${opts.lens ?? null}, 'complete')
         returning id`
       return inv.id
     }
@@ -816,10 +816,38 @@ describe.skipIf(!HARNESS_UP)(SUITE_TITLE, () => {
       expect(await lastLetterRequest()).toContain('BRIEFING-SENTINEL')
     })
 
+    it('lens gate: a BC investigation’s lens analysis never reaches an AB request’s prompt; it does reach a BC one', async () => {
+      const invId = await investigationFor('Victoria, British Columbia', {
+        lens: 'LENS-SENTINEL. Under the Freedom of Information and Protection of Privacy Act, RSBC 1996, c. 165, s. 4.',
+      })
+      await stub('/__qa/reset')
+      const ab = await insertAction({
+        content: '',
+        metadata: { publicBody: 'City of Edmonton', jurisdiction: 'ab', description: 'x' },
+        investigationId: invId,
+      })
+      expect((await generate(ab)).status).toBe(200)
+      const abSent = await lastLetterRequest()
+      expect(abSent).not.toContain('LENS-SENTINEL')
+      expect(abSent).not.toContain('RSBC')
+      expect(abSent).toContain('CONCERN-KEPT')
+
+      const bc = await insertAction({
+        content: '',
+        metadata: { publicBody: 'BC Ministry of Forests', jurisdiction: 'bc', description: 'x' },
+        investigationId: invId,
+      })
+      expect((await generate(bc)).status).toBe(200)
+      expect(await lastLetterRequest()).toContain('LENS-SENTINEL')
+    })
+
     it('N2: create refuses a typed body from another province, by name or alias, naming that province', async () => {
       const expected = {
         status: 400,
-        json: { error: 'That body is in the British Columbia directory. Choose British Columbia, or pick a body from the list.' },
+        json: {
+          error: 'That body is in the British Columbia directory. Choose British Columbia, or pick a body from the list.',
+          field: 'publicBody',
+        },
       }
       expect(await create({ actionType: 'fippa_request', description: 'x', publicBodyName: 'BC Ministry of Forests', jurisdiction: 'ab' })).toEqual(expected)
       expect(await create({ actionType: 'fippa_request', description: 'x', publicBodyName: 'Ministry of Forests', jurisdiction: 'ab' })).toEqual(expected)
@@ -843,7 +871,7 @@ describe.skipIf(!HARNESS_UP)(SUITE_TITLE, () => {
 
     it('N3: a typed Other name is capped at 200 characters', async () => {
       const over = await create({ actionType: 'fippa_request', description: 'x', publicBodyName: 'B'.repeat(201), jurisdiction: 'bc' })
-      expect(over).toEqual({ status: 400, json: { error: 'Keep the public body name to 200 characters or fewer' } })
+      expect(over).toEqual({ status: 400, json: { error: 'Keep the public body name to 200 characters or fewer', field: 'publicBody' } })
       const at = await create({ actionType: 'fippa_request', description: 'x', publicBodyName: 'B'.repeat(200), jurisdiction: 'bc' })
       expect(at.status).toBe(201)
       expect((await readRow(at.json.actionId as string)).metadata).toMatchObject({ publicBody: 'B'.repeat(200) })

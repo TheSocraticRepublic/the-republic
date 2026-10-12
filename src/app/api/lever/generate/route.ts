@@ -212,14 +212,14 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
   }
 
   // 3. Investigation context for richer FIPPA/comment generation
-  // For a FIPPA request the briefing (written under the investigation's own
-  // province, with its FOI contacts) is included only when that province is
-  // the request's; otherwise another province's citations and addresses could
-  // reach the prompt. The concern always stays.
+  // For a FIPPA request the briefing and the lens analysis (both written
+  // under the investigation's own province) are included only when that
+  // province is the request's; otherwise another province's citations and
+  // addresses could reach the prompt. The concern always stays.
   const isFippa = action.actionType === 'fippa_request'
-  const includeBriefing = !isFippa || resolveInvestigationProvince(investigation) === target.jurisdictionId
+  const sameProvince = !isFippa || resolveInvestigationProvince(investigation) === target.jurisdictionId
   const investigationContext = investigation
-    ? buildInvestigationContext(investigation, { includeBriefing })
+    ? buildInvestigationContext(investigation, { includeBriefing: sameProvince, includeLens: sameProvince })
     : ''
 
   // 4. The jurisdiction module. A FIPPA target is always a registered

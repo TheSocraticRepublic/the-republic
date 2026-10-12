@@ -283,15 +283,22 @@ describe('buildInvestigationContext', () => {
     return invParts.join('\n')
   }
   it('with the briefing it is byte-identical to the old block', () => {
-    expect(buildInvestigationContext(inv, { includeBriefing: true })).toBe(legacyBlock(inv))
+    expect(buildInvestigationContext(inv, { includeBriefing: true, includeLens: true })).toBe(legacyBlock(inv))
     const long: Inv = { ...inv, briefingText: 'b'.repeat(12_000), lensContextText: null, jurisdictionName: null }
-    expect(buildInvestigationContext(long, { includeBriefing: true })).toBe(legacyBlock(long))
+    expect(buildInvestigationContext(long, { includeBriefing: true, includeLens: true })).toBe(legacyBlock(long))
   })
   it('without it, only the briefing is dropped', () => {
-    const out = buildInvestigationContext(inv, { includeBriefing: false })
+    const out = buildInvestigationContext(inv, { includeBriefing: false, includeLens: true })
     expect(out).not.toContain('RSBC')
     expect(out).not.toContain('Briefing analysis')
     expect(out).toContain('Citizen concern: Synthetic concern')
     expect(out).toContain('Lens analysis:\nLens text.')
+  })
+  it('without the lens, only the lens is dropped', () => {
+    const lensWithCitation = { ...inv, lensContextText: 'Lens citing RSBC 1996, c. 165, s. 4.' }
+    const out = buildInvestigationContext(lensWithCitation, { includeBriefing: true, includeLens: false })
+    expect(out).not.toContain('Lens analysis')
+    expect(out).toContain('Briefing analysis')
+    expect(out).toContain('Citizen concern: Synthetic concern')
   })
 })

@@ -10,6 +10,7 @@ import {
   PROVINCE_OPTIONS,
   PUBLIC_BODY_DIRECTORY,
   isProvinceId,
+  provinceLabel,
   resolveInvestigationProvince,
   type ProvinceId,
 } from '@/lib/lever/public-body'
@@ -68,6 +69,13 @@ export function NewActionDialog({
   const gadflyInquiryId = useId()
   const provinceSelectId = useId()
   const otherBodyId = useId()
+  const bodyErrorId = useId()
+  const generateReasonId = useId()
+  const provinceSelectRef = useRef<HTMLSelectElement>(null)
+  const bodySelectRef = useRef<HTMLSelectElement>(null)
+  const otherBodyRef = useRef<HTMLInputElement>(null)
+  const descriptionRef = useRef<HTMLTextAreaElement>(null)
+  const createErrorRef = useRef<HTMLParagraphElement>(null)
 
   const [open, setOpen] = useState(!!(initialDocumentId || initialSessionId || initialInvestigationId))
   const [actionType, setActionType] = useState<ActionType>(
@@ -96,6 +104,8 @@ export function NewActionDialog({
   const [fetchingContext, setFetchingContext] = useState(false)
   const [dupWarning, setDupWarning] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  // A refusal the server tied to the public-body field, shown under it.
+  const [bodyError, setBodyError] = useState<string | null>(null)
   const router = useRouter()
 
   // Fetch documents, sessions, and the investigation (for the province) when the dialog opens
@@ -172,25 +182,46 @@ export function NewActionDialog({
     publicBodyChoice === OTHER_BODY ? otherBodyName.trim() : publicBodyChoice
   const canCreate = !!description.trim() && (!isFippa || !!province)
   const provinceUnverified = !!province && PROVINCE_OPTIONS.find((p) => p.id === province)?.verified === false
-  const provinceHint = !province
-    ? 'Choose the province this request goes to.'
-    : [
-        provinceDetected ? 'Detected from your investigation. Change it if it is wrong.' : null,
-        provinceUnverified
-          ? "This province's legal citations are not verified yet. Confirm them before you file."
-          : null,
-        !provinceDetected && !provinceUnverified ? "The request cites this province's access law." : null,
-      ]
-        .filter(Boolean)
-        .join(' ')
+  const showGenerateReason = isFippa && !province && !!description.trim()
+
+  // An error takes focus when it appears: the field-level one focuses the
+  // field it is about, the footer one focuses itself.
+  useEffect(() => {
+    if (!bodyError) return
+    if (publicBodyChoice === OTHER_BODY) otherBodyRef.current?.focus()
+    else bodySelectRef.current?.focus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bodyError])
+  useEffect(() => {
+    if (createError) createErrorRef.current?.focus()
+  }, [createError])
+
+  const clearErrors = () => {
+    setBodyError(null)
+    setCreateError(null)
+  }
 
   const handleCreate = useCallback(async () => {
-    if (!description.trim()) return
-    if (actionType === 'fippa_request' && !province) return
+    // Generate is aria-disabled, not disabled, while it can't run: it stays
+    // in the tab order, and activating it takes the citizen to what's missing.
+    if (!description.trim()) {
+      descriptionRef.current?.focus()
+      return
+    }
+    if (actionType === 'fippa_request' && !province) {
+      const select = provinceSelectRef.current
+      if (select) {
+        const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        select.scrollIntoView?.({ block: 'center', behavior: reduce ? 'auto' : 'smooth' })
+        select.focus()
+      }
+      return
+    }
     if (creatingRef.current) return
     creatingRef.current = true
     setLoading(true)
     setCreateError(null)
+    setBodyError(null)
     try {
       const res = await fetch('/api/lever/actions', {
         method: 'POST',
@@ -205,8 +236,17 @@ export function NewActionDialog({
           description: description.trim(),
         }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Failed to create action')
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        // A 4xx carries the server's own plain-instructional reason; show it.
+        // Network failures and 5xx keep the generic line below.
+        if (res.status >= 400 && res.status < 500 && typeof data?.error === 'string') {
+          if (data.field === 'publicBody') setBodyError(data.error)
+          else setCreateError(data.error)
+          return
+        }
+        throw new Error(`Create failed (${res.status})`)
+      }
       setOpen(false)
       router.push(`/lever/${data.actionId}`)
     } catch (err) {
@@ -224,6 +264,7 @@ export function NewActionDialog({
       setActionType((initialActionType as ActionType) || 'fippa_request')
       setPublicBodyChoice('')
       setOtherBodyName('')
+      setBodyError(null)
       setProvince('')
       setProvinceDetected(false)
       provinceTouchedRef.current = false
@@ -306,6 +347,7 @@ export function NewActionDialog({
                 </label>
                 <div className="relative">
                   <select
+                    ref={provinceSelectRef}
                     id={provinceSelectId}
                     value={province}
                     required
@@ -317,6 +359,9 @@ export function NewActionDialog({
                       setProvinceDetected(false)
                       // Bodies belong to one province; a new province clears the choice.
                       setPublicBodyChoice('')
+                      // ...including a typed "Other" name.
+                      setOtherBodyName('')
+                      clearErrors()
                     }}
                     className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0"
                   >
@@ -336,7 +381,19 @@ export function NewActionDialog({
                   />
                 </div>
                 <p id={`${provinceSelectId}-hint`} className="mt-1.5 text-2xs text-text-muted">
-                  {provinceHint}
+                  {!province && 'Choose the province this request goes to.'}
+                  {provinceUnverified && (
+                    <span className="block text-xs text-text-secondary">
+                      Open Cave has not verified {provinceLabel(province as ProvinceId)}&apos;s legal citations yet. Check
+                      each one against the Act before you file.
+                    </span>
+                  )}
+                  {province && provinceDetected && (
+                    <span className={clsx('block', provinceUnverified && 'mt-0.5')}>
+                      Detected from your investigation. Change it if it is wrong.
+                    </span>
+                  )}
+                  {province && !provinceDetected && !provinceUnverified && "The request cites this province's access law."}
                 </p>
               </div>
             )}
@@ -349,10 +406,16 @@ export function NewActionDialog({
                 </label>
                 <div className="relative">
                   <select
+                    ref={bodySelectRef}
                     id="action-public-body"
                     value={publicBodyChoice}
                     disabled={!province}
-                    onChange={(e) => setPublicBodyChoice(e.target.value)}
+                    aria-invalid={bodyError && publicBodyChoice !== OTHER_BODY ? true : undefined}
+                    aria-describedby={bodyError && publicBodyChoice !== OTHER_BODY ? bodyErrorId : undefined}
+                    onChange={(e) => {
+                      setPublicBodyChoice(e.target.value)
+                      clearErrors()
+                    }}
                     className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <option value="">{province ? 'Select a public body...' : 'Choose a province first'}</option>
@@ -375,15 +438,26 @@ export function NewActionDialog({
                       Public body name
                     </label>
                     <input
+                      ref={otherBodyRef}
                       id={otherBodyId}
                       type="text"
                       value={otherBodyName}
                       maxLength={200}
-                      onChange={(e) => setOtherBodyName(e.target.value)}
+                      aria-invalid={bodyError ? true : undefined}
+                      aria-describedby={bodyError ? bodyErrorId : undefined}
+                      onChange={(e) => {
+                        setOtherBodyName(e.target.value)
+                        clearErrors()
+                      }}
                       placeholder="Name of the public body"
                       className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-lever)]/40"
                     />
                   </div>
+                )}
+                {bodyError && (
+                  <p id={bodyErrorId} className="mt-1.5 text-xs text-status-danger">
+                    {bodyError}
+                  </p>
                 )}
               </div>
             )}
@@ -476,6 +550,7 @@ export function NewActionDialog({
                   : 'What policy topic?'}
               </label>
               <textarea
+                ref={descriptionRef}
                 id="action-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -486,9 +561,18 @@ export function NewActionDialog({
             </div>
           </div>
 
-          {/* Error alert */}
+          {/* Error alert (failures not tied to a field) */}
           {createError && (
-            <p role="alert" className="mt-4 text-xs text-status-danger">{createError}</p>
+            <p ref={createErrorRef} role="alert" tabIndex={-1} className="mt-4 text-xs text-status-danger outline-none">
+              {createError}
+            </p>
+          )}
+
+          {/* Why Generate is unavailable: the province select may be off-screen */}
+          {showGenerateReason && (
+            <p id={generateReasonId} className="mt-4 text-right text-xs text-text-muted">
+              Choose a province to generate this request.
+            </p>
           )}
 
           {/* Actions */}
@@ -497,13 +581,21 @@ export function NewActionDialog({
               Cancel
             </Dialog.Close>
             <button
+              type="button"
               onClick={handleCreate}
-              disabled={loading || !canCreate}
+              // aria-disabled, never disabled: the button keeps focus while
+              // busy and stays reachable while incomplete. creatingRef blocks
+              // a second send; handleCreate routes an incomplete activation.
+              aria-disabled={loading || !canCreate}
+              aria-busy={loading || undefined}
+              aria-describedby={showGenerateReason ? generateReasonId : undefined}
               className={clsx(
                 'rounded-lg px-5 py-2 text-sm font-medium transition-all duration-150',
-                loading || !canCreate
-                  ? 'cursor-not-allowed opacity-40'
-                  : 'hover:opacity-90'
+                loading
+                  ? 'cursor-progress'
+                  : !canCreate
+                    ? 'cursor-not-allowed opacity-40'
+                    : 'hover:opacity-90'
               )}
               style={{
                 backgroundColor: 'color-mix(in srgb, var(--accent-lever) 20%, transparent)',

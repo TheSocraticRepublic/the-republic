@@ -140,10 +140,10 @@ Voice: Formal. This is a legal document, not a blog post.`
 }
 
 /**
- * The INVESTIGATION CONTEXT block of the user message. With
- * `includeBriefing: true` it is byte-identical to the block before A2's fix
- * pass; `false` drops only the briefing analysis (the concern, jurisdiction
- * name and lens analysis stay).
+ * The INVESTIGATION CONTEXT block of the user message. With both flags true
+ * it is byte-identical to the block before A2's fix pass. `includeBriefing:
+ * false` drops the briefing analysis and `includeLens: false` the lens
+ * analysis; the concern and jurisdiction name always stay.
  */
 export function buildInvestigationContext(
   investigation: {
@@ -152,7 +152,7 @@ export function buildInvestigationContext(
     briefingText: string | null
     lensContextText: string | null
   },
-  opts: { includeBriefing: boolean }
+  opts: { includeBriefing: boolean; includeLens: boolean }
 ): string {
   const invParts: string[] = ['INVESTIGATION CONTEXT:']
   invParts.push(`Citizen concern: ${investigation.concern}`)
@@ -162,7 +162,7 @@ export function buildInvestigationContext(
   if (opts.includeBriefing && investigation.briefingText) {
     invParts.push(`Briefing analysis:\n${investigation.briefingText.slice(0, 10_000)}`)
   }
-  if (investigation.lensContextText) {
+  if (opts.includeLens && investigation.lensContextText) {
     invParts.push(`Lens analysis:\n${investigation.lensContextText.slice(0, 5_000)}`)
   }
   return invParts.join('\n')

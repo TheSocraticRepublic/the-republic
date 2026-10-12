@@ -126,13 +126,16 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
       // rather than stored and refused at every generation.
       const listing = listedIn(typedBodyName)
       if (listing && listing.province !== province) {
-        return NextResponse.json({ error: otherProvinceBodyError(listing.province) }, { status: 400 })
+        return NextResponse.json(
+          { error: otherProvinceBodyError(listing.province), field: 'publicBody' },
+          { status: 400 }
+        )
       }
       if (listing) {
         publicBody = listing.name
       } else if (typedBodyName.length > MAX_PUBLIC_BODY_NAME_LENGTH) {
         return NextResponse.json(
-          { error: `Keep the public body name to ${MAX_PUBLIC_BODY_NAME_LENGTH} characters or fewer` },
+          { error: `Keep the public body name to ${MAX_PUBLIC_BODY_NAME_LENGTH} characters or fewer`, field: 'publicBody' },
           { status: 400 }
         )
       }
