@@ -51,12 +51,20 @@ const NO_BREAK_PENALTY = 10000
 const noBreak = { hyphenationPenalty: NO_BREAK_PENALTY } as Record<string, unknown>
 
 /**
- * A word fits a measure when its measured width is at most this share of
- * it. The margin covers what summing per-character advances leaves out
- * (kerning, shaping) so the layout engine never finds a pre-broken line wider
- * than the box it is given.
+ * A word fits a measure when its whole-word width (kerning included, laid out
+ * by the embedded font itself) is within this many points of it. Only a word
+ * wider than that is cut (Jen C3: no 5% loss on every line).
  */
-export const FIT_FACTOR = 0.95
+export const FIT_TOLERANCE = 1
+
+/** A word whose advance estimate exceeds this share of the limit is measured whole. */
+const KERN_CHECK = 0.9
+
+/** Words are laid out for measuring in slices of at most this many characters. */
+const WORD_SLICE = 256
+
+/** A cut never leaves a last piece shorter than this many characters (Jen C3). */
+export const MIN_TAIL = 4
 
 export const PDF_PAPER = {
   ground: '#FFFFFF',
@@ -86,12 +94,25 @@ type FaceKey = 'regular' | 'bold' | 'italic' | 'boldItalic'
 
 interface FontkitFace {
   unitsPerEm: number
-  layout(text: string): { advanceWidth: number }
+  layout(text: string): {
+    advanceWidth: number
+    glyphs: { codePoints: number[] }[]
+    positions: { xAdvance: number }[]
+  }
 }
 
-/** The width of text in points, for a face at a size. */
+/** Widths in points, for a face at a size. */
 export interface LetterMetrics {
+  /** Sum of per-character advances (an estimate; no kerning). */
   width(text: string, face: FaceKey, fontSize: number): number
+  /** The text laid out whole by the font (kerning and shaping included). */
+  run(text: string, face: FaceKey, fontSize: number): number
+  /**
+   * The same layout's advance per code point, kerning included: a glyph's
+   * advance goes to the first code point it covers (a ligature's others get
+   * 0). Summing a range is that range's width as laid out in the word.
+   */
+  advances(text: string, face: FaceKey, fontSize: number): number[]
 }
 
 /**
@@ -117,6 +138,7 @@ export async function loadLetterMetrics(): Promise<LetterMetrics> {
     faces[key] = source.data
   }
   const cache = new Map<string, number>()
+  const runCache = new Map<string, number>()
   return {
     width(text, face, fontSize) {
       const f = faces[face]
@@ -129,6 +151,28 @@ export async function loadLetterMetrics(): Promise<LetterMetrics> {
           cache.set(k, w)
         }
         units += w
+      }
+      return (units / f.unitsPerEm) * fontSize
+    },
+    advances(text, face, fontSize) {
+      const f = faces[face]
+      const laid = f.layout(text)
+      const n = Array.from(text).length
+      const out = new Array<number>(n).fill(0)
+      let at = 0
+      laid.glyphs.forEach((g, i) => {
+        if (at < n) out[at] += (laid.positions[i].xAdvance / f.unitsPerEm) * fontSize
+        at += Math.max(1, g.codePoints.length)
+      })
+      return out
+    },
+    run(text, face, fontSize) {
+      const f = faces[face]
+      const k = `${face}\u0000${text}`
+      let units = runCache.get(k)
+      if (units === undefined) {
+        units = f.layout(text).advanceWidth
+        if (text.length <= 200) runCache.set(k, units)
       }
       return (units / f.unitsPerEm) * fontSize
     },
@@ -355,6 +399,7 @@ export function flattenInlines(inlines: Inline[], marks: PieceStyle[] = []): Pie
 interface Glyph {
   ch: string
   marks: PieceStyle[]
+  face: FaceKey
   width: number
 }
 
@@ -364,38 +409,143 @@ function faceOf(marks: PieceStyle[], bold: boolean): FaceKey {
   return b ? (i ? 'boldItalic' : 'bold') : i ? 'italic' : 'regular'
 }
 
+/** Re-measure glyphs [a, b) (one word) from whole layouts of each face segment. */
+function measureWhole(glyphs: Glyph[], a: number, b: number, m: Measure) {
+  for (let seg = a; seg < b; ) {
+    let segEnd = seg
+    while (segEnd < b && glyphs[segEnd].face === glyphs[seg].face) segEnd++
+    // Laid out in slices of at most WORD_SLICE characters: shaping is not
+    // linear in the run's length, and a 100,000-character token must not
+    // stall the estimate. A slice seam loses at most one kerning pair.
+    for (let c = seg; c < segEnd; c += WORD_SLICE) {
+      const d = Math.min(segEnd, c + WORD_SLICE)
+      let text = ''
+      for (let k = c; k < d; k++) text += glyphs[k].ch
+      const adv = m.metrics.advances(text, glyphs[seg].face, m.fontSize)
+      for (let k = c; k < d; k++) glyphs[k].width = adv[k - c]
+    }
+    seg = segEnd
+  }
+}
+
+/** Width of glyphs [from, to): their advances (kerned, for any word measured whole). */
+function runWidth(glyphs: Glyph[], from: number, to: number): number {
+  let w = 0
+  for (let k = from; k < to; k++) w += glyphs[k].width
+  return w
+}
+
+/** A token that reads as a URL (Jen C3c): it breaks at its own punctuation first. */
+function isUrlShaped(glyphs: Glyph[], from: number, to: number): boolean {
+  let text = ''
+  for (let k = from; k < Math.min(to, from + 12); k++) text += glyphs[k].ch
+  return /^\(?(https?:\/\/|www\.)/i.test(text) || (to - from > 8 && glyphs.slice(from, to).some((g, i, a) => g.ch === '/' && a[i + 1]?.ch === '/'))
+}
+
+/**
+ * Is "cut before glyph k" a conventional URL break? After "//"; before
+ * / . - _ ? # %; before or after = and &.
+ */
+function isUrlBreak(glyphs: Glyph[], k: number): boolean {
+  const c = glyphs[k]?.ch
+  const prev = glyphs[k - 1]?.ch
+  if (prev === '/' && glyphs[k - 2]?.ch === '/') return true
+  if (c === '/' && prev === '/') return false
+  if (c !== undefined && '/.-_?#%'.includes(c)) return true
+  if ((c !== undefined && '=&'.includes(c)) || (prev !== undefined && '=&'.includes(prev))) return true
+  return false
+}
+
+/**
+ * Cut glyphs [from, to) (one word wider than the limit) into pieces whose
+ * whole-run widths fit. A URL-shaped word breaks at the nearest conventional
+ * point in the last third of a piece; otherwise at a character. The last
+ * piece is never shorter than MIN_TAIL characters: the shortfall comes from
+ * the piece before it.
+ */
+function cutWord(glyphs: Glyph[], from: number, to: number, limit: number): number[] {
+  const url = isUrlShaped(glyphs, from, to)
+  const ends: number[] = []
+  let s = from
+  while (s < to) {
+    let e = s
+    let used = 0
+    while (e < to && used + glyphs[e].width <= limit) used += glyphs[e++].width
+    if (e === s) e = s + 1
+    if (url && e < to) {
+      const floor = s + Math.ceil(((e - s) * 2) / 3)
+      for (let k = e; k > floor; k--) {
+        if (isUrlBreak(glyphs, k)) {
+          e = k
+          break
+        }
+      }
+    }
+    ends.push(e)
+    s = e
+  }
+  // No tail under MIN_TAIL characters.
+  const n = ends.length
+  if (n >= 2) {
+    const tail = ends[n - 1] - ends[n - 2]
+    const prevStart = n >= 3 ? ends[n - 3] : from
+    if (tail < MIN_TAIL && ends[n - 2] - prevStart > MIN_TAIL) {
+      ends[n - 2] = Math.max(prevStart + 1, ends[n - 1] - MIN_TAIL)
+    }
+  }
+  return ends
+}
+
 /**
  * Break a line's pieces into lines that each fit `m.measure`, or return null
  * when no word is too wide and the block fits on a page (the layout engine
  * then wraps at spaces itself).
  *
- * Greedy: words, each with the spaces after it, fill a line while they fit;
- * a word wider than the measure starts a new line and is cut at character
- * boundaries (by code point, so no surrogate pair is split) into pieces that
- * each fit. Every character lands in exactly one line, in order, and nothing
- * is added. Linear in the line's length.
+ * Greedy: words, each with the spaces after it, fill a line while they fit
+ * the full measure (within FIT_TOLERANCE); only a word wider than that starts
+ * a new line and is cut (cutWord), by code point, so no surrogate pair is
+ * split. Every character lands in exactly one line, in order, and nothing is
+ * added. Linear in the line's length.
  */
 export function breakToFit(pieces: Piece[], m: Measure): Piece[][] | null {
-  const limit = m.measure * FIT_FACTOR
+  const limit = m.measure - FIT_TOLERANCE
   const glyphs: Glyph[] = []
   for (const p of pieces) {
     const face = faceOf(p.marks, m.bold)
-    for (const ch of p.text) glyphs.push({ ch, marks: p.marks, width: m.metrics.width(ch, face, m.fontSize) })
+    for (const ch of p.text) glyphs.push({ ch, marks: p.marks, face, width: 0 })
+  }
+  // Widths start as cached per-character advances (cheap). A word whose
+  // estimate comes near the limit is then measured properly: one whole
+  // layout per face segment, kerning included, so the cut decision and the
+  // cut points use the font's own widths (Jen C3). Words far under the limit
+  // never need it: kerning moves a word by a few percent at most.
+  for (const g of glyphs) g.width = m.metrics.width(g.ch, g.face, m.fontSize)
+  for (let a = 0; a < glyphs.length; ) {
+    if (glyphs[a].ch === ' ') {
+      a++
+      continue
+    }
+    let b = a
+    let est = 0
+    while (b < glyphs.length && glyphs[b].ch !== ' ') est += glyphs[b++].width
+    if (est > limit * KERN_CHECK) measureWhole(glyphs, a, b, m)
+    a = b
   }
 
   // Words: [start, wordEnd) non-space, [wordEnd, spaceEnd) spaces.
-  const words: { start: number; wordEnd: number; spaceEnd: number; width: number }[] = []
+  const words: { start: number; wordEnd: number; spaceEnd: number; width: number; spaceWidth: number }[] = []
   let tooWide = false
   let total = 0
   for (let i = 0; i < glyphs.length; ) {
     let wordEnd = i
-    let width = 0
-    while (wordEnd < glyphs.length && glyphs[wordEnd].ch !== ' ') width += glyphs[wordEnd++].width
+    while (wordEnd < glyphs.length && glyphs[wordEnd].ch !== ' ') wordEnd++
     let spaceEnd = wordEnd
-    while (spaceEnd < glyphs.length && glyphs[spaceEnd].ch === ' ') spaceEnd++
+    let spaceWidth = 0
+    while (spaceEnd < glyphs.length && glyphs[spaceEnd].ch === ' ') spaceWidth += glyphs[spaceEnd++].width
+    const width = runWidth(glyphs, i, wordEnd)
     if (width > limit) tooWide = true
-    for (let k = i; k < spaceEnd; k++) total += glyphs[k].width
-    words.push({ start: i, wordEnd, spaceEnd, width })
+    total += width + spaceWidth
+    words.push({ start: i, wordEnd, spaceEnd, width, spaceWidth })
     i = spaceEnd
   }
   // A paragraph that would run past a page is broken here too: react-pdf
@@ -412,22 +562,23 @@ export function breakToFit(pieces: Piece[], m: Measure): Piece[][] | null {
   }
   for (const w of words) {
     const spaces = glyphs.slice(w.wordEnd, w.spaceEnd)
-    const spaceWidth = spaces.reduce((n, g) => n + g.width, 0)
     if (w.width <= limit) {
       if (used > 0 && used + w.width > limit) newLine()
       lines[lines.length - 1].push(...glyphs.slice(w.start, w.spaceEnd))
-      used += w.width + spaceWidth
+      used += w.width + w.spaceWidth
       continue
     }
     if (used > 0) newLine()
-    for (let k = w.start; k < w.wordEnd; k++) {
-      const g = glyphs[k]
-      if (used > 0 && used + g.width > limit) newLine()
-      lines[lines.length - 1].push(g)
-      used += g.width
-    }
+    let s = w.start
+    const ends = cutWord(glyphs, w.start, w.wordEnd, limit)
+    ends.forEach((e, idx) => {
+      if (idx > 0) newLine()
+      lines[lines.length - 1].push(...glyphs.slice(s, e))
+      used = runWidth(glyphs, s, e)
+      s = e
+    })
     lines[lines.length - 1].push(...spaces)
-    used += spaceWidth
+    used += w.spaceWidth
   }
 
   // Re-group each line's characters into runs of equal marks.

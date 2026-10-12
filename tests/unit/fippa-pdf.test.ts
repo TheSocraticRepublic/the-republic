@@ -30,7 +30,7 @@ import * as path from 'node:path'
 import { JSDOM as UntypedJSDOM } from 'jsdom'
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { renderLeverPdf } from '@/lib/pdf/render'
-import { loadLetterMetrics, estimateRenderCost, RENDER_COST_LIMIT, FIT_FACTOR } from '@/lib/pdf/templates/fippa-request'
+import { loadLetterMetrics, estimateRenderCost, RENDER_COST_LIMIT, BODY_MEASURE } from '@/lib/pdf/templates/fippa-request'
 import { FOOTER_BAND_TOP, FOOTER_BAND_BOTTOM } from '@/lib/pdf/primitives'
 import { PUBLIC_BODY_DIRECTORY, resolveRecipient, type RecipientResolution } from '@/lib/lever/public-body'
 import {
@@ -266,7 +266,7 @@ describe('FIPPA PDF: words wider than the measure (Razor W1)', () => {
       const { pdf } = await renderFixture(fx)
       expect(squash(letterPagesText(pdf))).toBe(squash(fx.expectedLetter))
       if (fx.id === 'wide-guidance') expect(squash(guidancePagesText(pdf))).toContain('W'.repeat(60))
-      // A line broken here is cut to FIT_FACTOR of its own measure, measured
+      // A line broken here fits its own measure, measured
       // in its own face: a heading's lines in bold, a list item's after its
       // prefix box. The rendered glyphs (pdfjs widths are the real ones) must
       // end inside that, not merely inside the page margin.
@@ -276,7 +276,7 @@ describe('FIPPA PDF: words wider than the measure (Razor W1)', () => {
         const measure = 72 + 468 - start
         const body = pdf.pages[0].items.filter((i) => /^[kW]+$/.test(i.str))
         expect(body.length).toBeGreaterThan(1)
-        for (const it of body) expect(it.right - start, it.str.slice(0, 10)).toBeLessThanOrEqual(measure * FIT_FACTOR + 0.5)
+        for (const it of body) expect(it.right - start, it.str.slice(0, 10)).toBeLessThanOrEqual(measure + 0.5)
       }
       for (const p of pdf.pages) {
         for (const it of p.items) {
@@ -288,6 +288,64 @@ describe('FIPPA PDF: words wider than the measure (Razor W1)', () => {
     },
     30_000
   )
+})
+
+describe('FIPPA PDF: where a word is cut (Jen C3)', () => {
+  /** n copies of ch, the longest whose whole width is at most `share` of the body measure. */
+  async function tokenAt(ch: string, share: number): Promise<string> {
+    const metrics = await loadLetterMetrics()
+    let n = 1
+    while (metrics.run(ch.repeat(n + 1), 'regular', 12) <= BODY_MEASURE * share) n++
+    return ch.repeat(n)
+  }
+
+  it('a token at 97% of the measure is not cut: it sits whole on one line', async () => {
+    const token = await tokenAt('n', 0.97)
+    const { pdf } = await renderFixture({ content: `Lead in ${token} after.`, format: undefined })
+    expect(squash(letterPagesText(pdf))).toBe(squash(`Lead in ${token} after.`))
+    expect(pdf.pages[0].items.some((i) => i.str.includes(token))).toBe(true)
+  })
+
+  it('a token just over the measure is cut, and no piece is shorter than 4 characters', async () => {
+    const line = await tokenAt('n', 1)
+    for (const extra of [1, 2, 3]) {
+      const token = line + 'n'.repeat(extra + 4)
+      const { pdf } = await renderFixture({ content: token, format: undefined })
+      expect(squash(letterPagesText(pdf))).toBe(token)
+      const pieces = pdf.pages[0].items.map((i) => i.str).filter((t) => /^n+$/.test(t))
+      expect(pieces.length, `extra ${extra}`).toBeGreaterThan(1)
+      for (const piece of pieces) expect(piece.length, `extra ${extra}`).toBeGreaterThanOrEqual(4)
+    }
+    const short = line + 'n'
+    const { pdf } = await renderFixture({ content: short, format: undefined })
+    const pieces = pdf.pages[0].items.map((i) => i.str).filter((t) => /^n+$/.test(t))
+    expect(pieces.join('')).toBe(short)
+    for (const piece of pieces) expect(piece.length).toBeGreaterThanOrEqual(4)
+  })
+
+  it('a long URL breaks at its own punctuation, never mid-word when a break point is near', async () => {
+    const url =
+      'https://www2.gov.bc.ca/gov/content/governments/about-the-bc-government/open-government/open-information/freedom-of-information/foi-faq?section=contacts&lang=en#operations-and-requests-for-records'
+    const { pdf } = await renderFixture({ content: `Source: ${url}`, format: undefined })
+    expect(squash(letterPagesText(pdf))).toBe(squash(`Source: ${url}`))
+    // One string per visual line (pdfjs may split a line into several items).
+    const byLine = new Map<number, string>()
+    for (const it of pdf.pages[0].items) {
+      if (isFooter(it.str)) continue
+      const y = Math.round(it.baseline)
+      byLine.set(y, (byLine.get(y) ?? '') + it.str)
+    }
+    const parts = [...byLine.entries()].sort((a, b) => b[0] - a[0]).map(([, t]) => t).filter((t) => t.trim())
+    const first = parts.findIndex((t) => t.includes('https'))
+    const urlParts = [parts[first].slice(parts[first].indexOf('https')), ...parts.slice(first + 1)]
+    expect(urlParts.length).toBeGreaterThan(1)
+    for (let k = 1; k < urlParts.length; k++) {
+      const before = urlParts[k - 1].trimEnd()
+      const next = urlParts[k]
+      const ok = before.endsWith('//') || /^[/.\-_?#%=&]/.test(next) || /[=&]$/.test(before)
+      expect(ok, `${before.slice(-12)} | ${next.slice(0, 12)}`).toBe(true)
+    }
+  })
 })
 
 const GEOMETRY_FIXTURES = [
@@ -609,10 +667,13 @@ async function largestAdmitted(unit: string, joiner = '\n', cap = MAX_CONTENT): 
   const metrics = await loadLetterMetrics()
   const make = (n: number) => Array.from({ length: n }, () => unit).join(joiner)
   let lo = 1
-  let hi = 20000
+  let hi = 4000
   while (lo < hi) {
     const mid = Math.ceil((lo + hi) / 2)
-    if (estimateRenderCost(make(mid), undefined, metrics) <= RENDER_COST_LIMIT && make(mid).length <= cap) lo = mid
+    // Length first: estimating a multi-megabyte string would fill the heap
+    // and slow the render this test then times.
+    const text = make(mid)
+    if (text.length <= cap && estimateRenderCost(text, undefined, metrics) <= RENDER_COST_LIMIT) lo = mid
     else hi = mid - 1
   }
   return make(lo)
