@@ -14,19 +14,32 @@
  * 2. The writer guard (`assertLocalQaDatabaseUrl` and friends). Before every
  *    database writer the harness launches, it validates the EFFECTIVE URL that
  *    tool will use:
- *      - drizzle-kit and scripts/apply-custom-migrations.ts use
- *        resolveMigrationDatabaseUrl(), which PREFERS DIRECT_DATABASE_URL over
- *        DATABASE_URL. Checking DATABASE_URL alone would wave through a remote
- *        DIRECT_DATABASE_URL, so the migration check calls the resolver itself.
- *      - the seed and the app use DATABASE_URL.
+ *      - `assertLocalMigrationTarget()` validates the URL
+ *        resolveMigrationDatabaseUrl() returns, which PREFERS
+ *        DIRECT_DATABASE_URL over DATABASE_URL. Every script that resolves its
+ *        URL through that helper dials it: drizzle-kit (drizzle.config.ts),
+ *        scripts/apply-custom-migrations.ts, AND scripts/seed-jurisdictions.ts.
+ *        Checking DATABASE_URL alone would wave through a remote
+ *        DIRECT_DATABASE_URL, so this check calls the resolver itself.
+ *      - `assertLocalAppTarget()` validates DATABASE_URL only. That is what the
+ *        app runtime (src/lib/db/index.ts) dials, and nothing else. It is NOT a
+ *        sufficient guard for any script that resolves its URL through
+ *        resolveMigrationDatabaseUrl(), the seed included: those must be guarded
+ *        with `assertLocalMigrationTarget()` or `assertLocalQaTargets()`.
+ *      - `assertLocalQaTargets()` runs both. It is the default for ANY harness
+ *        writer; reach for a narrower helper only when the writer's URL source
+ *        has been read and is known to be the one that helper validates.
  *    A URL passes only with a loopback host, port 55432 written explicitly, and
- *    a database name ending `_qa`.
+ *    a database name ending `_qa` with no `%` in it.
  *
  * Host parsing mirrors postgres.js 3.4 (`parseUrl`/`parseOptions`): an empty
  * host, port or database in the URL makes postgres.js fall back to PGHOST,
  * PGPORT and PGDATABASE, and a comma in the authority is a multi-host list. All
  * of those are refused rather than interpreted, because the guard must judge the
- * address postgres.js will actually dial, not a guess at it.
+ * address postgres.js will actually dial, not a guess at it. The database name
+ * is the RAW (undecoded) path, as postgres.js 3.4.8 takes it
+ * (`url.pathname.slice(1)`); any `%` in it is refused, so no percent-escape can
+ * make the guard and the driver read different names.
  */
 
 import { resolveMigrationDatabaseUrl } from './migration-database-url'
@@ -75,7 +88,8 @@ export function parseDatabaseUrl(url: string): ParsedDatabaseUrl {
   return {
     host: parsed.hostname.toLowerCase(),
     port: parsed.port,
-    database: decodeURIComponent(parsed.pathname.replace(/^\//, '')),
+    // Raw, not decoded: postgres.js dials `url.pathname.slice(1)` verbatim.
+    database: parsed.pathname.replace(/^\//, ''),
   }
 }
 
@@ -108,6 +122,11 @@ export function assertLocalQaDatabaseUrl(url: string | undefined, label: string)
       `${label} rejected: port "${parsed.port || '(unset)'}" is not ${QA_DB_PORT}`
     )
   }
+  if (parsed.database.includes('%')) {
+    throw new Error(
+      `${label} rejected: database "${parsed.database}" contains a percent-escape; write the name literally`
+    )
+  }
   if (!parsed.database.endsWith(QA_DB_NAME_SUFFIX) || parsed.database === QA_DB_NAME_SUFFIX) {
     throw new Error(
       `${label} rejected: database "${parsed.database || '(unset)'}" does not end in ${QA_DB_NAME_SUFFIX}`
@@ -132,12 +151,22 @@ export function assertLocalMigrationTarget(): void {
   assertLocalQaDatabaseUrl(effective, `${label} (effective migration URL)`)
 }
 
-/** Guard for the seed and the app server: validates DATABASE_URL. */
+/**
+ * Guard for the app server only: validates DATABASE_URL, which is what
+ * src/lib/db/index.ts dials. NOT sufficient on its own for any script that
+ * resolves its URL through resolveMigrationDatabaseUrl() (drizzle-kit, the
+ * custom runner, scripts/seed-jurisdictions.ts): those prefer
+ * DIRECT_DATABASE_URL, so guard them with assertLocalMigrationTarget() or
+ * assertLocalQaTargets().
+ */
 export function assertLocalAppTarget(): void {
   assertLocalQaDatabaseUrl(process.env.DATABASE_URL, 'DATABASE_URL')
 }
 
-/** Both guards: what the harness runs before any writer starts. */
+/**
+ * Both guards. The DEFAULT for every harness writer, and what the harness runs
+ * before any writer starts.
+ */
 export function assertLocalQaTargets(): void {
   assertLocalMigrationTarget()
   assertLocalAppTarget()

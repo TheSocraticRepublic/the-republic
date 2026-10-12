@@ -68,6 +68,17 @@ describe('assertLocalQaDatabaseUrl', () => {
     ).toThrow(/does not end in _qa/)
   })
 
+  it('judges the raw database name postgres.js dials, refusing any percent-escape', () => {
+    // postgres.js 3.4.8 takes url.pathname.slice(1) undecoded, so this URL
+    // would dial database "republic%5Fqa", not "republic_qa".
+    expect(parseDatabaseUrl('postgres://u:p@127.0.0.1:55432/republic%5Fqa').database).toBe(
+      'republic%5Fqa'
+    )
+    expect(() =>
+      assertLocalQaDatabaseUrl('postgres://u:p@127.0.0.1:55432/republic%5Fqa', 'DATABASE_URL')
+    ).toThrow(/database "republic%5Fqa" contains a percent-escape/)
+  })
+
   it('refuses a database left to the PGDATABASE default', () => {
     expect(() =>
       assertLocalQaDatabaseUrl('postgres://u:p@127.0.0.1:55432', 'DATABASE_URL')
