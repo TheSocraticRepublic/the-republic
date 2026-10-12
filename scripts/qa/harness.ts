@@ -44,6 +44,7 @@ import * as url from 'node:url'
 import { assertLocalQaTargets } from '../lib/local-db-guard'
 import { QA_JWT_SECRET_PREFIX, QA_LOGIN_CODE, QA_USER_A, QA_USER_B } from './seed-local'
 import { AI_STUB_LETTERS, AI_STUB_MIRROR_TEXT } from '../../tests/fixtures/letters'
+import { interceptSendCode } from './browser'
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
@@ -421,20 +422,6 @@ async function appRequest(
 
 function httpGet(pathname: string, cookie?: string): Promise<Response> {
   return appRequest('GET', pathname, { cookie })
-}
-
-/**
- * W3: no browser the harness drives may reach send-code (it would call Resend
- * with the dummy key and the synthetic address). Installed on the CONTEXT, so
- * it covers every page in it. Exported for later batches' browser tests.
- */
-export async function interceptSendCode(context: import('playwright').BrowserContext): Promise<{ count: number }> {
-  const counter = { count: 0 }
-  await context.route('**/api/auth/send-code', async (route) => {
-    counter.count++
-    await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' })
-  })
-  return counter
 }
 
 async function mintCookie(values: Record<string, string>, user: 'a' | 'b'): Promise<{ header: string; json: Record<string, unknown> }> {
@@ -1013,7 +1000,11 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(`[harness] ${err instanceof Error ? err.message : String(err)}`)
-  process.exit(1)
-})
+// Run only when executed directly: importing this file must never start or
+// tear down a harness.
+if (process.argv[1] && path.resolve(process.argv[1]) === url.fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error(`[harness] ${err instanceof Error ? err.message : String(err)}`)
+    process.exit(1)
+  })
+}

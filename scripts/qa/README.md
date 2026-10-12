@@ -138,9 +138,10 @@ Login is tested for real: `seed-local.ts --login-code` stores the hash of a
 known code for user A, and the browser check types it into `/login`. The
 login page's first step POSTs `/api/auth/send-code`; the harness never lets
 that reach the server (it would try to send email), so the browser check
-answers that one request itself, through `interceptSendCode(context)`, which
-is installed on the browser context before any page opens. Any later browser
-test on the harness must install it the same way. `verify-code`, the cookie
+answers that one request itself, through `interceptSendCode(context)` from
+`scripts/qa/browser.ts`, installed on the browser context before any page
+opens. Any later browser test on the harness must import it from that module
+(it has no side effects on import) and install it the same way. `verify-code`, the cookie
 and the redirect are the real ones.
 
 ## The AI stub
