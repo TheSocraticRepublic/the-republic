@@ -10,6 +10,9 @@ import {
   CHOOSE_PROVINCE_ERROR,
   PROVINCE_OPTIONS,
   isProvinceId,
+  listedIn,
+  provinceLabel,
+  storedPublicBodyName,
   type ProvinceId,
 } from '@/lib/lever/public-body'
 import {
@@ -144,7 +147,11 @@ export function ActionViewer({
   // Generation records the letter format; the parser must see the new one.
   const [letterFormat, setLetterFormat] = useState<unknown>(initialLetterFormat)
   // A province chosen here (PATCH `jurisdiction`) overrides the stored one.
-  const [jurisdiction, setJurisdiction] = useState<unknown>(recipientMetadata?.jurisdiction)
+  const [jurisdiction, setJurisdictionState] = useState<unknown>(recipientMetadata?.jurisdiction)
+  const setJurisdiction = useCallback((value: unknown) => {
+    jurisdictionRef.current = value
+    setJurisdictionState(value)
+  }, [])
   const [mode, setMode] = useState<ViewMode>(initialContent ? 'viewing' : 'generating')
   const [streamedContent, setStreamedContent] = useState('')
   const [statusUpdating, setStatusUpdating] = useState(false)
@@ -155,6 +162,20 @@ export function ActionViewer({
   const [info, setInfo] = useState<string | null>(null)
   const [needsProvince, setNeedsProvince] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+
+  /*
+   * The directory body this action names, if it names a listed one, and its
+   * province. A listed body belongs to one province, so the province choice
+   * offers only that one (Razor N5: any other pick leaves generation refused
+   * with no way back from the screen).
+   */
+  const bodyListing = useMemo(() => {
+    const name = storedPublicBodyName(recipientMetadata ?? {})
+    return name ? listedIn(name) : null
+  }, [recipientMetadata])
+  const jurisdictionRef = useRef<unknown>(recipientMetadata?.jurisdiction)
+  const bodyListingMismatch = () =>
+    !!bodyListing && isProvinceId(jurisdictionRef.current) && jurisdictionRef.current !== bodyListing.province
 
   /*
    * The compare-and-set baseline (§4): the hash of the content exactly as the
@@ -194,7 +215,7 @@ export function ActionViewer({
       setJurisdiction(stored.metadata?.jurisdiction)
       rebaseline(text)
     },
-    [rebaseline]
+    [rebaseline, setJurisdiction]
   )
 
   /**
@@ -258,6 +279,15 @@ export function ActionViewer({
           setMode('viewing')
           return
         }
+        // A draft whose stored province doesn't match its listed body (Razor
+        // N5): the server's message, and the choice again, limited to the
+        // body's own province, so the draft is never stranded.
+        if (res.status === 409 && bodyListing && bodyListingMismatch()) {
+          setActionError(error ?? 'Generation failed. Try again.')
+          setNeedsProvince(true)
+          setMode('viewing')
+          return
+        }
         setActionError(error ?? 'Generation failed. Try again.')
         setMode('viewing')
         return
@@ -298,6 +328,7 @@ export function ActionViewer({
         setMode('viewing')
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionId, readStored, adoptStored, rebaseline])
 
   /*
@@ -415,13 +446,14 @@ export function ActionViewer({
         }
         setJurisdiction(province)
         setNeedsProvince(false)
+        setActionError(null)
         await runGenerate()
       } catch (err) {
         console.error('[action-viewer] Province update failed:', err)
         setActionError("The province couldn't be saved. Try again.")
       }
     },
-    [patch, runGenerate]
+    [patch, runGenerate, setJurisdiction]
   )
 
   /*
@@ -602,7 +634,10 @@ export function ActionViewer({
       )}
 
       {needsProvince && mode === 'viewing' && (
-        <ProvinceChoice onChoose={handleChooseProvince} />
+        <ProvinceChoice
+          onChoose={handleChooseProvince}
+          only={bodyListing ? { province: bodyListing.province, body: bodyListing.name } : null}
+        />
       )}
 
       {/* Document display */}
@@ -682,9 +717,17 @@ export function ActionViewer({
 // Province choice (a FIPPA draft whose generation needs one)
 // ---------------------------------------------------------------------------
 
-function ProvinceChoice({ onChoose }: { onChoose: (province: ProvinceId) => Promise<void> }) {
+function ProvinceChoice({
+  onChoose,
+  only,
+}: {
+  onChoose: (province: ProvinceId) => Promise<void>
+  /** A listed body's own province: the only one offered, pre-selected. */
+  only: { province: ProvinceId; body: string } | null
+}) {
   const selectId = useId()
-  const [choice, setChoice] = useState<ProvinceId | ''>('')
+  const [choice, setChoice] = useState<ProvinceId | ''>(only ? only.province : '')
+  const options = only ? PROVINCE_OPTIONS.filter((p) => p.id === only.province) : PROVINCE_OPTIONS
   const [busy, setBusy] = useState(false)
   return (
     // A <div> and a click handler, not a <form>: the app's pattern since the
@@ -697,6 +740,12 @@ function ProvinceChoice({ onChoose }: { onChoose: (province: ProvinceId) => Prom
       <label htmlFor={selectId} className="mb-1.5 block text-sm text-text-secondary">
         {CHOOSE_PROVINCE_ERROR}.
       </label>
+      {only && (
+        <p data-province-reason className="mb-2 text-sm text-text-secondary">
+          {only.body} is in the {provinceLabel(only.province)} directory, so this request goes to{' '}
+          {provinceLabel(only.province)}. For another province, start a new request.
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative">
           <select
@@ -709,7 +758,7 @@ function ProvinceChoice({ onChoose }: { onChoose: (province: ProvinceId) => Prom
             <option value="" disabled>
               Choose a province...
             </option>
-            {PROVINCE_OPTIONS.map((p) => (
+            {options.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.verified ? p.label : `${p.label} (not verified)`}
               </option>

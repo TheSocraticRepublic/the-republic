@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { renderLeverPdf, hasLeverPdfTemplate } from '@/lib/pdf/render'
+import { renderLeverPdf, hasLeverPdfTemplate, PdfTooCostly } from '@/lib/pdf/render'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
 import { loadRecipientResolution } from '@/lib/lever/load-recipient'
@@ -155,14 +155,16 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
         },
       })
     } catch (err) {
-      if (err instanceof PdfTimeout) {
-        // Logged with identifiers only. The render itself can't be cancelled;
-        // it finishes in the background and its result is dropped.
+      if (err instanceof PdfTooCostly || err instanceof PdfTimeout) {
+        // Logged with identifiers only. A refusal (the cost estimate) is the
+        // guarantee: it answers before any layout. The timer is a backstop
+        // for an estimate that is wrong; it fires only when react-pdf yields,
+        // and the render it abandons can't be cancelled.
         console.error(
           JSON.stringify({
-            event: 'lever.export.pdf_timeout',
+            event: err instanceof PdfTooCostly ? 'lever.export.pdf_refused' : 'lever.export.pdf_timeout',
             actionId: action.id,
-            timeoutMs: PDF_RENDER_TIMEOUT_MS,
+            ...(err instanceof PdfTooCostly ? { cost: err.cost } : { timeoutMs: PDF_RENDER_TIMEOUT_MS }),
             ts: new Date().toISOString(),
           })
         )

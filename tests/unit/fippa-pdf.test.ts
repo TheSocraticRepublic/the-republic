@@ -30,6 +30,7 @@ import * as path from 'node:path'
 import { JSDOM as UntypedJSDOM } from 'jsdom'
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { renderLeverPdf } from '@/lib/pdf/render'
+import { loadLetterMetrics, estimateRenderCost, RENDER_COST_LIMIT } from '@/lib/pdf/templates/fippa-request'
 import { FOOTER_BAND_TOP, FOOTER_BAND_BOTTOM } from '@/lib/pdf/primitives'
 import { PUBLIC_BODY_DIRECTORY, resolveRecipient, type RecipientResolution } from '@/lib/lever/public-body'
 import {
@@ -246,6 +247,34 @@ describe('FIPPA PDF: text oracle', () => {
 // ---------------------------------------------------------------------------
 // Footer, band and margins
 // ---------------------------------------------------------------------------
+
+/** Razor W1: tokens of 60 characters or fewer that are wider than their measure. */
+const WIDE_GLYPH_FIXTURES: Pick<LetterFixture, 'id' | 'content' | 'format' | 'expectedLetter'>[] = [
+  { id: 'wide-paragraph', content: `Before ${'W'.repeat(60)} after.`, format: undefined, expectedLetter: `Before ${'W'.repeat(60)} after.` },
+  { id: 'wide-heading', content: `# ${'M'.repeat(58)}`, format: undefined, expectedLetter: 'M'.repeat(58) },
+  { id: 'wide-bullet', content: `- ${'W'.repeat(55)}`, format: undefined, expectedLetter: `• ${'W'.repeat(55)}` },
+  { id: 'wide-numbered-bold', content: `100. **${'W'.repeat(50)}**`, format: undefined, expectedLetter: `100. ${'W'.repeat(50)}` },
+  { id: 'wide-guidance', content: `Letter.\n=== NOT PART OF YOUR REQUEST ===\n${'W'.repeat(60)}`, format: 'marker-v1', expectedLetter: 'Letter.' },
+]
+
+describe('FIPPA PDF: words wider than the measure (Razor W1)', () => {
+  it.each(WIDE_GLYPH_FIXTURES.map((fx) => [fx.id, fx] as const))(
+    '%s: every glyph survives, inside the margins, nothing inserted',
+    async (_id, fx) => {
+      const { pdf } = await renderFixture(fx)
+      expect(squash(letterPagesText(pdf))).toBe(squash(fx.expectedLetter))
+      if (fx.id === 'wide-guidance') expect(squash(guidancePagesText(pdf))).toContain('W'.repeat(60))
+      for (const p of pdf.pages) {
+        for (const it of p.items) {
+          if (!it.str.trim()) continue
+          expect(it.x, it.str.slice(0, 20)).toBeGreaterThanOrEqual(72 - 0.5)
+          expect(it.right, it.str.slice(0, 20)).toBeLessThanOrEqual(p.width - 72 + 0.5)
+        }
+      }
+    },
+    30_000
+  )
+})
 
 const GEOMETRY_FIXTURES = [
   FIFTY_KB_LETTER,
@@ -538,6 +567,115 @@ describe('export route', () => {
     expect((await exportRequest(format, null)).status).toBe(401)
     expect((await exportRequest(format, 'user-b')).status).toBe(404)
   })
+})
+
+// ---------------------------------------------------------------------------
+// The answer-time bound, unmocked (Razor C1): every shape PATCH admits
+// ---------------------------------------------------------------------------
+
+const MAX_CONTENT = 100_000
+const fill = (unit: string) => unit.repeat(Math.ceil(MAX_CONTENT / unit.length)).slice(0, MAX_CONTENT)
+const PROSE = FIFTY_KB_LETTER.content.split('\n\n')[0]
+
+/** The worst shapes of a 100,000-character letter, the most PATCH accepts. */
+export const WORST_CASES: Record<string, string> = {
+  prose: fill(`${PROSE}\n\n`),
+  'words-61': fill(`${'0123456789'.repeat(6)}1 `),
+  'one-token': fill('0123456789'),
+  'wide-glyphs': fill(`${'W'.repeat(60)} `),
+  'long-urls': fill(`https://example.org/${'a'.repeat(280)} `),
+  'short-lines': fill('a\n'),
+  'blank-lines': fill('\n'),
+  'markup-lines': fill('**a** *b* [c](d) [e]\n'),
+  'bullets': fill('- item\n'),
+}
+
+/** The largest letter of `unit` lines (joined by "\n") whose estimated cost is still admitted. */
+async function largestAdmitted(unit: string, joiner = '\n'): Promise<string> {
+  const metrics = await loadLetterMetrics()
+  const make = (n: number) => Array.from({ length: n }, () => unit).join(joiner)
+  let lo = 1
+  let hi = 20000
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2)
+    if (estimateRenderCost(make(mid), undefined, metrics) <= RENDER_COST_LIMIT && make(mid).length <= MAX_CONTENT) lo = mid
+    else hi = mid - 1
+  }
+  return make(lo)
+}
+
+const ADMITTED_UNITS: Record<string, string | [string, string]> = {
+  prose: PROSE,
+  'one-paragraph-61-char-words': [`${'0123456789'.repeat(6)}1`, ' '],
+  'one-paragraph-prose': [PROSE, ' '],
+  'short-lines': 'a',
+  'blank-lines': '',
+  bullets: '- item',
+  numbered: '12. **x** y',
+  'markup-lines': '**a** *b* [c](d) [e]',
+  'one-token-per-line': '0123456789'.repeat(30),
+  'wide-glyphs': 'W'.repeat(60),
+  'long-urls': `https://example.org/${'a'.repeat(280)}`,
+}
+
+describe('export route: the answer comes within 8.5 s for any letter PATCH admits (real render)', () => {
+  beforeEach(() => {
+    renderOverride = null
+  })
+
+  it.each(Object.keys(WORST_CASES))(
+    '%s (100,000 characters): the PDF or the 503 with its exact message, within 8.5 s',
+    async (shape) => {
+      const content = WORST_CASES[shape]
+      expect(content.length).toBe(MAX_CONTENT)
+      actionRows = [{ ...filedRow(LEGACY_LETTER), content, metadata: {} }]
+      const t0 = performance.now()
+      const res = await exportRequest('pdf')
+      const body = Buffer.from(await res.arrayBuffer())
+      const ms = performance.now() - t0
+      console.log(`[fippa-pdf answer-time] ${shape}: ${res.status} in ${ms.toFixed(0)} ms`)
+      expect(ms).toBeLessThan(8_500)
+      if (res.status === 200) {
+        expect(body.subarray(0, 5).toString('latin1')).toBe('%PDF-')
+      } else {
+        expect(res.status).toBe(503)
+        expect(JSON.parse(body.toString('utf8'))).toEqual({
+          error: "The PDF couldn't be made right now. Use Print or Plain text instead.",
+        })
+      }
+    },
+    120_000
+  )
+
+  it.each(Object.keys(ADMITTED_UNITS))(
+    '%s, the largest letter the cost bound admits: a whole PDF within 8.5 s',
+    async (shape) => {
+      const unit = ADMITTED_UNITS[shape]
+      const content = typeof unit === 'string' ? await largestAdmitted(unit) : await largestAdmitted(unit[0], unit[1])
+      actionRows = [{ ...filedRow(LEGACY_LETTER), content, metadata: {} }]
+      const t0 = performance.now()
+      const res = await exportRequest('pdf')
+      const body = Buffer.from(await res.arrayBuffer())
+      const ms = performance.now() - t0
+      console.log(`[fippa-pdf answer-time] admitted ${shape} (${content.length} chars): ${res.status} in ${ms.toFixed(0)} ms`)
+      expect(res.status).toBe(200)
+      expect(body.subarray(0, 5).toString('latin1')).toBe('%PDF-')
+      expect(ms).toBeLessThan(8_500)
+    },
+    120_000
+  )
+
+  it('one over the bound is refused at once with the 503, before any layout', async () => {
+    const metrics = await loadLetterMetrics()
+    let n = 1
+    while (estimateRenderCost(Array.from({ length: n }, () => PROSE).join('\n'), undefined, metrics) <= RENDER_COST_LIMIT) n++
+    actionRows = [{ ...filedRow(LEGACY_LETTER), content: Array.from({ length: n }, () => PROSE).join('\n'), metadata: {} }]
+    const t0 = performance.now()
+    const res = await exportRequest('pdf')
+    expect(res.status).toBe(503)
+    expect(await res.json()).toEqual({ error: "The PDF couldn't be made right now. Use Print or Plain text instead." })
+    expect(performance.now() - t0).toBeLessThan(1_500)
+  }, 30_000)
 })
 
 // ---------------------------------------------------------------------------

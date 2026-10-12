@@ -356,7 +356,7 @@ describe('generation (A2 carry)', () => {
 
   it('"Choose the province" offers BC, AB and ON, stores the choice through PATCH, then generates', async () => {
     plan_extra = { generate: { status: 409, error: 'Choose the province this request goes to' } }
-    renderViewer({ content: '', metadata: { publicBody: 'BC Ministry of Forests' } })
+    renderViewer({ content: '', metadata: { publicBody: 'Synthetic Test Authority (QA)' } })
     const panel = (await waitFor(() => {
       const el = document.querySelector('[data-province-choice]')
       expect(el).not.toBeNull()
@@ -376,6 +376,50 @@ describe('generation (A2 carry)', () => {
     await screen.findByText('Generated.')
     expect(patches).toEqual([{ jurisdiction: 'bc', expectedContentSha256: sha('') }])
     expect(generates).toBe(2)
+    expect(document.querySelector('[data-province-choice]')).toBeNull()
+  })
+
+  it('a listed body: only its own province is offered, pre-selected, and why (Razor N5)', async () => {
+    plan_extra = { generate: { status: 409, error: 'Choose the province this request goes to' } }
+    renderViewer({ content: '', metadata: { publicBody: 'BC Ministry of Forests' } })
+    const panel = (await waitFor(() => {
+      const el = document.querySelector('[data-province-choice]')
+      expect(el).not.toBeNull()
+      return el
+    })) as HTMLElement
+    const select = within(panel).getByRole('combobox') as HTMLSelectElement
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(['', 'bc'])
+    expect(select.value).toBe('bc')
+    expect(panel.querySelector('[data-province-reason]')!.textContent).toBe(
+      'BC Ministry of Forests is in the British Columbia directory, so this request goes to British Columbia. For another province, start a new request.'
+    )
+    plan.generate = { streamed: 'Generated.', storedAfter: 'Generated.' }
+    fireEvent.click(within(panel).getByRole('button'))
+    await screen.findByText('Generated.')
+    expect(patches).toEqual([{ jurisdiction: 'bc', expectedContentSha256: sha('') }])
+  })
+
+  it('a draft stranded in the wrong province gets the choice back, limited to its body\'s province (Razor N5)', async () => {
+    const refusal =
+      'This request names BC Ministry of Forests, which is in the British Columbia directory, but it goes to Alberta. Start a new request with the right province.'
+    plan_extra = { generate: { status: 409, error: refusal } }
+    renderViewer({ content: '', metadata: { publicBody: 'BC Ministry of Forests', jurisdiction: 'ab' } })
+    expect((await screen.findByRole('alert')).textContent).toBe(refusal)
+    const panel = document.querySelector('[data-province-choice]') as HTMLElement
+    const select = within(panel).getByRole('combobox') as HTMLSelectElement
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(['', 'bc'])
+    plan.generate = { streamed: 'Generated.', storedAfter: 'Generated.' }
+    fireEvent.click(within(panel).getByRole('button'))
+    await screen.findByText('Generated.')
+    expect(patches).toEqual([{ jurisdiction: 'bc', expectedContentSha256: sha('') }])
+    expect(plan.row.metadata.jurisdiction).toBe('bc')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('a 409 that is not about the province never offers the choice', async () => {
+    plan_extra = { generate: { status: 409, error: 'This letter is no longer a draft' } }
+    renderViewer({ content: '', metadata: { publicBody: 'BC Ministry of Forests', jurisdiction: 'bc' } })
+    expect((await screen.findByRole('alert')).textContent).toBe('This letter is no longer a draft')
     expect(document.querySelector('[data-province-choice]')).toBeNull()
   })
 
