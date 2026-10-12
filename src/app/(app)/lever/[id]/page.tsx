@@ -44,7 +44,8 @@ export default async function LeverActionPage({ params }: PageProps) {
   const typeLabel = ACTION_TYPE_LABELS[action.actionType] ?? action.actionType
 
   return (
-    <div data-arm="lever" className="mx-auto max-w-2xl px-6 py-10">
+    // 720px less the 24px gutters leaves the letter paper its 672px (A1).
+    <div data-arm="lever" className="mx-auto max-w-[720px] px-6 py-10">
       {/* Back nav */}
       <div className="mb-6 flex items-center gap-4">
         <Link
