@@ -591,14 +591,14 @@ export const WORST_CASES: Record<string, string> = {
 }
 
 /** The largest letter of `unit` lines (joined by "\n") whose estimated cost is still admitted. */
-async function largestAdmitted(unit: string, joiner = '\n'): Promise<string> {
+async function largestAdmitted(unit: string, joiner = '\n', cap = MAX_CONTENT): Promise<string> {
   const metrics = await loadLetterMetrics()
   const make = (n: number) => Array.from({ length: n }, () => unit).join(joiner)
   let lo = 1
   let hi = 20000
   while (lo < hi) {
     const mid = Math.ceil((lo + hi) / 2)
-    if (estimateRenderCost(make(mid), undefined, metrics) <= RENDER_COST_LIMIT && make(mid).length <= MAX_CONTENT) lo = mid
+    if (estimateRenderCost(make(mid), undefined, metrics) <= RENDER_COST_LIMIT && make(mid).length <= cap) lo = mid
     else hi = mid - 1
   }
   return make(lo)
@@ -618,10 +618,42 @@ const ADMITTED_UNITS: Record<string, string | [string, string]> = {
   'long-urls': `https://example.org/${'a'.repeat(280)}`,
 }
 
+/*
+ * A render can't be interrupted, so a vitest timeout can't cut one short
+ * either: it fails the test once the render returns. So the cheap checks run
+ * first (the estimate alone, then a letter one line over the bound), and a
+ * broken bound fails there; batteries run this file with --bail=1 so nothing
+ * after that first failure starts. Every render test has a 12 s timeout,
+ * sized to the 8.5 s answer the plan requires.
+ */
+const ANSWER_TEST_TIMEOUT = 12_000
+
 describe('export route: the answer comes within 8.5 s for any letter PATCH admits (real render)', () => {
   beforeEach(() => {
     renderOverride = null
   })
+
+  it('every 100,000-character worst case is over the bound by the estimate alone (no render)', async () => {
+    const metrics = await loadLetterMetrics()
+    for (const [shape, content] of Object.entries(WORST_CASES)) {
+      expect(estimateRenderCost(content, undefined, metrics), shape).toBeGreaterThan(RENDER_COST_LIMIT)
+    }
+  }, ANSWER_TEST_TIMEOUT)
+
+  it('one over the bound is refused at once with the 503, before any layout', async () => {
+    // One prose line more than the largest admitted letter: about 3 s to
+    // render if the bound were gone, so a disarmed bound fails here, fast.
+    const metrics = await loadLetterMetrics()
+    const content = `${await largestAdmitted(PROSE, '\n\n', Infinity)}\n\n${PROSE}`
+    expect(estimateRenderCost(content, undefined, metrics)).toBeGreaterThan(RENDER_COST_LIMIT)
+    actionRows = [{ ...filedRow(LEGACY_LETTER), content, metadata: {} }]
+    const t0 = performance.now()
+    const res = await exportRequest('pdf')
+    expect(res.status).toBe(503)
+    expect(await res.json()).toEqual({ error: "The PDF couldn't be made right now. Use Print or Plain text instead." })
+    expect(performance.now() - t0).toBeLessThan(1_500)
+  }, ANSWER_TEST_TIMEOUT)
+
 
   it.each(Object.keys(WORST_CASES))(
     '%s (100,000 characters): the PDF or the 503 with its exact message, within 8.5 s',
@@ -644,7 +676,7 @@ describe('export route: the answer comes within 8.5 s for any letter PATCH admit
         })
       }
     },
-    120_000
+    ANSWER_TEST_TIMEOUT
   )
 
   it.each(Object.keys(ADMITTED_UNITS))(
@@ -662,20 +694,9 @@ describe('export route: the answer comes within 8.5 s for any letter PATCH admit
       expect(body.subarray(0, 5).toString('latin1')).toBe('%PDF-')
       expect(ms).toBeLessThan(8_500)
     },
-    120_000
+    ANSWER_TEST_TIMEOUT
   )
 
-  it('one over the bound is refused at once with the 503, before any layout', async () => {
-    const metrics = await loadLetterMetrics()
-    let n = 1
-    while (estimateRenderCost(Array.from({ length: n }, () => PROSE).join('\n'), undefined, metrics) <= RENDER_COST_LIMIT) n++
-    actionRows = [{ ...filedRow(LEGACY_LETTER), content: Array.from({ length: n }, () => PROSE).join('\n'), metadata: {} }]
-    const t0 = performance.now()
-    const res = await exportRequest('pdf')
-    expect(res.status).toBe(503)
-    expect(await res.json()).toEqual({ error: "The PDF couldn't be made right now. Use Print or Plain text instead." })
-    expect(performance.now() - t0).toBeLessThan(1_500)
-  }, 30_000)
 })
 
 // ---------------------------------------------------------------------------
