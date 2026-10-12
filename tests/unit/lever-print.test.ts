@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createHash } from 'crypto'
-import { JSDOM } from 'jsdom'
+// @ts-expect-error -- jsdom ships no types and @types/jsdom is not a dependency; one constructor is used, typed below.
+import { JSDOM as UntypedJSDOM } from 'jsdom'
 import { NextRequest } from 'next/server'
 import {
   LETTER_FIXTURES,
@@ -37,6 +38,8 @@ vi.mock('@/lib/rate-limit', () => ({ checkRateLimit: async () => ({ success: tru
 vi.mock('@/lib/db', () => ({
   getDb: () => ({ select: () => ({ from: () => ({ where: () => ({ limit: async () => rows }) }) }) }),
 }))
+
+const JSDOM = UntypedJSDOM as new (html: string) => { window: { document: Document } }
 
 const ID = '11111111-1111-4111-8111-111111111111'
 const CREATED = new Date('2026-10-01T12:00:00Z')

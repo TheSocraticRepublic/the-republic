@@ -74,6 +74,7 @@ export default async function LeverActionPage({ params }: PageProps) {
         initialContent={action.content ?? ''}
         initialStatus={action.status}
         actionType={action.actionType}
+        letterFormat={(action.metadata as Record<string, unknown> | null)?.letterFormat}
       />
 
       {/* Cross-arm navigation — only when this action is tied to a document */}
