@@ -16,6 +16,13 @@ const LOCAL = 'postgres://qa_app:pw@127.0.0.1:55432/republic_qa'
 const LOCAL_NAME = 'postgresql://qa_app:pw@localhost:55432/republic_qa'
 const REMOTE = 'postgres://app:pw@aws-1-us-east-2.pooler.supabase.com:5432/postgres'
 
+describe('test environment default', () => {
+  it('runs .ts tests under node unless a file opts into jsdom', () => {
+    // vitest.config.ts widens `include` to .tsx but keeps the node default.
+    expect(typeof window).toBe('undefined')
+  })
+})
+
 describe('assertLocalQaDatabaseUrl', () => {
   it('accepts the harness database on 127.0.0.1 and on localhost', () => {
     expect(() => assertLocalQaDatabaseUrl(LOCAL, 'DATABASE_URL')).not.toThrow()
