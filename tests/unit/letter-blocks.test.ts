@@ -306,6 +306,23 @@ describe('parseLetter: word-sequence property over 500 fuzzed strings', () => {
  * that once went through an argument spread.
  */
 describe('parseLetter: linear time on pathological lines (Razor C1)', () => {
+  /*
+   * Sentinels first: mid-size shapes that a linear parser finishes in a few
+   * milliseconds and a quadratic one needs seconds for. They fail fast, so a
+   * regression is caught in seconds rather than after minutes at 199,000.
+   */
+  const sentinels: Record<string, string> = {
+    'sentinel [a]( x 10,000': '[a]('.repeat(10_000),
+    'sentinel [ x 60,000 then ]': '['.repeat(60_000) + ']',
+  }
+  for (const [name, s] of Object.entries(sentinels)) {
+    it(`${name} parses in under 300 ms`, () => {
+      const t0 = performance.now()
+      parseLetter(s, 'marker-v1')
+      expect(performance.now() - t0).toBeLessThan(300)
+    })
+  }
+
   const N = 199_000
   const shapes: Record<string, string> = {
     '[a]( run': '[a]('.repeat(N / 4),
