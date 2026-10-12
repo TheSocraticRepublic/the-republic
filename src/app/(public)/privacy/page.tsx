@@ -6,6 +6,9 @@ export const metadata = {
     'What Open Cave collects, what it deliberately does not, who processes it, and where it lives.',
 }
 
+const LINK_CLASS =
+  'text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors'
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-9">
@@ -213,21 +216,24 @@ export default function PrivacyPage() {
             href="https://github.com/TheSocraticRepublic"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
+            className={LINK_CLASS}
           >
             github.com/TheSocraticRepublic
           </a>
           ). Use the subject{' '}
           <code className="whitespace-nowrap text-text-muted">Privacy: Open Cave</code>, send it
-          from the email address you sign in with so we can confirm the account is yours, and say
-          what you&apos;re asking for. We respond within 30 days. Don&apos;t put personal details in
-          a public issue. If you&apos;re not satisfied with our response, you can complain to the
-          Office of the Information and Privacy Commissioner for British Columbia (
+          from the email address you sign in with, because we reply only to the address on your
+          account, and say what you&apos;re asking for. We respond within 30 days. Don&apos;t put
+          personal details in a public issue.
+        </p>
+        <p>
+          If you&apos;re not satisfied with our response, you can complain to the Office of the
+          Information and Privacy Commissioner for British Columbia (
           <a
             href="https://www.oipc.bc.ca"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
+            className={LINK_CLASS}
           >
             oipc.bc.ca
           </a>
@@ -236,7 +242,7 @@ export default function PrivacyPage() {
             href="https://www.priv.gc.ca"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
+            className={LINK_CLASS}
           >
             priv.gc.ca
           </a>
