@@ -230,8 +230,7 @@ access requests within 30 days. We require nothing beyond an email to use the to
 
 ## Contact
 
-For privacy or data requests, including access to or correction of your personal information, email us. Open Cave's maintainer is responsible for its privacy practices; the address is on the project owner's GitHub profile ([github.com/TheSocraticRepublic](https://github.com/TheSocraticRepublic)). Use the subject `Privacy: Open Cave`, send it from the email address you sign in with, because we reply only to the address on your account, and say what you're asking for. We respond within 30 days. Don't put personal details in a public issue.
+Questions about privacy or data handling: open an issue on the public repository or reach
+out through the forum. We will respond.
 
-If you're not satisfied with our response, you can complain to the Office of the Information and Privacy Commissioner for British Columbia ([oipc.bc.ca](https://www.oipc.bc.ca)) or the Office of the Privacy Commissioner of Canada ([priv.gc.ca](https://www.priv.gc.ca)).
-
-Last updated: 2026-10-11
+Last updated: 2026-08-26

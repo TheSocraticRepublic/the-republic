@@ -6,9 +6,6 @@ export const metadata = {
     'What Open Cave collects, what it deliberately does not, who processes it, and where it lives.',
 }
 
-const LINK_CLASS =
-  'text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors'
-
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-9">
@@ -33,7 +30,7 @@ export default function PrivacyPage() {
         >
           Privacy Policy
         </h1>
-        <p className="mt-0.5 text-xs text-text-muted">Last updated 2026-10-11</p>
+        <p className="mt-0.5 text-xs text-text-muted">Last updated 2026-08-26</p>
       </header>
 
       <p className="text-sm leading-relaxed text-text-secondary">
@@ -209,45 +206,8 @@ export default function PrivacyPage() {
 
       <Section title="Contact">
         <p>
-          For privacy or data requests, including access to or correction of your personal
-          information, email us. Open Cave&apos;s maintainer is responsible for its privacy
-          practices; the address is on the project owner&apos;s GitHub profile (
-          <a
-            href="https://github.com/TheSocraticRepublic"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={LINK_CLASS}
-          >
-            github.com/TheSocraticRepublic
-          </a>
-          ). Use the subject{' '}
-          <code className="whitespace-nowrap text-text-muted">Privacy: Open Cave</code>, send it
-          from the email address you sign in with, because we reply only to the address on your
-          account, and say what you&apos;re asking for. We respond within 30 days. Don&apos;t put
-          personal details in a public issue.
-        </p>
-        <p>
-          If you&apos;re not satisfied with our response, you can complain to the Office of the
-          Information and Privacy Commissioner for British Columbia (
-          <a
-            href="https://www.oipc.bc.ca"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={LINK_CLASS}
-          >
-            oipc.bc.ca
-          </a>
-          ) or the Office of the Privacy Commissioner of Canada (
-          <a
-            href="https://www.priv.gc.ca"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={LINK_CLASS}
-          >
-            priv.gc.ca
-          </a>
-          ).{' '}
-          This policy mirrors the canonical{' '}
+          Questions about privacy or data handling: open an issue on the public repository or reach
+          out through the forum. This policy mirrors the canonical{' '}
           <code className="text-text-muted">PRIVACY.md</code> in the open-source repository.
         </p>
       </Section>
