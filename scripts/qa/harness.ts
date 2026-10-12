@@ -702,8 +702,10 @@ async function runChecks(values: Record<string, string>, state: HarnessState): P
       await page.getByRole('button', { name: 'Verify code' }).click()
       await page.waitForURL(`${APP_URL}/investigate`, { timeout: 30_000 })
       const reload = await page.goto(`${APP_URL}/investigate`)
-      const cookies = await context.cookies(APP_URL)
-      const auth = cookies.find((c) => c.name === 'republic_token')
+      // No URL filter: context.cookies(url) drops Secure cookies for an http
+      // URL, although Chromium does send them to loopback.
+      const cookies = await context.cookies()
+      const auth = cookies.find((c) => c.name === 'republic_token' && c.domain === APP_HOST)
       ev.push(`send-code answered in the browser (never reached the server): ${sendCodeIntercepted} time(s)`)
       ev.push(`POST /api/auth/verify-code (real route, through the browser) -> HTTP ${verifyStatus}`)
       ev.push(`browser landed on ${page.url()}; reload -> HTTP ${reload?.status()}`)
