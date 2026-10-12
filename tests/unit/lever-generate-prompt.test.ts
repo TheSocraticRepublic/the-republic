@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  buildInvestigationContext,
   buildLeverGeneration,
   buildFippaPrompt,
   buildLeverPrompt,
@@ -261,5 +262,36 @@ describe('the built legal prompt, by jurisdiction', () => {
     if (!('built' in r)) throw new Error('expected a prompt')
     expect(r.built.userMessage).toContain('Public Body: Synthetic Water Board')
     for (const c of citations(onModule)) expect(r.built.system).toContain(c)
+  })
+})
+
+describe('buildInvestigationContext', () => {
+  type Inv = { concern: string; jurisdictionName: string | null; briefingText: string | null; lensContextText: string | null }
+  const inv: Inv = {
+    concern: 'Synthetic concern',
+    jurisdictionName: 'Victoria, British Columbia',
+    briefingText: 'Briefing citing RSBC 1996, c. 165.',
+    lensContextText: 'Lens text.',
+  }
+  // The pre-fix-pass block, verbatim from generate/route.ts.
+  function legacyBlock(i: Inv): string {
+    const invParts: string[] = ['INVESTIGATION CONTEXT:']
+    invParts.push(`Citizen concern: ${i.concern}`)
+    if (i.jurisdictionName) invParts.push(`Jurisdiction: ${i.jurisdictionName}`)
+    if (i.briefingText) invParts.push(`Briefing analysis:\n${i.briefingText.slice(0, 10_000)}`)
+    if (i.lensContextText) invParts.push(`Lens analysis:\n${i.lensContextText.slice(0, 5_000)}`)
+    return invParts.join('\n')
+  }
+  it('with the briefing it is byte-identical to the old block', () => {
+    expect(buildInvestigationContext(inv, { includeBriefing: true })).toBe(legacyBlock(inv))
+    const long: Inv = { ...inv, briefingText: 'b'.repeat(12_000), lensContextText: null, jurisdictionName: null }
+    expect(buildInvestigationContext(long, { includeBriefing: true })).toBe(legacyBlock(long))
+  })
+  it('without it, only the briefing is dropped', () => {
+    const out = buildInvestigationContext(inv, { includeBriefing: false })
+    expect(out).not.toContain('RSBC')
+    expect(out).not.toContain('Briefing analysis')
+    expect(out).toContain('Citizen concern: Synthetic concern')
+    expect(out).toContain('Lens analysis:\nLens text.')
   })
 })

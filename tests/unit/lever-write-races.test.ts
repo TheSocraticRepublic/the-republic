@@ -135,6 +135,7 @@ type Handler = (req: import('next/server').NextRequest, ctx: { params: Promise<R
 let PATCH: Handler
 let GENERATE: Handler
 let CREATE: Handler
+let INVESTIGATION_GET: Handler
 let NextRequestCtor: typeof import('next/server').NextRequest
 
 const NOT_A_DRAFT = 'This letter is no longer a draft'
@@ -310,6 +311,7 @@ describe.skipIf(!HARNESS_UP)(SUITE_TITLE, () => {
     PATCH = (await import('@/app/api/lever/actions/[id]/route')).PATCH as unknown as Handler
     GENERATE = (await import('@/app/api/lever/generate/route')).POST as unknown as Handler
     CREATE = (await import('@/app/api/lever/actions/route')).POST as unknown as Handler
+    INVESTIGATION_GET = (await import('@/app/api/investigate/[id]/route')).GET as unknown as Handler
     await stub('/__qa/reset')
   }, 30_000)
 
@@ -734,6 +736,177 @@ describe.skipIf(!HARNESS_UP)(SUITE_TITLE, () => {
       expect(letters[1]).toContain('RSA 2000')
       expect(letters[1]).not.toContain('RSBC')
       expect((await readRow(bc.json.actionId as string)).metadata).toMatchObject({ letterFormat: 'marker-v1' })
+    })
+  })
+
+  describe('fix pass: resolved investigation province, other-province bodies, briefing gate, filing transaction, body bound', () => {
+    async function investigationFor(jurisdictionName: string, opts: { briefing?: string; resolvedFrom?: string } = {}) {
+      const [inv] = await db1<{ id: string }[]>`
+        insert into investigations (user_id, concern, jurisdiction_name, jurisdiction_id, briefing_text, status)
+        values (
+          ${OWNER.id}, 'Synthetic QA concern CONCERN-KEPT', ${jurisdictionName},
+          ${opts.resolvedFrom ? db1`(select id from jurisdictions where name = ${opts.resolvedFrom} limit 1)` : null},
+          ${opts.briefing ?? null}, 'complete')
+        returning id`
+      return inv.id
+    }
+
+    async function lastLetterRequest(): Promise<string> {
+      const { requests } = (await stub('/__qa/requests')) as { requests: Array<{ kind: string; body: unknown }> }
+      return JSON.stringify(requests.filter((r) => r.kind === 'letter').at(-1)?.body ?? null)
+    }
+
+    it('W2: a legacy FIPPA draft under a "City of Burnaby" investigation resolves BC from its jurisdiction and generates', async () => {
+      const [{ province }] = await db1<{ province: string }[]>`select province from jurisdictions where name = 'City of Burnaby'`
+      expect(province).toBe('British Columbia')
+      const invId = await investigationFor('City of Burnaby', { resolvedFrom: 'City of Burnaby' })
+      await stub('/__qa/reset')
+      const id = await insertAction({
+        content: '',
+        metadata: { publicBody: 'BC Ministry of Forests', addressee: 'BC Ministry of Forests', description: 'x' },
+        investigationId: invId,
+      })
+      const res = await generate(id)
+      expect(res.status).toBe(200)
+      const sent = await lastLetterRequest()
+      expect(sent).toContain('RSBC 1996')
+      expect(sent).toContain('Public Body: BC Ministry of Forests')
+
+      // and the dialog's source: the investigation GET carries the resolved province
+      const get = await INVESTIGATION_GET(request('GET', `http://localhost/api/investigate/${invId}`, OWNER.id), {
+        params: Promise.resolve({ id: invId }),
+      })
+      expect(get.status).toBe(200)
+      expect(((await get.json()) as { investigation: { jurisdictionProvince: string | null } }).investigation.jurisdictionProvince).toBe(
+        'British Columbia'
+      )
+    })
+
+    it('W2: without the resolved jurisdiction the same Burnaby draft is refused (keyword detection alone finds nothing)', async () => {
+      const invId = await investigationFor('City of Burnaby')
+      const id = await insertAction({ content: '', metadata: { publicBody: 'BC Ministry of Forests', description: 'x' }, investigationId: invId })
+      const res = await generate(id)
+      expect(res.status).toBe(409)
+      expect(JSON.parse(res.text)).toEqual({ error: CHOOSE_PROVINCE })
+    })
+
+    it('N5: a BC investigation briefing never reaches an AB request’s prompt; it does reach a BC one', async () => {
+      const invId = await investigationFor('Victoria, British Columbia', {
+        briefing: 'BRIEFING-SENTINEL. Under the Freedom of Information and Protection of Privacy Act, RSBC 1996, c. 165, s. 4.',
+      })
+      await stub('/__qa/reset')
+      const ab = await insertAction({
+        content: '',
+        metadata: { publicBody: 'City of Edmonton', jurisdiction: 'ab', description: 'x' },
+        investigationId: invId,
+      })
+      expect((await generate(ab)).status).toBe(200)
+      const abSent = await lastLetterRequest()
+      expect(abSent).not.toContain('BRIEFING-SENTINEL')
+      expect(abSent).not.toContain('RSBC')
+      expect(abSent).toContain('CONCERN-KEPT')
+      expect(abSent).toContain('RSA 2000')
+
+      const bc = await insertAction({
+        content: '',
+        metadata: { publicBody: 'BC Ministry of Forests', jurisdiction: 'bc', description: 'x' },
+        investigationId: invId,
+      })
+      expect((await generate(bc)).status).toBe(200)
+      expect(await lastLetterRequest()).toContain('BRIEFING-SENTINEL')
+    })
+
+    it('N2: create refuses a typed body from another province, by name or alias, naming that province', async () => {
+      const expected = {
+        status: 400,
+        json: { error: 'That body is in the British Columbia directory. Choose British Columbia, or pick a body from the list.' },
+      }
+      expect(await create({ actionType: 'fippa_request', description: 'x', publicBodyName: 'BC Ministry of Forests', jurisdiction: 'ab' })).toEqual(expected)
+      expect(await create({ actionType: 'fippa_request', description: 'x', publicBodyName: 'Ministry of Forests', jurisdiction: 'ab' })).toEqual(expected)
+      // the alias in its own province is stored as the directory name
+      const ok = await create({ actionType: 'fippa_request', description: 'x', publicBodyName: 'Ministry of Forests', jurisdiction: 'bc' })
+      expect(ok.status).toBe(201)
+      expect((await readRow(ok.json.actionId as string)).metadata).toMatchObject({ publicBody: 'BC Ministry of Forests', jurisdiction: 'bc' })
+    })
+
+    it('N2: a legacy row naming another province’s body gets a 409 that names the real problem', async () => {
+      await stub('/__qa/reset')
+      const id = await insertAction({ content: '', metadata: { publicBody: 'BC Ministry of Forests', jurisdiction: 'ab', description: 'x' } })
+      const res = await generate(id)
+      expect(res.status).toBe(409)
+      expect(JSON.parse(res.text)).toEqual({
+        error:
+          'This request names BC Ministry of Forests, which is in the British Columbia directory, but it goes to Alberta. Start a new request with the right province.',
+      })
+      expect(await letterRequestCount()).toBe(0)
+    })
+
+    it('N3: a typed Other name is capped at 200 characters', async () => {
+      const over = await create({ actionType: 'fippa_request', description: 'x', publicBodyName: 'B'.repeat(201), jurisdiction: 'bc' })
+      expect(over).toEqual({ status: 400, json: { error: 'Keep the public body name to 200 characters or fewer' } })
+      const at = await create({ actionType: 'fippa_request', description: 'x', publicBodyName: 'B'.repeat(200), jurisdiction: 'bc' })
+      expect(at.status).toBe(201)
+      expect((await readRow(at.json.actionId as string)).metadata).toMatchObject({ publicBody: 'B'.repeat(200) })
+    })
+
+    it('N6: a filing whose side effects fail rolls back (still final, nothing recorded); a repeat "file" then succeeds', async () => {
+      const invId = await investigationFor('Victoria, British Columbia')
+      const id = await insertAction({ content: 'Filed after a failure.', status: 'final', investigationId: invId })
+      let pending!: Promise<{ status: number; json: Record<string, unknown> }>
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
+      try {
+        await withRowLock(
+          id,
+          async () => {
+            // The PATCH reads the investigation id, then blocks on its UPDATE.
+            pending = patch(id, { status: 'filed' })
+            await blockedUpdates(1)
+          },
+          // Meanwhile the investigation is deleted: the outcome insert will fail its foreign key.
+          async (tx) => {
+            await tx`delete from investigations where id = ${invId}`
+          }
+        )
+        const failed = await pending
+        expect(failed).toEqual({ status: 500, json: { error: "The filing couldn't be recorded. Nothing was changed. Try again." } })
+      } finally {
+        errors.mockRestore()
+      }
+      const after = await readRow(id)
+      expect(after.status).toBe('final')
+      expect(after.metadata?.filedAt).toBeUndefined()
+      const [{ credentials }] = await db1<{ credentials: number }[]>`
+        select count(*)::int as credentials from credential_events where source_id = ${id}`
+      expect(credentials).toBe(0)
+
+      const retry = await patch(id, { status: 'filed' })
+      expect(retry.status).toBe(200)
+      expect((await readRow(id)).status).toBe('filed')
+    })
+
+    it('N8: a body too long to hold valid content is refused with 413 before parsing', async () => {
+      const id = await insertAction({ content: 'Short.' })
+      const res = await PATCH(
+        new NextRequestCtor(`http://localhost/api/lever/actions/${id}`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json', 'x-user-id': OWNER.id },
+          // not even JSON: a parse would be a 400, so a 413 proves the bound ran first
+          body: '{'.repeat(100_000 * 6 + 4097),
+        }),
+        { params: Promise.resolve({ id }) }
+      )
+      expect(res.status).toBe(413)
+      expect((await readRow(id)).content).toBe('Short.')
+      // a body just under the bound still parses (and fails as JSON, 400)
+      const under = await PATCH(
+        new NextRequestCtor(`http://localhost/api/lever/actions/${id}`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json', 'x-user-id': OWNER.id },
+          body: '{'.repeat(1000),
+        }),
+        { params: Promise.resolve({ id }) }
+      )
+      expect(under.status).toBe(400)
     })
   })
 

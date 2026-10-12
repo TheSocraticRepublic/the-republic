@@ -6,6 +6,10 @@ import {
   resolveActionJurisdiction,
   resolveRecipient,
   resolveGenerationTarget,
+  resolveInvestigationProvince,
+  provinceIdFromName,
+  otherProvinceBodyError,
+  listedIn,
   normaliseAddress,
   isCheckedEntry,
   CHOOSE_PROVINCE_ERROR,
@@ -272,5 +276,64 @@ describe('resolveGenerationTarget', () => {
     expect(
       resolveGenerationTarget({ actionType: 'public_comment', metadata: { jurisdiction: 'on' }, investigation: null })
     ).toEqual({ ok: true, jurisdictionId: 'bc', publicBodyName: null })
+  })
+})
+
+describe('resolveInvestigationProvince: the resolved jurisdiction first, detection second', () => {
+  const BURNABY = { concern: 'Synthetic concern', jurisdictionName: 'City of Burnaby', province: 'British Columbia' }
+  it('reads the resolved province where keyword detection finds nothing', () => {
+    // "City of Burnaby" matches no detection keyword
+    expect(resolveInvestigationProvince({ ...BURNABY, province: null })).toBeNull()
+    expect(resolveInvestigationProvince(BURNABY)).toBe('bc')
+    expect(resolveActionJurisdiction({}, BURNABY)).toBe('bc')
+  })
+  it('the resolved province wins over a conflicting keyword', () => {
+    expect(resolveInvestigationProvince({ concern: '', jurisdictionName: 'Victoria, British Columbia', province: 'Alberta' })).toBe('ab')
+  })
+  it('an unsupported province falls back to detection, then null', () => {
+    expect(resolveInvestigationProvince({ concern: '', jurisdictionName: 'Toronto', province: 'Quebec' })).toBe('on')
+    expect(resolveInvestigationProvince({ concern: '', jurisdictionName: 'Montreal', province: 'Quebec' })).toBeNull()
+    expect(resolveInvestigationProvince(null)).toBeNull()
+  })
+  it('the stored province still outranks the investigation', () => {
+    expect(resolveActionJurisdiction({ jurisdiction: 'on' }, BURNABY)).toBe('on')
+  })
+  it('maps province names case-insensitively, and nothing else', () => {
+    expect(provinceIdFromName(' ontario ')).toBe('on')
+    expect(provinceIdFromName('BC')).toBeNull()
+    expect(provinceIdFromName(undefined)).toBeNull()
+  })
+  it('a legacy FIPPA draft under a Burnaby investigation generates under BC', () => {
+    expect(
+      resolveGenerationTarget({ actionType: 'fippa_request', metadata: { publicBody: 'BC Ministry of Forests' }, investigation: BURNABY })
+    ).toEqual({ ok: true, jurisdictionId: 'bc', publicBodyName: 'BC Ministry of Forests' })
+  })
+})
+
+describe('a body in another province’s directory', () => {
+  it('listedIn finds the province, by name or by alias', () => {
+    expect(listedIn('BC Ministry of Forests')).toEqual({ province: 'bc', name: 'BC Ministry of Forests' })
+    expect(listedIn('Ministry of Forests')).toEqual({ province: 'bc', name: 'BC Ministry of Forests' })
+    expect(listedIn('City of Edmonton')).toEqual({ province: 'ab', name: 'City of Edmonton' })
+    expect(listedIn('Synthetic Water Board')).toBeNull()
+  })
+  it('the create refusal names the province it belongs to', () => {
+    expect(otherProvinceBodyError('bc')).toBe(
+      'That body is in the British Columbia directory. Choose British Columbia, or pick a body from the list.'
+    )
+  })
+  it('generation of such a legacy row is refused with the real problem, not "choose the province"', () => {
+    expect(
+      resolveGenerationTarget({
+        actionType: 'fippa_request',
+        metadata: { publicBody: 'Ministry of Forests', jurisdiction: 'ab' },
+        investigation: null,
+      })
+    ).toEqual({
+      ok: false,
+      status: 409,
+      error:
+        'This request names BC Ministry of Forests, which is in the British Columbia directory, but it goes to Alberta. Start a new request with the right province.',
+    })
   })
 })
