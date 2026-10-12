@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { ArmHeader } from '@/components/layout/arm-header'
 import { ActionViewer } from '@/components/lever/action-viewer'
 import { CrossArmActions } from '@/components/ui/cross-arm-actions'
+import { loadInvestigationProvince } from '@/lib/lever/load-recipient'
 
 export const metadata = {
   title: 'Lever',
@@ -43,8 +44,26 @@ export default async function LeverActionPage({ params }: PageProps) {
 
   const typeLabel = ACTION_TYPE_LABELS[action.actionType] ?? action.actionType
 
+  // The recipient notices (filings §3) need the action's recipient fields and
+  // its investigation's province, and nothing else of either: the citizen's
+  // concern text is not sent to the page for this.
+  const metadata = (action.metadata ?? {}) as Record<string, unknown>
+  const isFippa = action.actionType === 'fippa_request'
+  const recipientMetadata = isFippa
+    ? {
+        publicBody: metadata.publicBody,
+        publicBodyName: metadata.publicBodyName,
+        addressee: metadata.addressee,
+        jurisdiction: metadata.jurisdiction,
+      }
+    : undefined
+  const investigationProvince = isFippa
+    ? await loadInvestigationProvince(db, action.investigationId, userId)
+    : null
+
   return (
-    <div data-arm="lever" className="mx-auto max-w-2xl px-6 py-10">
+    // 720px less the 24px gutters leaves the letter paper its 672px (A1).
+    <div data-arm="lever" className="mx-auto max-w-[720px] px-6 py-10">
       {/* Back nav */}
       <div className="mb-6 flex items-center gap-4">
         <Link
@@ -74,6 +93,10 @@ export default async function LeverActionPage({ params }: PageProps) {
         initialContent={action.content ?? ''}
         initialStatus={action.status}
         actionType={action.actionType}
+        letterFormat={metadata.letterFormat}
+        recipientMetadata={recipientMetadata}
+        investigationProvince={investigationProvince}
+        notesRemovalConfirmedAt={metadata.notesRemovalConfirmedAt}
       />
 
       {/* Cross-arm navigation — only when this action is tied to a document */}

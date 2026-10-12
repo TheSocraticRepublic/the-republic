@@ -19,17 +19,6 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 ## Owed right now
 
-- **Post-remediation re-audit COMPLETE (2026-08-26): grade C, score 30, 0 FAIL / 35 WARN
-  (deduplicated).** 18 of the original 26 WARNs closed. WARN count rose under deeper
-  specialist scrutiny (Jen: 11 on unmigrated light-surface hex + a11y; Dao: 7 operational).
-  Report at `~/marvin/state/production-audits/the-republic-2026-08-26-remediation.md`.
-  Relay ledger: `republic-warn-remediation-b1` → complete, Razor 0 CRITICAL.
-
-- **Merge to main + deploy.** The session branch (`marvin/the-republic-audit` at `a974442`)
-  has 40+ commits ahead of main. Merge requires Lee's go-ahead per the brief's authority
-  constraints. ~~Migrations 0012-0014 must be applied to prod DB post-merge~~ — all applied
-  via runner at 2026-08-29 03:09 UTC (verified: `_custom_migrations` tracks all 14).
-
 - **Branch protection (C2) — needs Lee's own GitHub account.** Settings → Branches → Add rule for `main`:
   - Required status check: `ci`
   - Require up-to-date branches
@@ -38,6 +27,37 @@ in this project has already been ruled on, usually for a reason that is not obvi
   The constraint behind this is in `DECISIONS.md` → Operating constraints.
 
 - ~~**SENTRY_AUTH_TOKEN env var (OBS-1).**~~ Lee handling directly (2026-08-27).
+
+- **Razor notes on the CI batch (no fix owed; carry forward).** **N1:** the CI pins node 22.22.1, which predates the 22.22.2 security release and differs from Netlify's floating `NODE_VERSION=22` (22.23.3 at review); review it with the next dependency batch (Parking Lot). **N2:** Next 16.3.1 changed how `headers()` reads the request, and identity reaches handlers through the middleware's `x-user-id`. The local production smoke passed 11/11; Lee's signed-in check after deploy is still a release condition. **N3:** audit-ci's path exception would let a new dev-only consumer of the same hoisted `braces` through until the 2027-01-05 review (documented in `audit-ci.jsonc`; register DEP-2). **N4:** `event-stream` 4.0.1 enters the dev tree through audit-ci; it is clean (the compromised release was 3.3.6).
+
+- **Build-checks fix is live (2026-10-11); Lee owes one follow-up.** Main is `fa16447` (PR #5) on Netlify deploy `6acc1bbeb27b4900083c30a8`, which is now the rollback target for any next release. **Lee to sign in once on opencave.ca with the audit account**, to confirm sign-in works after the Next 16.3.1 header change (Razor N2). TEST-1 (the non-owner export) was accepted by Lee on 2026-10-12. Sentry has no project in the org, so it gives no post-deploy signal (OBS-1).
+
+- **S1 release card is with Lee: DECISION NEEDED (filed 2026-10-12).** Draft PR #6 (`release/s1-redirect-privacy`, CI green, run 38201423939) holds S1's five files alone, cherry-picked onto main `fa16447` and byte-identical to the reviewed head `44b3af4`. The rollback target is `6acc1bbeb27b4900083c30a8`. **The blocker:** the privacy contact, and `SECURITY.md` line 9, point at the email on the TheSocraticRepublic GitHub profile, and the profile shows none (`gh api users/TheSocraticRepublic`: `email: null`). The options:
+  - (a) Lee publishes a monitored public email on the profile;
+  - (b) Lee names an address for the page;
+  - (c) recommended: ship the redirect fix only, holding the privacy text;
+  - (d) hold everything.
+
+  Never merge PR #6 or anything to main without his yes. Razor RN2: whoever answers privacy requests replies only to the account's sign-in address.
+
+- **Findings inventory and audit artifacts** are private, in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/` (mode 700). It holds 120 findings with dispositions mapped to the r4 batch IDs (updated 2026-10-11). Screenshots and reports are deleted at relay close, except the inventory (owner Lee).
+
+- **UI and filings plan r4.1: Q0a, Q0b, S1, A1, A2, A3 and A4 merged to the session branch (A4 at `1bd2524`); the A-series release card goes to Lee next, then B1.**
+  - **The plan:** `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md`. Its Fable critic is `-critic.md` (CONCERN, no FAIL); r3 and earlier critics sit beside it. Amendments recorded in the plan: S1's privacy wording; A1's Export menu order, per-status notice wording and full-bleed phone paper; no persisted Mirror comparisons; A4's Carried lines and its two review amendments (the 8 s bound holds for any admitted content via a pre-render cost bound; words cut by measured width; page numbers count letter pages only; the length refusal has its own copy).
+  - **The A-series release rule:** A1-A4 release together, never A1 alone, because the PDF keeps the old template until A4. The first A-series release card also carries the legacy-letter question (plan Decision 2), the Netlify mid-stream abort check (Parking Lot), A4's hosted capacity reading against Netlify's documented 60 s synchronous limit, the D_prev compatibility run, and Lee's signed-in look check. It also lists A4's plan amendments (letter-only page numbers, the length refusal) and Razor's carried RW1 (the cost estimate admits a contrived 8 s letter and refuses some 4 s schedules).
+  - **Lee's open ruling (marker line):** A4 shipped with the plan's current unclean-split message. If Lee rules that a letter whose marker line was deleted may be finalised after a confirmation, that is a small follow-up batch (server accepts the confirmation for `split: 'none'`; the viewer asks for it) before the A-series release.
+  - **The harness:** `npx tsx scripts/qa/harness.ts run` (or `up` / `check` / `down`; see `scripts/qa/README.md`). Browser tests use `scripts/qa/browser.ts`, and signed-in evidence runs in Chromium on 127.0.0.1. Every non-GET request sends `Origin: http://127.0.0.1:3177`. Named limits: no network isolation; its ports sit in the ephemeral range, so `up` can be refused on a TIME_WAIT (retry). A fresh relay worktree needs `npm ci` (the session checkout's `node_modules` lacks the Q0a dev tools).
+  - **Machine:** keep the memory guard on (no build or harness under 4 GB available; never both at once). **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only).
+
+- **Cold start for the next batch (B1).**
+  1. Read the plan's "### B1", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether B1 has UI (Jen, opus xhigh, after Razor).
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-a4-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-b1`, `parallel_batches` to `[["B1"]]`, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-b1 --stage implement --batch 1 --step B1`; `git worktree add -b relay/ui-b1-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
+  4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only. Carry Razor's A4 RW1 into B1's review only if B1 touches the PDF engine; otherwise it stays in the Parking Lot.
+  5. Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
+  6. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
+
+- **Lee's rulings 2026-10-12 ("go ahead with all of the recommendations for these decisions"), being executed.** (1) Release the open-redirect fix and A1-A5 to opencave.ca with S1's privacy wording held out (relay `republic-ui-s1b` restores `PRIVACY.md` and the privacy page to main's bytes). (2) Legacy final and filed letters render as stored with the notice beside them; no split feature. (3) Finalise without the marker line asks for confirmation (relay `republic-ui-a5`); two markers still block. (4) For the A-series release, a restore of `D_prev` without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route in 30 min, Lee's look check). Still open: the privacy contact address (S1 wording returns with it). PR #6 is superseded by the A-series release; close it when that release merges. Release record goes in `~/.local/share/marvin/private/republic-releases/` before promotion; re-run the D_prev check with an A5-confirmed record before promotion.
 
 ## Open questions awaiting Lee
 
@@ -52,6 +72,15 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | Illustration variant selection (D4 Athenians) | Cameo set vs. other variants for the drawn archetype illustrations | Since D3 hand-off |
 | ~~Pooler switch window (P1)~~ *(closed — the switch shipped 2026-07-15)* | Needs a low-traffic window, Lee's call | Since 2026-07-09 |
 | Rotation / history scrub for the Supabase account identifiers | The pseudonymous account address and project ref have been in public tracked history since `1e3841a` (2026-08-16). Either that is accepted, or it needs a rotation + scrub decision. | 2026-08-21 |
+| Approve the Open Cave UI and filings remediation plan (revision 2, folding the astra critic's r1: 12 FAIL, 5 CONCERN)? On approval the r1 review is renamed -critic-r1.md and astra re-reviews revision 2 before Batch 0; any r2 FAIL stops the relay and comes back to you before code is written. (resolved 2026-10-07) | The plan has waited at the approval prompt since 2026-10-02; nothing in it can start without your yes. | 2026-10-02 |
+| Approve the R3-R9 plus evidence-correction wording for DECISIONS.md (draft at .claude/drafts/decisions-r3-r9.md)? (resolved 2026-10-11) | Six UI batches build on these rulings; it's an append-only file in a public repo | 2026-10-07 |
+| If UI plan r3's critic passes, may it proceed under your 2026-10-05 twenty-batch approval (same findings, regrouped into 28 smaller batches, plus Q0 harness, S1 security and privacy, G1 Gadfly)? (resolved 2026-10-11) | The plan's own rule sends any re-review FAIL back to you; r2 failed | 2026-10-07 |
+| Release S1 to opencave.ca, and which inbox should the privacy and security contact name? (a) publish a monitored email on the TheSocraticRepublic GitHub profile; (b) name an address for the page; (c, recommended) ship the redirect fix only and hold the privacy text; (d) hold all (resolved 2026-10-12) | The live open redirect stays open until S1 ships, and the contact line points at a profile with no public email | 2026-10-12 |
+| Lee's signed-in check on opencave.ca with the audit account after the build-checks deploy | Next 16.3.1 changed request-header reads; identity reaches handlers via the middleware, and no signed-in check has run on production | 2026-10-11 |
+| A new letter's notes sit under the line '=== NOT PART OF YOUR REQUEST ==='. If the citizen deletes that line and the notes, may they finalise the letter? Today (as the plan specifies) they can't, and the refusal tells them to remove notes they already removed. Recommended: when the line is missing, Finalise asks them to confirm they've removed everything that isn't part of the request, then proceeds; two copies of the line still block. (resolved 2026-10-12) | A4 builds the Finalise message on this; the rest of the A-series can proceed. Nothing is live until A1-A4 release together. | 2026-10-12 (Razor W1, relay republic-ui-a2) |
+| Release the A-series (login redirect fix, A1-A4 filings work) to opencave.ca, and what happens to S1's privacy wording? (a) release everything once you answer the S1 contact question; (b, recommended) back out only the privacy wording and release the rest now; (c) hold. Full card: ~/marvin/state/relay/republic-ui-a-series-release-card.md (resolved 2026-10-12) | A release is everything on the session branch since main, which includes S1's privacy line pointing at a GitHub profile with no public email; the live open redirect stays open until something ships | 2026-10-12 (A-series release card) |
+| Old letters: accept that final and filed letters written before this work keep their guidance notes inside the letter (drafts get a notice and can be edited)? (a, recommended) accept; (b) build a citizen-marked split, about one more batch (resolved 2026-10-12) | Takes effect with the A-series release; final and filed letters can't be edited and no automatic split is safe | 2026-10-12 (plan Decision 2) |
+| Rollback authority for the A-series release: may the session restore the current deploy (6acc1bbe at fa16447) without asking if a named post-release check fails (health or signed-out probe, a new server error on a touched route in the first 30 minutes, or your look check)? (resolved 2026-10-12) | Without it, a failed check leaves a broken release live while you are reached | 2026-10-12 (plan Decision 3) |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
 2026-07-16 hand-off). SEC-1, FORUM-1's cosmetic gate, Relay 1, Relay 2 and Relay 3 are all
@@ -60,6 +89,189 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 — Lee approves the A-series release card
+
+- **Rulings:** release the open-redirect fix and A1-A5 with S1's privacy wording held; accept legacy letters as stored; confirm-to-finalise when the marker line is missing; restore without asking on a named failed check.
+- **Started:** relays `republic-ui-s1b` (privacy wording back to main's bytes) and `republic-ui-a5` (confirmed finalise), plan sections added the same day.
+- **Next:** Razor (and Jen for A5), merge both, re-run the D_prev check, then promotion through a release PR into main.
+
+### 2026-10-12 — A-series release card drafted; D_prev compatibility run passes
+
+- **D_prev run:** today's production code (fa16447) against 30 harness records, including ones the new code wrote (marker-v1, province by PATCH, conflict-tested, finalised, filed): 120/120 calls 200, screen and print complete, no record damaged. Its PDF drops the letter's own sign-off line on every letter, legacy included; that is today's behaviour, which A4 fixes. Report: ~/marvin/state/relay/republic-ui-a-series-dprev-compat.md.
+- **Card:** ~/marvin/state/relay/republic-ui-a-series-release-card.md (four decisions, Lee's look check). Waiting on the coordinator, which was offline when it was ready.
+- **Next:** deliver the card; B1 waits on the coordinator's word, since the standing instruction covered the A-series.
+
+### 2026-10-12 — A4 merged to the session branch (`1bd2524`)
+
+- **What it does:** the FIPPA PDF is built from the parsed letter on pure white, with a separate "Not part of your request" guidance page, letter-only page numbers in the embedded letter face, measured-width line breaking and a pre-render cost bound (letters too long for a PDF are refused in under a second with their own message). On screen: recipient notices, Insert directory address for checked entries on drafts, conflict handling that never discards the citizen's text, and a province choice for refused drafts.
+- **Review:** Razor CRITICAL (an 8 s timer cannot interrupt synchronous react-pdf layout; worst case 31 s) fixed by linear layout plus the cost bound and re-checked; RW1 (the estimate is not proportional to render time across shapes) carried to the Parking Lot. Jen's 12 concerns adopted at floor (two were plan gaps); Razor PASS on the design fix. 63 mutants killed.
+- **Process:** a mutant that disarmed the bound hung the battery for 30 min; answer-time tests now carry 12 s per-test timeouts. An orphaned vitest worker escaped the battery's process-group kill (a marvin battery gap).
+- **Next:** the A-series release card to Lee via the coordinator, then B1.
+
+### 2026-10-12 — A3 merged to the session branch (`ce54117`)
+
+- **What it does:** `PublicBody` gains `sourceUrl`, `checkedOn` and `sourceQuote`. The Province of British Columbia and the three ministry entries (Forests; Environment and Climate Change Strategy; Energy, Mines and Low Carbon Innovation) were checked against gov.bc.ca's FOI FAQ, which names FOI Operations as the FOI service provider for every ministry, and corrected to "FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC V8W 9K1"; the per-ministry boxes they listed appear on no government page. They resolve `checked`. The Environmental Assessment Office (its box is only its general mailing address) and every municipal entry stay unchecked, and their addresses are pinned by tests.
+- **Reviews:** Razor WARNING (1 warning, 8 notes): my first transcription of the page added commas, so the quotes weren't verbatim, and the main FOI page carries the address only as a fee-cheque line. Re-read from the page HTML; all four entries now quote the FAQ's contact block exactly. Re-check PASS. Harness suite 187/187 for the A2 files, full suite 1156/1156 and `next build` at the first head; 15/15 mutants after the fix.
+- **Carried to A4:** letters generated before A2 carry the retired ministry boxes, which now resolve `checked`; the notice stays an occurrence check.
+- **Parked:** out-of-date ministry names; the EAO's FOI route (ROADMAP → Deferred from republic-ui-a3).
+
+### 2026-10-12 — A2 merged to the session branch (`94f3977`)
+
+- **What it does:** one recipient resolver (`src/lib/lever/public-body.ts`; stored province, then the investigation's resolved province, then keyword detection, never a BC default); a confirmed province select and a body select in the new-action dialog; compare-and-set writes for edit, finalise and generation; generation refuses final letters; FIPPA prompt 0.6.0 with the guidance marker and address placeholder (non-FIPPA prompts byte-identical); filing side effects in the same transaction as the status change; oversized bodies refused before parsing.
+- **Evidence:** every §4 overlap forced on the harness with two real connections and the stub's hold/release; full suite 1143/1143 with the harness up; 55/55 mutants killed; lint, tsc, token lint and build pass.
+- **Reviews:** Razor WARNING (2 warnings, 9 notes), fixed and re-checked twice to PASS; W1 is the plan's own finalise rule and went to Lee. Jen CONCERNS 5 on the dialog, all adopted (server message shown on refusal, reason line and aria-disabled Generate, focus kept while pending, Other name cleared on province change, AB/ON caveat line). One off-manifest file: `GET /api/investigate/[id]` gains `jurisdictionProvince` (Razor: ownership unchanged, public reference data).
+- **Parked:** harness ports in the ephemeral range; developer-worded 4xx reaching citizens; the discard event onto `logEvent()`; mid-stream abort on Netlify (ROADMAP → Deferred from republic-ui-a2).
+
+### 2026-10-12 (context floor: hand-off rewritten, session marvin/republic-r2)
+
+Before A2, at the coordinator's request, the owed rows were rewritten:
+- stale locations corrected (removed worktrees, plan r3, the deleted cookie);
+- three doubled-bullet rows from earlier writes fixed;
+- a cold-start recipe for A2 added.
+
+The state: Q0a, Q0b, S1 and A1 are merged to the session branch; the S1 release card is with Lee; the A-series releases together after A4.
+
+**Next:** A2, from the cold-start row.
+
+### 2026-10-12 (A1 merged, session marvin/republic-r2)
+
+Relay `republic-ui-a1` merged to the session branch as `a97c7de`. `parseLetter` implements plan §1-§2 and matched all 29 hand-written goldens on its first run (35 with the worker's additions). The print route and viewer render from it, with templates no longer adding letter parts, and TXT and MD export the stored text byte for byte (the MD export used to add frontmatter and an Open Cave footer).
+
+Razor's CRITICAL C1 was a quadratic link scan: a 199,000-character `[a](` line took 112 s to parse, reachable through a citizen's own draft on server render. Fixed in `86ffbf7`; now linear, 86 ms, with a timing regression test. W1 (guidance placeholders highlighted in print) is fixed too. Jen's ten concerns were adopted, two of them as plan amendments. Battery 28/28, harness 250/250, 1031 tests.
+
+The S1 release card is still with Lee (no public email on the GitHub profile).
+
+**Next:** A2.
+
+### 2026-10-12 (S1 merged; release card filed, session marvin/republic-r2)
+
+Relay `republic-ui-s1` merged to the session branch as `5430e85`.
+- **The redirect fix:** `safeRedirectTarget` returns the checked absolute same-origin URL with an origin postcondition, and profile setup navigates with it. Razor's 52 hostile inputs all held. On the harness, the four escapes and the original backslash case all land on the app's origin, and the old code goes to `evil.example`. Battery 9/9 (one documented equivalent mutant).
+- **The privacy contact:** reworded by Petra (accountability, identity, 30 days, complaint routes) and Jen (link, code subject, one voice, two paragraphs); Razor RN2 added "we reply only to the address on your account".
+- **The blocker,** found independently by all three reviewers: the GitHub profile the contact points at has no public email.
+
+An S1-only release branch is open as draft PR #6 with CI green, waiting for Lee.
+
+**Next:** A1, while the S1 card waits.
+
+### 2026-10-12 (Q0b merged, session marvin/republic-r2)
+
+Relay `republic-ui-q0b` merged to the session branch as `c0b87b5`. It is the local QA harness:
+- Docker Postgres with a Supabase shim and the BYPASSRLS `qa_app` role, Redis behind the Upstash REST shim, and an Anthropic-format AI stub;
+- synthetic seed, including two real Commons divisions with their openparliament.ca URLs;
+- minted sessions and a real `verify-code` browser login;
+- every writer guarded by `assertLocalQaTargets()` with an explicit `DIRECT_DATABASE_URL` and a missing `DOTENV_CONFIG_PATH` (closes Q0a's W2; a dotenv file pointed at 192.0.2.1 is ignored);
+- readiness on `/api/health` plus an authenticated database route (closes N3);
+- 29 letter fixtures with hand-written golden projections, which Razor checked against his own implementation of §1-§2.
+
+Razor gave WARNING (W1: a refused `up` tore down the live harness and signalled unowned pids; W2: build reuse was unsound; W3: no network isolation). Fixes `f0018b8` and `69a63b4` closed them, plus N2, N3, N6 and the re-check's RW1, which I verified myself.
+
+The expired production audit cookie (`republic_token`, expired 2026-10-08) was deleted per the plan's custody rule.
+
+**Next:** S1.
+
+### 2026-10-12 (Q0a merged, session marvin/republic-r2)
+
+Relay `republic-ui-q0a` merged to the session branch as `8558cd8`. It delivers:
+- a local-only database TLS rule (no TLS only with `QA_LOCAL_DB=1` and a loopback host; that flag with a remote host throws);
+- `scripts/lib/local-db-guard.ts` checking each writer's effective URL;
+- `.tsx` tests under jsdom;
+- `DR.md` corrected;
+- pinned dev-only QA tooling: pdfjs-dist 5.4.296, playwright 1.63.0, @axe-core/playwright 4.13.0, lighthouse 13.5.0, jsdom 29.1.1 (30.x needs Node 22.22.2), @testing-library/react 16.3.3.
+
+The lockfile was hand-edited to keep the app's zod at 4.4.2. It was verified by the orchestrator and Razor: zero production lock changes, nested zod 4.6.6 integrity equal to the registry, and `npm ci` reproduces it.
+
+Razor gave WARNING (W1 a false guard comment, W2 a drizzle-kit `.env` load); the fix `33d74c7` closed W1 and N1 on re-check, and W2 carries to Q0b. Mutation battery 30/30 killed; build green once memory recovered.
+
+**Next:** Q0b.
+
+### 2026-10-12 (TEST-1 accepted)
+
+Lee, through the coordinator, 2026-10-12: "For the Republic accept it". The non-owner letter export, untested across two real accounts, is accepted as shipped. UI plan r4.1 closes it with owner, non-owner and anonymous tests on `POST /api/lever/export` through the real middleware on the local harness (A4). No DECISIONS entry, because the acceptance is temporary and ends when A4 ships. Q0a is with Ted.
+
+### 2026-10-11 (plan r4 gate open, session marvin/republic-r2)
+
+The Fable critic on r4 returned CONCERN, no FAIL. It reproduced S1's redirect fix in Node and verified every harness premise against the code. Its must-fix items are folded as r4.1:
+- QA tooling (Playwright, axe, Lighthouse, jsdom, testing-library, `.tsx` tests) in Q0a;
+- the Origin and Secure-cookie constraints and the superuser `vector` extension in Q0b;
+- react-pdf oversize-token chunking and global hyphenation in A4;
+- release content defined as `origin/main..S`;
+- Sentry removed as a signal (no project exists);
+- the province always shown and confirmed;
+- finalising blocked on an unclean split;
+- hash re-baselining.
+
+Batch 0 wrote five Parking Lot entries.
+
+**Next:** relay Q0a.
+
+### 2026-10-11 (build-checks fix deployed, session marvin/republic-r2)
+
+Lee approved card 17 through the coordinator: "go ahead and merge the Republic build checks".
+
+- **What merged.** PR #4's branch also carried two unrelated docs commits, so the four code commits were cherry-picked onto main as `release/ci-build-checks` (PR #5), byte-identical to the reviewed relay head (lock sha `1280473f…`). CI went green on the PR (run 38184313344, every step success), then merged as `fa16447`.
+- **The rollback target** was read before the merge and again just before it: `6ac01a4ef8c65100089a3faa` at `c80dcfe`.
+- **Deploy and checks.** Netlify published `6acc1bbeb27b4900083c30a8` at `fa16447` at 23:30 UTC. `/`, `/login`, `/privacy`, `/foundations`, `/archive` and `/api/health` (`ok`) all return 200, and protected routes redirect to login. CI on main is green (run 38184443202), the first green run since 2026-08-29.
+- **Not checked: a briefing page.** Briefings need sign-in, which is Lee's follow-up.
+- **Found:** `/icon` redirects signed-out visitors to login. It did the same on the previous deploy, so it is pre-existing; parked.
+- **Cleanup.** PR #4 is closed as superseded; the relay and release worktrees are removed; main is merged back into the session branch (`7da303e`); the ledger entry is `shipped`.
+
+**Next:** the UI plan r4 astra review, on the coordinator's go after 17:40.
+
+### 2026-10-11 (plan r4, session marvin/republic-r2)
+
+Lee answered cards 15 and 16 through the coordinator: "go ahead with the 20 opencave batches". Plan r4 is written. It is self-contained and folds all 16 points of the r3 review:
+- the redirect helper returns the checked absolute URL;
+- every content and status write is a compare-and-set;
+- letters carry a recorded format, and legacy text is never split;
+- FIPPA generation refuses an unknown jurisdiction instead of defaulting to BC;
+- only checked directory addresses can be inserted;
+- the local harness gets a Supabase shim, a BYPASSRLS app role, a local-only TLS rule, a Redis REST endpoint and an AI stub;
+- the carried concern is bound to one tab's login handoff.
+
+The private findings inventory now uses the r4 batch IDs. Card 17 (CI merge to main) is still open.
+
+**Next:** the astra review after the Codex reset.
+
+### 2026-10-11 (Oct 2 rulings recorded, session marvin/republic-r2)
+
+Lee approved the Oct 2 design rulings card as written (coordinator pane, 2026-10-11). The seven Open Cave rulings (R3-R9: government-only links, warm surfaces, plain white filings, Fraunces wordmark, tested privacy address, static grain, honest gated Forum) and the 'verified'-label evidence correction are now in DECISIONS.md through the writer, dated 2026-10-11, each noting it was ruled 2026-10-02. The draft file is removed as superseded. Cards 15-17 (plan re-review path, fourth revision or the cut, CI merge to main) are still open.
+
+**Next:** Lee's answers on cards 15-17.
+
+### 2026-10-10 (fleet unpaused, ungated pass, session marvin/republic-r2)
+
+Checked what the four cards with Lee (the Oct 2 rulings, proceeding on a passing plan, revision 4 or a cut, merge to main) leave ungated. The Assignment 0 done-whens hold on the pushed branch. ARCHITECTURE.md gained a Continuous Integration section: the provenance step, the Node pin gap against Netlify, the two audits and why they are split. The other candidates belong to the gated UI plan: the LIGHT_PALETTE drift in CLAUDE.md and globals.css is in its D1, and the non-owner export test (TEST-1) is in its harness ownership checks. Nothing else is ungated.
+
+**Next:** Lee's answers on cards 14-17.
+
+### 2026-10-08 (resumed after the weekly reset)
+
+The CI relay finished: Ted wrote the `audit-ci.jsonc` reasons, all five negative controls failed as they should, and Razor gave WARNING (W1) that was fixed and re-checked to PASS. Locally, the build, all 830 tests and both audits pass, and a production-mode runtime smoke passed 11/11 (forged `x-user-id` never reaches a handler, a valid JWT reaches the handler, CSRF rejects missing and hostile origins). The branch is merged into the session branch at `8a2abfe`. CI is green on draft PR #4, its first green run since 2026-08-29. The UI r3 critic came back FAIL. Netlify confirmed to auto-build main (`stop_builds: false`).
+
+**Next:** Lee's answers on the deploy card, the R3-R9 wording, and the UI r3 path.
+
+### 2026-10-07 (parked on quota line, session marvin/republic-r2)
+
+Parked on the coordinator's instruction when the weekly quota hit Lee's 97% line. The CI plan went through six astra rounds; the dependency evidence is strong and the remaining FAILs were release choreography, so the coordinator cut it to r7-dependency-only and relayed it. Ted is parked mid-batch with the gates green. UI r3 is written but unreviewed. The private issue register gained SEC-UI-1, DEP-2 and TEST-1. No Lee rulings this session, so nothing was written to DECISIONS.md.
+
+**Next:** finish relay `republic-ci-green-deps` from Stage 1 (see Owed), then the UI r3 critic.
+
+### 2026-10-07 (structure pass, session marvin/republic-r2)
+
+Docs brought up to the 2026-10 state ahead of the CI batch and the UI and filings relay.
+
+- **ROADMAP:** `current` and `next` rewritten (they described 2026-08-07 and 2026-08-29). Shipped entries added for 08-26, 08-27, 08-28, 08-29, 10-01 and 10-02. Parking Lot: the §D/E triage line struck as done 2026-08-23; the plan's seven deferrals indexed, with their detail section copied verbatim.
+- **Owed rows closed as done:** "Post-remediation re-audit COMPLETE (2026-08-26)" was a status and not owed work. Pass 2 then reached grade B on 2026-08-27. "Merge to main + deploy" is done: `marvin/the-republic-audit` merged to main in August, and main through at least `5ec2bd8` is live. The superseded "plan r2 awaiting approval" row was replaced by the critic-then-relay row, since Lee approved all 20 batches on 2026-10-05.
+- **Plan approval question resolved:** Lee approved the whole plan on 2026-10-05, overriding the strategist's three-batch recommendation. The plan pair moved to `~/marvin/state/plans/republic-ui-filings-2026-10/` (marvin `21acc775`).
+- **Branches:** `marvin/republic` fast-forwarded into this session branch (its one commit only saved the approval prompt). Deleted as superseded: local `marvin/session-1921aa` (tip `2074c6c`, PRIV-2 B1 shipped on main as `c6b8af0`); `origin/marvin/session-27cd20` (tip `a79d15a`, June design phases A-D and audit remediation, on main as `4f9b5aa`, `77bc0aa`, `3400a63`, `a355d38`, `4f05e6b`, `f166d03`); `origin/relay/audit-remediation-r1` (tip `2b0a1c2`, one research doc, byte-identical at `~/marvin/content/reference/the-republic/civic-impact-strategy-2026-07.md`). Kept: `relay/permission-allowlist` (2 ahead). It adds a `.claude/settings.json` permission allow-list from MARVIN's permission-architecture relay (2026-08-28), and a project session does not merge permission settings.
+
+**Next:** CI dependency batch, then the r2 critic.
+
+### 2026-10-05 -- republic session closed for a context reset (saved by marvin session-d09d2c)
+
+Lee closed every window to reset context. The session had sat at the plan-approval prompt since 2026-10-02, in plan mode, so marvin session-d09d2c saved it: the plan and its r1 critic copied from ~/.claude/plans into .claude/plans/, the approval recorded as an open question, and branch marvin/republic pushed to origin for the first time.
 
 ### 2026-08-29 (investigation completion fixes)
 **Investigation completion poller fixes + schema state verified.**

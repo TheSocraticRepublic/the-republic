@@ -1,6 +1,7 @@
 import React from 'react'
 import { renderToStream } from '@react-pdf/renderer'
 import type { DocumentProps } from '@react-pdf/renderer'
+import type { RecipientResolution } from '@/lib/lever/public-body'
 import type {
   CampaignMaterial,
   FactSheetSpec,
@@ -17,7 +18,12 @@ import { FactSheetTemplate } from './templates/fact-sheet'
 import { TalkingPointsTemplate } from './templates/talking-points'
 import { TimelineTemplate } from './templates/timeline'
 import { ComparisonTemplate } from './templates/comparison'
-import { FippaRequestTemplate } from './templates/fippa-request'
+import {
+  FippaRequestTemplate,
+  loadLetterMetrics,
+  estimateRenderCost,
+  RENDER_COST_LIMIT,
+} from './templates/fippa-request'
 import { PublicCommentTemplate } from './templates/public-comment'
 import { PolicyBriefTemplate } from './templates/policy-brief'
 
@@ -75,6 +81,17 @@ export interface LeverActionData {
   content: string
   actionType: string
   metadata?: Record<string, unknown>
+  /** FIPPA only: the action's status (it words the §2 notice). */
+  status?: 'draft' | 'final' | 'filed'
+  /** FIPPA only: the recipient resolver's answer, with the action's investigation (§3). */
+  recipient?: RecipientResolution
+}
+
+/** A letter whose estimated render cost is over the limit; nothing was rendered. */
+export class PdfTooCostly extends Error {
+  constructor(readonly cost: number) {
+    super(`PDF render cost ${cost} is over the limit ${RENDER_COST_LIMIT}`)
+  }
 }
 
 /**
@@ -84,11 +101,22 @@ export interface LeverActionData {
 export async function renderLeverPdf(
   action: LeverActionData
 ): Promise<NodeJS.ReadableStream> {
-  const element = buildLeverElement(action)
+  // A FIPPA letter is measured with its embedded font before layout, so
+  // over-wide words can be broken without anything inserted (fippa-request).
+  const metrics = action.actionType === 'fippa_request' ? await loadLetterMetrics() : null
+  if (metrics) {
+    // Refused before any layout: react-pdf can't be interrupted once it starts.
+    const cost = estimateRenderCost(action.content, action.metadata?.letterFormat, metrics)
+    if (cost > RENDER_COST_LIMIT) throw new PdfTooCostly(cost)
+  }
+  const element = buildLeverElement(action, metrics)
   return renderToStream(element as React.ReactElement<DocumentProps>)
 }
 
-function buildLeverElement(action: LeverActionData): React.ReactElement {
+function buildLeverElement(
+  action: LeverActionData,
+  metrics: Awaited<ReturnType<typeof loadLetterMetrics>> | null
+): React.ReactElement {
   switch (action.actionType) {
     case 'fippa_request':
       return React.createElement(FippaRequestTemplate, {
@@ -96,6 +124,9 @@ function buildLeverElement(action: LeverActionData): React.ReactElement {
           title: action.title,
           content: action.content,
           metadata: action.metadata,
+          status: action.status,
+          recipient: action.recipient,
+          metrics: metrics!,
         },
       })
     case 'public_comment':

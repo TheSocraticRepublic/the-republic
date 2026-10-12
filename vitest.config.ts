@@ -3,7 +3,10 @@ import path from 'path'
 
 export default defineConfig({
   test: {
-    include: ['tests/**/*.test.ts'],
+    // .tsx tests are included too. The default environment stays `node`; a
+    // component test opts into the DOM with a `// @vitest-environment jsdom`
+    // pragma on its first line.
+    include: ['tests/**/*.test.{ts,tsx}'],
   },
   resolve: {
     alias: {

@@ -1,10 +1,24 @@
 ---
 status: current
-current: "**Relay 3 + Fable code-refresh SHIPPED + DEPLOYED 2026-08-07** (ade8625..b8783e4 → main → opencave.ca, live-verified: health 200 all-green, CSRF gate rejecting hostile origins 403 / passing same-origin 400, all public surfaces 200). Fable second-pass code-refresh (8 Fable readers, ~196 findings vs Opus's ~90) → 14 surgical fixes; then Relay 3 in 3 Razor-gated batches (22 items, 46 files, 721→798 tests): B1 security (CSRF extracted to lib/api/csrf.ts + applied to the 3 matcher-excluded auth routes, SSRF validators harmonized — 127/8 range + ::ffff: mapped IPs + 0/8 + non-dotted IPv4, redirect:'manual' on 3 AP fetches, rate-limit guard, prompt-injection delimiters); B2 JURIS-1 (jurisdiction routing made dynamic — resolveJurisdictionModuleId + module-surface functions on all 3 modules, briefing/scout/lever/match/new-action-dialog de-BC-hardcoded, 3 system prompts converted to builders interpolating the resolved FOI framework, AB/ON set verified:false with a practitioner-caution line that now actually renders, BC path verified byte-identical); B3 civic-correctness (PartyBreakdown rewritten off a fabricated party_size field the API never sends, saved-Oracle render path, sync billId anti-clobber + MP deactivation, filed-lever immutability, finishReason truncation checks, archive left-joins). **PRODUCTION INCIDENT 2026-08-06 — RESOLVED:** auth returned 500 on every rate-limited route (login impossible) because the Upstash Redis DB was DELETED by the provider after 14 days idle — the keepalive pinged /api/health which ran SELECT 1 against *Postgres* and never touched Redis. Fixed in two halves: code (limiter construction+call guarded → fails closed, and /api/health now probes Redis so it can go red — it caught the cause within minutes of shipping) and ops (new Upstash DB + env vars). Recurrence structurally prevented: probeRateLimiter does a real Redis round-trip every 10min (144/day) so the idle-delete timer cannot start. Health monitor cadence twice-weekly → every 10min, naming the failed dependency. **Production audit 2026-08-06 (7 specialists): grade F, 16 unique FAILs** — report at ~/marvin/state/production-audits/the-republic-2026-08-06.md; Batch A complete, B and C open. Prior: Code-refresh 2026-08-05 SHIPPED + DEPLOYED (7865597..29ddc1a → main → opencave.ca, live-verified: health ok, status-token utilities in prod CSS). Whole-repo audit (8 parallel readers, ~90 findings) → 15 bucket-A commits: −558 loc dead code (5 consumer-less parliament GETs, archive GETs, briefing delegate, scout shim, AP builders), lint 42→7 warnings (4 deliberate + 3 new-ruleset), ~35 red-family palette sites → `--status-danger` + CI Gate 3, aria-current on sidebar nav, Sentry scrub dedup (6 copies → scrubEventPII), session constant single-sourced (5 sites), app-version single-sourced, next 16.2.9→16.3.0 (middleware auth-bypass CVE) + audit fix (high vulns 6→0), oracle docs reconciled in BOTH repos (lib/lever+lib/mirror fiction, RFC 9421→draft-cavage-12, FORUM_ENABLED gate documented, SECURITY.md 8-digit/Postgres, PRIVACY.md false 'enforced in code' claim dropped). Razor Stage-6 equivalence gate PASS (0 CRITICAL; 2 notes fixed post-gate). Full report + 18 routed bugs + forum pre-launch list: `.refresh/2026-08-05.md` (gitignored — public repo; canonical ~/marvin/state/production-audits/the-republic-2026-08-05-code-refresh.md). Prior: Relay 2 (design-system) merged 2026-07-16 + live. Beatrice type floor (new `--text-2xs`/`--text-3xs` tokens, **9px abolished**, 167 sub-12px `text-[Npx]` instances re-tokenized across 60 files, CI grep gate); Saul `--status-{success,danger,warning,neutral}` tokens in **all 4 CSS scopes** (dark keep/lift + Jen-derived contrast-verified light values `#066048/#AC1717/#8E3F07/#5C5650`) + **A11Y-2 party dots** (Conservative `#1A4782`→`#5B84B8`, Liberal/Independent lifts) + **Bloc-dot key bug fixed** (DB 'Bloc' short form never matched the 'Bloc Québécois' map key → Independent-gray fallback); George three-register copy (6 empty-states + 44 'Please'-drops + CLAUDE.md rule); TOKEN-1 (13 status components → tokens, `scripts/lint-design-tokens.sh` raw-status-hex CI gate). GATED: Ted 3 build-runs + 1 Razor-fix → **Razor PASS** (1 CRITICAL: apostrophes broke the CI Lint gate — Next16 skips ESLint in `build`; 1 WARNING: gate scope — both fixed) → **Jen CONCERNS-resolved** (Bloc FIXED; Turbopack-**dev-only** token gap discharged — orchestrator verified the PRODUCTION `next build` CSS carries every token byte-exact in `.dark`+`.dark-island`+`:root`+`.light-scope`). All gates green: build + 721 tests + lint(0 err) + `contrast.js` exit0 + 2 CI grep gates. Prior (2026-07-15): all 4 F-grade audit blockers remediated + deployed (Relay 1 + pooler switch — see shipped). Plan `.claude/plans/republic-audit-remediation-2026-07-09.md`."
-next: "**Post-remediation pass 2 re-audit 2026-08-27: grade B, score 76, 0 FAIL / 12 WARN / 7 RULED.** Two remediation passes closed 31 of the original 26+9 WARNs across 4 relay batches (pass 1: CSP, privacy, tokens, a11y, safeRoute, npm audit, timestamps, CHECKs; pass 2: island token architecture, loading screens, a11y labels, structured logging, health endpoint, forum rate limit, archive N+1, error leak, privacy link, lint cleanup). 12 WARNs remain: 5 advisory (Sentry chunk, jurisdictions query, updatedAt triggers, polymorphic refs, hard-cascade deletion), 3 operational (unstructured console.error, npm transitive vulns, external uptime monitor), ~~2 migration-pending~~ (0012-0014 all applied to prod via runner at 2026-08-29 03:09 UTC — verified: _custom_migrations tracks all 14, generation_nonce populated on today's investigation, no schema_migrations table), 2 new from deeper coverage (historical-context.tsx hex, gadfly-entry.tsx hex). 7 RULED items are standing decisions excluded from grading. **Deploy requires:** merge to main (migrations already applied). **Investigation completion fixes** (2026-08-29): GeneratingPoller watchdog fallback after router.refresh(), HARD_STOP_MS anchored to STUCK_GENERATION_THRESHOLD_MINUTES (12 min, matches reaper), disclaimer copy corrected per Lee. **P2 First Light is top priority after this closes (Lee, 2026-08-27).** Handoff: `.claude/handoff.md`."
+current: "**2026-10 state.** Live at opencave.ca, graded B (score 76, 0 FAIL / 12 WARN / 7 RULED, re-audit 2026-08-27), 830 tests. **Build-checks fix live 2026-10-11** (main `fa16447`, Netlify deploy `6acc1bbeb27b4900083c30a8`): `next` 16.3.8 and CI green on main again for the first time since 2026-08-29. **P2 First Light has never fired.** The 2026-10-02 UI review found that filings cannot be filed as produced: print collapses to raw markdown, the PDF carries two letterheads and no page numbers, and the model writes the recipient address. Its remediation plan is at revision 4 (2026-10-11, folding the astra r3 critic), awaiting its astra review; Lee approved the scope on 2026-10-05 and the go-ahead on 2026-10-11. Charter done-criterion (2) is open on both halves: `main` is unprotected and citizen data has no backup regime (DECISIONS → Operating constraints). Plan of record: `~/marvin/state/activation-plans/2026-10-portfolio/the-republic.md`."
+next: "**Session `marvin/republic-r2` (2026-10-11):** (1) UI and filings plan r4.1 (Fable critic CONCERN, gate open): Batch 0 done; **Q0a and Q0b merged to the session branch.** Q0a: local-only database TLS rule, writer guard, pinned QA tooling. Q0b: the local QA harness (`npx tsx scripts/qa/harness.ts run`): a production build against local Postgres with a Supabase shim, Redis REST and an AI stub, synthetic seed and minted sessions, 8/8 checks. Each passed Razor after fix passes. **S1 merged to the session branch** (open-redirect fix through `safeRedirectTarget`, browser-verified on the harness; interim privacy contact reviewed by Petra and Jen). Its release waits on Lee: the GitHub profile the privacy and security contact points at shows no public email. **A1 merged to the session branch** (lossless letter rendering on screen and print against hand-written goldens; Razor's CRITICAL quadratic link scan fixed, now linear; Jen's design gate adopted). The A-series releases together after A4. **A2 merged to the session branch** (one recipient resolver with a confirmed province, compare-and-set writes for edit, finalise and generation, generation refuses final letters, FIPPA prompt 0.6.0 with the guidance marker; races forced on the harness, 55/55 mutants; Razor PASS after fixes, Jen's five dialog concerns adopted). **A3 merged to the session branch** (the Province and three ministry entries checked against gov.bc.ca's FOI page and corrected to FOI Operations, PO Box 9569, with verbatim quotes; the Environmental Assessment Office and every municipal entry stay unchecked and pinned; Razor PASS after one fix pass). **A4 merged to the session branch** (the FIPPA PDF built from the parsed letter on pure white with a separate \"Not part of your request\" guidance page, letter-only page numbers in the embedded letter face, measured-width line breaking and a pre-render cost bound that refuses letters too long to make into a PDF in under a second; recipient notices, Insert directory address for checked entries, conflict handling that never discards the citizen's text, and a province choice for refused drafts; Razor's CRITICAL slow-PDF finding fixed and re-checked, Jen's twelve concerns adopted, 63 mutants killed). One ruling still waits on Lee: whether a new letter whose marker line the citizen deleted may be finalised (A4 shows the refusal; a confirm step would be a follow-up). **Lee approved the A-series release card on 2026-10-12:** release the redirect fix and A1-A5 with S1's privacy wording held (S1b merged: the privacy page and PRIVACY.md back to main's bytes), legacy letters as stored, a confirm-to-finalise step (A5, in relay), and a restore without asking on a named failed check. **A5 merged to the session branch** (finalising a letter whose marker line was deleted asks the citizen to confirm the whole letter will print as the request; two marker lines get their own refusal; blank letters can't be finalised; confirmed letters drop the \"may include notes\" notice; Razor PASS, Jen's five concerns adopted, 45 mutants killed). Next: the A-series release (redirect fix plus A1-A5), then B1. Each release waits on Lee. (2) Lee owes two follow-ups on the build-checks deploy: one signed-in check on the audit account, and accepting or closing the untested non-owner export case. **Charter gates (charter gate):** P2 First Light (Lee, citizen zero, top priority 2026-08-27); citizen-data backup regime and branch protection on main (both Lee-gated). Handoff: `.claude/handoff.md`."
 testing: null
 pinned: true
 shipped:
+  - date: 2026-10-11
+    item: "Build-checks fix deployed (main `fa16447`, PR #5, Netlify deploy `6acc1bbeb27b4900083c30a8`; rollback target `6ac01a4ef8c65100089a3faa` at `c80dcfe`): `next` and `eslint-config-next` 16.3.8 (clears the critical and highs in `next`), CI hardening (read-only permissions, no persisted credentials, Node 22.22.1 pin, provenance step), and two blocking dependency audits (production with no exceptions; full tree via audit-ci with one path-scoped `braces` exception, review by 2027-01-05). Only the four code commits of relay `republic-ci-green-deps` were cherry-picked onto main, byte-identical to the Razor-reviewed head. CI green on the PR (run 38184313344) and on main (run 38184443202); the live site, login, health and public pages answer after the deploy. Lee approved the merge 2026-10-11."
+  - date: 2026-10-02
+    item: "BC FIPPA citations corrected (`c80dcfe`): every BC FOI letter cited s. 75(5)(a) for a public-interest fee waiver and promised a reply within 30 calendar days. Checked against the Act on bclaws.gov.bc.ca: the public-interest ground is s. 75(5)(b), and Schedule 1 excludes holidays and Saturdays from a day. The briefing, Lever and Scout prompts each carried a hand-copied BC framework with the same wrong values; they now import the module. Found by the 2026-10-02 four-auditor UI review, which also produced the 20-batch UI and filings plan (`~/marvin/state/plans/republic-ui-filings-2026-10/`)."
+  - date: 2026-10-01
+    item: "Landing demo vote card (`5ec2bd8`): a sitting MP shown voting on a bill that does not exist, with an invented quote and no marker, replaced by an invented MP and riding with a visible Illustrative example label; the card gets role=figure so the label is announced."
+  - date: 2026-08-29
+    item: "Investigation completion poller fixes (`956d829`, relay investigation-completion-fixes, Razor PASS 0 findings): GeneratingPoller watchdog forces a reload if router.refresh() leaves it mounted (the blank-page-on-completion bug Lee hit); HARD_STOP_MS derived from the 12-minute reaper threshold and moved after the fetch; disclaimer copy reads a few minutes (Lee). Schema state verified: migrations 0001-0014 applied in production. Data backup procedure documented in `drizzle/DR.md` (`bdf56a8`): pg_dump via the postgres:17 image, IPv6 direct host, off-machine copy. A procedure, not a regime."
+  - date: 2026-08-28
+    item: "Lens panel wired into GoDeeper (R-A7, `c1cd6df`): author-only entry beside Gadfly and Lever; non-authors see the existing grid unchanged."
+  - date: 2026-08-27
+    item: "Audit remediation pass 2, re-audit grade B (score 76, 0 FAIL / 12 WARN / 7 RULED). Three relay batches: code and API hygiene (`8eb0d9c`: lint, logEvent, error leak, health gate, forum rate limit, privacy link, archive N+1), loading screens and a11y labels (`4f2c3ee`), island token architecture (`b08099f`, `0c1359a`: globals.css var-indirection, .dark-island merge, 8 components migrated). Razor PASS, 0 CRITICAL, 1 WARNING fixed (`1b8e79b`, dead isAuthenticated branch). Relay ledger `republic-warn-remediation-pass2`."
+  - date: 2026-08-26
+    item: "Production audit (7 specialists, grade C, score 48, 0 FAIL / 26 WARN; every FAIL from the 2026-08-06 F-grade audit closed), then remediation pass 1 in two Razor-gated batches: CSP unification, privacy sync, safeRoute, a11y, token migration, next/image, loading screens, npm audit fix (`9882834`, `e3fd148`, `15fa402`, `7534926`); timestamptz migration 0013 and CHECK constraints 0014 (`722096a`, `d327c56`). Re-audit grade C (score 30, 0 FAIL / 35 WARN) as deeper coverage surfaced more. Relay ledger `republic-warn-remediation-b1`, `-b2`."
   - date: 2026-08-23
     item: "Register drain + Batch D + SAFE-1 + PERF-2 (31 commits on session branch, deploy-gated behind fresh audit). Charter adopted. Full §D/E triage: 28 findings rated against actual code (1 CRITICAL, 1 high, 19 medium, 7 low). 15 findings fixed directly: BUG-F2 bill summary fabrication (CRITICAL — prompt rewritten to honest metadata-only framing), O-11 gadfly persistence via after(), BUG-F21 scroll-reveal SSR fix, R-A6 MP letter IDOR, R-A3 profile PATCH rate limit, R-A4 tie-as-defeated styling (4 components), R-A5 API error states, SEC-F8 AP digest binding, SEC-F13 gadfly session IDOR, BUG-F18 RAG race timeout, BUG-F22 moderation terminal guards, BUG-F32 phantom turns, O-16 sync credential decay, O-13 bill navigation. 3 migration-shaped fixes via relay (BUG-F15/F28 generationNonce, DATA-F3 turnIndex unique with renumber-not-delete, BUG-F17 contradictions nullable + patterns cache guard). Batch D: PERF-1 ISR revalidation on 5 public pages, NODE-1 Node 20→22. SAFE-1: safeRoute sweep — 35 routes wrapped, 2 legitimately excluded (health, print), Razor class-level 65/65 verification. PERF-2: Anthropic prompt caching — cachedSystem() helper, 19 call sites wrapped, single-block byte-equivalent by construction. Razor 0 CRITICAL across all reviews; Fable critic gate on all 3 relay plans. 830 tests, 0 lint errors, build clean. 6 findings deferred with reason (SEC-F10, SEC-F12/BUG-F6, O-17, O-18, R-A7). OBS-1 (Sentry source maps) is code-complete — only needs SENTRY_AUTH_TOKEN env var (Lee/ops)."
   - date: 2026-08-16
@@ -185,7 +199,7 @@ Detailed open findings live in the private issue register
 repository is public:
 
 - Register §A remaining — 5 live unowned items
-- Register §D/E triage — findings never severity-rated against the code
+- ~~Register §D/E triage — findings never severity-rated against the code~~ done 2026-08-23 (28 findings rated against the code; see the 2026-08-23 shipped entry)
 - Register §F — forum pre-launch list
 - Register Batch D candidates
 
@@ -199,7 +213,39 @@ Named elsewhere and not yet scheduled:
   - Walk every surface in Chrome DevTools watching for violations — public: `/`, `/login`, `/foundations`, `/privacy`, `/archive`, `/archive/[id]`, `/u/[name]`; authenticated: `/oracle`, `/investigate`, `/votes`, `/lever`, `/mirror`, `/scout`; plus PDF export (campaign or lever) — then flip `Content-Security-Policy-Report-Only` → `Content-Security-Policy` in `src/middleware.ts:19` if zero violations
 - Google Fonts references on the print pages (`print-utils.ts`)
 - JURIS-2 — AB/ON FOI citation practitioner review
+- QA harness ports inside the kernel's ephemeral range (see Deferred from republic-ui-a2)
+- Developer-worded 4xx messages reaching citizens through the Lever dialog (see Deferred from republic-ui-a2)
+- `lever.generate.discarded` onto the logging allow-list (see Deferred from republic-ui-a2)
+- Mid-stream abort on Netlify unverified (see Deferred from republic-ui-a2)
+- Out-of-date BC ministry names in the directory (see Deferred from republic-ui-a3)
+- Environmental Assessment Office FOI route unconfirmed (see Deferred from republic-ui-a3)
+- PDF cost estimate not proportional to render time (see Deferred from republic-ui-a4)
+- PDF line-breaking refinements: full-measure fill and lead-in sharing (see Deferred from republic-ui-a4)
+- Printed URLs break at arbitrary characters (see Deferred from republic-ui-a4)
+- Small Lever follow-ups from A4: Retry-After on the length refusal, address splitter, 30 px buttons at 375, "Forests's" (see Deferred from republic-ui-a4)
+- Non-Latin scripts render as missing glyphs in PDFs (see Deferred from republic-ui-a4)
+- Flaky timing test in permanence-gate (see Deferred from republic-ui-a4)
+- Privacy and security contact routes reach no monitored inbox (see Deferred from republic-ui-s1b)
+- Two small A5 test gaps and a two-tab stale notice (see Deferred from republic-ui-a5)
 - D4 "The Athenians" — illustration variant selection
+- Release mechanics for dependency deploys (publish boundary, post-deploy checks, containment) — see Deferred from republic-ci-green-deps
+- `next` 16.4.0 (minor) — deferred from the 2026-10-07 CI batch
+- Authenticated post-deploy checks need a session that can sign in; owner Lee
+- `/icon` (the 32px PNG favicon) redirects signed-out visitors to `/login`: the middleware public list has `/favicon` but not `/icon`. Pre-existing (the 2026-10-02 deploy behaves the same); the `.ico` favicon still serves. Found in the 2026-10-11 post-deploy check
+- Node 22.22.1 CI pin predates the 22.22.2 security release and differs from Netlify's floating NODE_VERSION=22 — review with the next dependency batch
+- Lever writer redesign (template assembly) — see Deferred from the 2026-10-02 UI and filings plan
+- Structured briefing output (JSON per section)
+- AB and ON FIPPA templates (the JURIS-2 human review)
+- Municipal public-body FOI addresses
+- Votes on the landing
+- Briefing mobile sticky section bar
+- CSP walk checklist additions: allowlisted links, grain, new fonts
+- QA harness has no network isolation (fonts at build, Represent, openparliament, Resend if unintercepted get synthetic data only); evidence must never depend on an outbound call — see `scripts/qa/README.md`
+- Tagged (accessible) PDFs — see Deferred from the UI and filings plan r4
+- Date-format unification across exports — see Deferred from the UI and filings plan r4
+- Oracle editorialising in model output — see Deferred from the UI and filings plan r4
+- Gadfly gold on public pages (look decision for Lee) — see Deferred from the UI and filings plan r4
+- "Usually ready in N minutes" on Investigate (needs Lee's production figure) — see Deferred from the UI and filings plan r4
 
 ### Deferred from 2026-08-26 audit remediation
 
@@ -210,8 +256,96 @@ Named elsewhere and not yet scheduled:
 
 ### Deferred from 2026-08-27 audit remediation (pass 2)
 
-- 32 moderate/low npm vulns — all transitive via @irys/sdk + drizzle-kit/esbuild (dev-only); no non-breaking fix exists
+- ~~32 moderate/low npm vulns~~ re-measured 2026-10-08 after `republic-ci-green-deps`: full tree 26 moderate / 20 low; production tree 18 moderate / 20 low; 0 high, 0 critical in production. One dev-only high (braces, GHSA-vfj7-8cjw-p6xm) is allow-listed on one path in `audit-ci.jsonc`, review by 2027-01-05, owner Lee
 - Unbounded all-jurisdictions query in run-briefing.ts — advisory; 3 jurisdictions currently, scales linearly
+
+### Deferred from the 2026-10-02 UI and filings plan
+
+Written verbatim from `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md` → Parking Lot writes (Batch 0), on 2026-10-07.
+
+- **Lever writer redesign (template assembly).** It needs its own plan and critic covering:
+  - a deterministic legal and recipient boundary, and validation or review of model prose;
+  - a versioned content format with a reader and writer matrix (edit, PATCH, Copy, TXT, MD, print, PDF, legacy draft, final and filed);
+  - atomic revision and status writes, idempotent briefing-to-Lever seeding, failure preservation, and prior-content recovery;
+  - explicit jurisdiction resolution (no silent BC default);
+  - bounded output and latency.
+
+  Source: astra critic r1 on this plan.
+- **Structured briefing output** (JSON per section): retires D2's heuristics.
+- **AB and ON FIPPA templates:** the JURIS-2 human review. Fee-waiver sections and day rules are unchecked.
+- **Municipal public-body FOI addresses** (`checkedOn` unset after A3).
+- **Votes on the landing** (arm station plus chip, landing-public L17).
+- **Briefing mobile sticky section bar** (reading-surfaces F-P1-5).
+- **CSP walk checklist** additions: allowlisted links, grain, new fonts.
+
+### Deferred from republic-ui-a5 (2026-10-12)
+
+Named during relay `republic-ui-a5` (Razor review and design-fix check; Jen's review).
+
+- **Busy-flag release untested after a refused confirm (Razor RN1).** Edit and Re-generate are released in a `finally`, which is correct today, but two mutants releasing only on error or only on success survive. Why parked: a test gap, not a defect; add the test with the next viewer change.
+- **Panel-status mutant equivalent in practice (Razor RN2).** Every path that leaves draft closes the panel first. Why parked: no observable behaviour to pin.
+- **Stale \"may include notes\" notice after a two-tab finalise (Razor N2, Jen accepted).** The second tab picks up the final letter but not its confirmation time until a reload. Why parked: errs cautious, matches what that tab saw, and a reload clears it.
+- **Indented, bold or re-cased marker lines are not markers (Razor N1).** Covered by the panel's copy (\"can't find… all of this letter will print as your request\"); a near-marker refused as unclean would bring the dead end back. Why parked: a parser change, if ever, belongs to the Lever writer's content contract.
+
+### Deferred from republic-ui-s1b (2026-10-12)
+
+Named during relay `republic-ui-s1b` (Razor PASS, notes N1-N3), which held S1's privacy wording out of the A-series release on Lee's ruling.
+
+- **Contact routes that go nowhere usable.** The restored privacy text (production's since 2026-08-26) names two routes: a public GitHub issue, which works, and the forum, which is gated and returns 404. Its "Your Rights" section sends access requests to the same place, and it has no warning against posting personal details in a public issue. It also omits the complaint route to the BC and federal privacy commissioners. `SECURITY.md` line 9 sends security reports to "the email address in the GitHub profile", and the profile shows none. Why parked: the fix is S1's reviewed wording plus a real address, which waits on Lee's answer to the contact-address question; S1b makes nothing worse than production.
+
+### Deferred from republic-ui-a4 (2026-10-12)
+
+Named during relay `republic-ui-a4` (Razor review, re-check and design-fix check; Jen's Stage 3 review; Ted's reports). None blocks the A-series release.
+
+- **Cost estimate not proportional to render time (Razor RW1, carried).** The pre-render estimate counts nodes × pages, but time per unit varies more than threefold by letter shape. A contrived 19K-character letter of narrow placeholders (`[l] [i] [j]`) is admitted at cost about 18,900 and renders in 7.8–8.2 s on one core; a 300-record itemised schedule (34K characters, about 4.4 s) is refused. Ordinary 1–5 page letters cost about 6,000. Direction: weight styled runs separately from block nodes, calibrate on the slowest shape with headroom for the hosted CPU. Why parked: re-check WARNINGs carry forward rather than reopen a closed batch; Netlify's synchronous limit is 60 s, so the admitted worst case is inside it.
+- **PDF line-breaking refinements (Jen C3 targets d and e).** Ordinary lines of a pre-broken paragraph are not filled to the full measure, so the rag changes at a long token; a long token starts a fresh line and strands its lead-in ("The ministry's public page at", "Source:"). Why parked: targets, not floors; text and margins are already correct.
+- **Printed URLs break at arbitrary characters (Jen, routed to A1).** The print view's `overflow-wrap: anywhere` cuts URLs as "…_2025/C" / "R14". Apply the PDF's URL break points through `<wbr>` after `/`. Why parked: A1's print CSS, outside A4's manifest.
+- **Small Lever follow-ups.** The length refusal still sends `Retry-After: 30`, which contradicts "too long" (Razor note). The new address splitter drops a first segment with no digit; only checked BC entries reach it today and all start with "FOI Operations" (Razor note). Mark as Final is offered on an empty draft (predates A4). Edit and Save are 30 px tall at 375 (C2b). The checked notice can read "Forests's" (Jen C11 copy). Why parked: none changes a filing's text; each fits the next Lever or action-bar pass. (Mark as Final on an empty draft: shipped 2026-10-12, republic-ui-a5.)
+- **Non-Latin scripts in PDFs.** Source Serif 4 has no coverage, so such characters render as missing glyphs; the character count and text oracle hold. Predates A4. Why parked: needs a fallback face and a font decision.
+- **Flaky `tests/unit/permanence-gate.test.ts`.** One timing-dependent boundary test failed once in a full run while another project's mutation battery loaded the machine; 20/20 alone. Why parked: outside A4; fix by removing the wall-clock dependence.
+
+### Deferred from republic-ui-a3 (2026-10-12)
+
+Named during relay `republic-ui-a3`, which checked the BC provincial directory entries against gov.bc.ca.
+
+- **Out-of-date ministry names.** The directory still lists "BC Ministry of Environment and Climate Change Strategy" and "BC Ministry of Energy, Mines and Low Carbon Innovation"; gov.bc.ca's ministries index (https://www2.gov.bc.ca/gov/content/governments/organizational-structure/ministries-organizations/ministries) lists Environment and Parks, Energy and Climate Solutions, and Mining and Critical Minerals. Why parked: renaming changes the stored `publicBody` names the resolver matches, so it needs alias entries for existing actions and is not an address check.
+- **Environmental Assessment Office FOI route.** Its directory address (PO Box 9426) is confirmed only as the office's general mailing address (EAO contact page, dated 2018), and no page found says whether FOI Operations handles EAO requests. Why parked: it stays unchecked, selectable and never insertable, which is the plan's rule for an unconfirmed address; confirming it needs the EAO or FOI Operations to answer.
+
+### Deferred from republic-ui-a2 (2026-10-12)
+
+Named during relay `republic-ui-a2` (Razor review and re-checks, Ted's reports). None blocks the A-series release.
+
+- **Harness ports in the ephemeral range.** 55432, 58079 and 58080 sit inside Linux's default ephemeral range (32768-60999); `harness.ts up` was refused twice when a TIME_WAIT connection briefly held 55432. Why parked: it costs a retry, not a wrong result; moving the ports touches Q0b's compose file and README.
+- **Developer wording in citizen-facing errors (Razor RN4).** The A2 dialog now shows any 4xx body's `error`, so middleware strings ("Unauthorized", "Too many requests", "Invalid origin", "Missing origin or app URL") can reach a citizen. Not sensitive; not the plain-instructional error voice. A 401 should read as a sign-in prompt. Why parked: the strings live in the middleware and shared API helpers, outside every A-series manifest; fits B3a or a copy pass.
+- **`lever.generate.discarded` through `logEvent()` (Razor N9).** The discard event is `console.warn` JSON carrying identifiers only, because the logging allow-list file was outside A2's manifest. Why parked: correct as is; move it when that file is next in a manifest.
+- **Mid-stream abort on Netlify.** On `next start`, a client abort cancels the server stream before `onFinish`, so a reloaded tab shows what was stored. Whether Netlify's runtime propagates the abort the same way is unverified. Why parked: needs a deploy preview; check it on the A-series release card.
+
+### Deferred from the UI and filings plan r4 (2026-10-11)
+
+Written in Batch 0 of `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md` (r4.1). Each reason is from the plan and the private findings inventory.
+
+- **Tagged PDFs** (reading-surfaces Q3-a). `@react-pdf/renderer` has no tagging support, so FOI and campaign PDFs stay untagged. Screen readers get the screen and print versions.
+- **Date-format unification across exports** (reading-surfaces RS-P2-6). It belongs to the Lever writer's content contract, which is parked, not to rendering.
+- **Oracle editorialising in model output** (app-arms Q6-b). A prompt-owner change to the Oracle's system prompt, outside a UI relay.
+- **Gadfly gold on public pages** (landing-public L11). A look-and-feel decision for Lee; the rest of L11 (Foundations H1 matching its nav label) ships in F3.
+- **"Usually ready in N minutes" on Investigate** (C1). It needs the median of `briefing_completed_at − created_at` over real investigations, and the session has no read path to production data. Omitted until Lee supplies the figure.
+
+### Deferred from republic-ci-green-deps (2026-10-08)
+
+Why: the CI plan was cut to the dependency change alone (r7) on the coordinator's decision; every r6 gating FAIL fell in the release choreography, which is Lee's to approve. The r6 critic's gating findings and must-fix list, verbatim (`~/.claude/plans/republic-ci-green-2026-10-critic.md`):
+
+> 3. Completeness — FAIL [GATING]: promotion lacks an enforceable publish-before-check boundary, a main-push evidence procedure, and an executable pending-decision completion state; specify these transitions (F3, F8).
+> 5. Security — FAIL [GATING]: “sets no Redis, Sentry” does not remove inherited variables, and the environment guard runs only after the build; isolate the environment and run the guard before build and boot (F4).
+> 6. Failure modes — FAIL [GATING]: “Immediately apply” containment has no branch for a failed/hung containment command or failed verification; bound those operations and pre-authorize a concrete failure response (F5).
+> 7. Change safety — FAIL [GATING]: the promised maintenance response is undermined by an unforced redirect, production promotion does not preserve the validated deploy identity, and the restore target is captured too late in the stated sequence; repair and rehearse the recovery protocol (F2, F3).
+> 9. Verifiability — FAIL [GATING]: audit negative controls are meaningful, but the new smoke harness has no adversarial controls and the referenced PR evidence recipe cannot certify a main push unchanged; add harness controls and a separate promotion recipe (F3, F7).
+>
+> 1. **P0:** Correct maintenance routing, isolate/pin its deployment configuration, promote verified immutable content, and define bounded containment-failure behavior (F2, F5).
+> 2. **P0:** Establish the actual publish interlock, capture rollback identity before triggers, and define exact-main-commit evidence separately from PR evidence (F3).
+> 3. **P0:** Guard and isolate the environment before both build and runtime (F4).
+> 4. **P1:** Fix candidate-baseline checking and inventory binding; add negative controls for smoke assertions/process cleanup (F1, F7).
+> 5. **P1:** Bound authenticated release checks, distinguish pending decisions from session completion, serialize release ownership, and verify the observation/handoff mechanism (F8, F10, F11).
+> 6. **P2:** Correct runtime blast radius, enumerate maintenance artifacts, and link all concrete deferrals to the Parking Lot (F6, F9).
 
 ## Reference
 

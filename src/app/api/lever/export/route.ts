@@ -1,27 +1,27 @@
 import { NextRequest } from 'next/server'
-import { Readable } from 'stream'
 import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { renderLeverPdf, hasLeverPdfTemplate } from '@/lib/pdf/render'
+import { renderLeverPdf, hasLeverPdfTemplate, PdfTooCostly } from '@/lib/pdf/render'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
+import { loadRecipientResolution } from '@/lib/lever/load-recipient'
+
+/**
+ * A PDF that takes longer than this is abandoned (A4): the citizen gets a 503
+ * and a way out, never an empty or half-written file.
+ */
+const PDF_RENDER_TIMEOUT_MS = 8_000
+const PDF_UNAVAILABLE = "The PDF couldn't be made right now. Use Print or Plain text instead."
+/** The cost bound's refusal: not transient, so not "right now" (Jen C5). */
+const PDF_TOO_LONG = 'This letter is too long to make into a PDF. Use Print or Plain text instead.'
+
+class PdfTimeout extends Error {}
 
 const ACTION_TYPE_LABELS: Record<string, string> = {
   fippa_request: 'fippa-request',
   public_comment: 'public-comment',
   policy_brief: 'policy-brief',
-}
-
-const ACTION_TYPE_DISPLAY: Record<string, string> = {
-  fippa_request: 'FOI Request (FIPPA)',
-  public_comment: 'Public Comment',
-  policy_brief: 'Policy Brief',
-  legal_template: 'Legal Template',
-  media_spec: 'Media Specification',
-  talking_points: 'Talking Points',
-  coalition_template: 'Coalition Template',
-  mp_letter: 'Letter to MP',
 }
 
 /**
@@ -30,8 +30,10 @@ const ACTION_TYPE_DISPLAY: Record<string, string> = {
  *
  * Body: { actionId: string, format?: 'txt' | 'md' | 'pdf' }
  * - txt (default): plain text
- * - md: Markdown with YAML frontmatter and section headers
- * - pdf: Rendered PDF using @react-pdf/renderer templates
+ * - md: the stored text, byte for byte, as a .md file
+ * - pdf: Rendered PDF using @react-pdf/renderer templates. The whole file is
+ *   rendered before anything is sent; past PDF_RENDER_TIMEOUT_MS the route
+ *   answers 503 with PDF_UNAVAILABLE instead.
  */
 export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
@@ -85,6 +87,7 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
       content: leverActions.content,
       status: leverActions.status,
       metadata: leverActions.metadata,
+      investigationId: leverActions.investigationId,
       createdAt: leverActions.createdAt,
     })
     .from(leverActions)
@@ -119,26 +122,59 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
       )
     }
 
-    try {
-      const nodeStream = await renderLeverPdf({
-        title: action.title,
-        content: action.content,
-        actionType: action.actionType,
-        metadata: (action.metadata ?? {}) as Record<string, unknown>,
-      })
+    const metadata = (action.metadata ?? {}) as Record<string, unknown>
+    // The recipient block on a FIPPA guidance page (filings design §3): the
+    // resolver's answer with the action's own investigation.
+    const recipient =
+      action.actionType === 'fippa_request'
+        ? await loadRecipientResolution(db, { metadata, investigationId: action.investigationId }, userId)
+        : undefined
 
-      const webStream = nodeReadableToWebReadable(nodeStream)
+    try {
+      const pdf = await withTimeout(
+        (async () =>
+          drain(
+            await renderLeverPdf({
+              title: action.title,
+              content: action.content,
+              actionType: action.actionType,
+              metadata,
+              status: action.status,
+              recipient,
+            })
+          ))(),
+        PDF_RENDER_TIMEOUT_MS
+      )
       const filename = `${typeSlug}-${date}.pdf`
 
-      return new Response(webStream, {
+      return new Response(new Uint8Array(pdf), {
         status: 200,
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Length': String(pdf.length),
           'Cache-Control': 'no-store',
         },
       })
     } catch (err) {
+      if (err instanceof PdfTooCostly || err instanceof PdfTimeout) {
+        // Logged with identifiers only. A refusal (the cost estimate) is the
+        // guarantee: it answers before any layout. The timer is a backstop
+        // for an estimate that is wrong; it fires only when react-pdf yields,
+        // and the render it abandons can't be cancelled.
+        console.error(
+          JSON.stringify({
+            event: err instanceof PdfTooCostly ? 'lever.export.pdf_refused' : 'lever.export.pdf_timeout',
+            actionId: action.id,
+            ...(err instanceof PdfTooCostly ? { cost: err.cost } : { timeoutMs: PDF_RENDER_TIMEOUT_MS }),
+            ts: new Date().toISOString(),
+          })
+        )
+        return new Response(JSON.stringify({ error: err instanceof PdfTooCostly ? PDF_TOO_LONG : PDF_UNAVAILABLE }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '30' },
+        })
+      }
       console.error('[lever/export] PDF render failed:', err)
       return new Response(
         JSON.stringify({
@@ -150,35 +186,14 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
     }
   }
 
+  // Markdown, as written: the stored text byte for byte (filings §0). The menu
+  // labels it "Markdown (as written)"; nothing is added around it.
   if (format === 'md') {
-    const metadata = (action.metadata ?? {}) as Record<string, unknown>
-    const publicBody = (metadata.publicBody as string) ?? ''
-    const typeDisplay = ACTION_TYPE_DISPLAY[action.actionType] ?? action.actionType
-
-    // Build YAML frontmatter — JSON.stringify produces valid YAML double-quoted strings
-    const frontmatter = [
-      '---',
-      `title: ${JSON.stringify(action.title)}`,
-      `type: ${JSON.stringify(typeDisplay)}`,
-      `date: ${JSON.stringify(date)}`,
-      `status: ${JSON.stringify(action.status)}`,
-    ]
-    if (publicBody) {
-      frontmatter.push(`public_body: ${JSON.stringify(publicBody)}`)
-    }
-    frontmatter.push('---')
-
-    // Wrap content with section headers based on action type
-    const body = formatContentAsMarkdown(action.actionType, action.content, action.title)
-
-    const mdContent = frontmatter.join('\n') + '\n\n' + body + '\n\n---\n\n*Generated by Open Cave -- ' + date + '*\n'
-    const filename = `${typeSlug}-${date}.md`
-
-    return new Response(mdContent, {
+    return new Response(action.content, {
       status: 200,
       headers: {
         'Content-Type': 'text/markdown; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Disposition': `attachment; filename="${typeSlug}-${date}.md"`,
       },
     })
   }
@@ -194,67 +209,23 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
   })
 })
 
-/**
- * Add Markdown section headers to the raw text content based on action type.
- */
-function formatContentAsMarkdown(
-  actionType: string,
-  content: string,
-  title: string
-): string {
-  const lines: string[] = []
-
-  lines.push(`# ${title}`)
-  lines.push('')
-
-  switch (actionType) {
-    case 'fippa_request':
-      lines.push('## Freedom of Information Request')
-      lines.push('')
-      lines.push(content)
-      break
-    case 'public_comment':
-      lines.push('## Public Comment Submission')
-      lines.push('')
-      lines.push(content)
-      break
-    case 'policy_brief':
-      lines.push('## Policy Brief')
-      lines.push('')
-      lines.push(content)
-      break
-    default:
-      lines.push(content)
-      break
+/** Read a Node stream to the end. */
+async function drain(stream: NodeJS.ReadableStream): Promise<Buffer> {
+  const chunks: Buffer[] = []
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string))
   }
-
-  return lines.join('\n')
+  return Buffer.concat(chunks)
 }
 
-/**
- * Convert a Node.js ReadableStream to a Web ReadableStream for Next.js Response.
- */
-function nodeReadableToWebReadable(
-  nodeStream: NodeJS.ReadableStream
-): ReadableStream<Uint8Array> {
-  return new ReadableStream({
-    start(controller) {
-      nodeStream.on('data', (chunk: Buffer | string) => {
-        controller.enqueue(
-          chunk instanceof Buffer ? new Uint8Array(chunk) : new TextEncoder().encode(chunk as string)
-        )
-      })
-      nodeStream.on('end', () => {
-        controller.close()
-      })
-      nodeStream.on('error', (err) => {
-        controller.error(err)
-      })
-    },
-    cancel() {
-      if ('destroy' in nodeStream && typeof nodeStream.destroy === 'function') {
-        ;(nodeStream as Readable).destroy()
-      }
-    },
+/** The work's result, or a PdfTimeout rejection once `ms` has passed. */
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new PdfTimeout(`PDF render exceeded ${ms}ms`)), ms)
   })
+  // A render that fails after the timeout has already answered must not
+  // surface as an unhandled rejection.
+  work.catch(() => {})
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
 }

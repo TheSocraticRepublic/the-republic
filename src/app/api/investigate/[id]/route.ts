@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { getDb } from '@/lib/db'
-import { investigations } from '@/lib/db/schema'
+import { investigations, jurisdictions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { safeRoute } from '@/lib/api/safe-route'
 
@@ -38,8 +38,12 @@ export const GET = safeRoute(async (request: NextRequest, { params }: RouteConte
       briefingText: investigations.briefingText,
       lensContextText: investigations.lensContextText,
       status: investigations.status,
+      // The resolved jurisdiction's province (e.g. "British Columbia"), which
+      // the Lever's new-action dialog pre-selects from. Null if unresolved.
+      jurisdictionProvince: jurisdictions.province,
     })
     .from(investigations)
+    .leftJoin(jurisdictions, eq(jurisdictions.id, investigations.jurisdictionId))
     .where(and(eq(investigations.id, id), eq(investigations.userId, userId)))
     .limit(1)
 

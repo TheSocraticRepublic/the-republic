@@ -1,23 +1,66 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Download, Pencil, RefreshCw, Check, X, Printer, FileText } from 'lucide-react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, useId } from 'react'
+import { Download, Pencil, RefreshCw, Check, X, ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
 import { hasLeverPdfTemplate } from '@/lib/pdf/types'
+import { LetterPaper, type RecipientNoticeView } from '@/components/lever/letter-paper'
+import {
+  CHOOSE_PROVINCE_ERROR,
+  PROVINCE_OPTIONS,
+  isProvinceId,
+  listedIn,
+  provinceLabel,
+  storedPublicBodyName,
+  type ProvinceId,
+} from '@/lib/lever/public-body'
+import {
+  INSERT_ADDRESS_LABEL,
+  insertDirectoryAddress,
+  resolveRecipientForViewer,
+  screenRecipientNotice,
+} from '@/lib/lever/recipient-notice'
+import {
+  conflictReason,
+  CONFIRM_NO_NOTES_ACTION,
+  CONFIRM_NO_NOTES_FACT,
+  EDIT_CONFLICT_MESSAGE,
+  EDIT_NOT_A_DRAFT_MESSAGE,
+  EMPTY_LETTER,
+  NEWER_VERSION_MESSAGE,
+  NOT_A_DRAFT,
+  STALE_VIEW_MESSAGE,
+  STATUS_CHANGED,
+  UNCLEAN_SPLIT,
+  UNCLEAN_SPLIT_REPEATED,
+  type WriteConflict,
+} from '@/lib/lever/write-conflicts'
 
 type LeverActionType = (typeof leverActionTypeEnum.enumValues)[number]
+type Status = 'draft' | 'final' | 'filed'
 
 interface ActionViewerProps {
   actionId: string
   initialContent: string
-  initialStatus: 'draft' | 'final' | 'filed'
+  initialStatus: Status
   actionType: LeverActionType
+  /** `metadata.letterFormat`, passed to the letter parser untouched (absent means legacy). */
+  letterFormat?: unknown
+  /**
+   * The action's recipient fields (`publicBody`, `publicBodyName`, `addressee`,
+   * `jurisdiction`), for the §3 notices. FIPPA only.
+   */
+  recipientMetadata?: Record<string, unknown>
+  /** The action's investigation's province, resolved on the server; null when there is none. */
+  investigationProvince?: ProvinceId | null
+  /** `metadata.notesRemovalConfirmedAt` (A5): set by a confirmed finalise of a letter with no marker line. */
+  notesRemovalConfirmedAt?: unknown
 }
 
 type ViewMode = 'generating' | 'viewing' | 'editing'
 
-const STATUS_FLOW: Record<string, 'draft' | 'final' | 'filed'> = {
+const STATUS_FLOW: Record<string, Status> = {
   draft: 'final',
   final: 'filed',
 }
@@ -33,18 +76,203 @@ const ADVANCE_LABELS: Record<string, string> = {
   final: 'Mark as Filed',
 }
 
-export function ActionViewer({ actionId, initialContent, initialStatus, actionType }: ActionViewerProps) {
+type ExportFormat = 'txt' | 'md' | 'pdf'
+
+const EXPORT_FALLBACK_NAMES: Record<ExportFormat, string> = {
+  txt: 'action.txt',
+  md: 'action.md',
+  pdf: 'action.pdf',
+}
+
+/** Said after "Insert directory address" writes (Jen C8). */
+export const INSERTED_MESSAGE = 'Inserted the directory address into your letter. Check it before you send.'
+
+const PDF_FAILED = "The PDF couldn't be made. Use Print or Plain text instead."
+const RELOAD_FAILED = "The saved letter couldn't be reloaded. Reload the page to see it."
+
+/**
+ * SHA-256 of a string's UTF-8 bytes, lowercase hex: the same digest PATCH
+ * computes in the database (`encode(sha256(convert_to(content,'UTF8')),'hex')`).
+ */
+export async function sha256Hex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+/** What a write was, for wording its 409. */
+type WriteKind = 'edit' | 'status' | 'insert' | 'province'
+
+/**
+ * The message for a PATCH 409 (filings design §4). An edit's own text is
+ * never discarded, and its messages say so; every other write says what
+ * changed and how to see it.
+ */
+export function conflictMessage(reason: WriteConflict | null, kind: WriteKind, serverError: string | null): string {
+  if (kind === 'edit') {
+    if (reason === 'content-changed') return EDIT_CONFLICT_MESSAGE
+    if (reason === 'not-a-draft') return EDIT_NOT_A_DRAFT_MESSAGE
+  }
+  // A status write the server refused for any reason this viewer doesn't
+  // know (an invalid transition reached from a stale view) is a status that
+  // changed elsewhere (Jen C2); developer text never reaches the citizen.
+  if (kind === 'status' && reason === null) return STATUS_CHANGED
+  switch (reason) {
+    case 'content-changed':
+      return STALE_VIEW_MESSAGE
+    case 'not-a-draft':
+      return `${NOT_A_DRAFT}. Reload to see it.`
+    case 'status-changed':
+      return STATUS_CHANGED
+    case 'unclean-split':
+      // Two marker lines name their cause (Jen A5 C2); anything else unclean is the general line.
+      return serverError === UNCLEAN_SPLIT_REPEATED ? UNCLEAN_SPLIT_REPEATED : UNCLEAN_SPLIT
+    case 'confirm-no-notes':
+      // Answered by the confirmation itself; this is only its plain wording.
+      return `${CONFIRM_NO_NOTES_FACT} ${CONFIRM_NO_NOTES_ACTION}`
+    default:
+      return serverError && !serverError.includes('→') ? serverError : 'That change could not be saved. Try again.'
+  }
+}
+
+async function readError(res: Response): Promise<string | null> {
+  try {
+    const body = (await res.json()) as { error?: unknown }
+    return typeof body.error === 'string' ? body.error : null
+  } catch {
+    return null
+  }
+}
+
+interface StoredAction {
+  content: string | null
+  status: Status
+  metadata: Record<string, unknown> | null
+}
+
+export function ActionViewer({
+  actionId,
+  initialContent,
+  initialStatus,
+  actionType,
+  letterFormat: initialLetterFormat,
+  recipientMetadata,
+  investigationProvince = null,
+  notesRemovalConfirmedAt: initialNotesRemovalConfirmedAt,
+}: ActionViewerProps) {
   const [content, setContent] = useState(initialContent)
   const [editContent, setEditContent] = useState(initialContent)
-  const [status, setStatus] = useState<'draft' | 'final' | 'filed'>(initialStatus)
+  const [status, setStatus] = useState<Status>(initialStatus)
+  // Generation records the letter format; the parser must see the new one.
+  const [letterFormat, setLetterFormat] = useState<unknown>(initialLetterFormat)
+  // A province chosen here (PATCH `jurisdiction`) overrides the stored one.
+  const [jurisdiction, setJurisdictionState] = useState<unknown>(recipientMetadata?.jurisdiction)
+  const setJurisdiction = useCallback((value: unknown) => {
+    jurisdictionRef.current = value
+    setJurisdictionState(value)
+  }, [])
   const [mode, setMode] = useState<ViewMode>(initialContent ? 'viewing' : 'generating')
   const [streamedContent, setStreamedContent] = useState('')
   const [statusUpdating, setStatusUpdating] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [exporting, setExporting] = useState(false)
-  const [pdfExporting, setPdfExporting] = useState(false)
+  const [inserting, setInserting] = useState(false)
+  const [exporting, setExporting] = useState<ExportFormat | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
+  const [needsProvince, setNeedsProvince] = useState(false)
+  // A5: the in-place confirmation for a letter with no marker line, and
+  // whether a finalise was confirmed (it lifts the §2 notice once final).
+  const [confirmingNoNotes, setConfirmingNoNotes] = useState(false)
+  const [confirmBusy, setConfirmBusy] = useState(false)
+  const [notesConfirmedAt, setNotesConfirmedAt] = useState<unknown>(initialNotesRemovalConfirmedAt)
+  const advanceRef = useRef<HTMLButtonElement>(null)
+  // A refusal the citizen must read takes focus (Jen A5 C2): set, then the
+  // alert focuses itself once it is on screen.
+  const alertRef = useRef<HTMLParagraphElement>(null)
+  const focusAlertRef = useRef(false)
   const abortRef = useRef<AbortController | null>(null)
+
+  /*
+   * The directory body this action names, if it names a listed one, and its
+   * province. A listed body belongs to one province, so the province choice
+   * offers only that one (Razor N5: any other pick leaves generation refused
+   * with no way back from the screen).
+   */
+  const bodyListing = useMemo(() => {
+    const name = storedPublicBodyName(recipientMetadata ?? {})
+    return name ? listedIn(name) : null
+  }, [recipientMetadata])
+  const jurisdictionRef = useRef<unknown>(recipientMetadata?.jurisdiction)
+  const bodyListingMismatch = () =>
+    !!bodyListing && isProvinceId(jurisdictionRef.current) && jurisdictionRef.current !== bodyListing.province
+
+  /*
+   * The compare-and-set baseline (§4): the hash of the content exactly as the
+   * server returned it, taken before it reaches the textarea (which turns
+   * CRLF into LF). Re-taken from the stored text after every successful
+   * write and every re-read, so saving twice is never a false conflict.
+   */
+  const baselineRef = useRef<Promise<string> | null>(null)
+  const baseline = useCallback((): Promise<string> => {
+    baselineRef.current ??= sha256Hex(initialContent)
+    return baselineRef.current
+  }, [initialContent])
+  const rebaseline = useCallback((stored: string) => {
+    baselineRef.current = sha256Hex(stored)
+  }, [])
+
+  /** The stored row, re-read: after a stream ends, the server's text is the truth. */
+  const readStored = useCallback(async (): Promise<StoredAction | null> => {
+    try {
+      const res = await fetch(`/api/lever/actions/${actionId}`, { cache: 'no-store' })
+      if (!res.ok) return null
+      const body = (await res.json()) as { action?: StoredAction }
+      return body.action ?? null
+    } catch {
+      return null
+    }
+  }, [actionId])
+
+  /** Adopt a stored row as what the viewer shows and writes against. */
+  const adoptStored = useCallback(
+    (stored: StoredAction) => {
+      const text = stored.content ?? ''
+      setContent(text)
+      setEditContent(text)
+      setStatus(stored.status)
+      setLetterFormat(stored.metadata?.letterFormat)
+      setJurisdiction(stored.metadata?.jurisdiction)
+      rebaseline(text)
+    },
+    [rebaseline, setJurisdiction]
+  )
+
+  /**
+   * One PATCH with the baseline hash, every time (Razor N4, A2: a second tab
+   * could otherwise finalise text this one never displayed). Returns the
+   * stored content on success, or the 409's reason and server text.
+   */
+  const patch = useCallback(
+    async (
+      fields: Record<string, unknown>
+    ): Promise<
+      | { ok: true; content: string | null }
+      | { ok: false; status: number; reason: WriteConflict | null; error: string | null }
+    > => {
+      const expectedContentSha256 = await baseline()
+      const res = await fetch(`/api/lever/actions/${actionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...fields, expectedContentSha256 }),
+      })
+      if (res.ok) {
+        const body = (await res.json()) as { action?: { content?: string | null } }
+        return { ok: true, content: body.action?.content ?? null }
+      }
+      const error = await readError(res)
+      return { ok: false, status: res.status, reason: res.status === 409 ? conflictReason(error) : null, error }
+    },
+    [actionId, baseline]
+  )
 
   // Auto-generate if no content on mount
   useEffect(() => {
@@ -56,8 +284,10 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
 
   const runGenerate = useCallback(async () => {
     setMode('generating')
+    setConfirmingNoNotes(false)
     setStreamedContent('')
     setActionError(null)
+    setInfo(null)
 
     abortRef.current?.abort()
     abortRef.current = new AbortController()
@@ -71,7 +301,25 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       })
 
       if (!res.ok || !res.body) {
-        throw new Error('Generation failed')
+        const error = res.ok ? null : await readError(res)
+        // A FIPPA draft with no province gets the choice, here (A2 carry).
+        if (res.status === 409 && error === CHOOSE_PROVINCE_ERROR) {
+          setNeedsProvince(true)
+          setMode('viewing')
+          return
+        }
+        // A draft whose stored province doesn't match its listed body (Razor
+        // N5): the server's message, and the choice again, limited to the
+        // body's own province, so the draft is never stranded.
+        if (res.status === 409 && bodyListing && bodyListingMismatch()) {
+          setActionError(error ?? 'Generation failed. Try again.')
+          setNeedsProvince(true)
+          setMode('viewing')
+          return
+        }
+        setActionError(error ?? 'Generation failed. Try again.')
+        setMode('viewing')
+        return
       }
 
       const reader = res.body.getReader()
@@ -86,8 +334,21 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
         setStreamedContent(accumulated)
       }
 
-      setContent(accumulated)
-      setEditContent(accumulated)
+      // The stream closes only after the server's compare-and-set has run, so
+      // this read sees what was stored. If another write won, that is shown,
+      // and said.
+      const stored = await readStored()
+      if (stored) {
+        adoptStored(stored)
+        if ((stored.content ?? '') !== accumulated) setInfo(NEWER_VERSION_MESSAGE)
+      } else {
+        setContent(accumulated)
+        setEditContent(accumulated)
+        // No re-read, so no baseline from the server: the streamed text is
+        // the best guess, and a wrong guess is a 409, never a lost write.
+        rebaseline(accumulated)
+        setActionError(RELOAD_FAILED)
+      }
       setMode('viewing')
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
@@ -96,11 +357,95 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
         setMode('viewing')
       }
     }
-  }, [actionId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionId, readStored, adoptStored, rebaseline])
+
+  /*
+   * Finalising a marker-v1 letter whose notes aren't cleanly separated is
+   * refused by the server (§4). Two marker lines, or a letter that couldn't
+   * be read, are refused outright: the message, and the letter as it is.
+   * A letter whose marker line is missing is refused with "confirm-no-notes"
+   * (A5, Lee 2026-10-12): the confirmation opens in place, and finalising
+   * from it resends with `confirmNoNotes: true` and the same baseline hash,
+   * so a letter changed in between is still a conflict, never a silent
+   * finalise.
+   */
+  const onUncleanSplitRefused = useCallback(
+    (reason: 'unclean-split' | 'confirm-no-notes', serverError: string | null) => {
+      if (reason === 'confirm-no-notes') {
+        setConfirmingNoNotes(true)
+        return
+      }
+      setConfirmingNoNotes(false)
+      focusAlertRef.current = true
+      setActionError(conflictMessage('unclean-split', 'status', serverError))
+    },
+    []
+  )
+
+  useEffect(() => {
+    if (actionError && focusAlertRef.current) {
+      focusAlertRef.current = false
+      alertRef.current?.focus()
+    }
+  }, [actionError])
+
+  /** Cancel: the draft is untouched, and focus goes back to Mark as Final. */
+  const handleCancelConfirm = useCallback(() => {
+    setConfirmingNoNotes(false)
+    advanceRef.current?.focus()
+  }, [])
+
+  const handleConfirmNoNotes = useCallback(async () => {
+    setConfirmBusy(true)
+    setActionError(null)
+    setInfo(null)
+    try {
+      const result = await patch({ status: 'final', confirmNoNotes: true })
+      if (result.ok) {
+        setConfirmingNoNotes(false)
+        setStatus('final')
+        // The 200 proves the route took the confirmed path, which records
+        // the time on the row (server clock); the screen needs only to know
+        // it is set. A reload shows the stored value.
+        setNotesConfirmedAt(new Date().toISOString())
+        if (result.content !== null) rebaseline(result.content)
+        advanceRef.current?.focus()
+      } else if (result.reason === 'confirm-no-notes') {
+        // Still the same letter with no marker line: the confirmation stays.
+      } else {
+        setConfirmingNoNotes(false)
+        setActionError(
+          result.status === 409
+            ? conflictMessage(result.reason, 'status', result.error)
+            : result.error && !result.error.includes('→')
+              ? result.error
+              : 'Failed to update status. Try again.'
+        )
+        advanceRef.current?.focus()
+      }
+    } catch (err) {
+      console.error('[action-viewer] Confirmed finalise failed:', err)
+      setConfirmingNoNotes(false)
+      setActionError('Failed to update status. Try again.')
+      advanceRef.current?.focus()
+    } finally {
+      setConfirmBusy(false)
+    }
+  }, [patch, rebaseline])
 
   const handleAdvanceStatus = useCallback(async () => {
     const next = STATUS_FLOW[status]
     if (!next) return
+
+    // A blank letter is never finalised and never reaches the confirmation
+    // (Jen A5 C5). Nothing is sent; focus stays on Mark as Final.
+    if (next === 'final' && content.trim() === '') {
+      setConfirmingNoNotes(false)
+      setInfo(null)
+      setActionError(EMPTY_LETTER)
+      return
+    }
 
     // Confirmation gate when filing
     if (next === 'filed') {
@@ -111,60 +456,144 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
     }
 
     setStatusUpdating(true)
+    setConfirmingNoNotes(false)
+    setActionError(null)
+    setInfo(null)
     try {
-      const res = await fetch(`/api/lever/actions/${actionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: next }),
-      })
-      if (!res.ok) throw new Error('Failed to update status')
-      setStatus(next)
+      const result = await patch({ status: next })
+      if (result.ok) {
+        setStatus(next)
+        if (result.content !== null) rebaseline(result.content)
+      } else if (result.reason === 'unclean-split' || result.reason === 'confirm-no-notes') {
+        onUncleanSplitRefused(result.reason, result.error)
+      } else {
+        // Only a 409 is a conflict; any other refusal shows its own message
+        // (never developer text with an arrow).
+        setActionError(
+          result.status === 409
+            ? conflictMessage(result.reason, 'status', result.error)
+            : result.error && !result.error.includes('→')
+              ? result.error
+              : 'Failed to update status. Try again.'
+        )
+      }
     } catch (err) {
       console.error('[action-viewer] Status update failed:', err)
       setActionError('Failed to update status. Try again.')
     } finally {
       setStatusUpdating(false)
     }
-  }, [actionId, status])
+  }, [status, content, patch, rebaseline, onUncleanSplitRefused])
 
   const handleSaveEdit = useCallback(async () => {
     setSaving(true)
+    setActionError(null)
+    setInfo(null)
     try {
-      const res = await fetch(`/api/lever/actions/${actionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: editContent }),
-      })
-      if (!res.ok) throw new Error('Failed to save')
-      setContent(editContent)
-      setMode('viewing')
+      const result = await patch({ content: editContent })
+      if (result.ok) {
+        const stored = result.content ?? editContent
+        setContent(stored)
+        setEditContent(stored)
+        rebaseline(stored)
+        setMode('viewing')
+      } else {
+        // The citizen's text stays in the textarea, whatever went wrong.
+        setActionError(conflictMessage(result.reason, 'edit', result.error))
+      }
     } catch (err) {
       console.error('[action-viewer] Save failed:', err)
       setActionError('Failed to save changes. Try again.')
     } finally {
       setSaving(false)
     }
-  }, [actionId, editContent])
+  }, [editContent, patch, rebaseline])
 
   const handleCancelEdit = useCallback(() => {
     setEditContent(content)
+    setActionError(null)
     setMode('viewing')
   }, [content])
 
-  const handleExport = useCallback(async () => {
-    setExporting(true)
+  /** "Insert directory address": an explicit edit, through the same compare-and-set as Save. */
+  const handleInsertAddress = useCallback(
+    async (address: string) => {
+      const next = insertDirectoryAddress(content, letterFormat, address)
+      if (next === null) return
+      setInserting(true)
+      setActionError(null)
+      setInfo(null)
+      try {
+        const result = await patch({ content: next })
+        if (result.ok) {
+          const stored = result.content ?? next
+          setContent(stored)
+          setEditContent(stored)
+          rebaseline(stored)
+          setInfo(INSERTED_MESSAGE)
+        } else {
+          setActionError(conflictMessage(result.reason, 'insert', result.error))
+        }
+      } catch (err) {
+        console.error('[action-viewer] Insert address failed:', err)
+        setActionError("The address couldn't be inserted. Try again.")
+      } finally {
+        setInserting(false)
+      }
+    },
+    [content, letterFormat, patch, rebaseline]
+  )
+
+  /** The province choice, after a generate refused for want of one. Stored, then the letter is generated. */
+  const handleChooseProvince = useCallback(
+    async (province: ProvinceId) => {
+      setActionError(null)
+      try {
+        const result = await patch({ jurisdiction: province })
+        if (!result.ok) {
+          setActionError(conflictMessage(result.reason, 'province', result.error))
+          return
+        }
+        setJurisdiction(province)
+        setNeedsProvince(false)
+        setActionError(null)
+        await runGenerate()
+      } catch (err) {
+        console.error('[action-viewer] Province update failed:', err)
+        setActionError("The province couldn't be saved. Try again.")
+      }
+    },
+    [patch, runGenerate, setJurisdiction]
+  )
+
+  /*
+   * One handler for every download in the Export menu. TXT and MD are the
+   * stored text exactly as written; PDF is the rendered letter. A failure is
+   * shown, never swallowed, and never downloaded as a file.
+   */
+  const handleExport = useCallback(async (format: ExportFormat) => {
+    setExporting(format)
+    setActionError(null)
     try {
       const res = await fetch('/api/lever/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actionId }),
+        body: JSON.stringify({ actionId, format }),
       })
-      if (!res.ok) throw new Error('Export failed')
+      if (!res.ok) {
+        const error = await readError(res)
+        // A PDF that ran out of time is a 503 that says what to use instead.
+        if (format === 'pdf' && res.status === 503 && error) {
+          setActionError(error)
+          return
+        }
+        throw new Error(`Export failed (${res.status})`)
+      }
 
       const blob = await res.blob()
       const contentDisposition = res.headers.get('Content-Disposition') ?? ''
       const match = contentDisposition.match(/filename="([^"]+)"/)
-      const filename = match ? match[1] : 'action.txt'
+      const filename = match ? match[1] : EXPORT_FALLBACK_NAMES[format]
 
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -175,41 +604,33 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (err) {
-      console.error('[action-viewer] Export failed:', err)
+      console.error(`[action-viewer] ${format} export failed:`, err)
+      setActionError(format === 'pdf' ? PDF_FAILED : 'Export failed. Try again.')
     } finally {
-      setExporting(false)
+      setExporting(null)
     }
   }, [actionId])
 
-  const handleExportPdf = useCallback(async () => {
-    setPdfExporting(true)
-    try {
-      const res = await fetch('/api/lever/export', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actionId, format: 'pdf' }),
-      })
-      if (!res.ok) throw new Error('PDF export failed')
-
-      const blob = await res.blob()
-      const contentDisposition = res.headers.get('Content-Disposition') ?? ''
-      const match = contentDisposition.match(/filename="([^"]+)"/)
-      const filename = match ? match[1] : 'action.pdf'
-
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    } catch (err) {
-      console.error('[action-viewer] PDF export failed:', err)
-    } finally {
-      setPdfExporting(false)
-    }
+  const handlePrint = useCallback(() => {
+    setActionError(null)
+    window.open(`/api/lever/actions/${actionId}/print`, '_blank')
   }, [actionId])
+
+  const isFippa = actionType === 'fippa_request'
+
+  // The §3 notice, re-worded as the letter changes (an insert, an edit, a generation).
+  const recipientNotice = useMemo<RecipientNoticeView | null>(() => {
+    if (!isFippa || !content) return null
+    const resolution = resolveRecipientForViewer({ ...(recipientMetadata ?? {}), jurisdiction }, investigationProvince)
+    const notice = screenRecipientNotice(resolution, content, letterFormat, status)
+    const address = notice.insertAddress
+    return {
+      lines: notice.lines,
+      insert: address
+        ? { label: INSERT_ADDRESS_LABEL, onInsert: () => void handleInsertAddress(address), busy: inserting }
+        : null,
+    }
+  }, [isFippa, content, recipientMetadata, jurisdiction, investigationProvince, letterFormat, status, inserting, handleInsertAddress])
 
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.draft
   const nextStatus = STATUS_FLOW[status]
@@ -217,7 +638,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   return (
     <div className="space-y-4">
       {/* Controls row */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-start gap-2 sm:items-center">
         {/* Status badge */}
         <span
           className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium"
@@ -226,13 +647,14 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
           {statusStyle.label}
         </span>
 
-        <div className="flex-1" />
-
+        {/* The actions wrap onto their own lines on a phone, right-aligned. */}
+        <div className="flex flex-1 flex-wrap justify-end gap-2">
         {mode === 'viewing' && (
           <>
             {/* Advance status */}
             {nextStatus && (
               <button
+                ref={advanceRef}
                 onClick={handleAdvanceStatus}
                 disabled={statusUpdating}
                 className={clsx(
@@ -253,82 +675,66 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
             {/* Edit — only available in draft */}
             {status === 'draft' && (
               <button
-                onClick={() => { setEditContent(content); setMode('editing') }}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
+                onClick={() => {
+                  // Inert while a confirmed finalise is in flight (Jen A5 C3).
+                  if (confirmBusy) return
+                  setEditContent(content)
+                  setActionError(null)
+                  setConfirmingNoNotes(false)
+                  setMode('editing')
+                }}
+                aria-disabled={confirmBusy || undefined}
+                className={clsx(
+                  'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors border border-border',
+                  confirmBusy ? 'cursor-not-allowed opacity-50' : 'hover:text-text-primary hover:border-border-strong'
+                )}
               >
                 <Pencil size={12} strokeWidth={2} />
                 Edit
               </button>
             )}
 
-            {/* Re-generate — not available once filed */}
-            {status !== 'filed' && (
+            {/* Re-generate — drafts only: the server refuses final and filed (A2) */}
+            {status === 'draft' && (
               <button
-                onClick={runGenerate}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
+                onClick={() => {
+                  // Inert while a confirmed finalise is in flight (Jen A5 C3).
+                  if (!confirmBusy) void runGenerate()
+                }}
+                aria-disabled={confirmBusy || undefined}
+                className={clsx(
+                  'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors border border-border',
+                  confirmBusy ? 'cursor-not-allowed opacity-50' : 'hover:text-text-primary hover:border-border-strong'
+                )}
               >
                 <RefreshCw size={12} strokeWidth={2} />
                 Re-generate
               </button>
             )}
 
-            {/* Export */}
-            <button
-              onClick={handleExport}
-              disabled={exporting || !content}
-              className={clsx(
-                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
-                exporting || !content
-                  ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
-                  : 'text-[var(--accent-lever)] border border-[color-mix(in_srgb,var(--accent-lever)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--accent-lever)_8%,transparent)]'
-              )}
-            >
-              <Download size={12} strokeWidth={2} />
-              Export
-            </button>
-
-            {/* Print */}
-            <button
-              onClick={() => window.open(`/api/lever/actions/${actionId}/print`, '_blank')}
+            {/* Export: one menu for every way out (RS-P2-10) */}
+            <ExportMenu
               disabled={!content}
-              className={clsx(
-                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
-                !content
-                  ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
-                  : 'text-[var(--accent-lever)] border border-[color-mix(in_srgb,var(--accent-lever)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--accent-lever)_8%,transparent)]'
-              )}
-            >
-              <Printer size={12} strokeWidth={2} />
-              Print
-            </button>
-
-            {/* Download PDF */}
-            {hasLeverPdfTemplate(actionType) && (
-              <button
-                onClick={handleExportPdf}
-                disabled={pdfExporting || !content}
-                className={clsx(
-                  'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
-                  pdfExporting || !content
-                    ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
-                    : 'text-[var(--accent-lever)] border border-[color-mix(in_srgb,var(--accent-lever)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--accent-lever)_8%,transparent)]'
-                )}
-              >
-                <FileText size={12} strokeWidth={2} />
-                {pdfExporting ? 'Generating...' : 'Download PDF'}
-              </button>
-            )}
+              busy={exporting}
+              pdf={hasLeverPdfTemplate(actionType)}
+              onExport={handleExport}
+              onPrint={handlePrint}
+            />
           </>
         )}
 
         {mode === 'editing' && (
           <>
             <button
-              onClick={handleSaveEdit}
-              disabled={saving}
+              onClick={() => {
+                // Busy, not disabled: focus stays on the control (Jen C8).
+                if (!saving) void handleSaveEdit()
+              }}
+              aria-busy={saving || undefined}
+              aria-disabled={saving || undefined}
               className={clsx(
                 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
-                saving ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80'
+                saving ? 'cursor-progress' : 'hover:opacity-80'
               )}
               style={{
                 backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)',
@@ -348,11 +754,30 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
             </button>
           </>
         )}
+        </div>
       </div>
 
       {/* Error alert */}
       {actionError && (
-        <p role="alert" className="text-xs text-status-danger">{actionError}</p>
+        <p ref={alertRef} role="alert" tabIndex={-1} className="text-xs text-status-danger outline-none">
+          {actionError}
+        </p>
+      )}
+
+      {/* What happened, when it isn't an error (a newer version was kept) */}
+      {info && (
+        <p role="status" className="text-xs text-text-secondary">{info}</p>
+      )}
+
+      {confirmingNoNotes && mode === 'viewing' && status === 'draft' && (
+        <ConfirmNoNotes busy={confirmBusy} onConfirm={handleConfirmNoNotes} onCancel={handleCancelConfirm} />
+      )}
+
+      {needsProvince && mode === 'viewing' && (
+        <ProvinceChoice
+          onChoose={handleChooseProvince}
+          only={bodyListing ? { province: bodyListing.province, body: bodyListing.name } : null}
+        />
       )}
 
       {/* Document display */}
@@ -383,7 +808,19 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
         </div>
       )}
 
-      {mode === 'viewing' && (
+      {mode === 'viewing' && isFippa && content && (
+        <LetterPaper
+          content={content}
+          letterFormat={letterFormat}
+          status={status}
+          notesRemovalConfirmedAt={notesConfirmedAt}
+          // The confirmation is the notice escalated: one, not both (Jen A5 C4).
+          hideUncleanNotice={confirmingNoNotes && status === 'draft'}
+          recipient={recipientNotice}
+        />
+      )}
+
+      {mode === 'viewing' && !(isFippa && content) && (
         <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-6">
           {content ? (
             <pre
@@ -394,7 +831,11 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
             </pre>
           ) : (
             <div className="flex items-center justify-center h-48">
-              <p className="text-sm text-text-faint">No content yet. Click Re-generate to produce the document.</p>
+              <p className="text-sm text-text-faint">
+                {needsProvince
+                  ? 'No letter yet. Choose the province above to generate it.'
+                  : 'No content yet. Click Re-generate to produce the document.'}
+              </p>
             </div>
           )}
         </div>
@@ -421,5 +862,340 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
         </div>
       )}
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Confirm a finalise with no marker line (A5)
+// ---------------------------------------------------------------------------
+
+/**
+ * The confirmation in place, not a browser confirm(): one sentence of fact,
+ * one of action, Finalise and Cancel. Focus moves to it when it opens, so its
+ * text is read before either button is pressed; Escape is Cancel.
+ */
+function ConfirmNoNotes({
+  busy,
+  onConfirm,
+  onCancel,
+}: {
+  busy: boolean
+  onConfirm: () => Promise<void>
+  onCancel: () => void
+}) {
+  const id = useId()
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  // A layout effect, not a passive one: focus lands in the same commit that
+  // shows the panel, so it can never arrive after a fast Cancel and steal
+  // focus back from Mark as Final.
+  useLayoutEffect(() => {
+    rootRef.current?.focus()
+  }, [])
+
+  return (
+    // A <div> and click handlers, not a <form> (the auth triple-fire pattern).
+    <div
+      ref={rootRef}
+      data-confirm-no-notes
+      role="group"
+      aria-labelledby={`${id}-fact`}
+      aria-describedby={`${id}-action`}
+      tabIndex={-1}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && !busy) {
+          e.preventDefault()
+          onCancel()
+        }
+      }}
+      className="rounded-lg border border-border bg-surface-1 px-4 py-3 outline-none"
+      style={{ borderLeft: '3px solid var(--status-warning)' }}
+    >
+      <p id={`${id}-fact`} className="text-sm text-text-secondary">
+        {CONFIRM_NO_NOTES_FACT}
+      </p>
+      <p id={`${id}-action`} className="mt-1 text-sm text-text-secondary">
+        {CONFIRM_NO_NOTES_ACTION}
+      </p>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          data-confirm-finalise
+          onClick={() => {
+            // Busy, not disabled: focus stays on the button (Jen C8).
+            if (!busy) void onConfirm()
+          }}
+          aria-busy={busy || undefined}
+          aria-disabled={busy || undefined}
+          className={clsx(
+            'inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-3.5 text-sm font-medium transition-all duration-150 sm:min-h-0 sm:py-1.5',
+            busy ? 'cursor-progress' : 'hover:opacity-80'
+          )}
+          style={{
+            backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)',
+            color: 'var(--accent-mirror)',
+            border: '1px solid color-mix(in srgb, var(--accent-mirror) 20%, transparent)',
+          }}
+        >
+          <Check size={12} strokeWidth={2} />
+          {busy ? 'Finalising...' : 'Finalise'}
+        </button>
+        <button
+          type="button"
+          data-confirm-cancel
+          onClick={() => {
+            if (!busy) onCancel()
+          }}
+          aria-disabled={busy || undefined}
+          className="inline-flex min-h-[44px] items-center rounded-lg border border-border px-3.5 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary hover:border-border-strong sm:min-h-0 sm:py-1.5"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Province choice (a FIPPA draft whose generation needs one)
+// ---------------------------------------------------------------------------
+
+function ProvinceChoice({
+  onChoose,
+  only,
+}: {
+  onChoose: (province: ProvinceId) => Promise<void>
+  /** A listed body's own province: confirmed, not chosen (Jen C9). */
+  only: { province: ProvinceId; body: string } | null
+}) {
+  const selectId = useId()
+  const [choice, setChoice] = useState<ProvinceId | ''>(only ? only.province : '')
+  const [busy, setBusy] = useState(false)
+  const firstControl = useRef<HTMLSelectElement | HTMLButtonElement | null>(null)
+
+  // It appears where Re-generate was; focus moves to it so nothing is lost
+  // to <body> (Jen C9c).
+  useEffect(() => {
+    firstControl.current?.focus()
+  }, [])
+
+  const go = async () => {
+    if (!choice || busy) return
+    setBusy(true)
+    try {
+      await onChoose(choice)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const button = (label: string) => (
+    <button
+      ref={only ? (el) => void (firstControl.current = el) : undefined}
+      type="button"
+      onClick={go}
+      aria-busy={busy || undefined}
+      aria-disabled={!choice || busy || undefined}
+      className="inline-flex min-h-[44px] items-center rounded-lg border border-border-strong px-3 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-surface-2 sm:min-h-0"
+    >
+      {busy ? 'Saving...' : label}
+    </button>
+  )
+
+  return (
+    // A <div> and a click handler, not a <form>: the app's pattern since the
+    // React 19 form re-invocation bug (auth triple-fire).
+    <div
+      data-province-choice
+      role="group"
+      aria-labelledby={`${selectId}-label`}
+      className="rounded-lg border border-border bg-surface-1 px-4 py-3"
+      style={{ borderLeft: '3px solid var(--status-warning)' }}
+    >
+      {only ? (
+        <>
+          <p id={`${selectId}-label`} className="mb-1.5 text-sm text-text-secondary">
+            Confirm the province this request goes to.
+          </p>
+          <p data-province-reason className="mb-2 text-sm text-text-secondary">
+            {only.body} is in the {provinceLabel(only.province)} directory, so this request goes to{' '}
+            {provinceLabel(only.province)}. For another province, start a new request.
+          </p>
+          {button(`Generate for ${provinceLabel(only.province)}`)}
+        </>
+      ) : (
+        <>
+          <label id={`${selectId}-label`} htmlFor={selectId} className="mb-1.5 block text-sm text-text-secondary">
+            {CHOOSE_PROVINCE_ERROR}.
+          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <select
+                ref={(el) => void (firstControl.current = el)}
+                id={selectId}
+                value={choice}
+                required
+                onChange={(e) => setChoice(isProvinceId(e.target.value) ? e.target.value : '')}
+                className="min-h-[44px] appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0 sm:min-h-0"
+              >
+                <option value="" disabled>
+                  Choose a province...
+                </option>
+                {PROVINCE_OPTIONS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.verified ? p.label : `${p.label} (not verified)`}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={13}
+                strokeWidth={2}
+                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+              />
+            </div>
+            {button('Use this province and generate')}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Export menu
+// ---------------------------------------------------------------------------
+
+const MENU_TRIGGER_ON =
+  'text-[var(--accent-lever)] border border-[color-mix(in_srgb,var(--accent-lever)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--accent-lever)_8%,transparent)]'
+const MENU_TRIGGER_OFF = 'cursor-not-allowed opacity-50 text-text-faint border border-border'
+
+interface ExportMenuProps {
+  disabled: boolean
+  busy: ExportFormat | null
+  pdf: boolean
+  onExport: (format: ExportFormat) => void
+  onPrint: () => void
+}
+
+/**
+ * A disclosure menu: Escape and a click outside close it, arrow keys move
+ * between items, and focus returns to the trigger on close.
+ */
+function ExportMenu({ disabled, busy, pdf, onExport, onPrint }: ExportMenuProps) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // The rendered letter first, then the stored text as written (Jen).
+  const rendered: { key: string; label: string; run: () => void }[] = [
+    ...(pdf ? [{ key: 'pdf', label: 'PDF', run: () => onExport('pdf') }] : []),
+    { key: 'print', label: 'Print', run: onPrint },
+  ]
+  const asWritten: { key: string; label: string; run: () => void }[] = [
+    { key: 'txt', label: 'Plain text (as written)', run: () => onExport('txt') },
+    { key: 'md', label: 'Markdown (as written)', run: () => onExport('md') },
+  ]
+
+  const close = useCallback((refocus: boolean) => {
+    setOpen(false)
+    if (refocus) triggerRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    if (!open) return
+    menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
+    const onPointer = (e: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) close(false)
+    }
+    document.addEventListener('pointerdown', onPointer)
+    return () => document.removeEventListener('pointerdown', onPointer)
+  }, [open, close])
+
+  const onMenuKeyDown = (e: React.KeyboardEvent) => {
+    const els = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])
+    const at = els.indexOf(document.activeElement as HTMLButtonElement)
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      close(true)
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      els[(at + 1) % els.length]?.focus()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      els[(at - 1 + els.length) % els.length]?.focus()
+    } else if (e.key === 'Home') {
+      e.preventDefault()
+      els[0]?.focus()
+    } else if (e.key === 'End') {
+      e.preventDefault()
+      els[els.length - 1]?.focus()
+    } else if (e.key === 'Tab') {
+      close(false)
+    }
+  }
+
+  // While an export runs the trigger stays focusable and at full ink
+  // (aria-busy + aria-disabled, clicks ignored), so focus is never dropped.
+  const isBusy = busy !== null
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => {
+          if (!isBusy) setOpen((o) => !o)
+        }}
+        disabled={disabled}
+        aria-busy={isBusy || undefined}
+        aria-disabled={isBusy || undefined}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls="lever-export-menu"
+        className={clsx(
+          'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
+          disabled ? MENU_TRIGGER_OFF : MENU_TRIGGER_ON,
+          isBusy && 'cursor-progress'
+        )}
+      >
+        <Download size={12} strokeWidth={2} />
+        {busy === 'pdf' ? 'Making the PDF...' : busy ? 'Preparing...' : 'Export'}
+        <ChevronDown size={12} strokeWidth={2} aria-hidden />
+      </button>
+
+      {open && (
+        <div
+          ref={menuRef}
+          id="lever-export-menu"
+          role="menu"
+          aria-label="Export"
+          onKeyDown={onMenuKeyDown}
+          className="absolute right-0 z-20 mt-1.5 min-w-[13rem] rounded-xl border border-border bg-surface-1 p-1 shadow-lg"
+        >
+          {rendered.map((item) => (
+            <MenuItem key={item.key} label={item.label} onSelect={() => { close(true); item.run() }} />
+          ))}
+          <div role="separator" className="my-1 border-t border-border" />
+          {asWritten.map((item) => (
+            <MenuItem key={item.key} label={item.label} onSelect={() => { close(true); item.run() }} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MenuItem({ label, onSelect }: { label: string; onSelect: () => void }) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      tabIndex={-1}
+      onClick={onSelect}
+      className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-text-secondary transition-colors hover:bg-surface-2 hover:text-text-primary focus-visible:bg-surface-2 focus-visible:text-text-primary"
+    >
+      {label}
+    </button>
   )
 }

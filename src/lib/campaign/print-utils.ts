@@ -3,13 +3,18 @@
  * Used by both campaign and lever print routes.
  */
 
-/** Escape HTML special characters to prevent XSS in rendered HTML. */
+/**
+ * Escape HTML special characters to prevent XSS in rendered HTML. Covers the
+ * five that matter in text content and in single- or double-quoted
+ * attributes. The lever letter renderers re-export this as `escapeHtml`.
+ */
 export function esc(str: string): string {
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 /**

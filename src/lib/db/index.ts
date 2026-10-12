@@ -42,8 +42,45 @@ CMTyZKG3XEu5Ghl1LEnI3QmEKsqaCLv12BnVjbkSeZsMnevJPs1Ye6TjjJwdik5P
 o/bKiIz+Fq8=
 -----END CERTIFICATE-----`
 
-function buildSslConfig() {
-  if (env.NODE_ENV === 'production') {
+// The local-only QA rule. The QA harness Postgres (127.0.0.1:55432) has no
+// TLS, so TLS is switched off ONLY when QA_LOCAL_DB=1 AND the URL's host is
+// 127.0.0.1 or localhost. The flag with any other host throws, in every
+// NODE_ENV, before a connection is opened. Without the flag nothing changes.
+//
+// Host parsing mirrors postgres.js 3.4: the host postgres.js dials comes from
+// the authority after the FIRST '@', and a comma there is a multi-host list.
+// A multi-host list is never treated as loopback. scripts/lib/local-db-guard.ts
+// carries the scripts-side copy (separate module roots, as with the CA).
+const QA_LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost'])
+
+function isLoopbackDatabaseUrl(url: string): boolean {
+  const schemeEnd = url.indexOf('://')
+  if (schemeEnd === -1) return false
+  const authority = url.slice(schemeEnd + 3).split(/[?/]/)[0]
+  const hostPart = decodeURIComponent(authority.slice(authority.indexOf('@') + 1))
+  if (hostPart.includes(',')) return false
+  try {
+    return QA_LOOPBACK_HOSTS.has(new URL(url).hostname.toLowerCase())
+  } catch {
+    // Unparseable URL: not provably loopback, so the caller refuses it.
+    return false
+  }
+}
+
+export interface SslConfigInput {
+  nodeEnv: string
+  databaseUrl: string
+  qaLocalDb: string | undefined
+}
+
+export function buildSslConfig({ nodeEnv, databaseUrl, qaLocalDb }: SslConfigInput) {
+  if (qaLocalDb === '1') {
+    if (isLoopbackDatabaseUrl(databaseUrl)) return false
+    throw new Error(
+      'QA_LOCAL_DB=1 is set but the DATABASE_URL host is not 127.0.0.1 or localhost; refusing to connect'
+    )
+  }
+  if (nodeEnv === 'production') {
     // Pin the Supabase Root 2021 CA so TLS is verified without trusting the
     // OS store (which doesn't include Supabase's private PKI).
     // rejectUnauthorized: true rejects any cert not chaining to this CA.
@@ -69,7 +106,12 @@ export function getDb() {
       idle_timeout: 20,
       connect_timeout: 10,
       prepare: false,
-      ssl: buildSslConfig(),
+      ssl: buildSslConfig({
+        nodeEnv: env.NODE_ENV,
+        databaseUrl: env.DATABASE_URL,
+        // Read directly, like isForumEnabled(): not part of the env schema.
+        qaLocalDb: process.env.QA_LOCAL_DB,
+      }),
     })
     db = drizzle(client, { schema })
   }
