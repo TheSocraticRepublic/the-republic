@@ -1,13 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback, useId } from 'react'
+import { useState, useEffect, useCallback, useId, useRef } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useRouter } from 'next/navigation'
 import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react'
 import { clsx } from 'clsx'
-// Public bodies are loaded dynamically based on jurisdiction; BC is the fallback
 import { leverActionTypeEnum } from '@/lib/db/schema'
-import type { PublicBody } from '@/lib/jurisdictions/types'
+import { detectJurisdiction } from '@/lib/jurisdictions'
+import {
+  PROVINCE_OPTIONS,
+  PUBLIC_BODY_DIRECTORY,
+  isProvinceId,
+  type ProvinceId,
+} from '@/lib/lever/public-body'
 
 interface Document {
   id: string
@@ -43,6 +48,9 @@ const DESCRIPTION_PLACEHOLDERS: Partial<Record<ActionType, string>> = {
   policy_brief: 'What policy problem are you addressing and what change do you recommend?',
 }
 
+/** The public-body select's value for "Other (type the name)". Not a body name. */
+const OTHER_BODY = '__other__'
+
 interface NewActionDialogProps {
   initialDocumentId?: string
   initialSessionId?: string
@@ -58,27 +66,39 @@ export function NewActionDialog({
 }: NewActionDialogProps = {}) {
   const oracleDocId = useId()
   const gadflyInquiryId = useId()
+  const provinceSelectId = useId()
+  const otherBodyId = useId()
 
   const [open, setOpen] = useState(!!(initialDocumentId || initialSessionId || initialInvestigationId))
   const [actionType, setActionType] = useState<ActionType>(
     (initialActionType as ActionType) || 'fippa_request'
   )
-  const [publicBodyName, setPublicBodyName] = useState('')
+  // The body select holds an exact directory name, OTHER_BODY, or ''.
+  const [publicBodyChoice, setPublicBodyChoice] = useState('')
+  const [otherBodyName, setOtherBodyName] = useState('')
+  // The province the request goes to. Pre-selected from the investigation's
+  // detected jurisdiction when there is one, and always confirmable: the
+  // detection is a keyword guess.
+  const [province, setProvince] = useState<ProvinceId | ''>('')
+  const [provinceDetected, setProvinceDetected] = useState(false)
   const [selectedDocId, setSelectedDocId] = useState(initialDocumentId ?? '')
   const [selectedSessionId, setSelectedSessionId] = useState(initialSessionId ?? '')
   const [investigationId] = useState(initialInvestigationId ?? '')
   const [description, setDescription] = useState('')
   const [documents, setDocuments] = useState<Document[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
-  const [publicBodies, setPublicBodies] = useState<PublicBody[]>([])
-  const [jurisdictionLabel, setJurisdictionLabel] = useState('BC')
   const [loading, setLoading] = useState(false)
+  // Synchronous guard: a second click before the first request's state
+  // update renders is ignored, not sent.
+  const creatingRef = useRef(false)
+  // Once the citizen picks a province, a late detection never overrides it.
+  const provinceTouchedRef = useRef(false)
   const [fetchingContext, setFetchingContext] = useState(false)
   const [dupWarning, setDupWarning] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const router = useRouter()
 
-  // Fetch documents, sessions, and jurisdiction-aware public bodies when dialog opens
+  // Fetch documents, sessions, and the investigation (for the province) when the dialog opens
   useEffect(() => {
     if (!open) return
     setFetchingContext(true)
@@ -86,7 +106,7 @@ export function NewActionDialog({
     type ContextResponse = {
       documents?: Document[]
       sessions?: Session[]
-      investigation?: { jurisdictionName?: string | null }
+      investigation?: { jurisdictionName?: string | null; concern?: string | null }
       actions?: ExistingAction[]
     } | null
 
@@ -115,42 +135,16 @@ export function NewActionDialog({
       setDocuments(ready)
       setSessions(sessionsData?.sessions ?? [])
 
-      // Resolve jurisdiction from investigation's jurisdictionName
-      const jName = investigationData?.investigation?.jurisdictionName ?? ''
-
-      // Map jurisdiction name to module key for dynamic import
-      const jLower = jName.toLowerCase()
-      let moduleKey = 'bc'
-      let label = 'BC'
-
-      if (jLower.includes('alberta') || jLower.includes('edmonton') || jLower.includes('calgary')) {
-        moduleKey = 'ab'
-        label = 'AB'
-      } else if (jLower.includes('ontario') || jLower.includes('toronto') || jLower.includes('ottawa')) {
-        moduleKey = 'on'
-        label = 'ON'
-      }
-
-      try {
-        const mod = await import(`@/lib/jurisdictions/${moduleKey}/public-bodies`)
-        const bodies: PublicBody[] = mod[`${moduleKey}PublicBodies`]
-        if (bodies) {
-          setPublicBodies(bodies)
-          setJurisdictionLabel(label)
-        } else {
-          // Fallback to BC if the named export is missing
-          console.warn(`[NewActionDialog] No public bodies export for module key ${moduleKey}, falling back to BC`)
-          const bcMod = await import('@/lib/jurisdictions/bc/public-bodies')
-          setPublicBodies(bcMod.bcPublicBodies)
-          setJurisdictionLabel('BC')
-        }
-      } catch {
-        console.warn(`[NewActionDialog] Failed to load public bodies for ${moduleKey}, falling back to BC`)
-        try {
-          const bcMod = await import('@/lib/jurisdictions/bc/public-bodies')
-          setPublicBodies(bcMod.bcPublicBodies)
-          setJurisdictionLabel('BC')
-        } catch { /* no public bodies available */ }
+      // Pre-select the province from the investigation's detected
+      // jurisdiction (the same keyword heuristic the server uses). The
+      // citizen confirms it; with no detection they must choose one.
+      const inv = investigationData?.investigation
+      const detected = inv
+        ? detectJurisdiction(inv.concern ?? '', inv.jurisdictionName ?? undefined)
+        : undefined
+      if (isProvinceId(detected) && !provinceTouchedRef.current) {
+        setProvince(detected)
+        setProvinceDetected(true)
       }
 
       // Check for duplicate FIPPA on this investigation
@@ -167,8 +161,17 @@ export function NewActionDialog({
     }).finally(() => setFetchingContext(false))
   }, [open, investigationId])
 
+  const isFippa = actionType === 'fippa_request'
+  const publicBodies = province ? PUBLIC_BODY_DIRECTORY[province] : []
+  const publicBodyName =
+    publicBodyChoice === OTHER_BODY ? otherBodyName.trim() : publicBodyChoice
+  const canCreate = !!description.trim() && (!isFippa || !!province)
+
   const handleCreate = useCallback(async () => {
     if (!description.trim()) return
+    if (actionType === 'fippa_request' && !province) return
+    if (creatingRef.current) return
+    creatingRef.current = true
     setLoading(true)
     setCreateError(null)
     try {
@@ -178,6 +181,7 @@ export function NewActionDialog({
         body: JSON.stringify({
           actionType,
           publicBodyName: actionType === 'fippa_request' && publicBodyName ? publicBodyName : undefined,
+          jurisdiction: actionType === 'fippa_request' ? province : undefined,
           documentId: selectedDocId || undefined,
           sessionId: selectedSessionId || undefined,
           investigationId: investigationId || undefined,
@@ -192,15 +196,20 @@ export function NewActionDialog({
       console.error(err)
       setCreateError('Failed to create action. Try again.')
     } finally {
+      creatingRef.current = false
       setLoading(false)
     }
-  }, [actionType, publicBodyName, selectedDocId, selectedSessionId, investigationId, description, router])
+  }, [actionType, publicBodyName, province, selectedDocId, selectedSessionId, investigationId, description, router])
 
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v)
     if (!v) {
       setActionType((initialActionType as ActionType) || 'fippa_request')
-      setPublicBodyName('')
+      setPublicBodyChoice('')
+      setOtherBodyName('')
+      setProvince('')
+      setProvinceDetected(false)
+      provinceTouchedRef.current = false
       setSelectedDocId('')
       setSelectedSessionId('')
       setDescription('')
@@ -272,23 +281,34 @@ export function NewActionDialog({
               </div>
             </div>
 
-            {/* Public body selector — FIPPA only */}
-            {actionType === 'fippa_request' && (
+            {/* Province — FIPPA only, always shown, required */}
+            {isFippa && (
               <div>
-                <label htmlFor="action-public-body" className="mb-1.5 block text-xs font-medium text-text-secondary">
-                  Public body <span className="text-text-faint">({jurisdictionLabel})</span>
+                <label htmlFor={provinceSelectId} className="mb-1.5 block text-xs font-medium text-text-secondary">
+                  Province
                 </label>
                 <div className="relative">
                   <select
-                    id="action-public-body"
-                    value={publicBodyName}
-                    onChange={(e) => setPublicBodyName(e.target.value)}
+                    id={provinceSelectId}
+                    value={province}
+                    required
+                    aria-describedby={`${provinceSelectId}-hint`}
+                    onChange={(e) => {
+                      const next = e.target.value
+                      provinceTouchedRef.current = true
+                      setProvince(isProvinceId(next) ? next : '')
+                      setProvinceDetected(false)
+                      // Bodies belong to one province; a new province clears the choice.
+                      setPublicBodyChoice('')
+                    }}
                     className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0"
                   >
-                    <option value="">Select a public body...</option>
-                    {publicBodies.map((pb) => (
-                      <option key={`${pb.jurisdiction}-${pb.name}`} value={pb.name}>
-                        {pb.name}
+                    <option value="" disabled>
+                      Choose a province...
+                    </option>
+                    {PROVINCE_OPTIONS.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.verified ? p.label : `${p.label} (not verified)`}
                       </option>
                     ))}
                   </select>
@@ -298,6 +318,62 @@ export function NewActionDialog({
                     className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
                   />
                 </div>
+                <p id={`${provinceSelectId}-hint`} className="mt-1.5 text-2xs text-text-muted">
+                  {!province
+                    ? 'Choose the province this request goes to.'
+                    : provinceDetected
+                      ? 'Detected from your investigation. Change it if it is wrong.'
+                      : PROVINCE_OPTIONS.find((p) => p.id === province)?.verified === false
+                        ? "This province's legal citations are not verified yet. Confirm them before you file."
+                        : 'The request cites this province\'s access law.'}
+                </p>
+              </div>
+            )}
+
+            {/* Public body selector — FIPPA only, from the chosen province */}
+            {isFippa && (
+              <div>
+                <label htmlFor="action-public-body" className="mb-1.5 block text-xs font-medium text-text-secondary">
+                  Public body <span className="text-text-faint">(optional)</span>
+                </label>
+                <div className="relative">
+                  <select
+                    id="action-public-body"
+                    value={publicBodyChoice}
+                    disabled={!province}
+                    onChange={(e) => setPublicBodyChoice(e.target.value)}
+                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">{province ? 'Select a public body...' : 'Choose a province first'}</option>
+                    {publicBodies.map((pb) => (
+                      <option key={`${pb.jurisdiction}-${pb.name}`} value={pb.name}>
+                        {pb.name}
+                      </option>
+                    ))}
+                    {province && <option value={OTHER_BODY}>Other (type the name)</option>}
+                  </select>
+                  <ChevronDown
+                    size={13}
+                    strokeWidth={2}
+                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+                  />
+                </div>
+                {publicBodyChoice === OTHER_BODY && (
+                  <div className="mt-2">
+                    <label htmlFor={otherBodyId} className="sr-only">
+                      Public body name
+                    </label>
+                    <input
+                      id={otherBodyId}
+                      type="text"
+                      value={otherBodyName}
+                      maxLength={200}
+                      onChange={(e) => setOtherBodyName(e.target.value)}
+                      placeholder="Name of the public body"
+                      className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-lever)]/40"
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -411,10 +487,10 @@ export function NewActionDialog({
             </Dialog.Close>
             <button
               onClick={handleCreate}
-              disabled={loading || !description.trim()}
+              disabled={loading || !canCreate}
               className={clsx(
                 'rounded-lg px-5 py-2 text-sm font-medium transition-all duration-150',
-                loading || !description.trim()
+                loading || !canCreate
                   ? 'cursor-not-allowed opacity-40'
                   : 'hover:opacity-90'
               )}

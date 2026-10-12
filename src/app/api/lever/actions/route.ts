@@ -4,6 +4,15 @@ import { leverActions, documents, gadflySessions, investigations } from '@/lib/d
 import { eq, and, desc } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
+import {
+  CHOOSE_PROVINCE_ERROR,
+  PUBLIC_BODY_DIRECTORY,
+  isProvinceId,
+  type ProvinceId,
+} from '@/lib/lever/public-body'
+
+/** A typed "Other" public body name longer than this is refused. */
+const MAX_PUBLIC_BODY_NAME_LENGTH = 200
 
 /**
  * GET /api/lever/actions
@@ -45,6 +54,12 @@ export const GET = safeRoute(async function GET(request: NextRequest) {
  * POST /api/lever/actions
  * Create a new lever action stub (before generation).
  * Returns the action ID so the client can redirect to /lever/[id].
+ *
+ * A FIPPA request must carry the province the citizen confirmed
+ * (`jurisdiction`: bc, ab or on), stored as `metadata.jurisdiction`; the
+ * recipient resolver prefers it over detection. Its public body is stored in
+ * `metadata.publicBody` as the exact directory entry name when it is one,
+ * otherwise as the name the citizen typed ("Other").
  */
 export const POST = safeRoute(async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
@@ -71,7 +86,8 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
       | 'coalition_template'
     documentId?: string
     sessionId?: string
-    publicBodyName?: string
+    publicBodyName?: unknown
+    jurisdiction?: unknown
     investigationId?: string
     description: string
   }
@@ -81,13 +97,39 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { actionType, documentId, sessionId, publicBodyName, investigationId, description } = body
+  const { actionType, documentId, sessionId, publicBodyName, jurisdiction, investigationId, description } = body
 
   if (!actionType || !description?.trim()) {
     return NextResponse.json(
       { error: 'actionType and description are required' },
       { status: 400 }
     )
+  }
+
+  if (publicBodyName !== undefined && publicBodyName !== null && typeof publicBodyName !== 'string') {
+    return NextResponse.json({ error: 'publicBodyName must be a string' }, { status: 400 })
+  }
+  const typedBodyName = typeof publicBodyName === 'string' && publicBodyName.trim() ? publicBodyName.trim() : null
+
+  // FIPPA: the confirmed province, and the body as its exact directory name.
+  let province: ProvinceId | null = null
+  let publicBody: string | null = typedBodyName
+  if (actionType === 'fippa_request') {
+    if (!isProvinceId(jurisdiction)) {
+      return NextResponse.json({ error: CHOOSE_PROVINCE_ERROR }, { status: 400 })
+    }
+    province = jurisdiction
+    if (typedBodyName) {
+      const entry = PUBLIC_BODY_DIRECTORY[province].find((b) => b.name === typedBodyName)
+      if (entry) {
+        publicBody = entry.name
+      } else if (typedBodyName.length > MAX_PUBLIC_BODY_NAME_LENGTH) {
+        return NextResponse.json(
+          { error: `Keep the public body name under ${MAX_PUBLIC_BODY_NAME_LENGTH} characters` },
+          { status: 400 }
+        )
+      }
+    }
   }
 
   const db = getDb()
@@ -162,9 +204,10 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
       title,
       content: '',
       metadata: {
-        publicBody: publicBodyName ?? null,
-        addressee: publicBodyName ?? null,
+        publicBody,
+        addressee: publicBody,
         description: description.trim(),
+        ...(province ? { jurisdiction: province } : {}),
       },
       status: 'draft',
     })
