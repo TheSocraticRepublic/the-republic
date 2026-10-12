@@ -206,7 +206,41 @@ export default function PrivacyPage() {
 
       <Section title="Contact">
         <p>
-          {"For privacy or data requests, email the maintainer at the address on the project's GitHub profile, with the subject 'Privacy: Open Cave'. Don't put personal details in a public issue."}{' '}
+          For privacy or data requests, including access to or correction of your personal
+          information, email us. Open Cave&apos;s maintainer is responsible for its privacy
+          practices; the address is on the project owner&apos;s GitHub profile (
+          <a
+            href="https://github.com/TheSocraticRepublic"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
+          >
+            github.com/TheSocraticRepublic
+          </a>
+          ). Use the subject{' '}
+          <code className="whitespace-nowrap text-text-muted">Privacy: Open Cave</code>, send it
+          from the email address you sign in with so we can confirm the account is yours, and say
+          what you&apos;re asking for. We respond within 30 days. Don&apos;t put personal details in
+          a public issue. If you&apos;re not satisfied with our response, you can complain to the
+          Office of the Information and Privacy Commissioner for British Columbia (
+          <a
+            href="https://www.oipc.bc.ca"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
+          >
+            oipc.bc.ca
+          </a>
+          ) or the Office of the Privacy Commissioner of Canada (
+          <a
+            href="https://www.priv.gc.ca"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
+          >
+            priv.gc.ca
+          </a>
+          ).{' '}
           This policy mirrors the canonical{' '}
           <code className="text-text-muted">PRIVACY.md</code> in the open-source repository.
         </p>
