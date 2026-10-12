@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { createElement } from 'react'
+import { createElement, type ComponentProps } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 
@@ -38,7 +38,10 @@ afterEach(() => {
 
 function renderButton(disabled: boolean) {
   const onClick = vi.fn()
-  render(createElement(CTAButton, { onClick, disabled, children: 'Start Investigation' }))
+  // children travel as createElement's third argument; the cast only satisfies
+  // the props type, which declares children as required.
+  const props = { onClick, disabled } as unknown as ComponentProps<typeof CTAButton>
+  render(createElement(CTAButton, props, 'Start Investigation'))
   return { onClick, button: screen.getByRole('button', { name: 'Start Investigation' }) }
 }
 
