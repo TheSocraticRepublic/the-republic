@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { clsx } from 'clsx'
-import type { ReactNode } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 
 interface CTAButtonBaseProps {
   /** Pass the icon pre-rendered (e.g. `<Search size={13} strokeWidth={2} />`)
@@ -26,6 +26,11 @@ interface CTAButtonAsLink extends CTAButtonBaseProps {
 interface CTAButtonAsButton extends CTAButtonBaseProps {
   href?: undefined
   onClick?: () => void
+  /** Rendered as `aria-disabled="true"`, never the native `disabled`
+   *  attribute: the button stays in the tab order (a keyboard or screen-reader
+   *  user can still reach it and hear that it is unavailable), and the click
+   *  handler below refuses to dispatch. Keyboard activation (Enter, Space) of
+   *  a native button arrives as a click, so the same guard covers it. */
   disabled?: boolean
 }
 
@@ -65,11 +70,19 @@ export function CTAButton({
     )
   }
 
+  function handleClick(event: MouseEvent<HTMLButtonElement>) {
+    if (disabled) {
+      event.preventDefault()
+      return
+    }
+    onClick?.()
+  }
+
   return (
     <button
       type="button"
-      onClick={onClick}
-      disabled={disabled}
+      onClick={handleClick}
+      aria-disabled={disabled ? 'true' : undefined}
       className={classes}
       style={PILL_STYLE}
     >

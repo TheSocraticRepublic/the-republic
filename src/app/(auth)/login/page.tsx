@@ -1,23 +1,42 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Loader2 } from 'lucide-react'
+import { safeRedirectTarget } from '@/lib/navigation/safe-redirect'
 
 type Step = 'email' | 'code'
 
+/** Touch screens: focusing an input on load throws up the keyboard over the
+ *  page before the reader has seen it (mobile P2-11). */
+const COARSE_POINTER_QUERY = '(pointer: coarse)'
+
+function hasCoarsePointer(): boolean {
+  return typeof window.matchMedia === 'function' && window.matchMedia(COARSE_POINTER_QUERY).matches
+}
+
 export default function LoginPage() {
-  const router = useRouter()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const emailRef = useRef<HTMLInputElement>(null)
+  const codeRef = useRef<HTMLInputElement>(null)
+
+  // The one predicate both submit paths of the current step check before
+  // dispatching: the step's button (`disabled`) and the input's Enter handler.
+  // The handlers below do not re-check it.
+  const canSubmit = step === 'email' ? email.trim().length > 0 && !loading : code.length === 8 && !loading
+
+  // Focus the step's input on fine pointers only (replaces `autoFocus`).
+  useEffect(() => {
+    if (hasCoarsePointer()) return
+    const input = step === 'email' ? emailRef.current : codeRef.current
+    input?.focus()
+  }, [step])
 
   async function handleSendCode() {
-    if (!email.trim() || loading) return
-
     setLoading(true)
     setError(null)
 
@@ -42,8 +61,6 @@ export default function LoginPage() {
   }
 
   async function handleVerifyCode() {
-    if (code.length !== 8 || loading) return
-
     setLoading(true)
     setError(null)
 
@@ -59,16 +76,19 @@ export default function LoginPage() {
       if (!res.ok) {
         const message =
           data.error === 'expired'
-            ? 'This code has expired. Please request a new one.'
+            ? 'This code has expired. Request a new one.'
             : data.error === 'too_many_attempts'
-            ? 'Too many attempts. Please request a new code.'
-            : 'Invalid code. Please try again.'
+            ? 'Too many attempts. Request a new code.'
+            : 'Invalid code. Try again.'
         throw new Error(message)
       }
 
-      // Full reload so server components re-read the fresh session cookie
-      router.push('/investigate')
-      router.refresh()
+      // A full navigation, so server components read the fresh session cookie.
+      // `?redirect=` is untrusted: safeRedirectTarget returns an absolute URL
+      // on this origin (the target, or /investigate), and it is assigned as-is.
+      window.location.assign(
+        safeRedirectTarget(new URLSearchParams(window.location.search).get('redirect'), window.location.origin)
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -77,7 +97,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center px-4">
+    <main className="relative flex min-h-screen flex-col items-center justify-center px-4">
       {/* Cave photo background */}
       <div
         className="absolute inset-0 bg-cover bg-center"
@@ -129,11 +149,11 @@ export default function LoginPage() {
                 </label>
                 <input
                   id="email"
+                  ref={emailRef}
                   type="email"
-                  autoFocus
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && email.trim() && handleSendCode()}
+                  onKeyDown={(e) => e.key === 'Enter' && canSubmit && handleSendCode()}
                   placeholder="you@example.com"
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-white/25 outline-none transition-colors focus:border-white/20 focus:bg-white/10"
                 />
@@ -145,7 +165,7 @@ export default function LoginPage() {
 
               <button
                 onClick={handleSendCode}
-                disabled={loading || !email.trim()}
+                disabled={!canSubmit}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {loading ? (
@@ -165,13 +185,13 @@ export default function LoginPage() {
                 </label>
                 <input
                   id="code"
+                  ref={codeRef}
                   type="text"
-                  autoFocus
                   inputMode="numeric"
                   maxLength={8}
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                  onKeyDown={(e) => e.key === 'Enter' && code.length === 8 && handleVerifyCode()}
+                  onKeyDown={(e) => e.key === 'Enter' && canSubmit && handleVerifyCode()}
                   placeholder="00000000"
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.25em] text-white placeholder-white/25 outline-none transition-colors focus:border-white/20 focus:bg-white/10"
                 />
@@ -183,7 +203,7 @@ export default function LoginPage() {
 
               <button
                 onClick={handleVerifyCode}
-                disabled={loading || code.length !== 8}
+                disabled={!canSubmit}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {loading ? (
@@ -216,6 +236,6 @@ export default function LoginPage() {
           </a>
         </p>
       </div>
-    </div>
+    </main>
   )
 }

@@ -47,9 +47,13 @@ export function ConcernForm() {
       .finally(() => setFetchingJurisdictions(false))
   }, [])
 
-  const handleStartInvestigation = useCallback(async () => {
-    if (!concern.trim() || loading) return
+  // The one predicate every submit path checks before dispatching: the
+  // button (CTAButton's aria-disabled click guard) and the Cmd/Ctrl+Enter
+  // shortcut below. handleStartInvestigation itself does not re-check it, so
+  // each path's own guard is what stands between it and a request.
+  const canSubmit = concern.trim().length > 0 && !loading
 
+  const handleStartInvestigation = useCallback(async () => {
     if (abortRef.current) {
       abortRef.current.abort()
     }
@@ -97,7 +101,7 @@ export function ConcernForm() {
       }
       setLoading(false)
     }
-  }, [concern, selectedJurisdictionId, postalCode, loading, router])
+  }, [concern, selectedJurisdictionId, postalCode, router])
 
   const handleCancel = useCallback(() => {
     if (abortRef.current) {
@@ -110,13 +114,12 @@ export function ConcernForm() {
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
+        if (!canSubmit) return
         handleStartInvestigation()
       }
     },
-    [handleStartInvestigation]
+    [canSubmit, handleStartInvestigation]
   )
-
-  const canSubmit = concern.trim().length > 0 && !loading
 
   return (
     <div className="space-y-4">
