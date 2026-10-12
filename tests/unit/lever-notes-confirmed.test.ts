@@ -181,6 +181,18 @@ describe('PDF (export route): a confirmed letter (A5)', () => {
     expect(pdf.guidance).toContain('Where to send this')
   }, 30_000)
 
+  it('final and confirmed: no notice on any page, and the whole text is the letter (Razor N3)', async () => {
+    const pdf = await exportPdfText(row(MISSING_MARKER_LETTER, 'final', CONFIRMED_AT))
+    expect(pdf.all).not.toContain(NOTES)
+    expect(squash(pdf.letter)).toContain(squash(MISSING_MARKER_LETTER.expectedLetter))
+    expect(pdf.guidance).toContain('Where to send this')
+  }, 30_000)
+
+  it('final and unconfirmed: the final wording of the notice on the guidance page', async () => {
+    const pdf = await exportPdfText(row(MISSING_MARKER_LETTER, 'final'))
+    expect(squash(pdf.guidance)).toContain(squash(UNCLEAN_FINAL))
+  }, 30_000)
+
   it('the same letter unconfirmed carries the notice on the guidance page', async () => {
     const pdf = await exportPdfText(row(MISSING_MARKER_LETTER, 'filed'))
     expect(squash(pdf.guidance)).toContain(squash(UNCLEAN_FILED))

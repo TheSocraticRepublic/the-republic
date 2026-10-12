@@ -17,7 +17,8 @@ import { createHash } from 'node:crypto'
  */
 
 import { ActionViewer } from '@/components/lever/action-viewer'
-import { MARKER_V1_LETTER, PLACEHOLDER_LETTER, AI_STUB_LETTERS } from '../fixtures/letters'
+import { LetterPaper } from '@/components/lever/letter-paper'
+import { MARKER_V1_LETTER, PLACEHOLDER_LETTER, AI_STUB_LETTERS, OVERSIZE_FALLBACK } from '../fixtures/letters'
 
 const ID = '44444444-4444-4444-8444-444444444444'
 const sha = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex')
@@ -27,7 +28,11 @@ const NOT_A_DRAFT = 'This letter is no longer a draft'
 const CONTENT_CHANGED = 'This letter changed since you opened it'
 const STATUS_CHANGED = "This letter's status changed since you opened it. Reload to see it."
 const UNCLEAN_SPLIT = "Remove the notes that aren't part of your request before you finalise."
-const CONFIRM_FACT = 'This letter doesn\'t have the "Not part of your request" line.'
+const CONFIRM_FACT =
+  'Open Cave can\'t find the "Not part of your request" line, so all of this letter will print as your request.'
+const UNCLEAN_REPEATED =
+  'This letter has the "Not part of your request" line more than once. Keep only the one above your notes, or remove them all, then finalise.'
+const EMPTY_LETTER = 'This letter is empty. Write it or re-generate it, then finalise.'
 const CONFIRM_ACTION = "Check you've removed everything that isn't part of your request, then finalise."
 const CONFIRM_NO_NOTES = `${CONFIRM_FACT} ${CONFIRM_ACTION}`
 const MARKER_LINE = '=== NOT PART OF YOUR REQUEST ==='
@@ -105,7 +110,7 @@ function installServer(p: ServerPlan) {
         if (body.expectedContentSha256 !== sha(plan.row.content)) return json({ error: CONTENT_CHANGED }, 409)
         if (plan.confirmRule && body.status === 'final' && plan.row.metadata.letterFormat === 'marker-v1') {
           const markers = plan.row.content.split('\n').filter((l) => l.trimEnd() === MARKER_LINE).length
-          if (markers >= 2) return json({ error: UNCLEAN_SPLIT }, 409)
+          if (markers >= 2) return json({ error: UNCLEAN_REPEATED }, 409)
           if (markers === 0) {
             if (body.confirmNoNotes !== true) return json({ error: CONFIRM_NO_NOTES }, 409)
             plan.row.metadata = { ...plan.row.metadata, notesRemovalConfirmedAt: '2026-10-12T16:00:00.000Z' }
@@ -556,7 +561,20 @@ describe('confirm a finalise with no marker line (A5)', () => {
     expect(screen.getByText('Draft')).toBeTruthy()
     expect(plan.row.status).toBe('draft')
     expect(patches).toEqual([{ status: 'final', expectedContentSha256: sha(MISSING) }])
-    // The draft keeps its notice until it is confirmed.
+    // One notice, not two: the confirmation stands in for the notes line while open (Jen C4).
+    expect(letterNotice()).toBeNull()
+    // Positive sibling: the other notices are still there.
+    expect(document.querySelector('[data-recipient-notice]')).not.toBeNull()
+  })
+
+  it('the notes line hides only while the confirmation is open, and Cancel brings it back (Jen C4)', async () => {
+    plan_extra = { confirmRule: true }
+    renderViewer({ content: MISSING, metadata: { letterFormat: 'marker-v1' } })
+    expect(letterNotice()!.textContent).toContain('may include notes')
+    fireEvent.click(screen.getByText('Mark as Final'))
+    await waitFor(() => expect(panel()).not.toBeNull())
+    expect(letterNotice()).toBeNull()
+    fireEvent.click(within(panel()!).getByText('Cancel'))
     expect(letterNotice()!.textContent).toContain('may include notes')
   })
 
@@ -610,14 +628,76 @@ describe('confirm a finalise with no marker line (A5)', () => {
     expect(document.activeElement).toBe(advance())
   })
 
-  it('two marker lines never offer the confirmation: the unclean-split message', async () => {
+  it('two marker lines never offer the confirmation: the refusal names the repeated line, and takes focus (Jen C2)', async () => {
     const twice = `${MISSING}\n${MARKER_LINE}\nGuidance.\n${MARKER_LINE}\nMore.`
     plan_extra = { confirmRule: true }
     renderViewer({ content: twice, metadata: { letterFormat: 'marker-v1' } })
     fireEvent.click(screen.getByText('Mark as Final'))
-    expect((await screen.findByRole('alert')).textContent).toBe(UNCLEAN_SPLIT)
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toBe(UNCLEAN_REPEATED)
+    await waitFor(() => expect(document.activeElement).toBe(alert))
     expect(panel()).toBeNull()
     expect(patches).toHaveLength(1)
+  })
+
+  it('an unclean-split refusal that is not about a repeated line keeps the general wording', async () => {
+    plan_extra = { patch409: UNCLEAN_SPLIT }
+    renderViewer({ content: MISSING, metadata: { letterFormat: 'marker-v1' } })
+    fireEvent.click(screen.getByText('Mark as Final'))
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toBe(UNCLEAN_SPLIT)
+    await waitFor(() => expect(document.activeElement).toBe(alert))
+  })
+
+  it('while the confirm is in flight, Edit and Re-generate ignore clicks (Jen C3)', async () => {
+    openConfirm()
+    await waitFor(() => expect(panel()).not.toBeNull())
+    let release!: () => void
+    plan.patchGate = new Promise<void>((r) => (release = r))
+    fireEvent.click(within(panel()!).getByText('Finalise'))
+    await waitFor(() => expect(within(panel()!).getByText('Finalising...')).toBeTruthy())
+    const edit = screen.getByText('Edit').closest('button')!
+    const regen = screen.getByText('Re-generate').closest('button')!
+    expect(edit.getAttribute('aria-disabled')).toBe('true')
+    expect(regen.getAttribute('aria-disabled')).toBe('true')
+    fireEvent.click(edit)
+    fireEvent.click(regen)
+    expect(screen.queryByLabelText('Edit document text')).toBeNull()
+    expect(generates).toBe(0)
+    expect(panel()).not.toBeNull()
+    release()
+    await screen.findByText('Final')
+    expect(screen.queryByLabelText('Edit document text')).toBeNull()
+    expect(generates).toBe(0)
+    expect(plan.row.status).toBe('final')
+  })
+
+  it('with no confirm in flight, Edit and Re-generate close the confirmation', async () => {
+    openConfirm()
+    await waitFor(() => expect(panel()).not.toBeNull())
+    fireEvent.click(screen.getByText('Edit'))
+    expect(panel()).toBeNull()
+    expect(screen.getByLabelText('Edit document text')).toBeTruthy()
+    fireEvent.click(screen.getByText('Cancel'))
+    fireEvent.click(screen.getByText('Mark as Final'))
+    await waitFor(() => expect(panel()).not.toBeNull())
+    plan.generate = { streamed: MISSING, storedAfter: MISSING }
+    fireEvent.click(screen.getByText('Re-generate'))
+    await waitFor(() => expect(generates).toBe(1))
+    await screen.findByText('Mark as Final')
+    expect(panel()).toBeNull()
+  })
+
+  it('a blank letter never reaches the confirmation: the empty line, nothing sent, focus kept (Jen C5)', async () => {
+    plan_extra = { confirmRule: true }
+    renderViewer({ content: '  \n\t ', metadata: { letterFormat: 'marker-v1' } })
+    advance().focus()
+    fireEvent.click(advance())
+    expect((await screen.findByRole('alert')).textContent).toBe(EMPTY_LETTER)
+    expect(patches).toHaveLength(0)
+    expect(panel()).toBeNull()
+    expect(document.activeElement).toBe(advance())
+    expect(screen.getByText('Draft')).toBeTruthy()
   })
 
   it('on screen: a confirmed final or filed letter has no notice; unconfirmed, or a draft, it does', () => {
@@ -634,5 +714,12 @@ describe('confirm a finalise with no marker line (A5)', () => {
     cleanup()
     renderViewer({ content: MISSING, status: 'draft', metadata: confirmed })
     expect(letterNotice()!.textContent).toContain('may include notes')
+  })
+
+  it('hiding the notes line keeps the other notes (Jen C4): a fallback still says "Shown as plain text."', () => {
+    render(<LetterPaper content={OVERSIZE_FALLBACK.content} letterFormat="marker-v1" status="draft" hideUncleanNotice />)
+    const box = letterNotice()!
+    expect(box.textContent).toContain('Shown as plain text.')
+    expect(box.textContent).not.toContain('may include notes')
   })
 })
