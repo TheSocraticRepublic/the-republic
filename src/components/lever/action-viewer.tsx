@@ -78,6 +78,9 @@ const EXPORT_FALLBACK_NAMES: Record<ExportFormat, string> = {
   pdf: 'action.pdf',
 }
 
+/** Said after "Insert directory address" writes (Jen C8). */
+export const INSERTED_MESSAGE = 'Inserted the directory address into your letter. Check it before you send.'
+
 const PDF_FAILED = "The PDF couldn't be made. Use Print or Plain text instead."
 const RELOAD_FAILED = "The saved letter couldn't be reloaded. Reload the page to see it."
 
@@ -433,6 +436,7 @@ export function ActionViewer({
           setContent(stored)
           setEditContent(stored)
           rebaseline(stored)
+          setInfo(INSERTED_MESSAGE)
         } else {
           setActionError(conflictMessage(result.reason, 'insert', result.error))
         }
@@ -609,11 +613,15 @@ export function ActionViewer({
         {mode === 'editing' && (
           <>
             <button
-              onClick={handleSaveEdit}
-              disabled={saving}
+              onClick={() => {
+                // Busy, not disabled: focus stays on the control (Jen C8).
+                if (!saving) void handleSaveEdit()
+              }}
+              aria-busy={saving || undefined}
+              aria-disabled={saving || undefined}
               className={clsx(
                 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
-                saving ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80'
+                saving ? 'cursor-progress' : 'hover:opacity-80'
               )}
               style={{
                 backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)',
@@ -696,7 +704,11 @@ export function ActionViewer({
             </pre>
           ) : (
             <div className="flex items-center justify-center h-48">
-              <p className="text-sm text-text-faint">No content yet. Click Re-generate to produce the document.</p>
+              <p className="text-sm text-text-faint">
+                {needsProvince
+                  ? 'No letter yet. Choose the province above to generate it.'
+                  : 'No content yet. Click Re-generate to produce the document.'}
+              </p>
             </div>
           )}
         </div>
@@ -735,71 +747,98 @@ function ProvinceChoice({
   only,
 }: {
   onChoose: (province: ProvinceId) => Promise<void>
-  /** A listed body's own province: the only one offered, pre-selected. */
+  /** A listed body's own province: confirmed, not chosen (Jen C9). */
   only: { province: ProvinceId; body: string } | null
 }) {
   const selectId = useId()
   const [choice, setChoice] = useState<ProvinceId | ''>(only ? only.province : '')
-  const options = only ? PROVINCE_OPTIONS.filter((p) => p.id === only.province) : PROVINCE_OPTIONS
   const [busy, setBusy] = useState(false)
+  const firstControl = useRef<HTMLSelectElement | HTMLButtonElement | null>(null)
+
+  // It appears where Re-generate was; focus moves to it so nothing is lost
+  // to <body> (Jen C9c).
+  useEffect(() => {
+    firstControl.current?.focus()
+  }, [])
+
+  const go = async () => {
+    if (!choice || busy) return
+    setBusy(true)
+    try {
+      await onChoose(choice)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const button = (label: string) => (
+    <button
+      ref={only ? (el) => void (firstControl.current = el) : undefined}
+      type="button"
+      onClick={go}
+      aria-busy={busy || undefined}
+      aria-disabled={!choice || busy || undefined}
+      className="inline-flex min-h-[44px] items-center rounded-lg border border-border-strong px-3 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-surface-2 sm:min-h-0"
+    >
+      {busy ? 'Saving...' : label}
+    </button>
+  )
+
   return (
     // A <div> and a click handler, not a <form>: the app's pattern since the
     // React 19 form re-invocation bug (auth triple-fire).
     <div
       data-province-choice
+      role="group"
+      aria-labelledby={`${selectId}-label`}
       className="rounded-lg border border-border bg-surface-1 px-4 py-3"
       style={{ borderLeft: '3px solid var(--status-warning)' }}
     >
-      <label htmlFor={selectId} className="mb-1.5 block text-sm text-text-secondary">
-        {CHOOSE_PROVINCE_ERROR}.
-      </label>
-      {only && (
-        <p data-province-reason className="mb-2 text-sm text-text-secondary">
-          {only.body} is in the {provinceLabel(only.province)} directory, so this request goes to{' '}
-          {provinceLabel(only.province)}. For another province, start a new request.
-        </p>
+      {only ? (
+        <>
+          <p id={`${selectId}-label`} className="mb-1.5 text-sm text-text-secondary">
+            Confirm the province this request goes to.
+          </p>
+          <p data-province-reason className="mb-2 text-sm text-text-secondary">
+            {only.body} is in the {provinceLabel(only.province)} directory, so this request goes to{' '}
+            {provinceLabel(only.province)}. For another province, start a new request.
+          </p>
+          {button(`Generate for ${provinceLabel(only.province)}`)}
+        </>
+      ) : (
+        <>
+          <label id={`${selectId}-label`} htmlFor={selectId} className="mb-1.5 block text-sm text-text-secondary">
+            {CHOOSE_PROVINCE_ERROR}.
+          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <select
+                ref={(el) => void (firstControl.current = el)}
+                id={selectId}
+                value={choice}
+                required
+                onChange={(e) => setChoice(isProvinceId(e.target.value) ? e.target.value : '')}
+                className="min-h-[44px] appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0 sm:min-h-0"
+              >
+                <option value="" disabled>
+                  Choose a province...
+                </option>
+                {PROVINCE_OPTIONS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.verified ? p.label : `${p.label} (not verified)`}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={13}
+                strokeWidth={2}
+                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+              />
+            </div>
+            {button('Use this province and generate')}
+          </div>
+        </>
       )}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative">
-          <select
-            id={selectId}
-            value={choice}
-            required
-            onChange={(e) => setChoice(isProvinceId(e.target.value) ? e.target.value : '')}
-            className="appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0"
-          >
-            <option value="" disabled>
-              Choose a province...
-            </option>
-            {options.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.verified ? p.label : `${p.label} (not verified)`}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            size={13}
-            strokeWidth={2}
-            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={async () => {
-            if (!choice || busy) return
-            setBusy(true)
-            try {
-              await onChoose(choice)
-            } finally {
-              setBusy(false)
-            }
-          }}
-          disabled={!choice || busy}
-          className="inline-flex items-center rounded-lg border border-border-strong px-3 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {busy ? 'Saving...' : 'Use this province and generate'}
-        </button>
-      </div>
     </div>
   )
 }

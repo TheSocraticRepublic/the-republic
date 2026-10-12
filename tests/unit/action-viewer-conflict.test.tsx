@@ -34,7 +34,7 @@ const LISTED_NOT_FOUND = `Open Cave's directory lists BC Ministry of Forests's F
 const NO_CHECKED =
   'Open Cave has no checked address for this body. Find its FOI contact on its own website and confirm it before you send.'
 const EAO_UNCHECKED =
-  'Open Cave has an unchecked address for BC Environmental Assessment Office, from no recorded source. Confirm it with them before you send.'
+  "Open Cave hasn't checked an FOI address for BC Environmental Assessment Office. Find it on BC Environmental Assessment Office's own website and confirm it before you send."
 
 /** A FIPPA letter for BC Ministry of Forests with the address placeholder (and a bracket in the guidance). */
 const FORESTS_PLACEHOLDER = [
@@ -57,6 +57,8 @@ interface ServerPlan {
   row: Row
   /** Forced PATCH answer (status and error), instead of the rules. */
   patch409?: string
+  /** PATCH waits for this before answering. */
+  patchGate?: Promise<void>
   /** The generate response: text streamed, and what the row holds after. */
   generate?: { status?: number; error?: string; streamed?: string; storedAfter?: string; metadataAfter?: Record<string, unknown> }
   /** GET fails (re-read after a stream). */
@@ -88,6 +90,7 @@ function installServer(p: ServerPlan) {
       if (url === `/api/lever/actions/${ID}` && method === 'PATCH') {
         const body = JSON.parse(String(init!.body)) as Record<string, unknown>
         patches.push(body)
+        if (plan.patchGate) await plan.patchGate
         if (plan.patch409) return json({ error: plan.patch409 }, 409)
         if (body.expectedContentSha256 !== sha(plan.row.content)) return json({ error: CONTENT_CHANGED }, 409)
         if (typeof body.content === 'string') plan.row.content = body.content
@@ -216,12 +219,48 @@ describe('recipient notices (filings §3)', () => {
     await waitFor(() => expect(insertButton()).toBeNull())
     expect(patches).toHaveLength(1)
     expect(patches[0]).toEqual({
-      content: FORESTS_PLACEHOLDER.replace('[Public body FOI address]\n', `${FOI_OPS}\n`),
+      // Postal lines only, municipality on its own line (Jen C7).
+      content: FORESTS_PLACEHOLDER.replace('[Public body FOI address]\n', 'PO Box 9569, Stn Prov Govt\nVictoria BC V8W 9K1\n'),
       expectedContentSha256: sha(FORESTS_PLACEHOLDER),
     })
     // The guidance's bracket is untouched.
     expect(String(patches[0].content)).toContain('Leave [Public body FOI address] alone here.')
+    expect(String(patches[0].content)).not.toContain('FOI Operations')
     expect(noticeLines()).toEqual([CHECK])
+    // Said, not silent (Jen C8).
+    expect(screen.getByRole('status').textContent).toBe(
+      'Inserted the directory address into your letter. Check it before you send.'
+    )
+  })
+
+  it('busy, never disabled: Insert and Save keep focus while their write is in flight (Jen C8)', async () => {
+    let open!: () => void
+    plan_extra = { patchGate: new Promise<void>((r) => (open = r)) }
+    renderViewer({ content: FORESTS_PLACEHOLDER, metadata: FORESTS_BC })
+    const insert = insertButton()!
+    insert.focus()
+    fireEvent.click(insert)
+    await waitFor(() => expect(insert.getAttribute('aria-busy')).toBe('true'))
+    expect(insert.hasAttribute('disabled')).toBe(false)
+    expect(insert.getAttribute('aria-disabled')).toBe('true')
+    expect(document.activeElement).toBe(insert)
+    fireEvent.click(insert)
+    open()
+    await waitFor(() => expect(insertButton()).toBeNull())
+    expect(patches).toHaveLength(1)
+
+    let release!: () => void
+    plan.patchGate = new Promise<void>((r) => (release = r))
+    fireEvent.click(screen.getByText('Edit'))
+    fireEvent.change(textarea(), { target: { value: 'Edited.' } })
+    const save = screen.getByText('Save').closest('button')!
+    save.focus()
+    fireEvent.click(save)
+    await waitFor(() => expect(save.getAttribute('aria-busy')).toBe('true'))
+    expect(save.hasAttribute('disabled')).toBe(false)
+    expect(document.activeElement).toBe(save)
+    release()
+    await waitFor(() => expect(screen.queryByLabelText('Edit document text')).toBeNull())
   })
 
   it('insert that loses to another write: a 409 worded for a stale view, and nothing changes', async () => {
@@ -372,6 +411,7 @@ describe('generation (A2 carry)', () => {
       return el
     })) as HTMLElement
     const select = within(panel).getByRole('combobox') as HTMLSelectElement
+    await waitFor(() => expect(document.activeElement).toBe(select))
     expect(Array.from(select.options).map((o) => o.value)).toEqual(['', 'bc', 'ab', 'on'])
     expect(Array.from(select.options).map((o) => o.textContent)).toEqual([
       'Choose a province...',
@@ -388,7 +428,7 @@ describe('generation (A2 carry)', () => {
     expect(document.querySelector('[data-province-choice]')).toBeNull()
   })
 
-  it('a listed body: only its own province is offered, pre-selected, and why (Razor N5)', async () => {
+  it('a listed body: the province is confirmed, not chosen, with why, and focus lands on it (Razor N5, Jen C9)', async () => {
     plan_extra = { generate: { status: 409, error: 'Choose the province this request goes to' } }
     renderViewer({ content: '', metadata: { publicBody: 'BC Ministry of Forests' } })
     const panel = (await waitFor(() => {
@@ -396,29 +436,31 @@ describe('generation (A2 carry)', () => {
       expect(el).not.toBeNull()
       return el
     })) as HTMLElement
-    const select = within(panel).getByRole('combobox') as HTMLSelectElement
-    expect(Array.from(select.options).map((o) => o.value)).toEqual(['', 'bc'])
-    expect(select.value).toBe('bc')
+    expect(within(panel).queryByRole('combobox')).toBeNull()
+    expect(panel.textContent).toContain('Confirm the province this request goes to.')
     expect(panel.querySelector('[data-province-reason]')!.textContent).toBe(
       'BC Ministry of Forests is in the British Columbia directory, so this request goes to British Columbia. For another province, start a new request.'
     )
+    const go = within(panel).getByRole('button')
+    expect(go.textContent).toBe('Generate for British Columbia')
+    await waitFor(() => expect(document.activeElement).toBe(go))
+    expect(screen.getByText('No letter yet. Choose the province above to generate it.')).toBeTruthy()
     plan.generate = { streamed: 'Generated.', storedAfter: 'Generated.' }
-    fireEvent.click(within(panel).getByRole('button'))
+    fireEvent.click(go)
     await screen.findByText('Generated.')
     expect(patches).toEqual([{ jurisdiction: 'bc', expectedContentSha256: sha('') }])
   })
 
-  it('a draft stranded in the wrong province gets the choice back, limited to its body\'s province (Razor N5)', async () => {
+  it('a draft stranded in the wrong province gets the choice back, for its body\'s province only (Razor N5)', async () => {
     const refusal =
       'This request names BC Ministry of Forests, which is in the British Columbia directory, but it goes to Alberta. Start a new request with the right province.'
     plan_extra = { generate: { status: 409, error: refusal } }
     renderViewer({ content: '', metadata: { publicBody: 'BC Ministry of Forests', jurisdiction: 'ab' } })
     expect((await screen.findByRole('alert')).textContent).toBe(refusal)
     const panel = document.querySelector('[data-province-choice]') as HTMLElement
-    const select = within(panel).getByRole('combobox') as HTMLSelectElement
-    expect(Array.from(select.options).map((o) => o.value)).toEqual(['', 'bc'])
+    expect(within(panel).queryByRole('combobox')).toBeNull()
     plan.generate = { streamed: 'Generated.', storedAfter: 'Generated.' }
-    fireEvent.click(within(panel).getByRole('button'))
+    fireEvent.click(within(panel).getByRole('button', { name: 'Generate for British Columbia' }))
     await screen.findByText('Generated.')
     expect(patches).toEqual([{ jurisdiction: 'bc', expectedContentSha256: sha('') }])
     expect(plan.row.metadata.jurisdiction).toBe('bc')

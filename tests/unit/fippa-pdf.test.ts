@@ -205,7 +205,7 @@ describe('FIPPA PDF: text oracle', () => {
     const guidance = squash(guidancePagesText(pdf))
     expect(guidance).toContain(
       squash(
-        'Open Cave has an unchecked address for BC Environmental Assessment Office, from no recorded source. Confirm it with them before you send.'
+        "Open Cave hasn't checked an FOI address for BC Environmental Assessment Office. Find it on BC Environmental Assessment Office's own website and confirm it before you send."
       )
     )
     expect(guidance).not.toContain(squash('PO Box 9426'))
@@ -642,7 +642,7 @@ describe('export route', () => {
     expect(strip(guidancePagesText(a))).toBe(strip(guidancePagesText(b)))
     expect(guidancePagesText(b)).toContain('(checked 2026-10-12)')
     expect(guidancePagesText(a)).not.toContain('(checked 2026-10-12)')
-    expect(squash(guidancePagesText(a))).toContain(squash('Open Cave has an unchecked address for BC Ministry of Forests'))
+    expect(squash(guidancePagesText(a))).toContain(squash("Open Cave hasn't checked an FOI address for BC Ministry of Forests"))
   }, 60_000)
 
   it('the route resolves the recipient with the action\'s investigation (no stored province)', async () => {

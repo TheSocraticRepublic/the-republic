@@ -102,8 +102,9 @@ export function LetterPaper({ content, letterFormat, status, recipient }: Letter
           className="rounded-lg border border-border bg-surface-1 px-4 py-3 text-sm leading-relaxed text-text-secondary"
           style={{ borderLeft: '3px solid var(--border-strong)' }}
         >
-          {recipient.lines.map((line) => (
-            <p key={line} className="[overflow-wrap:anywhere]">
+          {recipient.lines.map((line, i) => (
+            // Instruction, then evidence, as separate lines (Jen C11).
+            <p key={line} className={i > 0 ? 'mt-1.5 [overflow-wrap:anywhere]' : '[overflow-wrap:anywhere]'}>
               {line}
             </p>
           ))}
@@ -111,10 +112,13 @@ export function LetterPaper({ content, letterFormat, status, recipient }: Letter
             <button
               type="button"
               data-insert-address
-              onClick={recipient.insert.onInsert}
-              disabled={recipient.insert.busy}
+              onClick={() => {
+                // Busy, not disabled: focus stays on the button (Jen C8).
+                if (!recipient.insert!.busy) recipient.insert!.onInsert()
+              }}
               aria-busy={recipient.insert.busy || undefined}
-              className="mt-2.5 inline-flex min-h-[44px] items-center rounded-lg border border-border-strong px-3.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-2 disabled:cursor-progress disabled:opacity-60 sm:min-h-0 sm:py-1.5"
+              aria-disabled={recipient.insert.busy || undefined}
+              className={`mt-2.5 inline-flex min-h-[44px] items-center rounded-lg border border-border-strong px-3.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-2 sm:min-h-0 sm:py-1.5${recipient.insert.busy ? ' cursor-progress' : ''}`}
             >
               {recipient.insert.busy ? 'Inserting...' : recipient.insert.label}
             </button>

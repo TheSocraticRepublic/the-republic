@@ -58,8 +58,10 @@ export function checkedListingLine(body: string, address: string, checkedOn: str
 }
 
 export function uncheckedLine(body: string, source: string | null | undefined): string {
-  const from = typeof source === 'string' && source.trim() ? source.trim() : 'no recorded source'
-  return `Open Cave has an unchecked address for ${body}, from ${from}. Confirm it with them before you send.`
+  // The page never shows an unchecked address, so this never asks the
+  // citizen to "confirm it" (Jen C10).
+  const lead = `Open Cave hasn't checked an FOI address for ${body}. Find it on ${body}'s own website and confirm it before you send.`
+  return typeof source === 'string' && source.trim() ? `${lead} Its unchecked listing came from ${source.trim()}.` : lead
 }
 
 export function sourceLine(sourceUrl: string): string {
@@ -71,6 +73,21 @@ export function sourceLine(sourceUrl: string): string {
  * way the directory's own evidence is (case, whitespace, punctuation, and the
  * Street/Avenue/PO Box variants), then compared as whole token sequences.
  */
+/**
+ * A directory address as postal lines (Jen C7): its leading attention segment
+ * dropped (a first comma segment with no digit, such as "FOI Operations",
+ * since the letter already carries its own attention line), and the
+ * municipality on its own line.
+ *   "FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC V8W 9K1"
+ *   -> ["PO Box 9569, Stn Prov Govt", "Victoria BC V8W 9K1"]
+ */
+export function postalLines(address: string): string[] {
+  const segs = address.split(/,\s*/).map((x) => x.trim()).filter(Boolean)
+  if (segs.length >= 3 && !/\d/.test(segs[0])) segs.shift()
+  if (segs.length < 2) return [segs.join(', ')]
+  return [segs.slice(0, -1).join(', '), segs[segs.length - 1]]
+}
+
 export function addressOccursIn(letterText: string, address: string): boolean {
   const needle = normaliseAddress(address)
   if (!needle) return false
@@ -109,7 +126,8 @@ export function screenRecipientNotice(
     case 'checked': {
       const { entry } = resolution
       const letter = letterPartText(content, letterFormat)
-      if (!addressOccursIn(letter, entry.foiAddress)) {
+      // The postal part is what a letter needs; an attention line may differ.
+      if (!addressOccursIn(letter, postalLines(entry.foiAddress).join(' '))) {
         lines.push(`${checkedListingLine(entry.name, entry.foiAddress, entry.checkedOn ?? '')} ${ADDRESS_NOT_FOUND_LINE}`)
       }
       if (status === 'draft' && letter.includes(RECIPIENT_ADDRESS_PLACEHOLDER)) {
@@ -139,7 +157,7 @@ export function whereToSendLines(resolution: RecipientResolution, content: strin
     case 'checked': {
       const { entry } = resolution
       const listing = checkedListingLine(entry.name, entry.foiAddress, entry.checkedOn ?? '')
-      const found = addressOccursIn(letterPartText(content, letterFormat), entry.foiAddress)
+      const found = addressOccursIn(letterPartText(content, letterFormat), postalLines(entry.foiAddress).join(' '))
       lines.push(found ? listing : `${listing} ${ADDRESS_NOT_FOUND_LINE}`)
       if (entry.sourceUrl) lines.push(sourceLine(entry.sourceUrl))
       break
@@ -157,7 +175,8 @@ export function whereToSendLines(resolution: RecipientResolution, content: strin
 
 /**
  * The text "Insert directory address" writes: every `[Public body FOI
- * address]` in the LETTER part replaced by the address, and nothing else
+ * address]` in the LETTER part replaced by the address as postal lines
+ * (postalLines), and nothing else
  * touched (line endings, the marker line and the guidance stay byte for
  * byte). Returns null when the letter part has no placeholder.
  *
@@ -179,7 +198,9 @@ export function insertDirectoryAddress(content: string, letterFormat: unknown, a
   let replaced = false
   for (let i = 0; i < letterEnd; i++) {
     if (lines[i].includes(RECIPIENT_ADDRESS_PLACEHOLDER)) {
-      lines[i] = lines[i].split(RECIPIENT_ADDRESS_PLACEHOLDER).join(address)
+      // Postal lines, joined with the line's own ending (CRLF stays CRLF).
+      const eol = lines[i].endsWith('\r') ? '\r\n' : '\n'
+      lines[i] = lines[i].split(RECIPIENT_ADDRESS_PLACEHOLDER).join(postalLines(address).join(eol))
       replaced = true
     }
   }
