@@ -12,7 +12,15 @@ import { safeRoute } from '@/lib/api/safe-route'
 import { parseLetter } from '@/lib/lever/letter-blocks'
 import { isProvinceId } from '@/lib/lever/public-body'
 import { createHash } from 'node:crypto'
-import { NOT_A_DRAFT, CONTENT_CHANGED, STATUS_CHANGED, UNCLEAN_SPLIT, CONFIRM_NO_NOTES } from '@/lib/lever/write-conflicts'
+import {
+  NOT_A_DRAFT,
+  CONTENT_CHANGED,
+  STATUS_CHANGED,
+  UNCLEAN_SPLIT,
+  UNCLEAN_SPLIT_REPEATED,
+  CONFIRM_NO_NOTES,
+  EMPTY_LETTER,
+} from '@/lib/lever/write-conflicts'
 
 /** PATCH refuses content longer than this (UTF-16 code units, JS string length) with 413. */
 const MAX_CONTENT_LENGTH = 100_000
@@ -101,9 +109,10 @@ export const GET = safeRoute(async function GET(request: NextRequest, { params }
  * and no fallback), which is otherwise refused with CONFIRM_NO_NOTES so the
  * citizen can confirm. It lands by the same compare-and-set, in the same
  * transaction, and records `metadata.notesRemovalConfirmedAt`, a time this
- * route takes itself and never from the request. Two markers and a fallback
- * parse stay refused with UNCLEAN_SPLIT whatever the flag says; on any other
- * write the flag is ignored.
+ * route takes itself and never from the request. Two markers (worded
+ * UNCLEAN_SPLIT_REPEATED) and a fallback parse (UNCLEAN_SPLIT) stay refused
+ * whatever the flag says; on any other write the flag is ignored. A blank
+ * letter is never finalised (400, EMPTY_LETTER).
  *
  * PATCH never writes `letterFormat`; only generation does.
  */
@@ -240,6 +249,10 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
       return NextResponse.json({ error: CONTENT_CHANGED }, { status: 409 })
     }
     const finalText = typeof content === 'string' ? content : existing.content
+    // A blank letter is never finalised, whatever its format (Jen A5 C5).
+    if (typeof finalText !== 'string' || finalText.trim() === '') {
+      return NextResponse.json({ error: EMPTY_LETTER }, { status: 400 })
+    }
     if (existingMetadata.letterFormat === 'marker-v1') {
       const { split, fallback } = parseLetter(finalText, existingMetadata.letterFormat)
       if (split === 'none' && !fallback) {
@@ -247,6 +260,9 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
           return NextResponse.json({ error: CONFIRM_NO_NOTES }, { status: 409 })
         }
         confirmedNoNotes = true
+      } else if (split === 'ambiguous') {
+        // Two or more marker lines: the refusal names that (Jen A5 C2).
+        return NextResponse.json({ error: UNCLEAN_SPLIT_REPEATED }, { status: 409 })
       } else if (split !== 'marker') {
         return NextResponse.json({ error: UNCLEAN_SPLIT }, { status: 409 })
       }
