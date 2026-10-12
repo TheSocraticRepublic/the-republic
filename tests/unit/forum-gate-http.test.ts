@@ -93,11 +93,11 @@ describe.skipIf(!APP_UP)('Forum gate over HTTP on the harness (signed in, gate o
     }
   })
 
-  async function fetchText(pathname: string, rsc = false): Promise<{ status: number; text: string; finalUrl: string }> {
+  async function fetchText(pathname: string, rsc = false): Promise<{ status: number; text: string; location: string | null }> {
     const headers: Record<string, string> = { cookie }
     if (rsc) headers.RSC = '1'
     const res = await fetch(`${APP_URL}${pathname}`, { headers, redirect: 'manual' })
-    return { status: res.status, text: await res.text(), finalUrl: res.url }
+    return { status: res.status, text: await res.text(), location: res.headers.get('location') }
   }
 
   function assertNoForumData(label: string, text: string) {
@@ -128,11 +128,21 @@ describe.skipIf(!APP_UP)('Forum gate over HTTP on the harness (signed in, gate o
 
   it('the RSC payload a client navigation receives carries none of it either', async () => {
     for (const p of paths()) {
-      // No router-state headers, so Next's expected cache-busting value is empty.
-      const { status, text } = await fetchText(`${p}?_rsc`, true)
-      expect(status, p).toBe(200)
-      expect(text, p).toContain('opens later')
-      assertNoForumData(`${p} (RSC)`, text)
+      // Next strips its `_rsc` cache-busting param before middleware, so the
+      // rewritten RSC request is answered with a 307 to the honest route with
+      // the expected `_rsc` (the client's fetch follows it). Neither hop may
+      // carry Forum data; the hop the client lands on is the honest page.
+      const first = await fetchText(`${p}?_rsc`, true)
+      assertNoForumData(`${p} (RSC, first hop)`, first.text)
+      let final = first
+      if (first.status === 307) {
+        const res = await fetch(new URL(first.location!, APP_URL), { headers: { cookie, RSC: '1' }, redirect: 'manual' })
+        final = { status: res.status, text: await res.text(), location: res.headers.get('location') }
+        expect(new URL(first.location!, APP_URL).pathname, p).toBe('/forum-opens-later')
+      }
+      expect(final.status, p).toBe(200)
+      expect(final.text, p).toContain('opens later')
+      assertNoForumData(`${p} (RSC)`, final.text)
     }
   })
 

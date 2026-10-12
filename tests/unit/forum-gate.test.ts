@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach, beforeAll } from 'vitest'
+import { describe, it, expect, afterEach, beforeAll, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 /*
@@ -11,7 +11,14 @@ import { NextRequest } from 'next/server'
 
 process.env.JWT_SECRET = 'forum-gate-test-secret-0123456789abcdef'
 
+vi.mock('next/navigation', () => ({
+  notFound: () => {
+    throw new Error('notFound() called')
+  },
+}))
+
 const { middleware } = await import('@/middleware')
+const { default: ForumOpensLaterPage } = await import('@/app/(app)/forum-opens-later/page')
 const { isForumPath, FORUM_GATED_PATH } = await import('@/lib/forum/gate-path')
 const { signJWT } = await import('@/lib/auth/jwt')
 
@@ -60,11 +67,10 @@ describe('middleware Forum gate', () => {
   })
 
   it('rewrites RSC (client navigation) requests too', async () => {
-    const res = await get('/forum/some-thread-id?_rsc=abc', true, { RSC: '1' })
+    const res = await get('/forum/some-thread-id?page=2', true, { RSC: '1' })
     const target = new URL(rewriteOf(res)!)
     expect(target.pathname).toBe(FORUM_GATED_PATH)
-    // The query survives: Next redirects an RSC request whose _rsc is missing.
-    expect(target.searchParams.get('_rsc')).toBe('abc')
+    expect(target.searchParams.get('page')).toBe('2')
   })
 
   it('keeps the identity headers on the rewritten request', async () => {
@@ -97,5 +103,17 @@ describe('middleware Forum gate', () => {
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/login?redirect=%2Fforum%2Fnew')
     expect(rewriteOf(res)).toBeNull()
+  })
+})
+
+describe('the honest route itself', () => {
+  it('renders the honest page while gated', () => {
+    const el = ForumOpensLaterPage()
+    expect(el).toBeTruthy()
+  })
+
+  it('has nothing true to say once the Forum opens: it 404s', () => {
+    process.env.FORUM_ENABLED = 'true'
+    expect(() => ForumOpensLaterPage()).toThrow('notFound() called')
   })
 })

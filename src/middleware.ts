@@ -30,8 +30,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // honest page, so nothing in src/app/(app)/forum executes: no page, no
   // generateMetadata, no database read (Razor W1). A layout that withholds
   // `children` cannot do this; the App Router renders the page in parallel.
-  // The query string is kept: Next validates the `_rsc` cache-busting param on
-  // client navigations and redirects when it is missing.
+  // The query string is kept. (Next strips its own `_rsc` param before
+  // middleware runs, so a client-navigation fetch of a gated URL gets a 307
+  // to the honest route carrying the right `_rsc`; the client follows it and
+  // only the honest page's payload is ever sent. Proven over HTTP in
+  // tests/unit/forum-gate-http.test.ts.)
   let forumRewrite: URL | undefined
   if (isForumPath(pathname) && !isForumEnabled()) {
     forumRewrite = request.nextUrl.clone()
