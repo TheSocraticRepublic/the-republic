@@ -39,6 +39,16 @@ export const EMPTY_LETTER_NOTE = 'This letter part is empty.'
 export const FALLBACK_NOTE = 'Shown as plain text.'
 export const UNREADABLE_NOTE = "This letter can't be shown. Reload the page; if it still fails, use Export, then Plain text."
 
+/**
+ * The recipient notice (filings §3), worded by the viewer from the resolver.
+ * It sits outside the letter, like every other notice.
+ */
+export interface RecipientNoticeView {
+  lines: string[]
+  /** The "Insert directory address" button: a checked entry, a draft, and the placeholder in the letter. */
+  insert: { label: string; onInsert: () => void; busy: boolean } | null
+}
+
 interface LetterPaperProps {
   /** The stored text, exactly as saved. */
   content: unknown
@@ -46,9 +56,11 @@ interface LetterPaperProps {
   letterFormat: unknown
   /** The action's status; it words the §2 notice. */
   status: 'draft' | 'final' | 'filed'
+  /** FIPPA letters only. */
+  recipient?: RecipientNoticeView | null
 }
 
-export function LetterPaper({ content, letterFormat, status }: LetterPaperProps) {
+export function LetterPaper({ content, letterFormat, status, recipient }: LetterPaperProps) {
   // Parse once per (content, format), not on every re-render of the viewer
   // (menu toggles, busy states). Razor C1.
   const parsed = useMemo(() => parseLetter(content, letterFormat), [content, letterFormat])
@@ -79,6 +91,38 @@ export function LetterPaper({ content, letterFormat, status }: LetterPaperProps)
           {notes.map((n) => (
             <p key={n}>{n}</p>
           ))}
+        </div>
+      )}
+
+      {recipient && (
+        <div
+          role="note"
+          aria-label="Recipient"
+          data-recipient-notice
+          className="rounded-lg border border-border bg-surface-1 px-4 py-3 text-sm leading-relaxed text-text-secondary"
+          style={{ borderLeft: '3px solid var(--border-strong)' }}
+        >
+          {recipient.lines.map((line, i) => (
+            // Instruction, then evidence, as separate lines (Jen C11).
+            <p key={line} className={i > 0 ? 'mt-1.5 [overflow-wrap:anywhere]' : '[overflow-wrap:anywhere]'}>
+              {line}
+            </p>
+          ))}
+          {recipient.insert && (
+            <button
+              type="button"
+              data-insert-address
+              onClick={() => {
+                // Busy, not disabled: focus stays on the button (Jen C8).
+                if (!recipient.insert!.busy) recipient.insert!.onInsert()
+              }}
+              aria-busy={recipient.insert.busy || undefined}
+              aria-disabled={recipient.insert.busy || undefined}
+              className={`mt-2.5 inline-flex min-h-[44px] items-center rounded-lg border border-border-strong px-3.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-2 sm:min-h-0 sm:py-1.5${recipient.insert.busy ? ' cursor-progress' : ''}`}
+            >
+              {recipient.insert.busy ? 'Inserting...' : recipient.insert.label}
+            </button>
+          )}
         </div>
       )}
 
