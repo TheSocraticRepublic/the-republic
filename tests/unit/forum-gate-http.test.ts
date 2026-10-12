@@ -128,7 +128,8 @@ describe.skipIf(!APP_UP)('Forum gate over HTTP on the harness (signed in, gate o
 
   it('the RSC payload a client navigation receives carries none of it either', async () => {
     for (const p of paths()) {
-      const { status, text } = await fetchText(`${p}?_rsc=fg1`, true)
+      // No router-state headers, so Next's expected cache-busting value is empty.
+      const { status, text } = await fetchText(`${p}?_rsc`, true)
       expect(status, p).toBe(200)
       expect(text, p).toContain('opens later')
       assertNoForumData(`${p} (RSC)`, text)

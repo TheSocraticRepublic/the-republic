@@ -61,7 +61,10 @@ describe('middleware Forum gate', () => {
 
   it('rewrites RSC (client navigation) requests too', async () => {
     const res = await get('/forum/some-thread-id?_rsc=abc', true, { RSC: '1' })
-    expect(new URL(rewriteOf(res)!).pathname).toBe(FORUM_GATED_PATH)
+    const target = new URL(rewriteOf(res)!)
+    expect(target.pathname).toBe(FORUM_GATED_PATH)
+    // The query survives: Next redirects an RSC request whose _rsc is missing.
+    expect(target.searchParams.get('_rsc')).toBe('abc')
   })
 
   it('keeps the identity headers on the rewritten request', async () => {

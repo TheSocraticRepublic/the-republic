@@ -30,8 +30,13 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // honest page, so nothing in src/app/(app)/forum executes: no page, no
   // generateMetadata, no database read (Razor W1). A layout that withholds
   // `children` cannot do this; the App Router renders the page in parallel.
-  const forumRewrite =
-    isForumPath(pathname) && !isForumEnabled() ? new URL(FORUM_GATED_PATH, request.url) : undefined
+  // The query string is kept: Next validates the `_rsc` cache-busting param on
+  // client navigations and redirects when it is missing.
+  let forumRewrite: URL | undefined
+  if (isForumPath(pathname) && !isForumEnabled()) {
+    forumRewrite = request.nextUrl.clone()
+    forumRewrite.pathname = FORUM_GATED_PATH
+  }
 
   // Public routes — no auth required
   if (
