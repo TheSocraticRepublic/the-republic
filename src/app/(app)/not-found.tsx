@@ -7,11 +7,15 @@ export const metadata = { title: 'Page not found' }
  * renders here, INSIDE the app shell, which already has the wordmark and the
  * page's <main>. So: the card only, centred in the shell's scroller, with no
  * header, no <main> and no viewport-height box (Jen, B2 design review C2).
+ *
+ * The action follows the real session: /u/<name> is public but lives in this
+ * group, so a signed-out visitor can land here (Razor DN2). Every route in
+ * the group renders dynamically, so the cookie read is safe.
  */
 export default function AppNotFound() {
   return (
     <div className="flex min-h-full items-center justify-center px-6 py-16">
-      <NotFoundCard action="app" />
+      <NotFoundCard action="session" />
     </div>
   )
 }

@@ -27,10 +27,11 @@ vi.mock('next/navigation', () => ({
 }))
 
 let cookieToken: string | undefined
+let cookieReads = 0
 let requestHeaders: Record<string, string> = {}
 vi.mock('next/headers', () => ({
   headers: async () => new Headers(requestHeaders),
-  cookies: async () => ({
+  cookies: async () => (cookieReads++, {
     get: (name: string) => (name === 'republic_token' && cookieToken ? { name, value: cookieToken } : undefined),
   }),
 }))
@@ -559,6 +560,7 @@ describe('not-found', () => {
   })
 
   it('app group: the card only, no wordmark and no <main> (the shell has both; Jen C2)', async () => {
+    cookieToken = await signJWT({ sub: 'user-a', email: 'a@example.test' })
     const { container } = await mount(AppNotFound)
     expect(container.querySelector('[data-not-found-card]')).not.toBeNull()
     expect(container.querySelector('h1')?.textContent).toBe('Page not found')
@@ -569,6 +571,14 @@ describe('not-found', () => {
     expect(action.getAttribute('href')).toBe('/investigations')
   })
 
+  it('app group follows the real session: a signed-out visitor to an unknown /u/<name> goes home (Razor DN2)', async () => {
+    cookieToken = undefined
+    const { container } = await mount(AppNotFound)
+    const action = container.querySelector('a[data-not-found-action]')!
+    expect(action.getAttribute('href')).toBe('/')
+    expect(action.textContent).toBe('Go to the home page')
+  })
+
   it('app group inside the real shell: one <main> in all', async () => {
     const card = await resolve(AppNotFound())
     const { container } = render(h(AppShell, { displayName: 'Ada Citizen', children: card as React.ReactElement }))
@@ -576,13 +586,19 @@ describe('not-found', () => {
     expect(container.querySelector('main [data-not-found-card]')).not.toBeNull()
   })
 
-  it('public group: the card only, with the session-aware action (Jen C2)', async () => {
-    cookieToken = undefined
+  it('public group: the card only, always home, and it never reads the session (Jen C2, Razor DN1)', async () => {
+    // A valid session is present, and is ignored: a cookie read under the
+    // statically generated public routes dropped the 404's server render.
+    cookieToken = await signJWT({ sub: 'user-a', email: 'a@example.test' })
+    cookieReads = 0
     const { container } = await mount(PublicNotFound)
     expect(container.querySelector('[data-not-found-card]')).not.toBeNull()
     expect(container.querySelectorAll('main').length).toBe(0)
     expect(container.textContent).not.toContain('Open Cave')
-    expect(container.querySelector('a[data-not-found-action]')!.getAttribute('href')).toBe('/')
+    const action = container.querySelector('a[data-not-found-action]')!
+    expect(action.getAttribute('href')).toBe('/')
+    expect(action.textContent).toBe('Go to the home page')
+    expect(cookieReads).toBe(0)
   })
 
   it('public group inside the real public layout: one <main>, one wordmark', async () => {

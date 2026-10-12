@@ -22,11 +22,15 @@ async function isSignedIn(): Promise<boolean> {
  *
  * `action`:
  * - 'session': a signed-in citizen is sent back into the app, anyone else to
- *   the home page (landing L13, mobile P2-2);
- * - 'app': always back into the app; the (app) group is signed-in only.
+ *   the home page (landing L13, mobile P2-2). Reads the session cookie, so
+ *   only for boundaries under dynamically rendered routes;
+ * - 'home': always the home page, and NO cookie read. For boundaries under
+ *   statically generated / ISR routes (the (public) group): reading cookies()
+ *   there made Next abandon the server render of the 404, so the server HTML
+ *   had an empty body and the card appeared only after JavaScript (Razor DN1).
  */
-export async function NotFoundCard({ action }: { action: 'session' | 'app' }) {
-  const signedIn = action === 'app' ? true : await isSignedIn()
+export async function NotFoundCard({ action }: { action: 'session' | 'home' }) {
+  const signedIn = action === 'home' ? false : await isSignedIn()
   const target = signedIn
     ? { href: '/investigations', label: 'Go to your investigations' }
     : { href: '/', label: 'Go to the home page' }
