@@ -21,10 +21,7 @@ import * as path from 'node:path'
 import * as url from 'node:url'
 import { signJWT } from '../../src/lib/auth/jwt'
 import { AUTH_COOKIE } from '../../src/lib/auth/middleware'
-import { QA_USER_A, QA_USER_B } from './seed-local'
-
-/** Every harness JWT_SECRET starts with this; harness.ts appends random hex per run. */
-export const QA_JWT_SECRET_PREFIX = 'qa-harness-jwt-'
+import { QA_JWT_SECRET_PREFIX, QA_USER_A, QA_USER_B } from './seed-local'
 
 /** Matches verify-code's COOKIE_MAX_AGE (7 days). */
 const COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60

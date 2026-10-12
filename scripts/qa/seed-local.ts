@@ -61,6 +61,14 @@ export const QA_USER_B = {
  */
 export const QA_LOGIN_CODE = '24681357'
 
+/**
+ * Every harness JWT_SECRET starts with this; harness.ts appends random hex per
+ * run, and mint-session.ts refuses any secret without it. Kept here, not in
+ * mint-session.ts, because mint-session imports the app's jwt.ts (server-only)
+ * and harness.ts must be able to read this constant without it.
+ */
+export const QA_JWT_SECRET_PREFIX = 'qa-harness-jwt-'
+
 export const QA_INVESTIGATION_ID = 'c0000000-0000-4000-8000-0000000000c1'
 
 const STATUSES = ['draft', 'final', 'filed'] as const
