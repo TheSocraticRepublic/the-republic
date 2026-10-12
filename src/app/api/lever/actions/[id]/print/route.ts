@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { esc, errorPage, PRINT_CSP } from '@/lib/campaign/print-utils'
+import { parseLetter, blocksToHtml, escapeHtml, uncleanSplitNotice } from '@/lib/lever/letter-blocks'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
 
@@ -70,9 +71,20 @@ export const GET = safeRoute(async (request: NextRequest, { params }: RouteConte
     })
   }
 
+  const metadata = (action.metadata ?? {}) as Record<string, unknown>
+
+  // A FIPPA request is a filing: the letter stands alone (filings §1, R5), so
+  // it gets its own page with no template header, date, addressee, signature
+  // or branding. Every other action type keeps the shell below, unchanged.
+  if (action.actionType === 'fippa_request') {
+    return new Response(fippaPrintPage(action.title, action.content, metadata.letterFormat, action.status), {
+      status: 200,
+      headers: printHeaders,
+    })
+  }
+
   const typeLabel = ACTION_TYPE_DISPLAY[action.actionType] ?? action.actionType
   const date = new Date(action.createdAt).toISOString().slice(0, 10)
-  const metadata = (action.metadata ?? {}) as Record<string, unknown>
   const publicBody = (metadata.publicBody as string) ?? ''
   const addressee = (metadata.addressee as string) ?? ''
 
@@ -105,8 +117,6 @@ function renderActionBody(
   ctx: { date: string; publicBody: string; addressee: string }
 ): string {
   switch (actionType) {
-    case 'fippa_request':
-      return renderFippaRequest(content, ctx)
     case 'public_comment':
       return renderPublicComment(content, ctx)
     case 'policy_brief':
@@ -114,49 +124,6 @@ function renderActionBody(
     default:
       return renderGenericAction(content)
   }
-}
-
-function renderFippaRequest(
-  content: string,
-  ctx: { date: string; publicBody: string; addressee: string }
-): string {
-  const lines: string[] = []
-
-  // Formal letter layout
-  lines.push('<div class="letter">')
-
-  // Date
-  lines.push(`<p class="letter-date">${esc(ctx.date)}</p>`)
-
-  // Addressee
-  if (ctx.addressee || ctx.publicBody) {
-    lines.push('<div class="letter-addressee">')
-    if (ctx.addressee) lines.push(`<p>${esc(ctx.addressee)}</p>`)
-    if (ctx.publicBody) lines.push(`<p>${esc(ctx.publicBody)}</p>`)
-    lines.push('</div>')
-  }
-
-  // Body
-  lines.push('<div class="letter-body">')
-  // Split content by double-newlines for paragraph separation
-  const paragraphs = content.split(/\n\n+/)
-  paragraphs.forEach((p) => {
-    const trimmed = p.trim()
-    if (trimmed) {
-      lines.push(`<p>${esc(trimmed)}</p>`)
-    }
-  })
-  lines.push('</div>')
-
-  // Signature placeholder
-  lines.push('<div class="signature">')
-  lines.push('<p>Sincerely,</p>')
-  lines.push('<div class="signature-line"></div>')
-  lines.push('<p class="signature-label">[Name]</p>')
-  lines.push('</div>')
-
-  lines.push('</div>')
-  return lines.join('\n')
 }
 
 function renderPublicComment(
@@ -391,6 +358,178 @@ function printPage(opts: {
     Generated from Open Cave &mdash; opencave.ca
   </div>
 </div>
+</body>
+</html>`
+}
+
+
+// ---------------------------------------------------------------------------
+// FIPPA letter page (filings §1-2)
+// ---------------------------------------------------------------------------
+
+/**
+ * How to drop the browser's own header and footer. Browsers print the page
+ * title, address, date and page numbers in the margins, and CSS can't turn
+ * that off, so the guidance page says how (A1, "no app page numbers").
+ */
+/** The same advice, one sentence, beside the Print button (screen only). */
+const BROWSER_MARGIN_TIP_SHORT =
+  'For a clean page, turn off "Headers and footers" in the print dialog.'
+
+const BROWSER_MARGIN_TIP =
+  'Your browser may print the page address, the date and page numbers in the margins. To leave them off, turn off "Headers and footers" in the print dialog (under "More settings" in Chrome and Edge, "Show details" in Safari).'
+
+/**
+ * The letter projection, then the guidance page after a page break.
+ *
+ * The letter is `<main>`'s first child, `.letter`, and holds nothing but the
+ * letter's blocks, so its text is exactly the golden projection. Everything
+ * that is not the letter (the Print button, the §2 notice, the empty-letter
+ * note) sits outside it: the screen-only bar above, or the guidance page.
+ */
+function fippaPrintPage(title: string, content: string, letterFormat: unknown, status: unknown): string {
+  const parsed = parseLetter(content, letterFormat)
+  const clean = parsed.split === 'marker' && !parsed.fallback
+  const letterEmpty = parsed.letter.length === 0
+
+  const notes: string[] = []
+  if (!clean) notes.push(uncleanSplitNotice(status))
+  if (parsed.fallback) notes.push('Shown as plain text.')
+  if (letterEmpty) notes.push('This letter part is empty.')
+  const notesHtml = notes.map((n) => `<p class="note">${escapeHtml(n)}</p>`).join('\n')
+
+  const guidanceHtml = parsed.guidance
+    ? `<div class="guidance-text">\n${blocksToHtml(parsed.guidance)}\n</div>`
+    : ''
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page { margin: 1in; }
+
+  html, body { background: #FFFFFF; }
+  body {
+    color: #1c1917;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    padding: 0 16px 3rem;
+  }
+
+  /* Screen-only bar: the Print button and the notices. It is its own row
+     above the letter, never over it, at every width (RS-P2-5). */
+  .screen-bar {
+    max-width: 6.5in;
+    margin: 0 auto;
+    padding: 1.25rem 0 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.75rem 1.5rem;
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #44403c;
+  }
+  .screen-bar .notes { flex: 1 1 18rem; }
+  .screen-bar .note + .note { margin-top: 0.25rem; }
+  .print-action {
+    flex: 0 1 15rem;
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+    text-align: right;
+  }
+  .print-tip { font-size: 12px; line-height: 1.4; color: #57534e; }
+  .print-btn {
+    font: inherit;
+    font-weight: 500;
+    min-height: 44px;
+    padding: 0 20px;
+    background: #1c1917;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .print-btn:focus-visible { outline: 2px solid #1c1917; outline-offset: 2px; }
+
+  main { max-width: 6.5in; margin: 0 auto; }
+
+  .lb { min-height: 1.5em; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .lb-h { font-size: inherit; font-weight: 600; }
+  .lb-verbatim { font: inherit; }
+  mark.ph {
+    background: #FDF2D0; color: #6B3A06; padding: 0 0.1em; border-radius: 2px;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  /* Hanging indent: wrapped lines of an item align after its prefix. */
+  .lb-item { padding-left: 1.5em; text-indent: -1.5em; }
+  .lb-item .lb-prefix { display: inline-block; min-width: 1.5em; text-indent: 0; }
+  /* A rule is a 1px hairline centred in its line; the element's text stays empty. */
+  .lb-rule { position: relative; }
+  .lb-rule::before {
+    content: ''; position: absolute; left: 0; right: 0; top: 50%;
+    border-top: 1px solid #A8A29E;
+  }
+
+  .guidance-page { break-before: page; page-break-before: always; }
+  .guidance-page h1 {
+    font-size: 15pt;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .guidance-page .note,
+  .guidance-page .tip,
+  .guidance-page .attribution { margin-top: 1rem; font-size: 10.5pt; color: #44403c; }
+  .guidance-text { margin-bottom: 0.5rem; }
+
+  @media screen {
+    .guidance-page { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e7e5e4; }
+    /* On screen the notices are in the bar above the letter; this copy is for paper. */
+    .guidance-page .note { display: none; }
+  }
+
+  @media print {
+    .screen-bar { display: none; }
+    body { padding: 0; }
+    main { max-width: none; }
+  }
+</style>
+</head>
+<body>
+<div class="screen-bar">
+<div class="notes">
+${notesHtml}
+</div>
+<div class="print-action">
+<button type="button" class="print-btn" onclick="window.print()">Print</button>
+<p class="print-tip">${escapeHtml(BROWSER_MARGIN_TIP_SHORT)}</p>
+</div>
+</div>
+<main>
+<div class="letter">
+${blocksToHtml(parsed.letter)}
+</div>
+<section class="guidance-page" aria-labelledby="guidance-title">
+<h1 id="guidance-title">Not part of your request</h1>
+${guidanceHtml}
+${notes.length ? notesHtml : ''}
+<p class="tip">${escapeHtml(BROWSER_MARGIN_TIP)}</p>
+<p class="attribution">Prepared with Open Cave, opencave.ca</p>
+</section>
+</main>
 </body>
 </html>`
 }

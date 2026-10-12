@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Download, Pencil, RefreshCw, Check, X, Printer, FileText } from 'lucide-react'
+import { Download, Pencil, RefreshCw, Check, X, ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
 import { hasLeverPdfTemplate } from '@/lib/pdf/types'
+import { LetterPaper } from '@/components/lever/letter-paper'
 
 type LeverActionType = (typeof leverActionTypeEnum.enumValues)[number]
 
@@ -13,6 +14,8 @@ interface ActionViewerProps {
   initialContent: string
   initialStatus: 'draft' | 'final' | 'filed'
   actionType: LeverActionType
+  /** `metadata.letterFormat`, passed to the letter parser untouched (absent means legacy). */
+  letterFormat?: unknown
 }
 
 type ViewMode = 'generating' | 'viewing' | 'editing'
@@ -33,7 +36,15 @@ const ADVANCE_LABELS: Record<string, string> = {
   final: 'Mark as Filed',
 }
 
-export function ActionViewer({ actionId, initialContent, initialStatus, actionType }: ActionViewerProps) {
+type ExportFormat = 'txt' | 'md' | 'pdf'
+
+const EXPORT_FALLBACK_NAMES: Record<ExportFormat, string> = {
+  txt: 'action.txt',
+  md: 'action.md',
+  pdf: 'action.pdf',
+}
+
+export function ActionViewer({ actionId, initialContent, initialStatus, actionType, letterFormat }: ActionViewerProps) {
   const [content, setContent] = useState(initialContent)
   const [editContent, setEditContent] = useState(initialContent)
   const [status, setStatus] = useState<'draft' | 'final' | 'filed'>(initialStatus)
@@ -41,8 +52,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   const [streamedContent, setStreamedContent] = useState('')
   const [statusUpdating, setStatusUpdating] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [exporting, setExporting] = useState(false)
-  const [pdfExporting, setPdfExporting] = useState(false)
+  const [exporting, setExporting] = useState<ExportFormat | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -151,20 +161,26 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
     setMode('viewing')
   }, [content])
 
-  const handleExport = useCallback(async () => {
-    setExporting(true)
+  /*
+   * One handler for every download in the Export menu. TXT and MD are the
+   * stored text exactly as written; PDF is the rendered letter. A failure is
+   * shown, never swallowed.
+   */
+  const handleExport = useCallback(async (format: ExportFormat) => {
+    setExporting(format)
+    setActionError(null)
     try {
       const res = await fetch('/api/lever/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actionId }),
+        body: JSON.stringify({ actionId, format }),
       })
-      if (!res.ok) throw new Error('Export failed')
+      if (!res.ok) throw new Error(`Export failed (${res.status})`)
 
       const blob = await res.blob()
       const contentDisposition = res.headers.get('Content-Disposition') ?? ''
       const match = contentDisposition.match(/filename="([^"]+)"/)
-      const filename = match ? match[1] : 'action.txt'
+      const filename = match ? match[1] : EXPORT_FALLBACK_NAMES[format]
 
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -175,40 +191,15 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (err) {
-      console.error('[action-viewer] Export failed:', err)
+      console.error(`[action-viewer] ${format} export failed:`, err)
+      setActionError(format === 'pdf' ? "The PDF couldn't be made. Use Print or Plain text instead." : 'Export failed. Try again.')
     } finally {
-      setExporting(false)
+      setExporting(null)
     }
   }, [actionId])
 
-  const handleExportPdf = useCallback(async () => {
-    setPdfExporting(true)
-    try {
-      const res = await fetch('/api/lever/export', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actionId, format: 'pdf' }),
-      })
-      if (!res.ok) throw new Error('PDF export failed')
-
-      const blob = await res.blob()
-      const contentDisposition = res.headers.get('Content-Disposition') ?? ''
-      const match = contentDisposition.match(/filename="([^"]+)"/)
-      const filename = match ? match[1] : 'action.pdf'
-
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    } catch (err) {
-      console.error('[action-viewer] PDF export failed:', err)
-    } finally {
-      setPdfExporting(false)
-    }
+  const handlePrint = useCallback(() => {
+    window.open(`/api/lever/actions/${actionId}/print`, '_blank')
   }, [actionId])
 
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.draft
@@ -217,7 +208,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   return (
     <div className="space-y-4">
       {/* Controls row */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-start gap-2 sm:items-center">
         {/* Status badge */}
         <span
           className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium"
@@ -226,8 +217,8 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
           {statusStyle.label}
         </span>
 
-        <div className="flex-1" />
-
+        {/* The actions wrap onto their own lines on a phone, right-aligned. */}
+        <div className="flex flex-1 flex-wrap justify-end gap-2">
         {mode === 'viewing' && (
           <>
             {/* Advance status */}
@@ -272,52 +263,14 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
               </button>
             )}
 
-            {/* Export */}
-            <button
-              onClick={handleExport}
-              disabled={exporting || !content}
-              className={clsx(
-                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
-                exporting || !content
-                  ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
-                  : 'text-[var(--accent-lever)] border border-[color-mix(in_srgb,var(--accent-lever)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--accent-lever)_8%,transparent)]'
-              )}
-            >
-              <Download size={12} strokeWidth={2} />
-              Export
-            </button>
-
-            {/* Print */}
-            <button
-              onClick={() => window.open(`/api/lever/actions/${actionId}/print`, '_blank')}
+            {/* Export: one menu for every way out (RS-P2-10) */}
+            <ExportMenu
               disabled={!content}
-              className={clsx(
-                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
-                !content
-                  ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
-                  : 'text-[var(--accent-lever)] border border-[color-mix(in_srgb,var(--accent-lever)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--accent-lever)_8%,transparent)]'
-              )}
-            >
-              <Printer size={12} strokeWidth={2} />
-              Print
-            </button>
-
-            {/* Download PDF */}
-            {hasLeverPdfTemplate(actionType) && (
-              <button
-                onClick={handleExportPdf}
-                disabled={pdfExporting || !content}
-                className={clsx(
-                  'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
-                  pdfExporting || !content
-                    ? 'cursor-not-allowed opacity-50 text-text-faint border border-border'
-                    : 'text-[var(--accent-lever)] border border-[color-mix(in_srgb,var(--accent-lever)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--accent-lever)_8%,transparent)]'
-                )}
-              >
-                <FileText size={12} strokeWidth={2} />
-                {pdfExporting ? 'Generating...' : 'Download PDF'}
-              </button>
-            )}
+              busy={exporting}
+              pdf={hasLeverPdfTemplate(actionType)}
+              onExport={handleExport}
+              onPrint={handlePrint}
+            />
           </>
         )}
 
@@ -348,6 +301,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
             </button>
           </>
         )}
+        </div>
       </div>
 
       {/* Error alert */}
@@ -383,7 +337,11 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
         </div>
       )}
 
-      {mode === 'viewing' && (
+      {mode === 'viewing' && actionType === 'fippa_request' && content && (
+        <LetterPaper content={content} letterFormat={letterFormat} status={status} />
+      )}
+
+      {mode === 'viewing' && !(actionType === 'fippa_request' && content) && (
         <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-6">
           {content ? (
             <pre
@@ -421,5 +379,144 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
         </div>
       )}
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Export menu
+// ---------------------------------------------------------------------------
+
+const MENU_TRIGGER_ON =
+  'text-[var(--accent-lever)] border border-[color-mix(in_srgb,var(--accent-lever)_25%,transparent)] hover:bg-[color-mix(in_srgb,var(--accent-lever)_8%,transparent)]'
+const MENU_TRIGGER_OFF = 'cursor-not-allowed opacity-50 text-text-faint border border-border'
+
+interface ExportMenuProps {
+  disabled: boolean
+  busy: ExportFormat | null
+  pdf: boolean
+  onExport: (format: ExportFormat) => void
+  onPrint: () => void
+}
+
+/**
+ * A disclosure menu: Escape and a click outside close it, arrow keys move
+ * between items, and focus returns to the trigger on close.
+ */
+function ExportMenu({ disabled, busy, pdf, onExport, onPrint }: ExportMenuProps) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // The rendered letter first, then the stored text as written (Jen).
+  const rendered: { key: string; label: string; run: () => void }[] = [
+    ...(pdf ? [{ key: 'pdf', label: 'PDF', run: () => onExport('pdf') }] : []),
+    { key: 'print', label: 'Print', run: onPrint },
+  ]
+  const asWritten: { key: string; label: string; run: () => void }[] = [
+    { key: 'txt', label: 'Plain text (as written)', run: () => onExport('txt') },
+    { key: 'md', label: 'Markdown (as written)', run: () => onExport('md') },
+  ]
+
+  const close = useCallback((refocus: boolean) => {
+    setOpen(false)
+    if (refocus) triggerRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    if (!open) return
+    menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
+    const onPointer = (e: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) close(false)
+    }
+    document.addEventListener('pointerdown', onPointer)
+    return () => document.removeEventListener('pointerdown', onPointer)
+  }, [open, close])
+
+  const onMenuKeyDown = (e: React.KeyboardEvent) => {
+    const els = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])
+    const at = els.indexOf(document.activeElement as HTMLButtonElement)
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      close(true)
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      els[(at + 1) % els.length]?.focus()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      els[(at - 1 + els.length) % els.length]?.focus()
+    } else if (e.key === 'Home') {
+      e.preventDefault()
+      els[0]?.focus()
+    } else if (e.key === 'End') {
+      e.preventDefault()
+      els[els.length - 1]?.focus()
+    } else if (e.key === 'Tab') {
+      close(false)
+    }
+  }
+
+  // While an export runs the trigger stays focusable and at full ink
+  // (aria-busy + aria-disabled, clicks ignored), so focus is never dropped.
+  const isBusy = busy !== null
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => {
+          if (!isBusy) setOpen((o) => !o)
+        }}
+        disabled={disabled}
+        aria-busy={isBusy || undefined}
+        aria-disabled={isBusy || undefined}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls="lever-export-menu"
+        className={clsx(
+          'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
+          disabled ? MENU_TRIGGER_OFF : MENU_TRIGGER_ON,
+          isBusy && 'cursor-progress'
+        )}
+      >
+        <Download size={12} strokeWidth={2} />
+        {busy === 'pdf' ? 'Making the PDF...' : busy ? 'Preparing...' : 'Export'}
+        <ChevronDown size={12} strokeWidth={2} aria-hidden />
+      </button>
+
+      {open && (
+        <div
+          ref={menuRef}
+          id="lever-export-menu"
+          role="menu"
+          aria-label="Export"
+          onKeyDown={onMenuKeyDown}
+          className="absolute right-0 z-20 mt-1.5 min-w-[13rem] rounded-xl border border-border bg-surface-1 p-1 shadow-lg"
+        >
+          {rendered.map((item) => (
+            <MenuItem key={item.key} label={item.label} onSelect={() => { close(true); item.run() }} />
+          ))}
+          <div role="separator" className="my-1 border-t border-border" />
+          {asWritten.map((item) => (
+            <MenuItem key={item.key} label={item.label} onSelect={() => { close(true); item.run() }} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MenuItem({ label, onSelect }: { label: string; onSelect: () => void }) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      tabIndex={-1}
+      onClick={onSelect}
+      className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-text-secondary transition-colors hover:bg-surface-2 hover:text-text-primary focus-visible:bg-surface-2 focus-visible:text-text-primary"
+    >
+      {label}
+    </button>
   )
 }
