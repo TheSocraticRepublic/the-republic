@@ -42,9 +42,9 @@ in this project has already been ruled on, usually for a reason that is not obvi
   - **Issue register entries** SEC-UI-1 (the live open redirect in profile setup), DEP-2 and TEST-1 are in `~/marvin/state/the-republic-issue-register.md`.
   - **The `gh` account:** the active one is not the repo owner. Use `GH_TOKEN=$(gh auth token --user TheSocraticRepublic)` per command, and never `gh auth switch`, which is global.
 
-- - **UI and filings plan r4.1: gate open; relay under way from Q0a.** The Fable critic (Lee, 2026-10-11: "go ahead and use Fable instead of Astra for now. Always opt to change models instead of impeding work to wait for resets per se.") returned CONCERN, no FAIL: all 16 r3 points closed, 14 outright and 2 with residue. Its 9 must-fix items are folded as r4.1 without another round. The review is `republic-ui-filings-critic.md` beside the plan in `~/marvin/state/plans/republic-ui-filings-2026-10/`. Batch 0 is done (Parking Lot entries written). Every release waits for Lee's yes, and the legacy-letter question goes on the first A-series release card. The machine is short of memory: one worker at a time, and no build under 4 GB available.
-
 - - **Build-checks fix is live (2026-10-11); Lee owes one follow-up.** Main is `fa16447` (PR #5) on Netlify deploy `6acc1bbeb27b4900083c30a8`; the rollback target is `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which brings back the affected `next` 16.3.0. **Lee to sign in once on the live site with the audit account**, to confirm sign-in still works after the framework change: Next 16.3.1 changed how request headers are read, and identity reaches handlers through the middleware's `x-user-id` (Razor N2). The local production smoke passed 11/11, but no signed-in check has run on production. Sentry has no project in the org, so it gives no post-deploy signal (OBS-1). *The non-owner export gap (TEST-1) was accepted by Lee on 2026-10-12; see the log.*
+
+- - **UI and filings plan r4.1: relay under way; Q0a merged, Q0b next.** The Fable critic (Lee, 2026-10-11: "go ahead and use Fable instead of Astra for now. Always opt to change models instead of impeding work to wait for resets per se.") returned CONCERN, no FAIL, and its 9 must-fix items are folded as r4.1. The plan and its review are in `~/marvin/state/plans/republic-ui-filings-2026-10/`. Q0a was merged to the session branch on 2026-10-12 (`8558cd8`). **Q0b carries Razor W2** (drizzle-kit 0.31.10 loads `./.env` before its config resolves the URL, so the harness must set `DIRECT_DATABASE_URL` explicitly in each writer's environment and point `DOTENV_CONFIG_PATH` at a file that doesn't exist) and **N3** (the database TLS refusal fires on first database use, so probe a database-backed route before treating the server as ready). Q0b must guard every writer with `assertLocalQaTargets()`. Migrations 0013 and 0014 carry their own BEGIN/COMMIT inside the runner's transaction (Ted's Q0b heads-up). **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only). Every release waits for Lee's yes, and the legacy-letter question goes on the first A-series release card. Keep the memory guard on: no build under 4 GB available.
 
 ## Open questions awaiting Lee
 
@@ -70,6 +70,21 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 (Q0a merged, session marvin/republic-r2)
+
+Relay `republic-ui-q0a` merged to the session branch as `8558cd8`. It delivers:
+- a local-only database TLS rule (no TLS only with `QA_LOCAL_DB=1` and a loopback host; that flag with a remote host throws);
+- `scripts/lib/local-db-guard.ts` checking each writer's effective URL;
+- `.tsx` tests under jsdom;
+- `DR.md` corrected;
+- pinned dev-only QA tooling: pdfjs-dist 5.4.296, playwright 1.63.0, @axe-core/playwright 4.13.0, lighthouse 13.5.0, jsdom 29.1.1 (30.x needs Node 22.22.2), @testing-library/react 16.3.3.
+
+The lockfile was hand-edited to keep the app's zod at 4.4.2. It was verified by the orchestrator and Razor: zero production lock changes, nested zod 4.6.6 integrity equal to the registry, and `npm ci` reproduces it.
+
+Razor gave WARNING (W1 a false guard comment, W2 a drizzle-kit `.env` load); the fix `33d74c7` closed W1 and N1 on re-check, and W2 carries to Q0b. Mutation battery 30/30 killed; build green once memory recovered.
+
+**Next:** Q0b.
 
 ### 2026-10-12 (TEST-1 accepted)
 
