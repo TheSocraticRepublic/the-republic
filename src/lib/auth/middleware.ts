@@ -8,7 +8,10 @@ export const AUTH_COOKIE = 'republic_token'
  * Middleware handler for authenticated (app) routes.
  * Reads the JWT from the cookie and redirects to /login if missing or invalid.
  */
-export async function withAuth(request: NextRequest): Promise<NextResponse> {
+export async function withAuth(
+  request: NextRequest,
+  opts: { rewriteTo?: URL } = {},
+): Promise<NextResponse> {
   const token = request.cookies.get(AUTH_COOKIE)?.value
 
   if (!token) {
@@ -36,6 +39,9 @@ export async function withAuth(request: NextRequest): Promise<NextResponse> {
   headers.set('x-user-email', payload.email)
   headers.set('x-pathname', request.nextUrl.pathname)
 
+  // An authenticated request may be served from another route (the gated
+  // Forum, src/middleware.ts) with the same identity headers.
+  if (opts.rewriteTo) return NextResponse.rewrite(opts.rewriteTo, { request: { headers } })
   return NextResponse.next({ request: { headers } })
 }
 

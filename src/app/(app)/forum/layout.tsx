@@ -1,21 +1,20 @@
-import { MessageSquare } from 'lucide-react'
-import { EmptyState } from '@/components/ui/empty-state'
 import { isForumEnabled } from '@/lib/forum/flag'
+import { ForumOpensLater } from '@/components/forum/forum-opens-later'
 
 /**
- * FORUM-1: server-side gate for the entire /forum page surface.
+ * FORUM-1: the Forum page surface is gated in MIDDLEWARE, not here.
  *
- * The Forum is intentionally unshipped — there's no moderation capacity yet.
- * This layout wraps every page under (app)/forum/* (list, new-thread,
- * thread view, moderation queue, policy) in a single fail-closed check on
- * isForumEnabled(): unless FORUM_ENABLED is explicitly 'true', no Forum page
- * renders. The gate itself (src/lib/forum/flag.ts) and the /api/forum/* 404s
- * are unchanged.
+ * While isForumEnabled() is false, src/middleware.ts rewrites every /forum
+ * URL (page loads and RSC requests alike) to /forum-opens-later, a route
+ * outside this segment, so nothing in src/app/(app)/forum runs: no page, no
+ * generateMetadata, no database read. The gate itself (src/lib/forum/flag.ts)
+ * and the /api/forum/* 404s are unchanged.
  *
- * What a gated visitor sees (R9, 2026-10-11): an honest "opens later" page in
- * place of the Forum, not a 404. "Page not found" was untrue about a feature
- * that exists. This is presentation only; the children are never rendered
- * while the gate is off.
+ * This check is a presentation fallback only. The App Router renders a
+ * layout and its page in parallel, so a layout that withholds `children`
+ * does NOT stop the page from executing or its output reaching the client
+ * payload (Razor W1, 2026-10-12). If this branch is ever reached, the
+ * middleware gate has been bypassed; do not rely on it for protection.
  */
 export default function ForumLayout({ children }: { children: React.ReactNode }) {
   if (!isForumEnabled()) {
@@ -23,15 +22,4 @@ export default function ForumLayout({ children }: { children: React.ReactNode })
   }
 
   return children
-}
-
-function ForumOpensLater() {
-  return (
-    <div className="mx-auto max-w-2xl px-6 py-12" data-forum-gated="true">
-      <h1 className="font-display text-2xl font-bold text-text-primary">Forum</h1>
-      <div className="mt-6">
-        <EmptyState icon={MessageSquare} message="The Forum opens later. Nothing here yet." />
-      </div>
-    </div>
-  )
 }

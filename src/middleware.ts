@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
+import { isForumEnabled } from '@/lib/forum/flag'
+import { isForumPath, FORUM_GATED_PATH } from '@/lib/forum/gate-path'
 
 function applySecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Content-Type-Options', 'nosniff')
@@ -23,6 +25,13 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
+
+  // While the Forum is gated, its pages are rewritten (after auth) to the
+  // honest page, so nothing in src/app/(app)/forum executes: no page, no
+  // generateMetadata, no database read (Razor W1). A layout that withholds
+  // `children` cannot do this; the App Router renders the page in parallel.
+  const forumRewrite =
+    isForumPath(pathname) && !isForumEnabled() ? new URL(FORUM_GATED_PATH, request.url) : undefined
 
   // Public routes — no auth required
   if (
@@ -107,11 +116,15 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     headers.set('x-user-id', '00000000-0000-0000-0000-000000000001')
     headers.set('x-user-email', 'dev@republic.local')
     headers.set('x-pathname', pathname)
-    return applySecurityHeaders(NextResponse.next({ request: { headers } }))
+    return applySecurityHeaders(
+      forumRewrite
+        ? NextResponse.rewrite(forumRewrite, { request: { headers } })
+        : NextResponse.next({ request: { headers } })
+    )
   }
 
   // Everything under (app) requires auth
-  return applySecurityHeaders(await withAuth(request))
+  return applySecurityHeaders(await withAuth(request, { rewriteTo: forumRewrite }))
 }
 
 export const config = {
