@@ -76,6 +76,9 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | Release S1 to opencave.ca, and which inbox should the privacy and security contact name? (a) publish a monitored email on the TheSocraticRepublic GitHub profile; (b) name an address for the page; (c, recommended) ship the redirect fix only and hold the privacy text; (d) hold all | The live open redirect stays open until S1 ships, and the contact line points at a profile with no public email | 2026-10-12 |
 | Lee's signed-in check on opencave.ca with the audit account after the build-checks deploy | Next 16.3.1 changed request-header reads; identity reaches handlers via the middleware, and no signed-in check has run on production | 2026-10-11 |
 | A new letter's notes sit under the line '=== NOT PART OF YOUR REQUEST ==='. If the citizen deletes that line and the notes, may they finalise the letter? Today (as the plan specifies) they can't, and the refusal tells them to remove notes they already removed. Recommended: when the line is missing, Finalise asks them to confirm they've removed everything that isn't part of the request, then proceeds; two copies of the line still block. | A4 builds the Finalise message on this; the rest of the A-series can proceed. Nothing is live until A1-A4 release together. | 2026-10-12 (Razor W1, relay republic-ui-a2) |
+| Release the A-series (login redirect fix, A1-A4 filings work) to opencave.ca, and what happens to S1's privacy wording? (a) release everything once you answer the S1 contact question; (b, recommended) back out only the privacy wording and release the rest now; (c) hold. Full card: ~/marvin/state/relay/republic-ui-a-series-release-card.md | A release is everything on the session branch since main, which includes S1's privacy line pointing at a GitHub profile with no public email; the live open redirect stays open until something ships | 2026-10-12 (A-series release card) |
+| Old letters: accept that final and filed letters written before this work keep their guidance notes inside the letter (drafts get a notice and can be edited)? (a, recommended) accept; (b) build a citizen-marked split, about one more batch | Takes effect with the A-series release; final and filed letters can't be edited and no automatic split is safe | 2026-10-12 (plan Decision 2) |
+| Rollback authority for the A-series release: may the session restore the current deploy (6acc1bbe at fa16447) without asking if a named post-release check fails (health or signed-out probe, a new server error on a touched route in the first 30 minutes, or your look check)? | Without it, a failed check leaves a broken release live while you are reached | 2026-10-12 (plan Decision 3) |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
 2026-07-16 hand-off). SEC-1, FORUM-1's cosmetic gate, Relay 1, Relay 2 and Relay 3 are all
@@ -84,6 +87,12 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 — A-series release card drafted; D_prev compatibility run passes
+
+- **D_prev run:** today's production code (fa16447) against 30 harness records, including ones the new code wrote (marker-v1, province by PATCH, conflict-tested, finalised, filed): 120/120 calls 200, screen and print complete, no record damaged. Its PDF drops the letter's own sign-off line on every letter, legacy included; that is today's behaviour, which A4 fixes. Report: ~/marvin/state/relay/republic-ui-a-series-dprev-compat.md.
+- **Card:** ~/marvin/state/relay/republic-ui-a-series-release-card.md (four decisions, Lee's look check). Waiting on the coordinator, which was offline when it was ready.
+- **Next:** deliver the card; B1 waits on the coordinator's word, since the standing instruction covered the A-series.
 
 ### 2026-10-12 — A4 merged to the session branch (`1bd2524`)
 
