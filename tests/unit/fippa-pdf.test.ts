@@ -30,7 +30,7 @@ import * as path from 'node:path'
 import { JSDOM as UntypedJSDOM } from 'jsdom'
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { renderLeverPdf } from '@/lib/pdf/render'
-import { loadLetterMetrics, estimateRenderCost, RENDER_COST_LIMIT } from '@/lib/pdf/templates/fippa-request'
+import { loadLetterMetrics, estimateRenderCost, RENDER_COST_LIMIT, FIT_FACTOR } from '@/lib/pdf/templates/fippa-request'
 import { FOOTER_BAND_TOP, FOOTER_BAND_BOTTOM } from '@/lib/pdf/primitives'
 import { PUBLIC_BODY_DIRECTORY, resolveRecipient, type RecipientResolution } from '@/lib/lever/public-body'
 import {
@@ -254,6 +254,8 @@ const WIDE_GLYPH_FIXTURES: Pick<LetterFixture, 'id' | 'content' | 'format' | 'ex
   { id: 'wide-heading', content: `# ${'M'.repeat(58)}`, format: undefined, expectedLetter: 'M'.repeat(58) },
   { id: 'wide-bullet', content: `- ${'W'.repeat(55)}`, format: undefined, expectedLetter: `• ${'W'.repeat(55)}` },
   { id: 'wide-numbered-bold', content: `100. **${'W'.repeat(50)}**`, format: undefined, expectedLetter: `100. ${'W'.repeat(50)}` },
+  { id: 'wide-number-prefix', content: `123456789. ${'W'.repeat(60)}`, format: undefined, expectedLetter: `123456789. ${'W'.repeat(60)}` },
+  { id: 'long-bold-heading', content: `# ${'k'.repeat(400)}`, format: undefined, expectedLetter: 'k'.repeat(400) },
   { id: 'wide-guidance', content: `Letter.\n=== NOT PART OF YOUR REQUEST ===\n${'W'.repeat(60)}`, format: 'marker-v1', expectedLetter: 'Letter.' },
 ]
 
@@ -264,6 +266,18 @@ describe('FIPPA PDF: words wider than the measure (Razor W1)', () => {
       const { pdf } = await renderFixture(fx)
       expect(squash(letterPagesText(pdf))).toBe(squash(fx.expectedLetter))
       if (fx.id === 'wide-guidance') expect(squash(guidancePagesText(pdf))).toContain('W'.repeat(60))
+      // A line broken here is cut to FIT_FACTOR of its own measure, measured
+      // in its own face: a heading's lines in bold, a list item's after its
+      // prefix box. The rendered glyphs (pdfjs widths are the real ones) must
+      // end inside that, not merely inside the page margin.
+      if (fx.id === 'long-bold-heading' || fx.id === 'wide-number-prefix') {
+        const metrics = await loadLetterMetrics()
+        const start = fx.id === 'long-bold-heading' ? 72 : 72 + metrics.width('123456789. ', 'regular', 12)
+        const measure = 72 + 468 - start
+        const body = pdf.pages[0].items.filter((i) => /^[kW]+$/.test(i.str))
+        expect(body.length).toBeGreaterThan(1)
+        for (const it of body) expect(it.right - start, it.str.slice(0, 10)).toBeLessThanOrEqual(measure * FIT_FACTOR + 0.5)
+      }
       for (const p of pdf.pages) {
         for (const it of p.items) {
           if (!it.str.trim()) continue
