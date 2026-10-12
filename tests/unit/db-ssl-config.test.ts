@@ -1,6 +1,16 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { buildSslConfig } from '@/lib/db'
 import { migrationSslConfig, supabaseSslConfig } from '../../scripts/lib/supabase-ssl'
+
+// getDb() wiring: capture what the app hands postgres.js, without a database.
+const postgresCalls = vi.hoisted(() => [] as Array<{ url: string; opts: { ssl?: unknown } }>)
+vi.mock('postgres', () => ({
+  default: (url: string, opts: { ssl?: unknown }) => {
+    postgresCalls.push({ url, opts })
+    return {}
+  },
+}))
+vi.mock('drizzle-orm/postgres-js', () => ({ drizzle: () => ({}) }))
 
 // The local-only QA TLS rule (plan: "Database TLS, local only, production
 // verification unchanged"). TLS is off only with QA_LOCAL_DB=1 AND a loopback
@@ -132,5 +142,53 @@ describe('migrationSslConfig (custom migration runner, scripts/lib/supabase-ssl.
       if (before === undefined) delete process.env.QA_LOCAL_DB
       else process.env.QA_LOCAL_DB = before
     }
+  })
+})
+
+describe('getDb() hands postgres.js the rule\'s result', () => {
+  // getDb() reads NODE_ENV and DATABASE_URL through the cached env proxy and
+  // QA_LOCAL_DB from process.env, so each case loads a fresh module graph.
+  const BASE_ENV = {
+    JWT_SECRET: 'test-secret',
+    NEXT_PUBLIC_APP_URL: 'http://127.0.0.1:3177',
+    ANTHROPIC_API_KEY: 'dummy',
+    RESEND_API_KEY: 'dummy',
+    NODE_ENV: 'production',
+  }
+
+  async function loadGetDb(extra: Record<string, string>) {
+    for (const [k, v] of Object.entries({ ...BASE_ENV, ...extra })) vi.stubEnv(k, v)
+    vi.resetModules()
+    return (await import('@/lib/db')).getDb
+  }
+
+  beforeEach(() => {
+    postgresCalls.length = 0
+    vi.stubEnv('QA_LOCAL_DB', undefined)
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('QA_LOCAL_DB=1 with a loopback DATABASE_URL opens the client with TLS off', async () => {
+    const getDb = await loadGetDb({ QA_LOCAL_DB: '1', DATABASE_URL: LOOPBACK_IP })
+    getDb()
+    expect(postgresCalls).toHaveLength(1)
+    expect(postgresCalls[0].url).toBe(LOOPBACK_IP)
+    expect(postgresCalls[0].opts.ssl).toBe(false)
+  })
+
+  it('QA_LOCAL_DB=1 with a remote DATABASE_URL throws before any client is created', async () => {
+    const getDb = await loadGetDb({ QA_LOCAL_DB: '1', DATABASE_URL: REMOTE })
+    expect(() => getDb()).toThrow(/refusing to connect/)
+    expect(postgresCalls).toHaveLength(0)
+  })
+
+  it('without the flag, production opens the client with the pinned CA', async () => {
+    const getDb = await loadGetDb({ DATABASE_URL: LOOPBACK_IP })
+    getDb()
+    expect(postgresCalls).toHaveLength(1)
+    expect(postgresCalls[0].opts.ssl).toEqual(PINNED)
   })
 })
