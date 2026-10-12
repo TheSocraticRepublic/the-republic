@@ -80,7 +80,8 @@ describe('safeRedirectTarget: other hosts and schemes', () => {
 
   it('a protocol-relative path is refused even when it names this host', () => {
     // Step 2 is a rule of its own, not only a consequence of the origin check.
-    expect(safeRedirectTarget('//127.0.0.1:3177/investigate', ORIGIN)).toBe(FALLBACK)
+    // (A path other than the fallback's, so acceptance can't masquerade as refusal.)
+    expect(safeRedirectTarget('//127.0.0.1:3177/lever', ORIGIN)).toBe(FALLBACK)
   })
 
   it('/%2F/evil stays an encoded path on this site', () => {
