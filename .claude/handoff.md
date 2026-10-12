@@ -32,14 +32,6 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **Build-checks fix is live (2026-10-11); Lee owes one follow-up.** Main is `fa16447` (PR #5) on Netlify deploy `6acc1bbeb27b4900083c30a8`, which is now the rollback target for any next release. **Lee to sign in once on opencave.ca with the audit account**, to confirm sign-in works after the Next 16.3.1 header change (Razor N2). TEST-1 (the non-owner export) was accepted by Lee on 2026-10-12. Sentry has no project in the org, so it gives no post-deploy signal (OBS-1).
 
-- **S1 release card is with Lee: DECISION NEEDED (filed 2026-10-12).** Draft PR #6 (`release/s1-redirect-privacy`, CI green, run 38201423939) holds S1's five files alone, cherry-picked onto main `fa16447` and byte-identical to the reviewed head `44b3af4`. The rollback target is `6acc1bbeb27b4900083c30a8`. **The blocker:** the privacy contact, and `SECURITY.md` line 9, point at the email on the TheSocraticRepublic GitHub profile, and the profile shows none (`gh api users/TheSocraticRepublic`: `email: null`). The options:
-  - (a) Lee publishes a monitored public email on the profile;
-  - (b) Lee names an address for the page;
-  - (c) recommended: ship the redirect fix only, holding the privacy text;
-  - (d) hold everything.
-
-  Never merge PR #6 or anything to main without his yes. Razor RN2: whoever answers privacy requests replies only to the account's sign-in address.
-
 - **Findings inventory and audit artifacts** are private, in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/` (mode 700). It holds 120 findings with dispositions mapped to the r4 batch IDs (updated 2026-10-11). Screenshots and reports are deleted at relay close, except the inventory (owner Lee).
 
 - **UI and filings plan r4.1: Q0a, Q0b, S1, A1, A2, A3 and A4 merged to the session branch (A4 at `1bd2524`); the A-series release card goes to Lee next, then B1.**
@@ -57,7 +49,7 @@ in this project has already been ruled on, usually for a reason that is not obvi
   5. Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
   6. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
 
-- **Lee's rulings 2026-10-12 ("go ahead with all of the recommendations for these decisions"), being executed.** (1) Release the open-redirect fix and A1-A5 to opencave.ca with S1's privacy wording held out (relay `republic-ui-s1b` restores `PRIVACY.md` and the privacy page to main's bytes). (2) Legacy final and filed letters render as stored with the notice beside them; no split feature. (3) Finalise without the marker line asks for confirmation (relay `republic-ui-a5`); two markers still block. (4) For the A-series release, a restore of `D_prev` without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route in 30 min, Lee's look check). Still open: the privacy contact address (S1 wording returns with it). PR #6 is superseded by the A-series release; close it when that release merges. Release record goes in `~/.local/share/marvin/private/republic-releases/` before promotion; re-run the D_prev check with an A5-confirmed record before promotion.
+- **A-series LIVE since 2026-10-12 17:48:49Z; Lee's look check owed.** Main `b9d9139` (PR #7, merge commit), Netlify deploy `6acd1d516cdac21aab7e88f4`; D_prev / rollback target `6acc1bbeb27b4900083c30a8` at `fa16447`. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-12-a-series.md`. Lee's standing authority for this release: restore D_prev without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route, or his look check), then `git revert -m 1 b9d9139` on main through a PR. The look-check steps are in `~/marvin/state/relay/republic-ui-a-series-release-card.md` ("After promotion"). PR #6 closed as superseded. Still open with Lee: the privacy contact address (S1's held wording returns with it; Razor S1b N1-N3 in the Parking Lot).
 
 ## Open questions awaiting Lee
 
@@ -81,6 +73,7 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | Release the A-series (login redirect fix, A1-A4 filings work) to opencave.ca, and what happens to S1's privacy wording? (a) release everything once you answer the S1 contact question; (b, recommended) back out only the privacy wording and release the rest now; (c) hold. Full card: ~/marvin/state/relay/republic-ui-a-series-release-card.md (resolved 2026-10-12) | A release is everything on the session branch since main, which includes S1's privacy line pointing at a GitHub profile with no public email; the live open redirect stays open until something ships | 2026-10-12 (A-series release card) |
 | Old letters: accept that final and filed letters written before this work keep their guidance notes inside the letter (drafts get a notice and can be edited)? (a, recommended) accept; (b) build a citizen-marked split, about one more batch (resolved 2026-10-12) | Takes effect with the A-series release; final and filed letters can't be edited and no automatic split is safe | 2026-10-12 (plan Decision 2) |
 | Rollback authority for the A-series release: may the session restore the current deploy (6acc1bbe at fa16447) without asking if a named post-release check fails (health or signed-out probe, a new server error on a touched route in the first 30 minutes, or your look check)? (resolved 2026-10-12) | Without it, a failed check leaves a broken release live while you are reached | 2026-10-12 (plan Decision 3) |
+| Which inbox should Open Cave's privacy and security contact name? (a) publish a monitored email on the TheSocraticRepublic GitHub profile; (b) name an address for the page directly. The S1 wording, reviewed and held, returns with your answer; SECURITY.md is fixed in the same change. | Live today, the privacy page sends requests to a public GitHub issue or the gated forum, with no warning against posting personal details, and SECURITY.md points at a profile email that doesn't exist | 2026-10-12 (S1, carried past the A-series release) |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
 2026-07-16 hand-off). SEC-1, FORUM-1's cosmetic gate, Relay 1, Relay 2 and Relay 3 are all
@@ -89,6 +82,13 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 — A-series released to opencave.ca
+
+- **Shipped:** S1's open-redirect fix (privacy wording held), A1-A5. PR #7 merged as `b9d9139`; deploy `6acd1d51` published 17:48:49Z with `commit_ref` = M.
+- **Before promotion:** S1b and A5 merged after Razor PASS (and Jen on A5); release gate at S `7733800` (lint, tsc, token lint, 1413 unit tests); D_prev compatibility run r2 PASS, 128/128 on 32 records including A5-confirmed letters.
+- **After:** signed-out probes identical to the D_prev baseline; /privacy serves the held wording; function logs read for 30 minutes (see the release record).
+- **Next:** Lee's look check, then B1.
 
 ### 2026-10-12 — Lee approves the A-series release card
 
