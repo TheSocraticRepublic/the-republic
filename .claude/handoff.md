@@ -42,20 +42,20 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **Findings inventory and audit artifacts** are private, in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/` (mode 700). It holds 120 findings with dispositions mapped to the r4 batch IDs (updated 2026-10-11). Screenshots and reports are deleted at relay close, except the inventory (owner Lee).
 
-- **UI and filings plan r4.1: Q0a, Q0b, S1, A1 and A2 merged to the session branch; A3 is next.**
-  - **The plan:** `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md`. Its Fable critic is `-critic.md` (CONCERN, no FAIL); r3 and earlier critics sit beside it. Amendments recorded in the plan: S1's privacy wording; A1's Export menu order, per-status notice wording and full-bleed phone paper; no persisted Mirror comparisons; A4's "Carried from A2" block (viewer sends the content hash and re-reads after a stream; all four conflict reasons mapped; a province choice on the "Choose the province" refusal).
-  - **The A-series release rule:** A1-A4 release together, never A1 alone, because the PDF keeps the old template until A4. The first A-series release card also carries the legacy-letter question (plan Decision 2) and a check that a mid-stream reload behaves on Netlify as it does on `next start` (Parking Lot).
-  - **A4 waits on Lee for one part:** the unclean-split message and behaviour, until he rules on a new letter whose marker line was deleted (open question below). The rest of A4 can be built.
-  - **The harness:** `npx tsx scripts/qa/harness.ts run` (or `up` / `check` / `down`; see `scripts/qa/README.md`). Browser tests use `scripts/qa/browser.ts`, and signed-in evidence runs in Chromium on 127.0.0.1. Every non-GET request sends `Origin: http://127.0.0.1:3177`. Named limits: no network isolation; its ports sit in the ephemeral range, so `up` can be refused on a TIME_WAIT (retry).
+- **UI and filings plan r4.1: Q0a, Q0b, S1, A1, A2 and A3 merged to the session branch; A4 is next.**
+  - **The plan:** `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md`. Its Fable critic is `-critic.md` (CONCERN, no FAIL); r3 and earlier critics sit beside it. Amendments recorded in the plan: S1's privacy wording; A1's Export menu order, per-status notice wording and full-bleed phone paper; no persisted Mirror comparisons; A4's "Carried from A2" and "Carried from A3" lines (viewer sends the content hash and re-reads after a stream; all four conflict reasons mapped; a province choice on the "Choose the province" refusal; the recipient notice stays an occurrence check for letters that carry retired ministry boxes).
+  - **The A-series release rule:** A1-A4 release together, never A1 alone, because the PDF keeps the old template until A4. The first A-series release card also carries the legacy-letter question (plan Decision 2), the Netlify mid-stream abort check (Parking Lot), and A4's hosted capacity reading against Netlify's documented function limit.
+  - **A4 and Lee's open ruling:** A4 is built with the plan's current unclean-split message. If Lee rules that a letter whose marker line was deleted may be finalised after a confirmation, that is a small follow-up batch (server accepts the confirmation for `split: 'none'`; the viewer asks for it) before the A-series release.
+  - **The harness:** `npx tsx scripts/qa/harness.ts run` (or `up` / `check` / `down`; see `scripts/qa/README.md`). Browser tests use `scripts/qa/browser.ts`, and signed-in evidence runs in Chromium on 127.0.0.1. Every non-GET request sends `Origin: http://127.0.0.1:3177`. Named limits: no network isolation; its ports sit in the ephemeral range, so `up` can be refused on a TIME_WAIT (retry). A fresh relay worktree needs `npm ci` (the session checkout's `node_modules` lacks the Q0a dev tools).
   - **Machine:** keep the memory guard on (no build or harness under 4 GB available; never both at once). **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only).
 
-- **Cold start for the next batch (A3).**
-  1. Read the plan's "### A3" and "### 3. Recipient" sections. A3 is data: optional `sourceUrl`, `checkedOn`, `sourceQuote` on `PublicBody`, and the orchestrator itself opens each provincial BC entry's government page and records URL, date and quoted address in the private evidence file `~/.local/share/marvin/private/republic-public-body-sources-2026-10.md` before the worker runs. An address that contradicts its page is corrected to the page; one that can't be confirmed stays unchecked.
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-a2-pack.json` as a template (write the new pack directly; `relay-pack-write.mjs` only stamps a closing `ledger_entry`). Set `branch` to `relay/ui-a3`, `parallel_batches` to `[["A3"]]`, leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); then `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-a3 --stage implement --batch 1 --step A3` and `git worktree add -b relay/ui-a3-A3 ../relay-republic-ui-a3-A3 HEAD`.
-  4. Ted (opus, medium) from the brief; Razor (opus, high) with a coverage checklist and plan summary in a brief file; no Jen (no UI). Resume the implementer for fixes; Razor re-checks only. A falling CRITICAL needs `razor.fixed_at`.
-  5. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree.
-  - Where things live: packs, briefs, reports and reviews in `~/marvin/state/relay/republic-ui-*`; mutation specs `republic-ui-filings-<batch>-mutants.json`; the private inventory in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/`. `gh` needs `GH_TOKEN=$(gh auth token --user TheSocraticRepublic)` per command.
+- **Cold start for the next batch (A4).**
+  1. Read the plan's "### A4" (with its Carried lines), "### 0." to "### 4." and "Releases: promotion, rollback and evidence". A4 has UI: Jen reviews (opus, xhigh) after Razor.
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-a3-pack.json` as a template and write the new pack directly. Set `branch` to `relay/ui-a4`, `parallel_batches` to `[["A4"]]`, `ui_work` true, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-a4 --stage implement --batch 1 --step A4`; `git worktree add -b relay/ui-a4-A4 ../relay-republic-ui-a4-A4 HEAD`.
+  4. Ted (opus, medium), then Razor (opus, high) from a brief file holding the coverage checklist and plan summary, then Jen. Resume the implementer for fixes; Razor re-checks only. A falling CRITICAL needs `razor.fixed_at`. A4's capacity test runs locally under `taskset -c 0`; the hosted half waits for the release.
+  5. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree. Then the A-series release card goes to Lee via the coordinator; nothing reaches main without his yes.
+  - Where things live: packs, briefs, reports and reviews in `~/marvin/state/relay/republic-ui-*`; mutation specs `republic-ui-filings-<batch>-mutants.json`; private audit artifacts and evidence under `~/.local/share/marvin/private/` (mode 700, outside the repo). `gh` needs `GH_TOKEN=$(gh auth token --user TheSocraticRepublic)` per command.
 
 ## Open questions awaiting Lee
 
@@ -84,6 +84,13 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 — A3 merged to the session branch (`ce54117`)
+
+- **What it does:** `PublicBody` gains `sourceUrl`, `checkedOn` and `sourceQuote`. The Province of British Columbia and the three ministry entries (Forests; Environment and Climate Change Strategy; Energy, Mines and Low Carbon Innovation) were checked against gov.bc.ca's FOI FAQ, which names FOI Operations as the FOI service provider for every ministry, and corrected to "FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC V8W 9K1"; the per-ministry boxes they listed appear on no government page. They resolve `checked`. The Environmental Assessment Office (its box is only its general mailing address) and every municipal entry stay unchecked, and their addresses are pinned by tests.
+- **Reviews:** Razor WARNING (1 warning, 8 notes): my first transcription of the page added commas, so the quotes weren't verbatim, and the main FOI page carries the address only as a fee-cheque line. Re-read from the page HTML; all four entries now quote the FAQ's contact block exactly. Re-check PASS. Harness suite 187/187 for the A2 files, full suite 1156/1156 and `next build` at the first head; 15/15 mutants after the fix.
+- **Carried to A4:** letters generated before A2 carry the retired ministry boxes, which now resolve `checked`; the notice stays an occurrence check.
+- **Parked:** out-of-date ministry names; the EAO's FOI route (ROADMAP → Deferred from republic-ui-a3).
 
 ### 2026-10-12 — A2 merged to the session branch (`94f3977`)
 
