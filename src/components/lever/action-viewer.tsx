@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo, useId } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, useId } from 'react'
 import { Download, Pencil, RefreshCw, Check, X, ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
@@ -838,7 +838,10 @@ function ConfirmNoNotes({
   const id = useId()
   const rootRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+  // A layout effect, not a passive one: focus lands in the same commit that
+  // shows the panel, so it can never arrive after a fast Cancel and steal
+  // focus back from Mark as Final.
+  useLayoutEffect(() => {
     rootRef.current?.focus()
   }, [])
 

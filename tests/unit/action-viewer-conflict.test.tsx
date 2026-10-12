@@ -27,6 +27,10 @@ const NOT_A_DRAFT = 'This letter is no longer a draft'
 const CONTENT_CHANGED = 'This letter changed since you opened it'
 const STATUS_CHANGED = "This letter's status changed since you opened it. Reload to see it."
 const UNCLEAN_SPLIT = "Remove the notes that aren't part of your request before you finalise."
+const CONFIRM_FACT = 'This letter doesn\'t have the "Not part of your request" line.'
+const CONFIRM_ACTION = "Check you've removed everything that isn't part of your request, then finalise."
+const CONFIRM_NO_NOTES = `${CONFIRM_FACT} ${CONFIRM_ACTION}`
+const MARKER_LINE = '=== NOT PART OF YOUR REQUEST ==='
 
 const CHECK = "Check the recipient before you send. Open Cave doesn't confirm it for you."
 const FOI_OPS = 'FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC V8W 9K1'
@@ -65,6 +69,12 @@ interface ServerPlan {
   getFails?: boolean
   exportStatus?: number
   exportError?: string
+  /**
+   * A5: the route's finalise rule for marker-v1, after the hash check. No
+   * marker line: 409 confirm-no-notes unless `confirmNoNotes: true`, which
+   * records the time. Two or more: 409 unclean-split whatever the flag.
+   */
+  confirmRule?: boolean
 }
 
 let plan: ServerPlan
@@ -93,6 +103,14 @@ function installServer(p: ServerPlan) {
         if (plan.patchGate) await plan.patchGate
         if (plan.patch409) return json({ error: plan.patch409 }, 409)
         if (body.expectedContentSha256 !== sha(plan.row.content)) return json({ error: CONTENT_CHANGED }, 409)
+        if (plan.confirmRule && body.status === 'final' && plan.row.metadata.letterFormat === 'marker-v1') {
+          const markers = plan.row.content.split('\n').filter((l) => l.trimEnd() === MARKER_LINE).length
+          if (markers >= 2) return json({ error: UNCLEAN_SPLIT }, 409)
+          if (markers === 0) {
+            if (body.confirmNoNotes !== true) return json({ error: CONFIRM_NO_NOTES }, 409)
+            plan.row.metadata = { ...plan.row.metadata, notesRemovalConfirmedAt: '2026-10-12T16:00:00.000Z' }
+          }
+        }
         if (typeof body.content === 'string') plan.row.content = body.content
         if (typeof body.status === 'string') plan.row.status = body.status as Row['status']
         if (typeof body.jurisdiction === 'string') plan.row.metadata = { ...plan.row.metadata, jurisdiction: body.jurisdiction }
@@ -138,6 +156,7 @@ function renderViewer(opts: {
         jurisdiction: metadata.jurisdiction,
       }}
       investigationProvince={opts.investigationProvince ?? null}
+      notesRemovalConfirmedAt={metadata.notesRemovalConfirmedAt}
     />
   )
 }
@@ -503,5 +522,117 @@ describe('Export: a PDF that ran out of time', () => {
       "The PDF couldn't be made right now. Use Print or Plain text instead."
     )
     expect(createObjectURL).not.toHaveBeenCalled()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// A5: confirmed finalise when the marker line is missing (Lee, 2026-10-12)
+// ---------------------------------------------------------------------------
+
+describe('confirm a finalise with no marker line (A5)', () => {
+  const MISSING = AI_STUB_LETTERS['missing-marker']
+  const panel = () => document.querySelector('[data-confirm-no-notes]') as HTMLElement | null
+  const letterNotice = () => document.querySelector('[data-letter-notice]')
+  const advance = () => screen.getByText('Mark as Final').closest('button') as HTMLButtonElement
+
+  function openConfirm() {
+    plan_extra = { confirmRule: true }
+    renderViewer({ content: MISSING, metadata: { letterFormat: 'marker-v1' } })
+    fireEvent.click(screen.getByText('Mark as Final'))
+  }
+
+  it('Mark as Final opens the confirmation in place, not a browser confirm(); the draft is unchanged', async () => {
+    const browserConfirm = vi.spyOn(window, 'confirm')
+    openConfirm()
+    await waitFor(() => expect(panel()).not.toBeNull())
+    expect(browserConfirm).not.toHaveBeenCalled()
+    const ps = Array.from(panel()!.querySelectorAll('p')).map((p) => p.textContent)
+    expect(ps).toEqual([CONFIRM_FACT, CONFIRM_ACTION])
+    expect(within(panel()!).getByText('Finalise')).toBeTruthy()
+    expect(within(panel()!).getByText('Cancel')).toBeTruthy()
+    // Focus is on the confirmation, so it is read before anything is pressed.
+    expect(document.activeElement).toBe(panel())
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByText('Draft')).toBeTruthy()
+    expect(plan.row.status).toBe('draft')
+    expect(patches).toEqual([{ status: 'final', expectedContentSha256: sha(MISSING) }])
+    // The draft keeps its notice until it is confirmed.
+    expect(letterNotice()!.textContent).toContain('may include notes')
+  })
+
+  it('Finalise resends with confirmNoNotes and the same hash; the letter is final and its notice is gone', async () => {
+    openConfirm()
+    await waitFor(() => expect(panel()).not.toBeNull())
+    fireEvent.click(within(panel()!).getByText('Finalise'))
+    await screen.findByText('Final')
+    expect(patches).toHaveLength(2)
+    expect(patches[1]).toEqual({ status: 'final', confirmNoNotes: true, expectedContentSha256: sha(MISSING) })
+    expect(plan.row.status).toBe('final')
+    expect(panel()).toBeNull()
+    expect(letterNotice()).toBeNull()
+    // Positive sibling: the letter is on screen, whole.
+    expect(document.querySelector('[data-letter-paper]')!.textContent).toContain('Mill Creek')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('Cancel leaves the draft untouched and puts focus back on Mark as Final', async () => {
+    openConfirm()
+    await waitFor(() => expect(panel()).not.toBeNull())
+    fireEvent.click(within(panel()!).getByText('Cancel'))
+    expect(panel()).toBeNull()
+    expect(document.activeElement).toBe(advance())
+    expect(patches).toHaveLength(1)
+    expect(plan.row.status).toBe('draft')
+    expect(screen.getByText('Draft')).toBeTruthy()
+    expect(letterNotice()!.textContent).toContain('may include notes')
+  })
+
+  it('Escape is Cancel', async () => {
+    openConfirm()
+    await waitFor(() => expect(panel()).not.toBeNull())
+    fireEvent.keyDown(panel()!, { key: 'Escape' })
+    expect(panel()).toBeNull()
+    expect(document.activeElement).toBe(advance())
+    expect(patches).toHaveLength(1)
+  })
+
+  it('a change in another tab while the confirmation is open is a conflict, never a silent finalise', async () => {
+    openConfirm()
+    await waitFor(() => expect(panel()).not.toBeNull())
+    plan.row.content = 'Another tab rewrote this letter.'
+    fireEvent.click(within(panel()!).getByText('Finalise'))
+    expect((await screen.findByRole('alert')).textContent).toBe('This letter changed since you opened it. Reload to see it.')
+    expect(patches[1]).toEqual({ status: 'final', confirmNoNotes: true, expectedContentSha256: sha(MISSING) })
+    expect(plan.row.status).toBe('draft')
+    expect(plan.row.metadata.notesRemovalConfirmedAt).toBeUndefined()
+    expect(screen.getByText('Draft')).toBeTruthy()
+    expect(panel()).toBeNull()
+    expect(document.activeElement).toBe(advance())
+  })
+
+  it('two marker lines never offer the confirmation: the unclean-split message', async () => {
+    const twice = `${MISSING}\n${MARKER_LINE}\nGuidance.\n${MARKER_LINE}\nMore.`
+    plan_extra = { confirmRule: true }
+    renderViewer({ content: twice, metadata: { letterFormat: 'marker-v1' } })
+    fireEvent.click(screen.getByText('Mark as Final'))
+    expect((await screen.findByRole('alert')).textContent).toBe(UNCLEAN_SPLIT)
+    expect(panel()).toBeNull()
+    expect(patches).toHaveLength(1)
+  })
+
+  it('on screen: a confirmed final or filed letter has no notice; unconfirmed, or a draft, it does', () => {
+    const confirmed = { letterFormat: 'marker-v1', notesRemovalConfirmedAt: '2026-10-12T16:00:00.000Z' }
+    renderViewer({ content: MISSING, status: 'final', metadata: confirmed })
+    expect(letterNotice()).toBeNull()
+    expect(document.querySelector('[data-letter-paper]')!.textContent).toContain('Tip: keep a dated copy')
+    cleanup()
+    renderViewer({ content: MISSING, status: 'filed', metadata: confirmed })
+    expect(letterNotice()).toBeNull()
+    cleanup()
+    renderViewer({ content: MISSING, status: 'final', metadata: { letterFormat: 'marker-v1' } })
+    expect(letterNotice()!.textContent).toContain('may include notes')
+    cleanup()
+    renderViewer({ content: MISSING, status: 'draft', metadata: confirmed })
+    expect(letterNotice()!.textContent).toContain('may include notes')
   })
 })
