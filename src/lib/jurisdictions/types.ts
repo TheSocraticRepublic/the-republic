@@ -76,6 +76,18 @@ export interface PublicBody {
   jurisdiction: string
   email?: string
   phone?: string
+  /**
+   * Evidence for `foiAddress`. An entry is "checked" only when all three are
+   * present and `foiAddress` equals the address in `sourceQuote` once both are
+   * normalised (see `isCheckedEntry` in `src/lib/lever/public-body.ts`).
+   * Anything less is unchecked: listed for selection, never insertable.
+   */
+  /** The https government page the address was read from. */
+  sourceUrl?: string
+  /** The date that page was read, as YYYY-MM-DD. */
+  checkedOn?: string
+  /** The address exactly as that page prints it. */
+  sourceQuote?: string
 }
 
 export interface JurisdictionPortal {

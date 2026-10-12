@@ -223,7 +223,7 @@ describe('the built legal prompt, by jurisdiction', () => {
     expect(r.built.system).toBe(buildFippaPrompt(bcModule))
     expect(r.built.userMessage.startsWith('Generate a FIPPA Request.\nPublic Body: BC Ministry of Forests\n')).toBe(true)
     // the directory address never reaches the model
-    expect(whole).not.toContain('PO Box 9049')
+    expect(whole).not.toContain('PO Box 9569')
     expect(whole).not.toContain('FOI Address')
   })
 

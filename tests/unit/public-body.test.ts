@@ -126,8 +126,8 @@ describe('isCheckedEntry', () => {
   it('refuses a non-https source', () => {
     expect(isCheckedEntry({ ...CHECKED, sourceUrl: 'http://www2.gov.bc.ca/x' })).toBe(false)
   })
-  it('no real directory entry is checked before A3 records its evidence', () => {
-    for (const province of ['bc', 'ab', 'on'] as const) {
+  it('no AB or ON directory entry is checked (A3 recorded BC evidence only)', () => {
+    for (const province of ['ab', 'on'] as const) {
       for (const entry of PUBLIC_BODY_DIRECTORY[province]) expect(isCheckedEntry(entry)).toBe(false)
     }
   })
@@ -182,7 +182,7 @@ describe('resolveRecipient', () => {
   it('maps a legacy alias to its directory entry', () => {
     expect(PUBLIC_BODY_ALIASES['Ministry of Forests']).toEqual({ province: 'bc', name: 'BC Ministry of Forests' })
     const r = resolveRecipient({ metadata: { publicBody: 'Ministry of Forests' }, investigation: BC_INVESTIGATION })
-    expect(r).toMatchObject({ status: 'unchecked', province: 'bc', name: 'BC Ministry of Forests' })
+    expect(r).toMatchObject({ status: 'checked', province: 'bc', name: 'BC Ministry of Forests' })
   })
 
   it('every alias points at a real directory entry', () => {
@@ -207,11 +207,11 @@ describe('resolveRecipient', () => {
     })
     it('legacy (alias, jurisdiction from the investigation)', () => {
       const r = resolveRecipient({ metadata: seedMetadata(LEGACY_LETTER), investigation: BC_INVESTIGATION })
-      expect(r).toMatchObject({ status: 'unchecked', province: 'bc', name: 'BC Ministry of Forests' })
+      expect(r).toMatchObject({ status: 'checked', province: 'bc', name: 'BC Ministry of Forests' })
     })
     it('marker-v1 (stored province)', () => {
       expect(resolveRecipient({ metadata: seedMetadata(MARKER_V1_LETTER) })).toMatchObject({
-        status: 'unchecked',
+        status: 'checked',
         province: 'bc',
       })
     })
