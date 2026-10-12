@@ -41,15 +41,15 @@ in this project has already been ruled on, usually for a reason that is not obvi
   - **The harness:** `npx tsx scripts/qa/harness.ts run` (or `up` / `check` / `down`; see `scripts/qa/README.md`). Browser tests use `scripts/qa/browser.ts`, and signed-in evidence runs in Chromium on 127.0.0.1. Every non-GET request sends `Origin: http://127.0.0.1:3177`. Named limits: no network isolation; its ports sit in the ephemeral range, so `up` can be refused on a TIME_WAIT (retry). A fresh relay worktree needs `npm ci` (the session checkout's `node_modules` lacks the Q0a dev tools).
   - **Machine:** keep the memory guard on (no build or harness under 4 GB available; never both at once). **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only).
 
-- **Cold start for the next batch (B1).**
-  1. Read the plan's "### B1", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether B1 has UI (Jen, opus xhigh, after Razor).
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-a4-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-b1`, `parallel_batches` to `[["B1"]]`, and leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-b1 --stage implement --batch 1 --step B1`; `git worktree add -b relay/ui-b1-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
-  4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only. Carry Razor's A4 RW1 into B1's review only if B1 touches the PDF engine; otherwise it stays in the Parking Lot.
+- **A-series LIVE since 2026-10-12 17:48:49Z; Lee's look check owed.** Main `b9d9139` (PR #7, merge commit), Netlify deploy `6acd1d516cdac21aab7e88f4`; D_prev / rollback target `6acc1bbeb27b4900083c30a8` at `fa16447`. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-12-a-series.md`. Lee's standing authority for this release: restore D_prev without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route, or his look check), then `git revert -m 1 b9d9139` on main through a PR. The look-check steps are in `~/marvin/state/relay/republic-ui-a-series-release-card.md` ("After promotion"). PR #6 closed as superseded. Still open with Lee: the privacy contact address (S1's held wording returns with it; Razor S1b N1-N3 in the Parking Lot).
+
+- **Cold start for the next batch (B2).**
+  1. Read the plan's "### B2", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether B1 has UI (Jen, opus xhigh, after Razor).
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-b1-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-b2`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-b2 --stage implement --batch 1 --step B2`; `git worktree add -b relay/ui-b2-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
+  4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only.
   5. Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
   6. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
-
-- **A-series LIVE since 2026-10-12 17:48:49Z; Lee's look check owed.** Main `b9d9139` (PR #7, merge commit), Netlify deploy `6acd1d516cdac21aab7e88f4`; D_prev / rollback target `6acc1bbeb27b4900083c30a8` at `fa16447`. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-12-a-series.md`. Lee's standing authority for this release: restore D_prev without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route, or his look check), then `git revert -m 1 b9d9139` on main through a PR. The look-check steps are in `~/marvin/state/relay/republic-ui-a-series-release-card.md` ("After promotion"). PR #6 closed as superseded. Still open with Lee: the privacy contact address (S1's held wording returns with it; Razor S1b N1-N3 in the Parking Lot).
 
 ## Open questions awaiting Lee
 
@@ -82,6 +82,12 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 — B1 merged to the session branch (`310b100`)
+
+- **What it does:** warm dark surfaces per R4 (arm pages kept warm through an OKLCH tint with a real S0 fallback), faint and island text tokens at 4.5:1 on the grounds they paint, a neutral chrome focus ring with an ink ring inside papers, `--font-sans` on the body face, and a phones-only 16px field rule that never shrinks larger fields.
+- **Review:** Razor W1 (ring on papers) and W2 (light island faint) fixed; the fix's own regression (the civic strip ring) carried into the design fix pass and closed; Jen's six concerns adopted, with C4 carried to D1 and C6 plus the dark-island toggle to D4 in the plan. Mutation batteries all killed.
+- **Next:** B2. Lee's look check on the A-series release is still owed.
 
 ### 2026-10-12 — A-series released to opencave.ca
 
