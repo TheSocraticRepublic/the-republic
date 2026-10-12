@@ -63,7 +63,8 @@ export function AppShell({ children, displayName, effectiveWeight }: AppShellPro
             <Dialog.Description className="sr-only">
               Site navigation and account links
             </Dialog.Description>
-            <Dialog.Close aria-label="Close navigation" className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
+            {/* 44px, seated inside the sidebar's sticky 60px wordmark band (Jen C3). */}
+            <Dialog.Close aria-label="Close navigation" className="absolute right-2 top-2 z-20 flex h-11 w-11 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
               <X size={16} strokeWidth={2} />
             </Dialog.Close>
             <Sidebar

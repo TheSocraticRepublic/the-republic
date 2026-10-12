@@ -8,7 +8,8 @@ import { clsx } from 'clsx'
 import { useState, useEffect, useRef } from 'react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
 
-// Jen: group label + arm microcopy pending copy review
+// Arm descriptions: one register, plain-instructional, one line each in the
+// 224px sidebar (Jen, B2 design review C4).
 const arms = [
   {
     name: 'Scout',
@@ -20,25 +21,25 @@ const arms = [
     name: 'Oracle',
     href: '/oracle',
     icon: Eye,
-    description: 'See who a document serves',
+    description: 'See who it serves',
   },
   {
     name: 'Gadfly',
     href: '/gadfly',
     icon: MessageCircleQuestion,
-    description: 'Sharpen your own thinking',
+    description: 'Test your thinking',
   },
   {
     name: 'Lever',
     href: '/lever',
     icon: FileText,
-    description: 'Turn findings into filings',
+    description: 'Draft a filing',
   },
   {
     name: 'Mirror',
     href: '/mirror',
     icon: GitCompare,
-    description: 'Compare across governments',
+    description: 'Compare other places',
   },
 ]
 
@@ -62,6 +63,7 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
   const router = useRouter()
   const [instrumentsOpen, setInstrumentsOpen] = useState(true)
   const navRef = useRef<HTMLElement>(null)
+  const bandRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollDown, setCanScrollDown] = useState(false)
 
@@ -101,14 +103,26 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
     }
   }, [instrumentsOpen, isModerator])
 
-  // Keep the current page's row in view (app-arms P1-1, step 6). On mount and
-  // on every route change. 'nearest' does nothing when the row is already
-  // visible, so this never jumps a list the citizen has scrolled themselves
-  // unless the route changed. jsdom has no scrollIntoView, hence the guard.
+  // Keep the current page's row in view (app-arms P1-1, step 6), on mount and
+  // on every route change, by setting the scroller's scrollTop. NOT
+  // scrollIntoView: in Chromium that also moves the sequential-focus starting
+  // point to the row, so the first Tab skipped "Skip to content" and every row
+  // above the current page (Jen, B2 design review C1). A scrollTop change
+  // leaves focus navigation alone. Does nothing when the row is already fully
+  // visible; in the drawer the sticky wordmark band is the top inset.
   useEffect(() => {
-    const current = navRef.current?.querySelector<HTMLElement>('[aria-current="page"]')
-    current?.scrollIntoView?.({ block: 'nearest' })
-  }, [pathname])
+    const scroller = isDrawer ? navRef.current : scrollRef.current
+    const row = navRef.current?.querySelector<HTMLElement>('[aria-current="page"]')
+    if (!scroller || !row || !scroller.contains(row)) return
+    const box = scroller.getBoundingClientRect()
+    const r = row.getBoundingClientRect()
+    const topInset = isDrawer ? (bandRef.current?.offsetHeight ?? 0) : 0
+    if (r.top < box.top + topInset) {
+      scroller.scrollTop -= box.top + topInset - r.top
+    } else if (r.bottom > box.bottom) {
+      scroller.scrollTop += r.bottom - box.bottom
+    }
+  }, [pathname, isDrawer])
 
   return (
     <nav
@@ -119,11 +133,18 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
         variant === 'sidebar' && 'w-56 border-r border-border',
         // Drawer (mobile P1-2): ONE scroller, the whole nav. No nested
         // scroll region, no fixed blocks below it eating the phone's height.
-        isDrawer && 'overflow-y-auto overscroll-contain',
+        // scroll-pt-16 keeps keyboard-focused rows clear of the sticky band.
+        isDrawer && 'overflow-y-auto overscroll-contain scroll-pt-16',
       )}
     >
-      {/* Wordmark (R6): Fraunces, no tagline. Same treatment as the landing. */}
-      <div className={clsx('px-5', isDrawer ? 'py-4' : 'py-5')}>
+      {/* Wordmark (R6): Fraunces, no tagline. Same treatment as the landing.
+          In the drawer it is a sticky, opaque 60px band that holds the close
+          button (app-shell.tsx), so no row ever scrolls under the X (Jen C3). */}
+      <div
+        ref={bandRef}
+        data-nav="band"
+        className={clsx('px-5', isDrawer ? 'sticky top-0 z-10 bg-surface-2 py-4 pr-14' : 'py-5')}
+      >
         <Link href="/" className="inline-block" onClick={onNavigate}>
           <span className="font-display text-xl font-semibold tracking-[-0.01em] text-text-primary">
             Open Cave
@@ -326,7 +347,6 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
 
           {/* The Instruments — visible-by-default group (successor to the collapsed "Expert Tools" accordion) */}
           <div>
-            {/* Jen: group label + arm microcopy pending copy review */}
             <button
               onClick={() => setInstrumentsOpen((v) => !v)}
               aria-expanded={instrumentsOpen}
@@ -370,7 +390,7 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
                           isActive ? 'bg-surface-1 shadow-sm' : 'group-hover:bg-surface-1'
                         )}
                       >
-                        {/* Resting-state accent tint (was flat text-muted) so the five instruments read as color-coded at rest, not only when active. Jen: confirm treatment. */}
+                        {/* Resting-state accent tint, so the five instruments read as colour-coded at rest, not only when active. */}
                         <Icon
                           size={15}
                           strokeWidth={1.75}
@@ -485,14 +505,21 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
           href="/profile"
           onClick={onNavigate}
           aria-current={profileActive ? 'page' : undefined}
+          // The visible name is truncated, so the destination and the whole
+          // name live in the accessible name (Jen C5).
+          aria-label={displayName ? `Your profile, ${displayName}` : undefined}
           className={clsx(
-            'flex items-center rounded-lg px-3 transition-colors hover:bg-surface-3',
+            'flex min-w-0 items-center rounded-lg px-3 transition-colors hover:bg-surface-3',
             isDrawer ? 'min-h-11' : 'py-2',
             profileActive && 'bg-surface-3',
           )}
         >
           {displayName ? (
-            <ProfileBadge displayName={displayName} size="sm" />
+            <ProfileBadge
+              displayName={displayName}
+              size="sm"
+              nameClassName="min-w-0 truncate text-sm font-medium text-text-primary"
+            />
           ) : (
             <span className="text-sm font-medium text-text-secondary">Your profile</span>
           )}
