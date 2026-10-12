@@ -3,6 +3,7 @@ import {
   parseLetter,
   blockPrefix,
   uncleanSplitNotice,
+  letterIsClean,
   type Block,
   type Inline,
 } from '@/lib/lever/letter-blocks'
@@ -56,11 +57,13 @@ interface LetterPaperProps {
   letterFormat: unknown
   /** The action's status; it words the §2 notice. */
   status: 'draft' | 'final' | 'filed'
+  /** `metadata.notesRemovalConfirmedAt` (A5): a confirmed finalise of a letter with no marker line. */
+  notesRemovalConfirmedAt?: unknown
   /** FIPPA letters only. */
   recipient?: RecipientNoticeView | null
 }
 
-export function LetterPaper({ content, letterFormat, status, recipient }: LetterPaperProps) {
+export function LetterPaper({ content, letterFormat, status, notesRemovalConfirmedAt, recipient }: LetterPaperProps) {
   // Parse once per (content, format), not on every re-render of the viewer
   // (menu toggles, busy states). Razor C1.
   const parsed = useMemo(() => parseLetter(content, letterFormat), [content, letterFormat])
@@ -73,7 +76,7 @@ export function LetterPaper({ content, letterFormat, status, recipient }: Letter
     )
   }
 
-  const clean = parsed.split === 'marker' && !parsed.fallback
+  const clean = letterIsClean(parsed, status, notesRemovalConfirmedAt)
   const notes: string[] = []
   if (!clean) notes.push(uncleanSplitNotice(status))
   if (parsed.fallback) notes.push(FALLBACK_NOTE)

@@ -3,7 +3,7 @@ import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { esc, errorPage, PRINT_CSP } from '@/lib/campaign/print-utils'
-import { parseLetter, blocksToHtml, escapeHtml, uncleanSplitNotice } from '@/lib/lever/letter-blocks'
+import { parseLetter, blocksToHtml, escapeHtml, uncleanSplitNotice, letterIsClean } from '@/lib/lever/letter-blocks'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
 import { loadRecipientResolution } from '@/lib/lever/load-recipient'
@@ -83,7 +83,7 @@ export const GET = safeRoute(async (request: NextRequest, { params }: RouteConte
     // action's own investigation, on the guidance page only.
     const recipient = await loadRecipientResolution(db, { metadata, investigationId: action.investigationId }, userId)
     const where = whereToSendLines(recipient, action.content, metadata.letterFormat)
-    return new Response(fippaPrintPage(action.title, action.content, metadata.letterFormat, action.status, where), {
+    return new Response(fippaPrintPage(action.title, action.content, metadata.letterFormat, action.status, where, metadata.notesRemovalConfirmedAt), {
       status: 200,
       headers: printHeaders,
     })
@@ -398,10 +398,12 @@ function fippaPrintPage(
   content: string,
   letterFormat: unknown,
   status: unknown,
-  whereToSend: string[]
+  whereToSend: string[],
+  /** `metadata.notesRemovalConfirmedAt` (A5): a confirmed finalise of a letter with no marker line. */
+  notesRemovalConfirmedAt?: unknown
 ): string {
   const parsed = parseLetter(content, letterFormat)
-  const clean = parsed.split === 'marker' && !parsed.fallback
+  const clean = letterIsClean(parsed, status, notesRemovalConfirmedAt)
   const letterEmpty = parsed.letter.length === 0
 
   const notes: string[] = []

@@ -96,6 +96,7 @@ export default async function LeverActionPage({ params }: PageProps) {
         letterFormat={metadata.letterFormat}
         recipientMetadata={recipientMetadata}
         investigationProvince={investigationProvince}
+        notesRemovalConfirmedAt={metadata.notesRemovalConfirmedAt}
       />
 
       {/* Cross-arm navigation — only when this action is tied to a document */}
