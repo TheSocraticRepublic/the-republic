@@ -11,7 +11,16 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
 import { parseLetter } from '@/lib/lever/letter-blocks'
 import { isProvinceId } from '@/lib/lever/public-body'
-import { NOT_A_DRAFT, CONTENT_CHANGED, STATUS_CHANGED, UNCLEAN_SPLIT } from '@/lib/lever/write-conflicts'
+import { createHash } from 'node:crypto'
+import {
+  NOT_A_DRAFT,
+  CONTENT_CHANGED,
+  STATUS_CHANGED,
+  UNCLEAN_SPLIT,
+  UNCLEAN_SPLIT_REPEATED,
+  CONFIRM_NO_NOTES,
+  EMPTY_LETTER,
+} from '@/lib/lever/write-conflicts'
 
 /** PATCH refuses content longer than this (UTF-16 code units, JS string length) with 413. */
 const MAX_CONTENT_LENGTH = 100_000
@@ -95,6 +104,16 @@ export const GET = safeRoute(async function GET(request: NextRequest, { params }
  * The 200 body carries the content as stored, so the client re-baselines its
  * hash on exactly what the server holds (§4).
  *
+ * `confirmNoNotes: true` (A5, Lee 2026-10-12) lets a finalise through for a
+ * marker-v1 letter whose marker line is missing (a parse with split 'none'
+ * and no fallback), which is otherwise refused with CONFIRM_NO_NOTES so the
+ * citizen can confirm. It lands by the same compare-and-set, in the same
+ * transaction, and records `metadata.notesRemovalConfirmedAt`, a time this
+ * route takes itself and never from the request. Two markers (worded
+ * UNCLEAN_SPLIT_REPEATED) and a fallback parse (UNCLEAN_SPLIT) stay refused
+ * whatever the flag says; on any other write the flag is ignored. A blank
+ * letter is never finalised (400, EMPTY_LETTER).
+ *
  * PATCH never writes `letterFormat`; only generation does.
  */
 export const PATCH = safeRoute(async function PATCH(request: NextRequest, { params }: RouteContext) {
@@ -124,6 +143,7 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
     content?: unknown
     expectedContentSha256?: unknown
     jurisdiction?: unknown
+    confirmNoNotes?: unknown
   }
   try {
     const raw = await request.text()
@@ -135,7 +155,7 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { status, content, expectedContentSha256, jurisdiction } = body ?? {}
+  const { status, content, expectedContentSha256, jurisdiction, confirmNoNotes } = body ?? {}
 
   if (!status && content === undefined && jurisdiction === undefined) {
     return NextResponse.json(
@@ -211,13 +231,39 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
   const existingMetadata = (existing.metadata ?? {}) as Record<string, unknown>
 
   // Finalising needs a clean split: a marker-v1 letter whose split is 'none'
-  // or 'ambiguous' still has notes inside it (filings design §4).
+  // or 'ambiguous' still has notes inside it (filings design §4). A missing
+  // marker line ('none' from a real parse, never a fallback) is the one case
+  // the citizen may confirm past (A5).
   const isFinalising = statusChange && status === 'final'
+  let confirmedNoNotes = false
   if (isFinalising) {
+    // A finalise checked against text the client never saw is a content
+    // conflict first: the citizen is told the letter changed, not what is
+    // wrong with a version they haven't read (A5, "a content change in
+    // between still gets the changed-since-opened conflict"). The UPDATE's
+    // compare-and-set below stays the authority; this only words the 409.
+    if (
+      typeof expectedContentSha256 === 'string' &&
+      createHash('sha256').update(existing.content ?? '', 'utf8').digest('hex') !== expectedContentSha256
+    ) {
+      return NextResponse.json({ error: CONTENT_CHANGED }, { status: 409 })
+    }
     const finalText = typeof content === 'string' ? content : existing.content
+    // A blank letter is never finalised, whatever its format (Jen A5 C5).
+    if (typeof finalText !== 'string' || finalText.trim() === '') {
+      return NextResponse.json({ error: EMPTY_LETTER }, { status: 400 })
+    }
     if (existingMetadata.letterFormat === 'marker-v1') {
-      const { split } = parseLetter(finalText, existingMetadata.letterFormat)
-      if (split !== 'marker') {
+      const { split, fallback } = parseLetter(finalText, existingMetadata.letterFormat)
+      if (split === 'none' && !fallback) {
+        if (confirmNoNotes !== true) {
+          return NextResponse.json({ error: CONFIRM_NO_NOTES }, { status: 409 })
+        }
+        confirmedNoNotes = true
+      } else if (split === 'ambiguous') {
+        // Two or more marker lines: the refusal names that (Jen A5 C2).
+        return NextResponse.json({ error: UNCLEAN_SPLIT_REPEATED }, { status: 409 })
+      } else if (split !== 'marker') {
         return NextResponse.json({ error: UNCLEAN_SPLIT }, { status: 409 })
       }
     }
@@ -257,6 +303,13 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
   if (isFilingTransition) {
     updates.metadata = sql`coalesce(${leverActions.metadata}, '{}'::jsonb) || ${JSON.stringify({
       filedAt: new Date().toISOString(),
+    })}::jsonb`
+  }
+  // A confirmed finalise records when the citizen confirmed, merged into the
+  // stored metadata. The time is the server's: nothing in the request sets it.
+  if (confirmedNoNotes) {
+    updates.metadata = sql`coalesce(${leverActions.metadata}, '{}'::jsonb) || ${JSON.stringify({
+      notesRemovalConfirmedAt: new Date().toISOString(),
     })}::jsonb`
   }
   // The province, merged into the stored metadata; nothing else in it changes.

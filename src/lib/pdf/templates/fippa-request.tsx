@@ -7,6 +7,7 @@ import {
   blockPrefix,
   projectBlock,
   uncleanSplitNotice,
+  letterIsClean,
   type Block,
   type Inline,
 } from '@/lib/lever/letter-blocks'
@@ -242,7 +243,7 @@ export function FippaRequestTemplate({ data }: { data: FippaRequestData }) {
   const parsed = parseLetter(data.content, format)
   const recipient = data.recipient ?? resolveRecipient({ metadata })
 
-  const clean = parsed.split === 'marker' && !parsed.fallback
+  const clean = letterIsClean(parsed, status, metadata.notesRemovalConfirmedAt)
   const notes: string[] = []
   if (!clean) notes.push(uncleanSplitNotice(status))
   if (parsed.fallback) notes.push(PDF_FALLBACK_NOTE)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo, useId } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, useId } from 'react'
 import { Download, Pencil, RefreshCw, Check, X, ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
@@ -23,13 +23,17 @@ import {
 } from '@/lib/lever/recipient-notice'
 import {
   conflictReason,
+  CONFIRM_NO_NOTES_ACTION,
+  CONFIRM_NO_NOTES_FACT,
   EDIT_CONFLICT_MESSAGE,
   EDIT_NOT_A_DRAFT_MESSAGE,
+  EMPTY_LETTER,
   NEWER_VERSION_MESSAGE,
   NOT_A_DRAFT,
   STALE_VIEW_MESSAGE,
   STATUS_CHANGED,
   UNCLEAN_SPLIT,
+  UNCLEAN_SPLIT_REPEATED,
   type WriteConflict,
 } from '@/lib/lever/write-conflicts'
 
@@ -50,6 +54,8 @@ interface ActionViewerProps {
   recipientMetadata?: Record<string, unknown>
   /** The action's investigation's province, resolved on the server; null when there is none. */
   investigationProvince?: ProvinceId | null
+  /** `metadata.notesRemovalConfirmedAt` (A5): set by a confirmed finalise of a letter with no marker line. */
+  notesRemovalConfirmedAt?: unknown
 }
 
 type ViewMode = 'generating' | 'viewing' | 'editing'
@@ -118,7 +124,11 @@ export function conflictMessage(reason: WriteConflict | null, kind: WriteKind, s
     case 'status-changed':
       return STATUS_CHANGED
     case 'unclean-split':
-      return UNCLEAN_SPLIT
+      // Two marker lines name their cause (Jen A5 C2); anything else unclean is the general line.
+      return serverError === UNCLEAN_SPLIT_REPEATED ? UNCLEAN_SPLIT_REPEATED : UNCLEAN_SPLIT
+    case 'confirm-no-notes':
+      // Answered by the confirmation itself; this is only its plain wording.
+      return `${CONFIRM_NO_NOTES_FACT} ${CONFIRM_NO_NOTES_ACTION}`
     default:
       return serverError && !serverError.includes('→') ? serverError : 'That change could not be saved. Try again.'
   }
@@ -147,6 +157,7 @@ export function ActionViewer({
   letterFormat: initialLetterFormat,
   recipientMetadata,
   investigationProvince = null,
+  notesRemovalConfirmedAt: initialNotesRemovalConfirmedAt,
 }: ActionViewerProps) {
   const [content, setContent] = useState(initialContent)
   const [editContent, setEditContent] = useState(initialContent)
@@ -168,6 +179,16 @@ export function ActionViewer({
   const [actionError, setActionError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [needsProvince, setNeedsProvince] = useState(false)
+  // A5: the in-place confirmation for a letter with no marker line, and
+  // whether a finalise was confirmed (it lifts the §2 notice once final).
+  const [confirmingNoNotes, setConfirmingNoNotes] = useState(false)
+  const [confirmBusy, setConfirmBusy] = useState(false)
+  const [notesConfirmedAt, setNotesConfirmedAt] = useState<unknown>(initialNotesRemovalConfirmedAt)
+  const advanceRef = useRef<HTMLButtonElement>(null)
+  // A refusal the citizen must read takes focus (Jen A5 C2): set, then the
+  // alert focuses itself once it is on screen.
+  const alertRef = useRef<HTMLParagraphElement>(null)
+  const focusAlertRef = useRef(false)
   const abortRef = useRef<AbortController | null>(null)
 
   /*
@@ -263,6 +284,7 @@ export function ActionViewer({
 
   const runGenerate = useCallback(async () => {
     setMode('generating')
+    setConfirmingNoNotes(false)
     setStreamedContent('')
     setActionError(null)
     setInfo(null)
@@ -340,19 +362,90 @@ export function ActionViewer({
 
   /*
    * Finalising a marker-v1 letter whose notes aren't cleanly separated is
-   * refused by the server (§4). This is the one place that refusal is
-   * handled: it shows the message and leaves the letter as it is. Lee has not
-   * yet ruled whether a letter whose marker line was deleted may be
-   * finalised after a confirmation (Razor W1, A2); if he says yes, the
-   * confirm step goes here and nowhere else.
+   * refused by the server (§4). Two marker lines, or a letter that couldn't
+   * be read, are refused outright: the message, and the letter as it is.
+   * A letter whose marker line is missing is refused with "confirm-no-notes"
+   * (A5, Lee 2026-10-12): the confirmation opens in place, and finalising
+   * from it resends with `confirmNoNotes: true` and the same baseline hash,
+   * so a letter changed in between is still a conflict, never a silent
+   * finalise.
    */
-  const onUncleanSplitRefused = useCallback(() => {
-    setActionError(conflictMessage('unclean-split', 'status', null))
+  const onUncleanSplitRefused = useCallback(
+    (reason: 'unclean-split' | 'confirm-no-notes', serverError: string | null) => {
+      if (reason === 'confirm-no-notes') {
+        setConfirmingNoNotes(true)
+        return
+      }
+      setConfirmingNoNotes(false)
+      focusAlertRef.current = true
+      setActionError(conflictMessage('unclean-split', 'status', serverError))
+    },
+    []
+  )
+
+  useEffect(() => {
+    if (actionError && focusAlertRef.current) {
+      focusAlertRef.current = false
+      alertRef.current?.focus()
+    }
+  }, [actionError])
+
+  /** Cancel: the draft is untouched, and focus goes back to Mark as Final. */
+  const handleCancelConfirm = useCallback(() => {
+    setConfirmingNoNotes(false)
+    advanceRef.current?.focus()
   }, [])
+
+  const handleConfirmNoNotes = useCallback(async () => {
+    setConfirmBusy(true)
+    setActionError(null)
+    setInfo(null)
+    try {
+      const result = await patch({ status: 'final', confirmNoNotes: true })
+      if (result.ok) {
+        setConfirmingNoNotes(false)
+        setStatus('final')
+        // The 200 proves the route took the confirmed path, which records
+        // the time on the row (server clock); the screen needs only to know
+        // it is set. A reload shows the stored value.
+        setNotesConfirmedAt(new Date().toISOString())
+        if (result.content !== null) rebaseline(result.content)
+        advanceRef.current?.focus()
+      } else if (result.reason === 'confirm-no-notes') {
+        // Still the same letter with no marker line: the confirmation stays.
+      } else {
+        setConfirmingNoNotes(false)
+        setActionError(
+          result.status === 409
+            ? conflictMessage(result.reason, 'status', result.error)
+            : result.error && !result.error.includes('→')
+              ? result.error
+              : 'Failed to update status. Try again.'
+        )
+        advanceRef.current?.focus()
+      }
+    } catch (err) {
+      console.error('[action-viewer] Confirmed finalise failed:', err)
+      setConfirmingNoNotes(false)
+      setActionError('Failed to update status. Try again.')
+      advanceRef.current?.focus()
+    } finally {
+      setConfirmBusy(false)
+    }
+  }, [patch, rebaseline])
 
   const handleAdvanceStatus = useCallback(async () => {
     const next = STATUS_FLOW[status]
     if (!next) return
+
+    // A blank letter is never finalised and never reaches the confirmation
+    // (Jen A5 C5). Nothing is sent; focus stays on Mark as Final.
+    if (next === 'final' && content.trim() === '') {
+      setConfirmingNoNotes(false)
+      setInfo(null)
+      setActionError(EMPTY_LETTER)
+      return
+    }
 
     // Confirmation gate when filing
     if (next === 'filed') {
@@ -363,6 +456,7 @@ export function ActionViewer({
     }
 
     setStatusUpdating(true)
+    setConfirmingNoNotes(false)
     setActionError(null)
     setInfo(null)
     try {
@@ -370,8 +464,8 @@ export function ActionViewer({
       if (result.ok) {
         setStatus(next)
         if (result.content !== null) rebaseline(result.content)
-      } else if (result.reason === 'unclean-split') {
-        onUncleanSplitRefused()
+      } else if (result.reason === 'unclean-split' || result.reason === 'confirm-no-notes') {
+        onUncleanSplitRefused(result.reason, result.error)
       } else {
         // Only a 409 is a conflict; any other refusal shows its own message
         // (never developer text with an arrow).
@@ -389,7 +483,7 @@ export function ActionViewer({
     } finally {
       setStatusUpdating(false)
     }
-  }, [status, patch, rebaseline, onUncleanSplitRefused])
+  }, [status, content, patch, rebaseline, onUncleanSplitRefused])
 
   const handleSaveEdit = useCallback(async () => {
     setSaving(true)
@@ -560,6 +654,7 @@ export function ActionViewer({
             {/* Advance status */}
             {nextStatus && (
               <button
+                ref={advanceRef}
                 onClick={handleAdvanceStatus}
                 disabled={statusUpdating}
                 className={clsx(
@@ -580,8 +675,19 @@ export function ActionViewer({
             {/* Edit — only available in draft */}
             {status === 'draft' && (
               <button
-                onClick={() => { setEditContent(content); setActionError(null); setMode('editing') }}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
+                onClick={() => {
+                  // Inert while a confirmed finalise is in flight (Jen A5 C3).
+                  if (confirmBusy) return
+                  setEditContent(content)
+                  setActionError(null)
+                  setConfirmingNoNotes(false)
+                  setMode('editing')
+                }}
+                aria-disabled={confirmBusy || undefined}
+                className={clsx(
+                  'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors border border-border',
+                  confirmBusy ? 'cursor-not-allowed opacity-50' : 'hover:text-text-primary hover:border-border-strong'
+                )}
               >
                 <Pencil size={12} strokeWidth={2} />
                 Edit
@@ -591,8 +697,15 @@ export function ActionViewer({
             {/* Re-generate — drafts only: the server refuses final and filed (A2) */}
             {status === 'draft' && (
               <button
-                onClick={runGenerate}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary border border-border hover:border-border-strong"
+                onClick={() => {
+                  // Inert while a confirmed finalise is in flight (Jen A5 C3).
+                  if (!confirmBusy) void runGenerate()
+                }}
+                aria-disabled={confirmBusy || undefined}
+                className={clsx(
+                  'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors border border-border',
+                  confirmBusy ? 'cursor-not-allowed opacity-50' : 'hover:text-text-primary hover:border-border-strong'
+                )}
               >
                 <RefreshCw size={12} strokeWidth={2} />
                 Re-generate
@@ -646,12 +759,18 @@ export function ActionViewer({
 
       {/* Error alert */}
       {actionError && (
-        <p role="alert" className="text-xs text-status-danger">{actionError}</p>
+        <p ref={alertRef} role="alert" tabIndex={-1} className="text-xs text-status-danger outline-none">
+          {actionError}
+        </p>
       )}
 
       {/* What happened, when it isn't an error (a newer version was kept) */}
       {info && (
         <p role="status" className="text-xs text-text-secondary">{info}</p>
+      )}
+
+      {confirmingNoNotes && mode === 'viewing' && status === 'draft' && (
+        <ConfirmNoNotes busy={confirmBusy} onConfirm={handleConfirmNoNotes} onCancel={handleCancelConfirm} />
       )}
 
       {needsProvince && mode === 'viewing' && (
@@ -690,7 +809,15 @@ export function ActionViewer({
       )}
 
       {mode === 'viewing' && isFippa && content && (
-        <LetterPaper content={content} letterFormat={letterFormat} status={status} recipient={recipientNotice} />
+        <LetterPaper
+          content={content}
+          letterFormat={letterFormat}
+          status={status}
+          notesRemovalConfirmedAt={notesConfirmedAt}
+          // The confirmation is the notice escalated: one, not both (Jen A5 C4).
+          hideUncleanNotice={confirmingNoNotes && status === 'draft'}
+          recipient={recipientNotice}
+        />
       )}
 
       {mode === 'viewing' && !(isFippa && content) && (
@@ -734,6 +861,97 @@ export function ActionViewer({
           />
         </div>
       )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Confirm a finalise with no marker line (A5)
+// ---------------------------------------------------------------------------
+
+/**
+ * The confirmation in place, not a browser confirm(): one sentence of fact,
+ * one of action, Finalise and Cancel. Focus moves to it when it opens, so its
+ * text is read before either button is pressed; Escape is Cancel.
+ */
+function ConfirmNoNotes({
+  busy,
+  onConfirm,
+  onCancel,
+}: {
+  busy: boolean
+  onConfirm: () => Promise<void>
+  onCancel: () => void
+}) {
+  const id = useId()
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  // A layout effect, not a passive one: focus lands in the same commit that
+  // shows the panel, so it can never arrive after a fast Cancel and steal
+  // focus back from Mark as Final.
+  useLayoutEffect(() => {
+    rootRef.current?.focus()
+  }, [])
+
+  return (
+    // A <div> and click handlers, not a <form> (the auth triple-fire pattern).
+    <div
+      ref={rootRef}
+      data-confirm-no-notes
+      role="group"
+      aria-labelledby={`${id}-fact`}
+      aria-describedby={`${id}-action`}
+      tabIndex={-1}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && !busy) {
+          e.preventDefault()
+          onCancel()
+        }
+      }}
+      className="rounded-lg border border-border bg-surface-1 px-4 py-3 outline-none"
+      style={{ borderLeft: '3px solid var(--status-warning)' }}
+    >
+      <p id={`${id}-fact`} className="text-sm text-text-secondary">
+        {CONFIRM_NO_NOTES_FACT}
+      </p>
+      <p id={`${id}-action`} className="mt-1 text-sm text-text-secondary">
+        {CONFIRM_NO_NOTES_ACTION}
+      </p>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          data-confirm-finalise
+          onClick={() => {
+            // Busy, not disabled: focus stays on the button (Jen C8).
+            if (!busy) void onConfirm()
+          }}
+          aria-busy={busy || undefined}
+          aria-disabled={busy || undefined}
+          className={clsx(
+            'inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-3.5 text-sm font-medium transition-all duration-150 sm:min-h-0 sm:py-1.5',
+            busy ? 'cursor-progress' : 'hover:opacity-80'
+          )}
+          style={{
+            backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 10%, transparent)',
+            color: 'var(--accent-mirror)',
+            border: '1px solid color-mix(in srgb, var(--accent-mirror) 20%, transparent)',
+          }}
+        >
+          <Check size={12} strokeWidth={2} />
+          {busy ? 'Finalising...' : 'Finalise'}
+        </button>
+        <button
+          type="button"
+          data-confirm-cancel
+          onClick={() => {
+            if (!busy) onCancel()
+          }}
+          aria-disabled={busy || undefined}
+          className="inline-flex min-h-[44px] items-center rounded-lg border border-border px-3.5 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary hover:border-border-strong sm:min-h-0 sm:py-1.5"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   )
 }

@@ -54,6 +54,25 @@ export function uncleanSplitNotice(status: unknown): string {
   return UNCLEAN_SPLIT_NOTICE
 }
 
+/**
+ * Whether a parsed letter is shown without the §2 notice, by every renderer
+ * (screen, print, PDF): a clean marker split, or (A5, Lee 2026-10-12) a
+ * final or filed marker-v1 letter with no marker line whose finalise the
+ * citizen confirmed, recorded by PATCH as `metadata.notesRemovalConfirmedAt`.
+ * A draft keeps the notice; a fallback parse, a two-marker letter and legacy
+ * text never lose it.
+ */
+export function letterIsClean(parsed: ParsedLetter, status: unknown, notesRemovalConfirmedAt: unknown): boolean {
+  if (parsed.fallback) return false
+  if (parsed.split === 'marker') return true
+  return (
+    parsed.split === 'none' &&
+    (status === 'final' || status === 'filed') &&
+    typeof notesRemovalConfirmedAt === 'string' &&
+    notesRemovalConfirmedAt !== ''
+  )
+}
+
 export type LetterSplit = 'marker' | 'none' | 'ambiguous' | 'legacy'
 
 export type Inline =

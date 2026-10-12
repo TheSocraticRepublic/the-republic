@@ -3,6 +3,7 @@ import {
   parseLetter,
   blockPrefix,
   uncleanSplitNotice,
+  letterIsClean,
   type Block,
   type Inline,
 } from '@/lib/lever/letter-blocks'
@@ -56,11 +57,25 @@ interface LetterPaperProps {
   letterFormat: unknown
   /** The action's status; it words the §2 notice. */
   status: 'draft' | 'final' | 'filed'
+  /** `metadata.notesRemovalConfirmedAt` (A5): a confirmed finalise of a letter with no marker line. */
+  notesRemovalConfirmedAt?: unknown
+  /**
+   * Leave out the §2 "may include notes" line (only that line) while the
+   * viewer's confirmation, which asks the same thing, is open (Jen A5 C4).
+   */
+  hideUncleanNotice?: boolean
   /** FIPPA letters only. */
   recipient?: RecipientNoticeView | null
 }
 
-export function LetterPaper({ content, letterFormat, status, recipient }: LetterPaperProps) {
+export function LetterPaper({
+  content,
+  letterFormat,
+  status,
+  notesRemovalConfirmedAt,
+  hideUncleanNotice = false,
+  recipient,
+}: LetterPaperProps) {
   // Parse once per (content, format), not on every re-render of the viewer
   // (menu toggles, busy states). Razor C1.
   const parsed = useMemo(() => parseLetter(content, letterFormat), [content, letterFormat])
@@ -73,9 +88,9 @@ export function LetterPaper({ content, letterFormat, status, recipient }: Letter
     )
   }
 
-  const clean = parsed.split === 'marker' && !parsed.fallback
+  const clean = letterIsClean(parsed, status, notesRemovalConfirmedAt)
   const notes: string[] = []
-  if (!clean) notes.push(uncleanSplitNotice(status))
+  if (!clean && !hideUncleanNotice) notes.push(uncleanSplitNotice(status))
   if (parsed.fallback) notes.push(FALLBACK_NOTE)
   if (parsed.letter.length === 0) notes.push(EMPTY_LETTER_NOTE)
 

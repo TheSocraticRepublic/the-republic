@@ -41,6 +41,7 @@ import {
   MISSING_MARKER_LETTER,
   AMBIGUOUS_LETTER,
   LITERAL_MARKER_LETTER,
+  OVERSIZE_FALLBACK,
 } from '../fixtures/letters'
 
 const QA_DATABASE_URL = 'postgres://qa_app:qa_app_dummy@127.0.0.1:55432/republic_qa'
@@ -141,6 +142,11 @@ let NextRequestCtor: typeof import('next/server').NextRequest
 const NOT_A_DRAFT = 'This letter is no longer a draft'
 const CONTENT_CHANGED = 'This letter changed since you opened it'
 const UNCLEAN = "Remove the notes that aren't part of your request before you finalise."
+const CONFIRM_NO_NOTES =
+  'Open Cave can\'t find the "Not part of your request" line, so all of this letter will print as your request. Check you\'ve removed everything that isn\'t part of your request, then finalise.'
+const UNCLEAN_REPEATED =
+  'This letter has the "Not part of your request" line more than once. Keep only the one above your notes, or remove them all, then finalise.'
+const EMPTY_LETTER = 'This letter is empty. Write it or re-generate it, then finalise.'
 const CHOOSE_PROVINCE = 'Choose the province this request goes to'
 
 // ---------------------------------------------------------------------------
@@ -512,9 +518,13 @@ describe.skipIf(!HARNESS_UP)(SUITE_TITLE, () => {
 
     it('finalising needs a clean split for marker-v1; legacy text is never interpreted', async () => {
       const meta = { publicBody: 'BC Ministry of Forests', jurisdiction: 'bc', letterFormat: 'marker-v1' }
-      for (const fixture of [MISSING_MARKER_LETTER, AMBIGUOUS_LETTER]) {
+      // A5: a missing marker line asks for confirmation; two markers are unclean.
+      for (const [fixture, error] of [
+        [MISSING_MARKER_LETTER, CONFIRM_NO_NOTES],
+        [AMBIGUOUS_LETTER, UNCLEAN_REPEATED],
+      ] as const) {
         const id = await insertAction({ content: fixture.content, metadata: meta })
-        expect(await patch(id, { status: 'final' })).toEqual({ status: 409, json: { error: UNCLEAN } })
+        expect(await patch(id, { status: 'final' })).toEqual({ status: 409, json: { error } })
         expect((await readRow(id)).status).toBe('draft')
       }
       const clean = await insertAction({ content: MARKER_V1_LETTER.content, metadata: meta })
@@ -527,9 +537,194 @@ describe.skipIf(!HARNESS_UP)(SUITE_TITLE, () => {
       expect((await patch(legacy, { status: 'final' })).status).toBe(200)
       // content and status in one request: the split is checked on the new content
       const both = await insertAction({ content: MARKER_V1_LETTER.content, metadata: meta })
+      expect(await patch(both, { status: 'final', content: AMBIGUOUS_LETTER.content })).toEqual({
+        status: 409,
+        json: { error: UNCLEAN_REPEATED },
+      })
       expect(await patch(both, { status: 'final', content: MISSING_MARKER_LETTER.content })).toEqual({
         status: 409,
-        json: { error: UNCLEAN },
+        json: { error: CONFIRM_NO_NOTES },
+      })
+    })
+
+    // ------------------------------- A5: confirmed finalise, no marker line
+
+    describe('A5: confirmNoNotes (Lee, 2026-10-12)', () => {
+      const meta = { publicBody: 'BC Ministry of Forests', jurisdiction: 'bc', letterFormat: 'marker-v1' }
+
+      it('no marker, no flag: 409 confirm-no-notes, nothing written', async () => {
+        const id = await insertAction({ content: MISSING_MARKER_LETTER.content, metadata: meta })
+        const res = await patch(id, { status: 'final', expectedContentSha256: sha256(MISSING_MARKER_LETTER.content) })
+        expect(res).toEqual({ status: 409, json: { error: CONFIRM_NO_NOTES } })
+        const row = await readRow(id)
+        expect(row.status).toBe('draft')
+        expect(row.metadata).toEqual(meta)
+        // A flag that is not exactly true is no confirmation.
+        expect(await patch(id, { status: 'final', confirmNoNotes: 'true' })).toEqual({ status: 409, json: { error: CONFIRM_NO_NOTES } })
+      })
+
+      it('no marker, with the flag: 200, final, and the server\'s own time recorded; letterFormat untouched', async () => {
+        const id = await insertAction({ content: MISSING_MARKER_LETTER.content, metadata: meta })
+        const before = Date.now()
+        const res = await patch(id, {
+          status: 'final',
+          confirmNoNotes: true,
+          expectedContentSha256: sha256(MISSING_MARKER_LETTER.content),
+          // Neither of these is a way to set the time.
+          notesRemovalConfirmedAt: '1999-01-01T00:00:00.000Z',
+          metadata: { notesRemovalConfirmedAt: '1999-01-01T00:00:00.000Z', letterFormat: 'legacy' },
+        })
+        const after = Date.now()
+        expect(res.status).toBe(200)
+        expect(res.json.action).toMatchObject({ status: 'final', content: MISSING_MARKER_LETTER.content })
+        const row = await readRow(id)
+        expect(row.status).toBe('final')
+        expect(row.content).toBe(MISSING_MARKER_LETTER.content)
+        const at = row.metadata!.notesRemovalConfirmedAt
+        expect(typeof at).toBe('string')
+        expect(new Date(at as string).toISOString()).toBe(at)
+        expect(Date.parse(at as string)).toBeGreaterThanOrEqual(before - 1000)
+        expect(Date.parse(at as string)).toBeLessThanOrEqual(after + 1000)
+        expect(row.metadata).toEqual({ ...meta, notesRemovalConfirmedAt: at })
+      })
+
+      it('the flag without a client hash is still bound to the text it checked', async () => {
+        const id = await insertAction({ content: MISSING_MARKER_LETTER.content, metadata: meta })
+        const res = await patch(id, { status: 'final', confirmNoNotes: true })
+        expect(res.status).toBe(200)
+        expect((await readRow(id)).metadata!.notesRemovalConfirmedAt).toEqual(expect.any(String))
+      })
+
+      it('two markers with the flag: 409 unclean-split, nothing written', async () => {
+        const id = await insertAction({ content: AMBIGUOUS_LETTER.content, metadata: meta })
+        const res = await patch(id, { status: 'final', confirmNoNotes: true, expectedContentSha256: sha256(AMBIGUOUS_LETTER.content) })
+        expect(res).toEqual({ status: 409, json: { error: UNCLEAN_REPEATED } })
+        const row = await readRow(id)
+        expect(row.status).toBe('draft')
+        expect(row.metadata).toEqual(meta)
+      })
+
+      it('a fallback parse with the flag: 409 unclean-split, nothing written', async () => {
+        // Over the parse bound, so the parse falls back (split 'none', fallback true).
+        const id = await insertAction({ content: OVERSIZE_FALLBACK.content, metadata: meta })
+        const res = await patch(id, { status: 'final', confirmNoNotes: true, expectedContentSha256: sha256(OVERSIZE_FALLBACK.content) })
+        expect(res).toEqual({ status: 409, json: { error: UNCLEAN } })
+        const row = await readRow(id)
+        expect(row.status).toBe('draft')
+        expect(row.metadata).toEqual(meta)
+      })
+
+      it('a stale hash with the flag: 409 content-changed, nothing written', async () => {
+        const id = await insertAction({ content: MISSING_MARKER_LETTER.content, metadata: meta })
+        const res = await patch(id, { status: 'final', confirmNoNotes: true, expectedContentSha256: sha256('What this tab showed.') })
+        expect(res).toEqual({ status: 409, json: { error: CONTENT_CHANGED } })
+        const row = await readRow(id)
+        expect(row.status).toBe('draft')
+        expect(row.metadata).toEqual(meta)
+      })
+
+      it('a stale hash is content-changed even when the stored letter now has two markers', async () => {
+        const id = await insertAction({ content: AMBIGUOUS_LETTER.content, metadata: meta })
+        const res = await patch(id, {
+          status: 'final',
+          confirmNoNotes: true,
+          expectedContentSha256: sha256(MISSING_MARKER_LETTER.content),
+        })
+        expect(res).toEqual({ status: 409, json: { error: CONTENT_CHANGED } })
+        expect((await readRow(id)).status).toBe('draft')
+      })
+
+      it('a confirm that loses to an edit committed meanwhile is a 409, and nothing is recorded', async () => {
+        const id = await insertAction({ content: MISSING_MARKER_LETTER.content, metadata: meta })
+        let pending!: Promise<{ status: number; json: Record<string, unknown> }>
+        await withRowLock(
+          id,
+          async () => {
+            // The confirm passes its checks on the text it read, then blocks on its UPDATE.
+            pending = patch(id, {
+              status: 'final',
+              confirmNoNotes: true,
+              expectedContentSha256: sha256(MISSING_MARKER_LETTER.content),
+            })
+            await blockedUpdates(1)
+          },
+          async (tx) => {
+            await tx`update lever_actions set content = 'Edited in another tab.' where id = ${id}`
+          }
+        )
+        const res = await pending
+        expect(res).toEqual({ status: 409, json: { error: CONTENT_CHANGED } })
+        const row = await readRow(id)
+        expect(row.status).toBe('draft')
+        expect(row.metadata).toEqual(meta)
+      })
+
+      it('the flag is ignored on a clean split, on an edit, and on filing; none records the time', async () => {
+        const clean = await insertAction({ content: MARKER_V1_LETTER.content, metadata: meta })
+        expect((await patch(clean, { status: 'final', confirmNoNotes: true })).status).toBe(200)
+        expect((await readRow(clean)).metadata).toEqual(meta)
+        expect((await patch(clean, { status: 'filed', confirmNoNotes: true })).status).toBe(200)
+        expect((await readRow(clean)).metadata!.notesRemovalConfirmedAt).toBeUndefined()
+        const draft = await insertAction({ content: MISSING_MARKER_LETTER.content, metadata: meta })
+        const edit = await patch(draft, { content: 'Still no marker.', confirmNoNotes: true })
+        expect(edit.status).toBe(200)
+        const row = await readRow(draft)
+        expect(row.status).toBe('draft')
+        expect(row.content).toBe('Still no marker.')
+        expect(row.metadata).toEqual(meta)
+      })
+
+      it('design fix: finalise with new content and a hash checks the hash against the STORED text (Razor N3)', async () => {
+        const id = await insertAction({ content: 'Draft as this tab opened it.', metadata: meta })
+        const ok = await patch(id, {
+          status: 'final',
+          content: MARKER_V1_LETTER.content,
+          expectedContentSha256: sha256('Draft as this tab opened it.'),
+        })
+        expect(ok.status).toBe(200)
+        const row = await readRow(id)
+        expect(row.status).toBe('final')
+        expect(row.content).toBe(MARKER_V1_LETTER.content)
+        // Stale hash plus new two-marker content: changed-since-opened, not the split wording.
+        const stale = await insertAction({ content: 'Changed by another tab.', metadata: meta })
+        expect(
+          await patch(stale, {
+            status: 'final',
+            content: AMBIGUOUS_LETTER.content,
+            expectedContentSha256: sha256('What this tab showed.'),
+          })
+        ).toEqual({ status: 409, json: { error: CONTENT_CHANGED } })
+        expect((await readRow(stale)).content).toBe('Changed by another tab.')
+      })
+
+      it('design fix: a blank letter is never finalised, whatever its format or flag (Jen C5)', async () => {
+        for (const [content, metadata] of [
+          ['', meta],
+          ['  \n\t ', meta],
+          ['', { publicBody: 'BC Ministry of Forests', jurisdiction: 'bc' }],
+        ] as const) {
+          const id = await insertAction({ content, metadata: { ...metadata } })
+          expect(await patch(id, { status: 'final', confirmNoNotes: true })).toEqual({ status: 400, json: { error: EMPTY_LETTER } })
+          const row = await readRow(id)
+          expect(row.status).toBe('draft')
+          expect(row.metadata!.notesRemovalConfirmedAt).toBeUndefined()
+        }
+        // Blank new content in the finalising request itself.
+        const id = await insertAction({ content: MARKER_V1_LETTER.content, metadata: meta })
+        expect(await patch(id, { status: 'final', content: '   ' })).toEqual({ status: 400, json: { error: EMPTY_LETTER } })
+        expect((await readRow(id)).content).toBe(MARKER_V1_LETTER.content)
+        // Positive sibling: a blank DRAFT may still be saved; only finalising is refused.
+        expect((await patch(id, { content: '' })).status).toBe(200)
+      })
+
+      it('a confirmed letter files with its time kept', async () => {
+        const id = await insertAction({ content: MISSING_MARKER_LETTER.content, metadata: meta })
+        expect((await patch(id, { status: 'final', confirmNoNotes: true })).status).toBe(200)
+        const at = (await readRow(id)).metadata!.notesRemovalConfirmedAt
+        expect((await patch(id, { status: 'filed' })).status).toBe(200)
+        const row = await readRow(id)
+        expect(row.status).toBe('filed')
+        expect(row.metadata!.notesRemovalConfirmedAt).toBe(at)
       })
     })
 
