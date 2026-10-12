@@ -1,4 +1,4 @@
-# Local QA harness services. Disposable: `docker compose -f docker-compose.qa.yml down -v`
+# Local QA harness services. Disposable: `npx tsx scripts/qa/harness.ts down`
 # removes the containers and the database volume. Driven by scripts/qa/harness.ts;
 # see scripts/qa/README.md.
 #
@@ -13,7 +13,10 @@
 #   redis:7                              sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85
 #   hiett/serverless-redis-http:latest   sha256:5b0bb9239fce53abf87b2018a7a0deb9ec7bd900c5360738fe5fbeeb426f9150
 
-name: open-cave-qa
+# No fixed `name:`. scripts/qa/harness.ts passes `-p open-cave-qa-<hash of the
+# worktree path>`, so each worktree gets its own project, and a `down` in one
+# worktree can never remove another's containers or volume. Drive it through
+# the harness (`harness.ts down`), which prints the project name it uses.
 
 services:
   postgres:

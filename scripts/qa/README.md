@@ -2,8 +2,9 @@
 
 A disposable, production-mode copy of Open Cave on your own machine, for
 authenticated evidence: signed-in pages, ownership checks, letter rendering,
-generation races. It never touches production, never uses a real API key, and
-never uses the auth bypass.
+generation races. Its database, Redis and AI model are local; it holds no real
+API key and never uses the auth bypass. It is NOT network-isolated: see
+"Outbound network" below for exactly what can still leave the machine.
 
 Nothing in this directory ships. `next build` type-checks it, and that is all
 it does to the app.
@@ -14,13 +15,23 @@ From a worktree that has no `.env*` files (only `.env.example`), after `npm ci`:
 
 ```bash
 npx tsx scripts/qa/harness.ts run                 # up, every Q0b check, tear down
-npx tsx scripts/qa/harness.ts up                  # start and supervise (Ctrl-C stops everything)
+npx tsx scripts/qa/harness.ts up                  # start and supervise (Ctrl-C, SIGTERM or SIGHUP stops it)
 npx tsx scripts/qa/harness.ts check               # the Q0b checks, against a running harness
 npx tsx scripts/qa/harness.ts down                # stop everything, remove the database volume
 ```
 
-Add `--reuse-build` to `up` or `run` to skip `next build` when the tree has not
-changed since the last harness build. Any change, committed or not, rebuilds.
+Every `up` and `run` builds (`next build`) under its own `env -i`. There is no
+reuse option: a `.next` built any other way (a plain `npm run build` carries
+the shell's environment, including any `NEXT_PUBLIC_*` it inlines) is never
+served.
+
+Teardown stops only what that invocation started. A refused `up` ("already
+running", a port in use) starts nothing and stops nothing. The compose project
+is `open-cave-qa-<hash>`, scoped to the worktree like the state directory, so
+`down` in one worktree can't remove another worktree's stack; the ports are
+still shared, so only one worktree's harness can run at a time. `down` signals
+a recorded pid only after its start time and command line show it is still the
+harness's process.
 
 `up` needs at least 4000 MB of available memory (it checks before starting the
 stack and again before `next build`) and ports 55432, 58079, 58080 and 3177 free
@@ -46,9 +57,10 @@ Every container port binds `127.0.0.1` only.
 
 1. **Preflight.** Refuses if any `.env*` file other than `.env.example` is in the
    repo root (Next.js would load it into the server; the harness lists the names
-   and never reads them), if a port is taken, or if memory is short.
-2. **Services.** `docker compose up -d --wait`, with an empty variables file so
-   compose never reads a repo `.env`.
+   and never reads them), if a harness is already running, if a port is taken,
+   or if memory is short. A refusal changes nothing.
+2. **Services.** `docker compose -p open-cave-qa-<hash> up -d --wait`, with an
+   empty variables file so compose never reads a repo `.env`.
 3. **Supabase shim** (`supabase-shim.sql`), as the container superuser: roles
    `anon`, `authenticated`, `service_role`; the application role `qa_app`
    (LOGIN, BYPASSRLS, NOSUPERUSER), which owns the tables like the production
@@ -98,9 +110,10 @@ Every container port binds `127.0.0.1` only.
 
 - **Origin.** The middleware rejects a state-changing request whose `Origin`
   isn't `NEXT_PUBLIC_APP_URL`. The harness sets it to `http://127.0.0.1:3177`,
-  so every non-browser POST, PATCH or DELETE (API tests, race tests) must send
-  `Origin: http://127.0.0.1:3177`. A 403 from a missing Origin is a harness bug,
-  not a finding.
+  so every non-browser POST, PUT, PATCH or DELETE (API tests, race tests) must
+  send `Origin: http://127.0.0.1:3177`. `harness.ts` routes all its own requests
+  through `appRequest()`, which adds it for every method but GET. A 403 from a
+  missing Origin is a harness bug, not a finding.
 - **Secure cookie.** `verify-code` sets the session cookie with `secure: true`.
   Chromium sends Secure cookies to `http://127.0.0.1` (loopback is a secure
   context), so all signed-in browser evidence runs in Chromium on `127.0.0.1`.
@@ -125,8 +138,10 @@ Login is tested for real: `seed-local.ts --login-code` stores the hash of a
 known code for user A, and the browser check types it into `/login`. The
 login page's first step POSTs `/api/auth/send-code`; the harness never lets
 that reach the server (it would try to send email), so the browser check
-answers that one request itself. `verify-code`, the cookie and the redirect
-are the real ones.
+answers that one request itself, through `interceptSendCode(context)`, which
+is installed on the browser context before any page opens. Any later browser
+test on the harness must install it the same way. `verify-code`, the cookie
+and the redirect are the real ones.
 
 ## The AI stub
 
@@ -158,11 +173,40 @@ All synthetic, from `tests/fixtures/letters.ts` unless noted:
   a non-empty list;
 - an Oracle document with an analysis, and a Gadfly session with three turns;
 - the Mirror's reference jurisdictions from `data/seeds/jurisdictions.json`
-  (the repo's own data). A Mirror comparison isn't stored; submitting the
-  Mirror form produces one through the AI stub;
+  (the repo's own data). A Mirror comparison can't be seeded: the app has no
+  table for comparisons and streams each one on demand. The populated `/mirror`
+  state is therefore a live request through the AI stub, and `check` exercises
+  exactly that (`POST /api/mirror/compare` as A, with the seeded document, must
+  return the stub's synthetic comparison and be recorded as a Mirror request);
 - two real House of Commons divisions, 45-1 #177 and #178, with both bills,
   all 337 current MPs and every ballot. Source URLs are in `seed-local.ts`, and
   the seed refuses to run if the ballots stop reproducing the official totals.
+
+## Outbound network (a named fidelity limit)
+
+The harness cannot sandbox the network: that needs root or user namespaces,
+and this host's kernel denies `unshare -Ur`. So `next build` and `next start`
+have the machine's network. The database, Redis and the AI model are local
+by construction (fixed loopback URLs, dummy keys, `ANTHROPIC_BASE_URL` on the
+stub). What can still leave the machine, and what it carries:
+
+| Destination | When | What it receives |
+|---|---|---|
+| Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`) | every `next build` (`next/font/google` in `src/app/layout.tsx`) | font requests only |
+| Sentry's build tooling | `next build` (`withSentryConfig` in `next.config.ts`); not verified whether it sends anything with no auth token, org or project set | build metadata at most; the harness sets no DSN, so the running app sends no events |
+| Represent API (`represent.opennorth.ca`) | postal-code lookup and investigation creation (`src/lib/parliament/represent.ts`) | the synthetic postal code a test enters |
+| openparliament.ca API | parliament sync, MP pattern and contradiction routes (`src/lib/parliament/client.ts`) | public identifiers; the project's User-Agent |
+| DuckDuckGo (`duck-duck-scrape`) | Scout discovery and briefing generation search (`src/lib/scout/search.ts`, `src/lib/ai/search-context.ts`) | the synthetic query or concern text |
+| Resend (`api.resend.com`) | only if a browser or API test reaches `/api/auth/send-code` without `interceptSendCode` | the synthetic address, with the dummy key (rejected) |
+| Any user-supplied URL | Oracle or Scout URL ingestion, archive re-ingest | whatever a test submits |
+
+Pinata and Arweave stay off (`PINATA_JWT` unset, `ENABLE_ARWEAVE` unset).
+
+Only synthetic data may ever be sent to any of these. And **no batch's
+evidence may depend on an outbound call succeeding.** A check that creates an
+investigation, looks up an MP or searches must either stub that dependency or
+assert only on behaviour that holds when the call fails; a third-party outage
+must never turn a harness check red or green.
 
 ## What the harness does not prove
 
@@ -175,6 +219,6 @@ stops. Signed-out evidence never stands in for signed-in evidence.
 
 ## Tearing down
 
-`down` (or Ctrl-C on `up`) stops the server and the stub and runs
-`docker compose -f docker-compose.qa.yml down -v`, which deletes the database
-volume. Nothing persists between runs.
+`down` (or Ctrl-C, SIGTERM or SIGHUP on `up` or `run`) stops the server and the
+stub and runs `docker compose -p open-cave-qa-<hash> down -v`, which deletes
+the database volume. Nothing persists between runs.

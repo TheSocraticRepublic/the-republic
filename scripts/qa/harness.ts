@@ -2,9 +2,9 @@
  * The local QA harness: a disposable production-mode stack for authenticated
  * evidence, with no production credentials and no auth bypass.
  *
- *   npx tsx scripts/qa/harness.ts up [--reuse-build]   start, then supervise until Ctrl-C or `down`
+ *   npx tsx scripts/qa/harness.ts up      start, then supervise until Ctrl-C, SIGTERM, SIGHUP or `down`
  *   npx tsx scripts/qa/harness.ts check                run the Q0b checks against a running stack
- *   npx tsx scripts/qa/harness.ts run [--reuse-build]  up, check, tear down, in one process
+ *   npx tsx scripts/qa/harness.ts run     up, check, tear down, in one process
  *   npx tsx scripts/qa/harness.ts down                 stop everything and remove the volume
  *
  * What `up` does, in order (scripts/qa/README.md has the why):
@@ -14,8 +14,8 @@
  *   3. scripts/qa/supabase-shim.sql, as the container superuser;
  *   4. drizzle-kit push, then scripts/apply-custom-migrations.ts (all 14 must
  *      be recorded in _custom_migrations), then scripts/qa/seed-local.ts;
- *   5. `next build` (skipped with --reuse-build only when the tree is
- *      unchanged since the last harness build), memory re-checked first;
+ *   5. `next build`, every run, under its own `env -i` (memory re-checked
+ *      first). A `.next` from anywhere else is never served;
  *   6. the AI stub on 127.0.0.1:58080 and `next start` on 127.0.0.1:3177;
  *   7. readiness: /api/health answers 200 "ok" (a database- and Redis-backed
  *      route), and an authenticated, database-backed API route returns A's
@@ -43,7 +43,7 @@ import * as path from 'node:path'
 import * as url from 'node:url'
 import { assertLocalQaTargets } from '../lib/local-db-guard'
 import { QA_JWT_SECRET_PREFIX, QA_LOGIN_CODE, QA_USER_A, QA_USER_B } from './seed-local'
-import { AI_STUB_LETTERS } from '../../tests/fixtures/letters'
+import { AI_STUB_LETTERS, AI_STUB_MIRROR_TEXT } from '../../tests/fixtures/letters'
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
@@ -63,7 +63,11 @@ const STATE_DIR = path.join(
 )
 const STATE_FILE = path.join(STATE_DIR, 'state.json')
 const HARNESS_LOG = path.join(STATE_DIR, 'harness.log')
-const BUILD_MARKER = path.join(STATE_DIR, 'build-marker')
+/**
+ * The compose project, scoped to this worktree like STATE_DIR, so a `down` in
+ * one worktree can never remove another worktree's stack.
+ */
+const COMPOSE_PROJECT = path.basename(STATE_DIR)
 /** An empty variables file for docker compose, so it never reads a repo .env. */
 const COMPOSE_VARS = path.join(STATE_DIR, 'compose-vars-empty')
 /** DOTENV_CONFIG_PATH for every child. It must never exist. */
@@ -211,10 +215,16 @@ function launch(label: string, env: Record<string, string>, command: string[], l
     // The spawned /usr/bin/env gets nothing; `-i` then clears even that.
     env: {} as NodeJS.ProcessEnv,
     stdio: ['ignore', fd, fd],
+    // Its own process group, so teardown can stop it AND everything it forks
+    // (next build's workers survive a signal to the parent alone).
+    detached: true,
   })
   fs.closeSync(fd)
   return child
 }
+
+/** Short-lived children (writers, build, mint) still running; a signal must stop them too. */
+const inFlight = new Set<ChildProcess>()
 
 function runToCompletion(
   label: string,
@@ -227,9 +237,13 @@ function runToCompletion(
     const child = spawn('/usr/bin/env', envArgv(env, command), {
       cwd: REPO_ROOT,
       // The spawned /usr/bin/env gets nothing; `-i` then clears even that.
-    env: {} as NodeJS.ProcessEnv,
+      env: {} as NodeJS.ProcessEnv,
       stdio: ['ignore', 'pipe', 'pipe'],
+      // Own process group; see launch().
+      detached: true,
     })
+    inFlight.add(child)
+    child.on('exit', () => inFlight.delete(child))
     let stdout = ''
     let stderr = ''
     child.stdout.on('data', (d: Buffer) => {
@@ -279,7 +293,7 @@ async function runWriter(label: string, values: Record<string, string>, command:
 // ---------------------------------------------------------------------------
 
 function compose(args: string[], input?: string): { status: number; stdout: string; stderr: string } {
-  const result = spawnSync('docker', ['compose', '--env-file', COMPOSE_VARS, '-f', COMPOSE_FILE, ...args], {
+  const result = spawnSync('docker', ['compose', '-p', COMPOSE_PROJECT, '--env-file', COMPOSE_VARS, '-f', COMPOSE_FILE, ...args], {
     cwd: REPO_ROOT,
     input,
     encoding: 'utf8',
@@ -298,7 +312,7 @@ function psql(sql: string): string {
 function composeDown(): void {
   fs.mkdirSync(STATE_DIR, { recursive: true })
   if (!fs.existsSync(COMPOSE_VARS)) fs.writeFileSync(COMPOSE_VARS, '')
-  log('docker compose down -v')
+  log(`docker compose -p ${COMPOSE_PROJECT} down -v`)
   const r = compose(['down', '-v'])
   process.stdout.write(r.stderr.replace(/^(?=.)/gm, '  compose | '))
   if (r.status !== 0) log(`compose down exited ${r.status}`)
@@ -312,6 +326,10 @@ interface HarnessState {
   supervisorPid: number
   serverPid: number
   stubPid: number
+  /** /proc/<pid>/stat start times, so a reused pid is never mistaken for ours. */
+  supervisorStart: string
+  serverStart: string
+  stubStart: string
   jwtSecret: string
   startedAt: string
 }
@@ -337,23 +355,86 @@ function pidAlive(pid: number): boolean {
   }
 }
 
-function buildFingerprint(values: Record<string, string>): string {
-  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: REPO_ROOT, encoding: 'utf8' }).stdout.trim()
-  const status = spawnSync('git', ['status', '--porcelain=v1', '-uall'], { cwd: REPO_ROOT, encoding: 'utf8' }).stdout
-  const diff = spawnSync('git', ['diff', 'HEAD'], { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }).stdout
-  // NEXT_PUBLIC_* is inlined at build time, so it is part of the fingerprint.
-  return createHash('sha256').update(`${head}\n${status}\n${diff}\n${values.NEXT_PUBLIC_APP_URL}`).digest('hex')
+/** Field 22 of /proc/<pid>/stat (start time in clock ticks since boot), or null if the pid is gone. */
+function procStartTime(pid: number): string | null {
+  try {
+    const stat = fs.readFileSync(`/proc/${pid}/stat`, 'utf8')
+    // The command name (field 2) may contain spaces; fields after it follow the last ')'.
+    return stat.slice(stat.lastIndexOf(')') + 2).split(' ')[19] ?? null
+  } catch {
+    return null
+  }
 }
+
+function procCmdline(pid: number): string {
+  try {
+    return fs.readFileSync(`/proc/${pid}/cmdline`, 'utf8').replace(/\0/g, ' ').trim()
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * W1: a recorded pid is ours only if it is alive, its start time is the one
+ * recorded when the harness launched it, and its command line still looks
+ * like what was launched. Anything else is a reused pid and is never signalled.
+ */
+function ownedPid(pid: number, start: string | undefined, cmdlineMarkers: string[]): { owned: boolean; why: string } {
+  if (!pid || !pidAlive(pid)) return { owned: false, why: 'not running' }
+  const actualStart = procStartTime(pid)
+  if (!start || actualStart !== start) return { owned: false, why: `start time ${actualStart} != recorded ${start}` }
+  const cmd = procCmdline(pid)
+  if (!cmdlineMarkers.some((m) => cmd.includes(m))) return { owned: false, why: `command line "${cmd.slice(0, 80)}" is not the harness's` }
+  return { owned: true, why: 'start time and command line match' }
+}
+
+const SERVER_MARKERS = ['next-server', 'next/dist/bin/next']
+const STUB_MARKERS = ['scripts/qa/ai-stub.ts']
+const SUPERVISOR_MARKERS = ['scripts/qa/harness.ts']
 
 // ---------------------------------------------------------------------------
 // HTTP helpers (loopback only)
 // ---------------------------------------------------------------------------
 
-async function httpGet(pathname: string, cookie?: string): Promise<Response> {
+/**
+ * Every non-browser request to the app goes through here. N2: the middleware
+ * rejects a state-changing request (POST, PUT, PATCH, DELETE) whose Origin is
+ * not NEXT_PUBLIC_APP_URL, so those always carry it. A 403 from a missing
+ * Origin would be a harness bug, never a finding.
+ */
+async function appRequest(
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  pathname: string,
+  opts: { cookie?: string; json?: unknown } = {}
+): Promise<Response> {
+  const headers: Record<string, string> = {}
+  if (opts.cookie) headers.cookie = opts.cookie
+  if (method !== 'GET') headers.origin = APP_URL
+  if (opts.json !== undefined) headers['content-type'] = 'application/json'
   return fetch(`${APP_URL}${pathname}`, {
+    method,
     redirect: 'manual',
-    headers: cookie ? { cookie } : {},
+    headers,
+    body: opts.json !== undefined ? JSON.stringify(opts.json) : undefined,
   })
+}
+
+function httpGet(pathname: string, cookie?: string): Promise<Response> {
+  return appRequest('GET', pathname, { cookie })
+}
+
+/**
+ * W3: no browser the harness drives may reach send-code (it would call Resend
+ * with the dummy key and the synthetic address). Installed on the CONTEXT, so
+ * it covers every page in it. Exported for later batches' browser tests.
+ */
+export async function interceptSendCode(context: import('playwright').BrowserContext): Promise<{ count: number }> {
+  const counter = { count: 0 }
+  await context.route('**/api/auth/send-code', async (route) => {
+    counter.count++
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' })
+  })
+  return counter
 }
 
 async function mintCookie(values: Record<string, string>, user: 'a' | 'b'): Promise<{ header: string; json: Record<string, unknown> }> {
@@ -412,7 +493,11 @@ async function preflight(): Promise<void> {
     )
   }
   const live = readState()
-  if (live && pidAlive(live.supervisorPid)) fail(`a harness is already running (supervisor pid ${live.supervisorPid}); run \`down\` first`)
+  if (live && ownedPid(live.supervisorPid, live.supervisorStart, SUPERVISOR_MARKERS).owned) {
+    // W1: refuse and touch nothing. This invocation started nothing, so its
+    // teardown has nothing to stop.
+    fail(`a harness is already running (supervisor pid ${live.supervisorPid}); run \`down\` first`)
+  }
   for (const port of PORTS) {
     if (!(await portIsFree(port))) fail(`port 127.0.0.1:${port} is in use; run \`down\` or free it first`)
   }
@@ -422,18 +507,30 @@ async function preflight(): Promise<void> {
   if (fs.existsSync(MISSING_DOTENV)) fail(`${MISSING_DOTENV} exists; it must not`)
 }
 
-async function bringUp(opts: { reuseBuild: boolean }): Promise<Running> {
+/**
+ * W1: what THIS invocation started. Teardown stops exactly these and nothing
+ * else: a refused `up` (already running, port taken) starts nothing, so it
+ * tears nothing down.
+ */
+const started: { compose: boolean; server?: ChildProcess; stub?: ChildProcess; stateWritten: boolean } = {
+  compose: false,
+  stateWritten: false,
+}
+
+async function bringUp(): Promise<Running> {
   fs.mkdirSync(path.join(STATE_DIR, 'home'), { recursive: true, mode: 0o700 })
   fs.writeFileSync(COMPOSE_VARS, '')
-  fs.writeFileSync(HARNESS_LOG, '')
   await preflight()
+  // Only now is the log ours to truncate; a refused `up` leaves the live one alone.
+  fs.writeFileSync(HARNESS_LOG, '')
 
   const values = harnessValues(`${QA_JWT_SECRET_PREFIX}${randomBytes(24).toString('hex')}`)
   if ('DEV_AUTH_BYPASS' in values) fail('DEV_AUTH_BYPASS must never be set')
   if (values.NODE_ENV !== 'production') fail('NODE_ENV must be production')
 
   requireMemory('starting the stack')
-  log('docker compose up -d --wait')
+  log(`docker compose -p ${COMPOSE_PROJECT} up -d --wait`)
+  started.compose = true
   const up = compose(['up', '-d', '--wait'])
   process.stdout.write(up.stderr.replace(/^(?=.)/gm, '  compose | '))
   if (up.status !== 0) fail('docker compose up failed')
@@ -462,23 +559,13 @@ async function bringUp(opts: { reuseBuild: boolean }): Promise<Running> {
 
   await runWriter('seed-local', values, [NODE, TSX, path.join(REPO_ROOT, 'scripts', 'qa', 'seed-local.ts')])
 
-  const fingerprint = buildFingerprint(values)
-  const reusable =
-    opts.reuseBuild &&
-    fs.existsSync(path.join(REPO_ROOT, '.next', 'BUILD_ID')) &&
-    fs.existsSync(BUILD_MARKER) &&
-    fs.readFileSync(BUILD_MARKER, 'utf8') === fingerprint
-  if (reusable) {
-    log('--reuse-build: tree unchanged since the last harness build; skipping next build')
-  } else {
-    if (opts.reuseBuild) log('--reuse-build: no matching harness build for this tree; building')
-    requireMemory('next build')
-    fs.rmSync(BUILD_MARKER, { force: true })
-    await runToCompletion('next build', pick(values, APP_KEYS), [NODE, NEXT, 'build'])
-    fs.writeFileSync(BUILD_MARKER, fingerprint)
-  }
+  // W2: always build, under this run's own env -i. A `.next` built by anything
+  // else (a plain `npm run build` with the shell's environment) is never served.
+  requireMemory('next build')
+  await runToCompletion('next build', pick(values, APP_KEYS), [NODE, NEXT, 'build'])
 
   const stub = launch('ai-stub', pick(values, STUB_KEYS), [NODE, TSX, path.join(REPO_ROOT, 'scripts', 'qa', 'ai-stub.ts')], path.join(STATE_DIR, 'ai-stub.log'))
+  started.stub = stub
   await waitFor('AI stub', 30_000, async () => {
     const r = await fetch(`${AI_STUB_URL}/__qa/health`)
     return r.ok ? null : `HTTP ${r.status}`
@@ -492,6 +579,7 @@ async function bringUp(opts: { reuseBuild: boolean }): Promise<Running> {
     [NODE, NEXT, 'start', '-p', String(APP_PORT), '-H', APP_HOST],
     serverLog
   )
+  started.server = server
 
   // N3: ready means a database-backed route answers correctly. /api/health
   // runs `select 1` through getDb() (which is where the TLS rule fires) and a
@@ -512,8 +600,6 @@ async function bringUp(opts: { reuseBuild: boolean }): Promise<Running> {
     log(`authenticated readiness probe: GET /api/lever/actions as A returned ${EXPECTED_A_ACTIONS} actions`)
   } catch (err) {
     console.error(`--- last lines of ${serverLog} ---\n${tail(serverLog)}`)
-    server.kill('SIGTERM')
-    stub.kill('SIGTERM')
     throw err
   }
 
@@ -521,39 +607,49 @@ async function bringUp(opts: { reuseBuild: boolean }): Promise<Running> {
     supervisorPid: process.pid,
     serverPid: server.pid as number,
     stubPid: stub.pid as number,
+    supervisorStart: procStartTime(process.pid) ?? '',
+    serverStart: procStartTime(server.pid as number) ?? '',
+    stubStart: procStartTime(stub.pid as number) ?? '',
     jwtSecret: values.JWT_SECRET,
     startedAt: new Date().toISOString(),
   })
+  started.stateWritten = true
   log(`ready: app ${APP_URL}, AI stub ${AI_STUB_URL}, database 127.0.0.1:55432, redis REST ${REDIS_REST_URL}`)
   log(`logs and state in ${STATE_DIR}`)
   return { values, server, stub }
 }
 
-async function stopChildren(running: { server?: ChildProcess; stub?: ChildProcess } | null, state: HarnessState | null): Promise<void> {
-  const pids = new Set<number>()
-  if (running?.server?.pid) pids.add(running.server.pid)
-  if (running?.stub?.pid) pids.add(running.stub.pid)
-  if (state) {
-    pids.add(state.serverPid)
-    pids.add(state.stubPid)
+interface Target {
+  label: string
+  pid: number
+}
+
+/** Every process the harness launches leads its own process group (pgid = pid). */
+function groupAlive(pgid: number): boolean {
+  try {
+    process.kill(-pgid, 0)
+    return true
+  } catch {
+    return false
   }
-  for (const pid of pids) {
-    if (pidAlive(pid)) {
-      log(`stopping pid ${pid}`)
-      try {
-        process.kill(pid, 'SIGTERM')
-      } catch {
-        // Already gone between the check and the signal.
-      }
+}
+
+async function signalAndWait(targets: Target[]): Promise<void> {
+  for (const t of targets) {
+    log(`stopping ${t.label} (process group ${t.pid})`)
+    try {
+      process.kill(-t.pid, 'SIGTERM')
+    } catch {
+      // Already gone between the ownership check and the signal.
     }
   }
   const deadline = Date.now() + 15_000
-  while ([...pids].some(pidAlive) && Date.now() < deadline) await sleep(250)
-  for (const pid of pids) {
-    if (pidAlive(pid)) {
-      log(`pid ${pid} ignored SIGTERM; sending SIGKILL`)
+  while (targets.some((t) => groupAlive(t.pid)) && Date.now() < deadline) await sleep(250)
+  for (const t of targets) {
+    if (groupAlive(t.pid)) {
+      log(`${t.label} (process group ${t.pid}) ignored SIGTERM; sending SIGKILL`)
       try {
-        process.kill(pid, 'SIGKILL')
+        process.kill(-t.pid, 'SIGKILL')
       } catch {
         // Already gone.
       }
@@ -561,10 +657,22 @@ async function stopChildren(running: { server?: ChildProcess; stub?: ChildProces
   }
 }
 
-async function teardown(running: Running | null): Promise<void> {
-  await stopChildren(running, readState())
-  composeDown()
-  fs.rmSync(STATE_FILE, { force: true })
+/**
+ * Tear down exactly what this invocation started. The server and stub are
+ * this process's own children (unreaped, so their pids cannot have been
+ * reused); compose is downed only if this invocation brought it up.
+ */
+async function teardownStarted(): Promise<void> {
+  const targets: Target[] = []
+  for (const [label, child] of [['next start', started.server], ['ai-stub', started.stub]] as const) {
+    if (child?.pid && child.exitCode === null && child.signalCode === null) targets.push({ label, pid: child.pid })
+  }
+  for (const child of inFlight) {
+    if (child.pid && child.exitCode === null && child.signalCode === null) targets.push({ label: 'in-flight step', pid: child.pid })
+  }
+  await signalAndWait(targets)
+  if (started.compose) composeDown()
+  if (started.stateWritten) fs.rmSync(STATE_FILE, { force: true })
 }
 
 // ---------------------------------------------------------------------------
@@ -682,16 +790,10 @@ async function runChecks(values: Record<string, string>, state: HarnessState): P
     const browser = await chromium.launch({ headless: true, env: { HOME: values.HOME, PATH: values.PATH } })
     try {
       const context = await browser.newContext()
+      // Before any page exists, so every page and popup in this context is covered.
+      const sendCode = await interceptSendCode(context)
       const page = await context.newPage()
-      let sendCodeIntercepted = 0
       let verifyStatus: number | null = null
-      // The harness never calls send-code (it would try to email). The login
-      // page's first step POSTs it, so the browser's request is answered here
-      // and never reaches the server. verify-code is NOT intercepted.
-      await page.route('**/api/auth/send-code', async (route) => {
-        sendCodeIntercepted++
-        await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' })
-      })
       page.on('response', (res) => {
         if (res.url() === `${APP_URL}/api/auth/verify-code`) verifyStatus = res.status()
       })
@@ -706,7 +808,7 @@ async function runChecks(values: Record<string, string>, state: HarnessState): P
       // URL, although Chromium does send them to loopback.
       const cookies = await context.cookies()
       const auth = cookies.find((c) => c.name === 'republic_token' && c.domain === APP_HOST)
-      ev.push(`send-code answered in the browser (never reached the server): ${sendCodeIntercepted} time(s)`)
+      ev.push(`send-code answered in the browser (never reached the server): ${sendCode.count} time(s)`)
       ev.push(`POST /api/auth/verify-code (real route, through the browser) -> HTTP ${verifyStatus}`)
       ev.push(`browser landed on ${page.url()}; reload -> HTTP ${reload?.status()}`)
       ev.push(`auth cookie set by the server: ${auth ? `republic_token httpOnly=${auth.httpOnly} secure=${auth.secure} sameSite=${auth.sameSite}` : 'MISSING'}`)
@@ -721,11 +823,7 @@ async function runChecks(values: Record<string, string>, state: HarnessState): P
     const actionId = psql(
       `select id from lever_actions where user_id = '${QA_USER_A.id}' and title = 'FIPPA Request: QA marker-v1 (draft)'`
     )
-    const r = await fetch(`${APP_URL}/api/lever/generate`, {
-      method: 'POST',
-      headers: { cookie: a.header, origin: APP_URL, 'content-type': 'application/json' },
-      body: JSON.stringify({ actionId }),
-    })
+    const r = await appRequest('POST', '/api/lever/generate', { cookie: a.header, json: { actionId } })
     const streamed = await r.text()
     ev.push(`POST /api/lever/generate (Origin: ${APP_URL}) for A's marker-v1 draft ${actionId} -> HTTP ${r.status}, ${streamed.length} characters streamed`)
     const { requests } = (await (await fetch(`${AI_STUB_URL}/__qa/requests`)).json()) as {
@@ -742,6 +840,28 @@ async function runChecks(values: Record<string, string>, state: HarnessState): P
       requests[0].kind === 'letter' &&
       requests[0].apiKeyMatched
     )
+  })
+
+  await record('a Mirror comparison is served by the AI stub (Mirror path)', async (ev) => {
+    // Comparisons are not stored (no table), so the populated /mirror state is
+    // produced on demand. This proves that path reaches the stub, and that the
+    // stub recognises it, so a prompt-wording change cannot silently route it
+    // to the generic reply.
+    await fetch(`${AI_STUB_URL}/__qa/reset`, { method: 'POST' })
+    const documentId = psql(`select id from documents where user_id = '${QA_USER_A.id}'`)
+    const r = await appRequest('POST', '/api/mirror/compare', {
+      cookie: a.header,
+      json: { documentId, policyArea: 'environment', description: 'How do other places notify residents before approving logging above a drinking-water intake? (QA)' },
+    })
+    const streamed = await r.text()
+    ev.push(`POST /api/mirror/compare (Origin: ${APP_URL}) as A with the seeded document -> HTTP ${r.status}, ${streamed.length} characters streamed`)
+    const { requests } = (await (await fetch(`${AI_STUB_URL}/__qa/requests`)).json()) as {
+      requests: Array<{ path: string; kind: string; apiKeyMatched: boolean }>
+    }
+    for (const q of requests) ev.push(`stub recorded: ${q.path} kind=${q.kind} apiKeyMatched=${q.apiKeyMatched}`)
+    const matches = streamed === AI_STUB_MIRROR_TEXT
+    ev.push(`streamed text ${matches ? 'equals' : 'DIFFERS FROM'} the stub's synthetic comparison`)
+    return r.status === 200 && matches && requests.length === 1 && requests[0].kind === 'mirror' && requests[0].apiKeyMatched
   })
 
   await record('`env -i` is visible in the launcher\'s process tree', async (ev) => {
@@ -772,32 +892,39 @@ async function runChecks(values: Record<string, string>, state: HarnessState): P
 // Commands
 // ---------------------------------------------------------------------------
 
-async function cmdUp(reuseBuild: boolean): Promise<void> {
-  let running: Running | null = null
+/**
+ * N6: SIGINT, SIGTERM and SIGHUP all tear down exactly what this invocation
+ * started (see `started`), in `up` and in `run` alike, then exit.
+ */
+function onSignalsTearDown(): { stopping: () => boolean; stop: (why: string, code?: number) => Promise<void> } {
   let stopping = false
-  const stop = async (signal: string) => {
+  const stop = async (why: string, code = 0) => {
     if (stopping) return
     stopping = true
-    log(`${signal} received; tearing down`)
-    await teardown(running)
-    process.exit(0)
+    log(`${why}; tearing down what this invocation started`)
+    await teardownStarted()
+    process.exit(code)
   }
-  process.on('SIGINT', () => void stop('SIGINT'))
-  process.on('SIGTERM', () => void stop('SIGTERM'))
+  for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'] as const) {
+    process.on(signal, () => void stop(`${signal} received`, 130))
+  }
+  return { stopping: () => stopping, stop }
+}
+
+async function cmdUp(): Promise<void> {
+  const { stopping, stop } = onSignalsTearDown()
+  let running: Running
   try {
-    running = await bringUp({ reuseBuild })
+    running = await bringUp()
   } catch (err) {
     console.error(`[harness] up failed: ${err instanceof Error ? err.message : String(err)}`)
-    await teardown(running)
-    process.exit(1)
+    await stop('up failed', 1)
+    return
   }
-  log('supervising; Ctrl-C or `harness.ts down` stops everything and removes the volume')
+  log('supervising; Ctrl-C, SIGTERM, SIGHUP or `harness.ts down` stops everything and removes the volume')
   for (const [label, child] of [['next start', running.server], ['ai-stub', running.stub]] as const) {
     child.on('exit', (code, signal) => {
-      if (!stopping) {
-        log(`${label} exited unexpectedly (code ${code}, signal ${signal}); tearing down`)
-        void stop('child exit')
-      }
+      if (!stopping()) void stop(`${label} exited unexpectedly (code ${code}, signal ${signal})`, 1)
     })
   }
   await new Promise(() => {})
@@ -805,7 +932,9 @@ async function cmdUp(reuseBuild: boolean): Promise<void> {
 
 async function cmdCheck(): Promise<void> {
   const state = readState()
-  if (!state || !pidAlive(state.supervisorPid)) fail('no running harness; start one with `up`')
+  if (!state || !ownedPid(state.supervisorPid, state.supervisorStart, SUPERVISOR_MARKERS).owned) {
+    fail('no running harness; start one with `up`')
+  }
   const values = harnessValues(state.jwtSecret)
   const results = await runChecks(values, state)
   const failed = results.filter((r) => !r.pass)
@@ -813,53 +942,73 @@ async function cmdCheck(): Promise<void> {
   if (failed.length > 0) process.exit(1)
 }
 
-async function cmdRun(reuseBuild: boolean): Promise<void> {
-  let running: Running | null = null
+async function cmdRun(): Promise<void> {
+  const { stop } = onSignalsTearDown()
   let code = 1
   try {
-    running = await bringUp({ reuseBuild })
+    const running = await bringUp()
     const results = await runChecks(running.values, readState() as HarnessState)
     const failed = results.filter((r) => !r.pass)
     console.log(`\n${results.length - failed.length}/${results.length} checks passed`)
     code = failed.length === 0 ? 0 : 1
   } catch (err) {
     console.error(`[harness] run failed: ${err instanceof Error ? err.message : String(err)}`)
-  } finally {
-    await teardown(running)
   }
-  process.exit(code)
+  await stop('run finished', code)
 }
 
+/**
+ * `down` is for THIS worktree's harness only: the compose project is scoped
+ * to the worktree, and a recorded pid is signalled only after its start time
+ * and command line prove it is still the harness's process (W1). A pid that
+ * fails that test is reported and left alone.
+ */
 async function cmdDown(): Promise<void> {
   fs.mkdirSync(STATE_DIR, { recursive: true })
   const state = readState()
-  if (state && pidAlive(state.supervisorPid)) {
-    log(`signalling supervisor ${state.supervisorPid}`)
-    process.kill(state.supervisorPid, 'SIGTERM')
-    const deadline = Date.now() + 60_000
-    while (pidAlive(state.supervisorPid) && Date.now() < deadline) await sleep(500)
+  if (state) {
+    const sup = ownedPid(state.supervisorPid, state.supervisorStart, SUPERVISOR_MARKERS)
+    if (sup.owned) {
+      log(`signalling supervisor ${state.supervisorPid}`)
+      process.kill(state.supervisorPid, 'SIGTERM')
+      const deadline = Date.now() + 60_000
+      while (pidAlive(state.supervisorPid) && Date.now() < deadline) await sleep(500)
+    } else {
+      log(`supervisor pid ${state.supervisorPid} not signalled: ${sup.why}`)
+    }
+    const strays: Target[] = []
+    for (const [label, pid, start, markers] of [
+      ['next start', state.serverPid, state.serverStart, SERVER_MARKERS],
+      ['ai-stub', state.stubPid, state.stubStart, STUB_MARKERS],
+    ] as const) {
+      const own = ownedPid(pid, start, markers)
+      if (own.owned) strays.push({ label, pid })
+      else log(`${label} pid ${pid} not signalled: ${own.why}`)
+    }
+    await signalAndWait(strays)
   }
-  // Whatever the supervisor did, finish the job: stray children, then the stack.
-  await stopChildren(null, state)
   composeDown()
   fs.rmSync(STATE_FILE, { force: true })
 }
 
 async function main() {
   const [command, ...rest] = process.argv.slice(2)
-  const reuseBuild = rest.includes('--reuse-build')
+  if (rest.length > 0) {
+    console.error(`unknown argument(s): ${rest.join(' ')}`)
+    process.exit(2)
+  }
   fs.mkdirSync(STATE_DIR, { recursive: true, mode: 0o700 })
   switch (command) {
     case 'up':
-      return cmdUp(reuseBuild)
+      return cmdUp()
     case 'check':
       return cmdCheck()
     case 'run':
-      return cmdRun(reuseBuild)
+      return cmdRun()
     case 'down':
       return cmdDown()
     default:
-      console.error('usage: harness.ts up [--reuse-build] | check | run [--reuse-build] | down')
+      console.error('usage: harness.ts up | check | run | down')
       process.exit(2)
   }
 }
