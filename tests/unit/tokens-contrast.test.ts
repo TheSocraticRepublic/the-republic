@@ -369,12 +369,18 @@ describe('focus ring on island paper (the grounds the ring actually lands on)', 
     return hits[0]
   }
 
-  /** `color-mix(in srgb, var(--x) N%, transparent)` resolved against a scope; `--color-island-*` reads `--island-*`. */
-  function resolveRing(value: string, vars: Map<string, string>): RGBA {
+  /**
+   * `color-mix(in srgb, var(--x) N%, transparent)` as an element inside `scopes` sees it.
+   * `--color-island-*` is emitted only at the theme root (`:root` on `<html>`, see the
+   * premise test below), where it resolves against the light `:root` island set and
+   * is inherited as that value; every other variable resolves in `scopes`.
+   */
+  function resolveRing(value: string, scopes: Map<string, string>): RGBA {
     const m = /^color-mix\(in srgb, var\((--[a-z0-9-]+)\) (\d+(?:\.\d+)?)%, transparent\)$/.exec(value)
     if (!m) throw new Error(`unexpected ring form: ${value}`)
-    const name = m[1].replace(/^--color-island-/, '--island-')
-    return { ...hexVar(vars, name), a: Number(m[2]) / 100 }
+    const alpha = Number(m[2]) / 100
+    if (m[1].startsWith('--color-island-')) return { ...hexVar(themeRoot(), m[1].replace(/^--color-island-/, '--island-')), a: alpha }
+    return { ...hexVar(scopes, m[1]), a: alpha }
   }
 
   /**
@@ -389,6 +395,8 @@ describe('focus ring on island paper (the grounds the ring actually lands on)', 
   }
   const LIGHT_PAPER = [':root', '.dark']
   const DARK_PAPER = [':root', '.dark', '.dark-island']
+  /** What `--color-island-*` resolves against: the variables on `<html>`. */
+  const themeRoot = () => effective(...LIGHT_PAPER)
 
   function lowOn(ring: RGBA, vars: Map<string, string>, grounds: readonly string[]): string[] {
     return grounds
@@ -403,13 +411,21 @@ describe('focus ring on island paper (the grounds the ring actually lands on)', 
     expect(contrast(over(ring, paper), paper)).toBeLessThan(1.1)
   })
 
-  it('paper re-points the ring at its island text: >= 3:1 on every light and dark island ground', () => {
+  it('premise: --color-island-* is declared only at the theme root, never by a theme scope', () => {
+    const atRoot: string[] = []
+    compiled.walkDecls('--color-island-text', (d) => void atRoot.push(`${layerOf(d)}:${d.value}`))
+    expect(atRoot).toEqual(['theme:var(--island-text)'])
+    for (const scope of [':root', '.dark', '.dark-island', '.light-scope'])
+      expect([...scopeVars(scope).keys()].filter((k) => k.startsWith('--color-island-'))).toEqual([])
+  })
+
+  it('paper re-points the ring through its own ground chain: >= 3:1 inside the chrome and inside .dark-island', () => {
     const value = ruleVars(paperRule()).get('--focus-ring')
     expect(value).toBeDefined()
-    const light = effective(...LIGHT_PAPER)
-    expect(lowOn(resolveRing(value as string, light), light, ISLAND_GROUNDS)).toEqual([])
-    const dark = effective(...DARK_PAPER)
-    expect(lowOn(resolveRing(value as string, dark), dark, ISLAND_GROUNDS)).toEqual([])
+    // Inline grounds are `var(--color-island-*)`, so they paint the theme-root island set in both contexts.
+    for (const ctx of [LIGHT_PAPER, DARK_PAPER]) {
+      expect(lowOn(resolveRing(value as string, effective(...ctx)), themeRoot(), ISLAND_GROUNDS)).toEqual([])
+    }
   })
 
   it('the paper rule is unlayered and comes after .dark-island, so it wins on an element that is both', () => {
@@ -484,8 +500,7 @@ describe('focus ring on island paper (the grounds the ring actually lands on)', 
     expect(hits).toHaveLength(1)
     const value = ruleVars(hits[0]).get('outline-color')
     expect(value).toBeDefined()
-    const light = effective(...LIGHT_PAPER)
-    expect(lowOn(resolveRing(value as string, light), light, ISLAND_GROUNDS)).toEqual([])
+    expect(lowOn(resolveRing(value as string, themeRoot()), themeRoot(), ISLAND_GROUNDS)).toEqual([])
   })
 })
 

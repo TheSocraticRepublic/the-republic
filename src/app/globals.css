@@ -469,12 +469,18 @@ body {
 /*
  * Island paper outside the briefing: the Campaign panel and reasoning card,
  * the Lens panel, the civic strip, the Votes letter, bill and explanation
- * views. These paint an `--island-*` ground inline (light paper by default,
- * since `.dark` never redeclares the island set; dark under `.dark-island`)
- * without being a theme scope, so the chrome's light ring would be ~1.04:1 on
- * them. Any element that paints an island ground re-points `--focus-ring` at
- * its own `--island-text`, which is ink on paper and light under
- * `.dark-island`, so every focusable inside inherits the right ring.
+ * views. These paint an island ground inline, `var(--color-island-*)`, without
+ * being a theme scope, so the chrome's light ring would be ~1.04:1 on them.
+ * Any element that paints an island ground re-points `--focus-ring` at the
+ * island text through the SAME chain as its ground, `--color-island-text`,
+ * so ring and paper always resolve together.
+ *
+ * That chain matters: Tailwind emits `--color-island-*: var(--island-*)` once,
+ * at the theme root, where it resolves to the light `:root` island set and is
+ * inherited as that value. A `.dark-island` ancestor's `--island-*` overrides
+ * therefore do NOT reach inline `var(--color-island-*)` grounds (measured in
+ * Chromium: a `.dark-island` paper still paints #fafaf9). Pointing the ring at
+ * `--island-text` instead would put a light ring on that light paper.
  *
  * Both spellings of the inline style are matched: React's server render
  * writes `background-color:var(...)`, the browser's CSSOM (React on the
@@ -487,7 +493,7 @@ body {
 [style*="background:var(--color-island-"],
 [style*="background: var(--color-island-"],
 [class*="bg-island-"] {
-  --focus-ring: color-mix(in srgb, var(--island-text) 70%, transparent);
+  --focus-ring: color-mix(in srgb, var(--color-island-text) 70%, transparent);
 }
 
 /* Content island entrance animation */
