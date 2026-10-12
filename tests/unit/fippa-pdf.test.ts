@@ -23,6 +23,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } 
 import { NextRequest } from 'next/server'
 import postgres from 'postgres'
 import { createHash } from 'node:crypto'
+import { execFileSync, spawnSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -43,6 +44,7 @@ import {
   nonWhiteOutsideText,
   type PdfRead,
   type PdfPage,
+  type PdfItem,
 } from './pdf-text'
 import {
   LETTER_FIXTURES,
@@ -65,6 +67,7 @@ import {
 // ---------------------------------------------------------------------------
 
 const TITLE = 'Not part of your request'
+const PAGE_LABEL_ANYWHERE = /Page \d+ of \d+/
 const CHECK = "Check the recipient before you send. Open Cave doesn't confirm it for you."
 const NO_CHECKED =
   'Open Cave has no checked address for this body. Find its FOI contact on its own website and confirm it before you send.'
@@ -102,7 +105,15 @@ async function renderFixture(
 }
 
 const isFooter = (s: string) => PAGE_LABEL.test(s)
-const bodyText = (p: PdfPage) => p.items.filter((i) => !isFooter(i.str)).map((i) => i.str).join('')
+/** An item in the footer band (by position: body text never enters it, tested below). */
+const inBand = (i: PdfItem) => i.top <= FOOTER_BAND_TOP + 1
+const bodyText = (p: PdfPage) => p.items.filter((i) => !inBand(i)).map((i) => i.str).join('')
+/** The footer the plan requires on each page: the letter's own "Page k of N", then the guidance page's label (Jen C1). */
+function expectedFooters(pdf: PdfRead): string[] {
+  const g = pdf.pages.findIndex((p) => bodyText(p).startsWith(TITLE))
+  return pdf.pages.map((_, k) => (k < g ? `Page ${k + 1} of ${g}` : TITLE))
+}
+const footers = (p: PdfPage) => p.items.filter((i) => inBand(i) && i.str.trim()).map((i) => i.str)
 
 /** The index of the guidance page: the first page whose body starts with its title. */
 function guidanceIndex(pdf: PdfRead): number {
@@ -360,14 +371,15 @@ const GEOMETRY_FIXTURES = [
 
 describe('FIPPA PDF: footer, band and margins', () => {
   it.each(GEOMETRY_FIXTURES.map((fx) => [fx.id, fx] as const))(
-    '%s: "Page k of N" exactly once on every page, with the right N',
+    '%s: the letter\'s pages read "Page k of N" with N its own page count; the guidance page reads "Not part of your request"',
     async (_id, fx) => {
       const { pdf } = await renderFixture(fx)
-      const n = pdf.pages.length
+      const want = expectedFooters(pdf)
       pdf.pages.forEach((p, k) => {
-        const labels = p.items.filter((i) => isFooter(i.str)).map((i) => i.str)
-        expect(labels, `page ${k + 1}`).toEqual([`Page ${k + 1} of ${n}`])
+        expect(footers(p), `page ${k + 1}`).toEqual([want[k]])
       })
+      // The letter's N counts the letter only; the guidance page is never numbered.
+      for (const p of pdf.pages.slice(guidanceIndex(pdf))) expect(p.text).not.toMatch(PAGE_LABEL_ANYWHERE)
     },
     30_000
   )
@@ -386,7 +398,7 @@ describe('FIPPA PDF: footer, band and margins', () => {
       for (const [k, p] of pdf.pages.entries()) {
         for (const it of p.items) {
           if (!it.str.trim()) continue
-          if (isFooter(it.str)) {
+          if (inBand(it)) {
             expect(it.bottom, `footer bottom, page ${k + 1}`).toBeGreaterThanOrEqual(FOOTER_BAND_BOTTOM - 3)
             expect(it.top, `footer top, page ${k + 1}`).toBeLessThanOrEqual(FOOTER_BAND_TOP)
             continue
@@ -419,6 +431,9 @@ describe('FIPPA PDF: footer, band and margins', () => {
 // ---------------------------------------------------------------------------
 
 const PDFTOPPM = hasPdftoppm()
+function hasPdffonts(): boolean {
+  return spawnSync('pdffonts', ['-v'], { stdio: 'ignore' }).status === 0
+}
 if (!PDFTOPPM) {
   console.warn('[fippa-pdf] pure-white raster test SKIPPED: pdftoppm is not installed (mandatory in the relay local run).')
 }
@@ -437,9 +452,10 @@ describe.skipIf(!PDFTOPPM)(
         rasters.forEach((r, k) => {
           const bad = nonWhiteOutsideText(r, pdf.pages[k], 2)
           expect(bad.slice(0, 3), `page ${k + 1}: ${bad.length} non-white pixels`).toEqual([])
-          // The test is not vacuous: the glyphs themselves are dark.
+          // The test is not vacuous: the glyphs themselves are inked (a 9 pt
+          // footer alone is antialiased grey at 50 dpi, so any non-white counts).
           let dark = 0
-          for (let o = 0; o < r.data.length; o += 3) if (r.data[o] < 128) dark++
+          for (let o = 0; o < r.data.length; o += 3) if (r.data[o] < 230) dark++
           expect(dark, `page ${k + 1} has ink`).toBeGreaterThan(0)
         })
       },
@@ -459,6 +475,25 @@ describe('FIPPA PDF: metadata and ink', () => {
     expect(pdf.info.Author ?? '').toBe('')
     expect(pdf.info.Creator ?? '').toBe('')
     expect(JSON.stringify(pdf.info)).not.toMatch(/open\s*cave/i)
+  })
+
+  it.skipIf(!hasPdffonts())('every font in a filing is embedded, and the footer is in the letter\'s face (pdffonts; Jen C6)', async () => {
+    const { buf } = await renderFixture(MARKER_V1_LETTER)
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oc-pdffonts-'))
+    try {
+      const file = path.join(dir, 'f.pdf')
+      fs.writeFileSync(file, buf)
+      const rows = execFileSync('pdffonts', [file], { encoding: 'utf8' }).trim().split('\n').slice(2)
+      expect(rows.length).toBeGreaterThan(0)
+      for (const row of rows) {
+        const cols = row.trim().split(/\s+/)
+        // name, type..., encoding, emb, sub, uni, object ID: emb is the 5th from the end.
+        expect(cols[cols.length - 5], row).toBe('yes')
+        expect(row, row).toMatch(/SourceSerif4/)
+      }
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
   })
 
   it('placeholders are inked #92400E, the letter #1C1917', async () => {
@@ -953,8 +988,9 @@ describe.skipIf(!HARNESS_APP)(
         expect(squash(letterPagesText(pdf))).toBe(squash(fx.expectedLetter))
         expect(letterPagesText(pdf)).not.toMatch(/open\s*cave/i)
         expect(pdf.info.Author ?? '').toBe('')
+        const want = expectedFooters(pdf)
         pdf.pages.forEach((p, k) => {
-          expect(p.items.filter((i) => isFooter(i.str)).map((i) => i.str)).toEqual([`Page ${k + 1} of ${pdf.pages.length}`])
+          expect(footers(p)).toEqual([want[k]])
         })
         const g = guidanceIndex(pdf)
         expect(g).toBeGreaterThanOrEqual(1)

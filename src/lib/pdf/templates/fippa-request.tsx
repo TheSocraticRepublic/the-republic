@@ -290,7 +290,7 @@ export function FippaRequestTemplate({ data }: { data: FippaRequestData }) {
         <Text style={styles.section} {...noBreak}>
           {ATTRIBUTION_LINE}
         </Text>
-        <PageNumberFooter insetX={PDF_PAPER.margin} />
+        <PageNumberFooter insetX={PDF_PAPER.margin} label={GUIDANCE_PAGE_TITLE} />
       </Page>
     </Document>
   )

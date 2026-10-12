@@ -31,7 +31,7 @@ export function pageNumberLabel(pageNumber: number, totalPages: number): string 
  * props to every dynamic node on its final pass), but its type declares only
  * the page number.
  */
-type PageProps = { pageNumber: number; totalPages: number }
+type PageProps = { pageNumber: number; totalPages: number; subPageNumber: number; subPageTotalPages: number }
 const withPages = (fn: (p: PageProps) => React.ReactNode) =>
   fn as unknown as (p: { pageNumber: number; subPageNumber: number }) => React.ReactNode
 
@@ -58,8 +58,11 @@ const footerBandStyles = StyleSheet.create({
     lineHeight: 1.3,
     color: colors.footerText,
   },
-  pageNumber: {
-    fontFamily: 'Inter',
+  // The filing's footer is set in the letter's own embedded face, so a
+  // filing embeds every font it uses (Jen C6: an unloaded family falls back
+  // to unembedded Helvetica).
+  filing: {
+    fontFamily: 'Source Serif 4',
     fontSize: 9,
     lineHeight: 1.3,
     color: colors.textMuted,
@@ -67,16 +70,30 @@ const footerBandStyles = StyleSheet.create({
 })
 
 /**
- * The page-number line alone, fixed on every page, centred in the band.
- * Filings use this one: no branding, no date (R5).
+ * The filing footer, fixed on every page of its <Page>, centred in the band;
+ * no branding, no date (R5).
+ *
+ * Without `label` it numbers the pages of ITS OWN <Page> element ("Page k of
+ * N" from react-pdf's sub-page counts): the letter's pages count only the
+ * letter, never the guidance page after it (Jen C1: a citizen who sends only
+ * the letter must not send one that announces a missing page). With `label`
+ * it prints that text instead, as the guidance page does.
  */
-export function PageNumberFooter({ insetX = space.pageMargin }: { insetX?: number }) {
+export function PageNumberFooter({ insetX = space.pageMargin, label }: { insetX?: number; label?: string }) {
+  const style = [footerBandStyles.band, footerBandStyles.centred, { left: insetX, right: insetX }]
+  if (label !== undefined) {
+    return (
+      <View fixed style={style}>
+        <Text style={footerBandStyles.filing}>{label}</Text>
+      </View>
+    )
+  }
   return (
     <View
       fixed
-      style={[footerBandStyles.band, footerBandStyles.centred, { left: insetX, right: insetX }]}
-      render={withPages(({ pageNumber, totalPages }) => (
-        <Text style={footerBandStyles.pageNumber}>{pageNumberLabel(pageNumber, totalPages)}</Text>
+      style={style}
+      render={withPages(({ subPageNumber, subPageTotalPages }) => (
+        <Text style={footerBandStyles.filing}>{pageNumberLabel(subPageNumber, subPageTotalPages)}</Text>
       ))}
     />
   )
@@ -693,7 +710,7 @@ function RepublicFooter({ insetX = space.pageMargin }: { insetX?: number }) {
       render={withPages(({ pageNumber, totalPages }) => (
         <>
           <Text style={footerBandStyles.text}>Generated from Open Cave -- opencave.ca</Text>
-          <Text style={footerBandStyles.text}>{pageNumberLabel(pageNumber, totalPages)}</Text>
+          <Text style={[footerBandStyles.text, { color: colors.textMuted }]}>{pageNumberLabel(pageNumber, totalPages)}</Text>
           <Text style={footerBandStyles.text}>{date}</Text>
         </>
       ))}
