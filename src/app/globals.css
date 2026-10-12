@@ -563,12 +563,18 @@ body {
 [data-arm="votes"] { --arm-tint: var(--accent-votes); }
 
 /*
- * Mixed in OKLCH, not sRGB: in sRGB a cool accent (Oracle's blue) cancels the
- * R4 umber and the room rendered neutral #101111. In OKLCH every room keeps a
- * warm hue at this 4% (R4, Lee).
+ * Arm rooms stay warm (R4, Lee). Mixed in sRGB, a cool accent cancelled the
+ * umber: the Oracle room rendered neutral #101111 and Mirror green-grey.
+ * Mixed in OKLCH the hue moves only 4% of the way to the accent, so every room
+ * keeps S0's umber hue (64-75 degrees), but only if S0's hue survives: S0 is so
+ * near neutral (C 0.003) that Chromium treats its converted hue as powerless and
+ * takes the accent's hue whole (measured: Oracle h 228, Scout 312). Writing S0
+ * through `oklch(from ... l c h)` makes its hue explicit, so it is interpolated.
+ * A browser without relative colour syntax drops this declaration and keeps
+ * the plain S0 fallback, which is warm too.
  */
 [data-arm] {
-  background: color-mix(in oklch, var(--surface-0) 96%, var(--arm-tint) 4%);
+  background: color-mix(in oklch, oklch(from var(--surface-0) l c h) 96%, var(--arm-tint) 4%);
   min-height: 100vh;
 }
 

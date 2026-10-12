@@ -122,20 +122,26 @@ function fromOklch({ L, C, h }: LCH): RGBA {
   }
 }
 
-/** `color-mix(in oklch, A p%, B q%)` for opaque A and B: shorter-arc hue, as CSS defaults. */
-function mixOklch(a: RGBA, p: number, b: RGBA, q: number): RGBA {
+/**
+ * `color-mix(in oklch, A p%, B q%)` for opaque A and B: shorter-arc hue, as CSS
+ * defaults. `aHueMissing` models what Chromium does when A is a near-neutral
+ * colour converted to OKLCH (measured on the harness, Chromium 153: the warm S0
+ * at C 0.003): its hue is treated as powerless and B's hue is taken whole.
+ */
+function mixOklch(a: RGBA, p: number, b: RGBA, q: number, aHueMissing = false): RGBA {
   const t = q / (p + q)
   const x = toOklch(a)
   const y = toOklch(b)
+  if (aHueMissing) x.h = y.h
   let dh = y.h - x.h
   if (dh > 180) dh -= 360
   if (dh < -180) dh += 360
   return fromOklch({ L: x.L + (y.L - x.L) * t, C: x.C + (y.C - x.C) * t, h: (x.h + dh * t + 360) % 360 })
 }
 
-function mixIn(space: string, a: RGBA, p: number, b: RGBA, q: number): RGBA {
+function mixIn(space: string, a: RGBA, p: number, b: RGBA, q: number, aHueExplicit = false): RGBA {
   if (space === 'srgb') return mix(a, p, b, q)
-  if (space === 'oklch') return mixOklch(a, p, b, q)
+  if (space === 'oklch') return mixOklch(a, p, b, q, !aHueExplicit)
   throw new Error(`unmodelled color-mix space: ${space}`)
 }
 
@@ -199,12 +205,12 @@ function focusRing(vars: Map<string, string>): RGBA {
 }
 
 /** The arm tint recipe as the compiled `[data-arm]` rule writes it. */
-function armTintRecipe(): { space: string; surface: number; tint: number } {
-  let found: { space: string; surface: number; tint: number } | null = null
+function armTintRecipe(): { space: string; surface: number; tint: number; explicit: boolean } {
+  let found: { space: string; surface: number; tint: number; explicit: boolean } | null = null
   compiled.walkRules('[data-arm]', (rule) => {
     rule.walkDecls('background', (d) => {
-      const m = /color-mix\(in ([a-z]+), var\(--surface-0\) (\d+)%, var\(--arm-tint\) (\d+)%\)/.exec(d.value)
-      if (m) found = { space: m[1], surface: Number(m[2]), tint: Number(m[3]) }
+      const m = /color-mix\(in ([a-z]+), (var\(--surface-0\)|oklch\(from var\(--surface-0\) l c h\)) (\d+)%, var\(--arm-tint\) (\d+)%\)/.exec(d.value)
+      if (m) found = { space: m[1], explicit: m[2].startsWith('oklch(from'), surface: Number(m[3]), tint: Number(m[4]) }
     })
   })
   if (!found) throw new Error('[data-arm] tint recipe not found')
@@ -262,10 +268,10 @@ describe('text contrast, .dark (app chrome)', () => {
 
   it('every text and status token clears 4.5:1 on every arm tint', () => {
     const v = scopeVars('.dark')
-    const { space, surface, tint } = armTintRecipe()
+    const { space, surface, tint, explicit } = armTintRecipe()
     const pairs: Pair[] = []
     for (const arm of ARMS) {
-      const ground = mixIn(space, hexVar(v, '--surface-0'), surface, hexVar(v, `--accent-${arm}`), tint)
+      const ground = mixIn(space, hexVar(v, '--surface-0'), surface, hexVar(v, `--accent-${arm}`), tint, explicit)
       for (const fg of [...TEXT, ...STATUS]) pairs.push({ fg, bg: `${arm} tint`, ratio: contrast(hexVar(v, fg), ground) })
     }
     expect(pairs).toHaveLength(48)
@@ -277,19 +283,24 @@ describe('text contrast, .dark (app chrome)', () => {
   // chroma >= 0.003, so the hue is not a rounding artefact of a neutral grey.
   it('every arm-tinted room stays warm (OKLCH hue 30-100°, chroma >= 0.003)', () => {
     const v = scopeVars('.dark')
-    const { space, surface, tint } = armTintRecipe()
+    const { space, surface, tint, explicit } = armTintRecipe()
     const cold: string[] = []
     for (const arm of ARMS) {
-      const ground = toOklch(mixIn(space, hexVar(v, '--surface-0'), surface, hexVar(v, `--accent-${arm}`), tint))
+      const ground = toOklch(mixIn(space, hexVar(v, '--surface-0'), surface, hexVar(v, `--accent-${arm}`), tint, explicit))
       if (!(ground.h >= 30 && ground.h <= 100 && ground.C >= 0.003)) cold.push(`${arm}: h ${ground.h.toFixed(0)}, C ${ground.C.toFixed(4)}`)
     }
     expect(cold).toEqual([])
   })
 
-  it('the warmth check sees the sRGB mix that turned the Oracle room grey', () => {
+  it('the warmth check sees both failures: the sRGB grey Oracle, and OKLCH with S0 hue left powerless', () => {
     const v = scopeVars('.dark')
-    const oracle = toOklch(mix(hexVar(v, '--surface-0'), 96, hexVar(v, '--accent-oracle'), 4))
+    const s0 = hexVar(v, '--surface-0')
+    const oracle = toOklch(mix(s0, 96, hexVar(v, '--accent-oracle'), 4))
     expect(oracle.C).toBeLessThan(0.003)
+    // Chromium measured Oracle at h 228 and Scout at h 312 for `in oklch, var(--surface-0) ...`.
+    expect(toOklch(mixOklch(s0, 96, hexVar(v, '--accent-oracle'), 4, true)).h).toBeGreaterThan(200)
+    // With S0's hue explicit, Chromium measured Oracle h 74.8; the model agrees.
+    expect(toOklch(mixOklch(s0, 96, hexVar(v, '--accent-oracle'), 4, false)).h).toBeCloseTo(74.8, 0)
     // and the converter round-trips
     const back = fromOklch(toOklch(parseHex('#292623')))
     expect(Math.round(back.r)).toBe(0x29)
