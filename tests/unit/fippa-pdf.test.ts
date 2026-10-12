@@ -217,6 +217,22 @@ describe('FIPPA PDF: text oracle', () => {
     expect(guidanceIndex(pdf)).toBe(1)
   })
 
+  it('a styled run boundary with no space is never a line break (no "-" added there)', async () => {
+    // Each token is one word of adjacent styled runs, "(**alpha**)(*beta*)…",
+    // under 60 characters, so it is laid out as ordinary text; preceded by a
+    // growing run of filler so that, line after line, it straddles the right
+    // margin. textkit treats every run boundary as a hyphenation point.
+    const token = '(**alpha**)(*beta*)(**gamma**)(*delta*)(**epsilon**)'
+    const lines: string[] = []
+    for (let k = 0; k < 60; k++) lines.push(`${'word '.repeat(k)}${token} end.`)
+    const content = lines.join('\n')
+    const { pdf } = await renderFixture({ content, format: undefined })
+    const text = letterPagesText(pdf)
+    const expected = lines.map((l) => l.replace(/\*/g, '')).join('\n')
+    expect(squash(text)).toBe(squash(expected))
+    expect((text.match(/-/g) ?? []).length).toBe(0)
+  }, 30_000)
+
   it('nothing is inserted: no hyphen appears that the letter does not have', async () => {
     for (const fx of [TYPOGRAPHY_LETTER, LONG_TOKEN_LETTER, LONG_URL_LETTER, WRAPPING_LINK_LETTER, FIFTY_KB_LETTER]) {
       const { pdf } = await renderFixture(fx)
