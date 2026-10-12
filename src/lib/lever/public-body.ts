@@ -39,15 +39,10 @@ export const PROVINCE_OPTIONS: readonly { id: ProvinceId; label: string; verifie
 ]
 
 /**
- * A directory entry, plus the evidence fields A3 adds to `PublicBody`
- * (`sourceUrl`, `checkedOn`, `sourceQuote`). Declared here structurally so the
- * resolver can read them before and after A3 changes the shared type.
+ * A directory entry: a `PublicBody`, whose optional `sourceUrl`, `checkedOn`
+ * and `sourceQuote` are the evidence `isCheckedEntry` reads.
  */
-export type DirectoryEntry = PublicBody & {
-  sourceUrl?: string
-  checkedOn?: string
-  sourceQuote?: string
-}
+export type DirectoryEntry = PublicBody
 
 export type PublicBodyDirectory = Record<ProvinceId, readonly DirectoryEntry[]>
 

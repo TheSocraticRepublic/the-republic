@@ -222,8 +222,12 @@ describe('the built legal prompt, by jurisdiction', () => {
     for (const c of citations(bcModule)) expect(whole).toContain(c)
     expect(r.built.system).toBe(buildFippaPrompt(bcModule))
     expect(r.built.userMessage.startsWith('Generate a FIPPA Request.\nPublic Body: BC Ministry of Forests\n')).toBe(true)
-    // the directory address never reaches the model
-    expect(whole).not.toContain('PO Box 9049')
+    // no directory address reaches the model: derived from the directory, so
+    // it can't go vacuous when an address changes
+    const boxes = bcModule.publicBodies.flatMap((b) => b.foiAddress.match(/Box \d+/g) ?? [])
+    expect(boxes.length).toBeGreaterThan(0)
+    for (const b of bcModule.publicBodies) expect(whole, b.name).not.toContain(b.foiAddress)
+    for (const box of boxes) expect(whole, box).not.toContain(box)
     expect(whole).not.toContain('FOI Address')
   })
 
