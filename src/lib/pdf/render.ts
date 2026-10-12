@@ -1,6 +1,7 @@
 import React from 'react'
 import { renderToStream } from '@react-pdf/renderer'
 import type { DocumentProps } from '@react-pdf/renderer'
+import type { RecipientResolution } from '@/lib/lever/public-body'
 import type {
   CampaignMaterial,
   FactSheetSpec,
@@ -75,6 +76,10 @@ export interface LeverActionData {
   content: string
   actionType: string
   metadata?: Record<string, unknown>
+  /** FIPPA only: the action's status (it words the §2 notice). */
+  status?: 'draft' | 'final' | 'filed'
+  /** FIPPA only: the recipient resolver's answer, with the action's investigation (§3). */
+  recipient?: RecipientResolution
 }
 
 /**
@@ -96,6 +101,8 @@ function buildLeverElement(action: LeverActionData): React.ReactElement {
           title: action.title,
           content: action.content,
           metadata: action.metadata,
+          status: action.status,
+          recipient: action.recipient,
         },
       })
     case 'public_comment':

@@ -39,8 +39,18 @@ interface Row {
 
 let rows: Row[] = []
 vi.mock('@/lib/rate-limit', () => ({ checkRateLimit: async () => ({ success: true }) }))
+// The action query is select-from-where; the recipient's investigation query
+// (A4, "Where to send this") joins its jurisdiction. Its rows are `investigationRows`.
+let investigationRows: Array<{ concern: string; jurisdictionName: string | null; province: string | null }> = []
 vi.mock('@/lib/db', () => ({
-  getDb: () => ({ select: () => ({ from: () => ({ where: () => ({ limit: async () => rows }) }) }) }),
+  getDb: () => ({
+    select: () => ({
+      from: () => ({
+        where: () => ({ limit: async () => rows }),
+        leftJoin: () => ({ where: () => ({ limit: async () => investigationRows }) }),
+      }),
+    }),
+  }),
 }))
 
 const JSDOM = UntypedJSDOM as new (html: string) => { window: { document: Document } }

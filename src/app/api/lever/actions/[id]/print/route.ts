@@ -6,6 +6,8 @@ import { esc, errorPage, PRINT_CSP } from '@/lib/campaign/print-utils'
 import { parseLetter, blocksToHtml, escapeHtml, uncleanSplitNotice } from '@/lib/lever/letter-blocks'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
+import { loadRecipientResolution } from '@/lib/lever/load-recipient'
+import { whereToSendLines, WHERE_TO_SEND_TITLE, ATTRIBUTION_LINE } from '@/lib/lever/recipient-notice'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -77,7 +79,11 @@ export const GET = safeRoute(async (request: NextRequest, { params }: RouteConte
   // it gets its own page with no template header, date, addressee, signature
   // or branding. Every other action type keeps the shell below, unchanged.
   if (action.actionType === 'fippa_request') {
-    return new Response(fippaPrintPage(action.title, action.content, metadata.letterFormat, action.status), {
+    // "Where to send this" (filings §3): the resolver's answer, with the
+    // action's own investigation, on the guidance page only.
+    const recipient = await loadRecipientResolution(db, { metadata, investigationId: action.investigationId }, userId)
+    const where = whereToSendLines(recipient, action.content, metadata.letterFormat)
+    return new Response(fippaPrintPage(action.title, action.content, metadata.letterFormat, action.status, where), {
       status: 200,
       headers: printHeaders,
     })
@@ -387,7 +393,13 @@ const BROWSER_MARGIN_TIP =
  * that is not the letter (the Print button, the §2 notice, the empty-letter
  * note) sits outside it: the screen-only bar above, or the guidance page.
  */
-function fippaPrintPage(title: string, content: string, letterFormat: unknown, status: unknown): string {
+function fippaPrintPage(
+  title: string,
+  content: string,
+  letterFormat: unknown,
+  status: unknown,
+  whereToSend: string[]
+): string {
   const parsed = parseLetter(content, letterFormat)
   const clean = parsed.split === 'marker' && !parsed.fallback
   const letterEmpty = parsed.letter.length === 0
@@ -494,6 +506,9 @@ function fippaPrintPage(title: string, content: string, letterFormat: unknown, s
   .guidance-page .tip,
   .guidance-page .attribution { margin-top: 1rem; font-size: 10.5pt; color: #44403c; }
   .guidance-text { margin-bottom: 0.5rem; }
+  .where-to-send { margin-top: 1.25rem; font-size: 10.5pt; color: #44403c; overflow-wrap: anywhere; }
+  .where-to-send h2 { font-size: 10.5pt; font-weight: 600; color: #1c1917; }
+  .where-to-send p { margin-top: 0.25rem; }
 
   @media screen {
     .guidance-page { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e7e5e4; }
@@ -526,8 +541,12 @@ ${blocksToHtml(parsed.letter)}
 <h1 id="guidance-title">Not part of your request</h1>
 ${guidanceHtml}
 ${notes.length ? notesHtml : ''}
+<section class="where-to-send" aria-labelledby="where-title">
+<h2 id="where-title">${escapeHtml(WHERE_TO_SEND_TITLE)}</h2>
+${whereToSend.map((line) => `<p>${escapeHtml(line)}</p>`).join('\n')}
+</section>
 <p class="tip">${escapeHtml(BROWSER_MARGIN_TIP)}</p>
-<p class="attribution">Prepared with Open Cave, opencave.ca</p>
+<p class="attribution">${escapeHtml(ATTRIBUTION_LINE)}</p>
 </section>
 </main>
 </body>

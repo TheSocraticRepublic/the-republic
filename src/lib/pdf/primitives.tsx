@@ -8,6 +8,65 @@ import {
 } from '@react-pdf/renderer'
 import { colors, type as typeScale, space, shared } from './styles'
 
+// -------------------------------------------------------------------
+// The footer band (A4): every page carries "Page N of M" in a fixed band
+// at the bottom of the page. The band sits inside the page's bottom
+// padding, so body text, which stops at that padding, can never enter it.
+// -------------------------------------------------------------------
+
+/** Distance from the page's bottom edge to the bottom of the footer band (points). */
+export const FOOTER_BAND_BOTTOM = 30
+/** The band's height (points): one line of footer text. */
+export const FOOTER_BAND_HEIGHT = 12
+/** The top of the band, measured from the page's bottom edge. Body text must stay above it. */
+export const FOOTER_BAND_TOP = FOOTER_BAND_BOTTOM + FOOTER_BAND_HEIGHT
+
+/** "Page k of N", the one page-number line every footer prints. */
+export function pageNumberLabel(pageNumber: number, totalPages: number): string {
+  return `Page ${pageNumber} of ${totalPages}`
+}
+
+const footerBandStyles = StyleSheet.create({
+  band: {
+    position: 'absolute',
+    bottom: FOOTER_BAND_BOTTOM,
+    height: FOOTER_BAND_HEIGHT,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  centred: {
+    justifyContent: 'center',
+  },
+  text: {
+    fontFamily: 'Inter',
+    fontSize: typeScale.micro,
+    lineHeight: 1,
+    color: colors.footerText,
+  },
+  pageNumber: {
+    fontFamily: 'Inter',
+    fontSize: 9,
+    lineHeight: 1,
+    color: colors.textMuted,
+  },
+})
+
+/**
+ * The page-number line alone, fixed on every page, centred in the band.
+ * Filings use this one: no branding, no date (R5).
+ */
+export function PageNumberFooter({ insetX = space.pageMargin }: { insetX?: number }) {
+  return (
+    <View fixed style={[footerBandStyles.band, footerBandStyles.centred, { left: insetX, right: insetX }]}>
+      <Text
+        style={footerBandStyles.pageNumber}
+        render={({ pageNumber, totalPages }) => pageNumberLabel(pageNumber, totalPages)}
+      />
+    </View>
+  )
+}
+
 // Ensure fonts are registered
 import './fonts'
 
@@ -23,7 +82,7 @@ interface RepublicPageProps {
   accentBand?: boolean
   /** Show wordmark below accent band */
   wordmark?: boolean
-  /** Show standard footer */
+  /** Show the standard footer (fixed on every page, with page numbers) */
   footer?: boolean
   /** Custom page style overrides */
   style?: React.ComponentProps<typeof Page>['style']
@@ -47,12 +106,22 @@ export function RepublicPage({
     ? shared.pageLandscape
     : shared.page
 
+  // The footer lines up with the page's own side margins, including a
+  // template's override of them.
+  const override = style && !Array.isArray(style) ? (style as { paddingHorizontal?: unknown }) : null
+  const insetX =
+    typeof override?.paddingHorizontal === 'number'
+      ? override.paddingHorizontal
+      : orientation === 'landscape'
+      ? space.pageMarginLandscape
+      : space.pageMargin
+
   return (
     <Page size={size} orientation={orientation} style={style ? [baseStyle, style].flat() : baseStyle}>
       {accentBand && <AccentBand />}
       {wordmark && <Wordmark />}
       <View style={{ flex: 1 }}>{children}</View>
-      {footer && <RepublicFooter />}
+      {footer && <RepublicFooter insetX={insetX} />}
     </Page>
   )
 }
@@ -64,16 +133,20 @@ export function RepublicPage({
 interface RepublicDocumentProps {
   children: React.ReactNode
   title?: string
+  /** PDF Author. Filings pass '' (R5: blank Author). */
   author?: string
+  /** PDF Creator. Filings pass '' (A4: blank Creator). */
+  creator?: string
 }
 
 export function RepublicDocument({
   children,
   title = 'Open Cave',
   author = 'Open Cave Civic AI',
+  creator = 'Open Cave',
 }: RepublicDocumentProps) {
   return (
-    <Document title={title} author={author} creator="Open Cave">
+    <Document title={title} author={author} creator={creator}>
       {children}
     </Document>
   )
@@ -586,7 +659,12 @@ export function PullQuote({ text, attribution }: PullQuoteProps) {
 // RepublicFooter — standard page footer
 // -------------------------------------------------------------------
 
-function RepublicFooter() {
+/**
+ * The campaign and Lever footer: fixed, so it prints on every page (not
+ * only after the last line of content), in the band below the body, with
+ * the page number between the attribution and the date.
+ */
+function RepublicFooter({ insetX = space.pageMargin }: { insetX?: number }) {
   const date = new Date().toLocaleDateString('en-CA', {
     year: 'numeric',
     month: 'long',
@@ -594,11 +672,15 @@ function RepublicFooter() {
   })
 
   return (
-    <View style={shared.footer}>
-      <Text style={shared.footerText}>
+    <View fixed style={[footerBandStyles.band, { left: insetX, right: insetX }]}>
+      <Text style={footerBandStyles.text}>
         Generated from Open Cave -- opencave.ca
       </Text>
-      <Text style={shared.footerText}>{date}</Text>
+      <Text
+        style={footerBandStyles.text}
+        render={({ pageNumber, totalPages }) => pageNumberLabel(pageNumber, totalPages)}
+      />
+      <Text style={footerBandStyles.text}>{date}</Text>
     </View>
   )
 }

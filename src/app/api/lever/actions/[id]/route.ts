@@ -10,6 +10,8 @@ import { CREDENTIAL_WEIGHTS } from '@/lib/credentials'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
 import { parseLetter } from '@/lib/lever/letter-blocks'
+import { isProvinceId } from '@/lib/lever/public-body'
+import { NOT_A_DRAFT, CONTENT_CHANGED, STATUS_CHANGED, UNCLEAN_SPLIT } from '@/lib/lever/write-conflicts'
 
 /** PATCH refuses content longer than this (UTF-16 code units, JS string length) with 413. */
 const MAX_CONTENT_LENGTH = 100_000
@@ -22,10 +24,6 @@ const SHA256_HEX = /^[0-9a-f]{64}$/
 const MAX_BODY_LENGTH = MAX_CONTENT_LENGTH * 6 + 4096
 const TOO_LONG = 'This letter is too long to save. Keep it under 100,000 characters.'
 
-const NOT_A_DRAFT = 'This letter is no longer a draft'
-const CONTENT_CHANGED = 'This letter changed since you opened it'
-const STATUS_CHANGED = "This letter's status changed since you opened it. Reload to see it."
-const UNCLEAN_SPLIT = "Remove the notes that aren't part of your request before you finalise."
 
 /** SHA-256 of the stored content as lowercase hex, computed in the database over its UTF-8 bytes. */
 const storedContentSha256 = sql<string>`encode(sha256(convert_to(${leverActions.content}, 'UTF8')), 'hex')`
@@ -88,6 +86,15 @@ export const GET = safeRoute(async function GET(request: NextRequest, { params }
  *   - Auto-creates investigation outcome (if investigationId present)
  *   - Awards foi_filed credential for FIPPA requests (with dedup)
  *
+ * `jurisdiction` (A4) records the province a FIPPA draft goes to, as
+ * `metadata.jurisdiction`, on its own (no content or status in the same
+ * request), by the same draft compare-and-set: the way forward for a legacy
+ * draft whose generation was refused with "Choose the province this request
+ * goes to".
+ *
+ * The 200 body carries the content as stored, so the client re-baselines its
+ * hash on exactly what the server holds (§4).
+ *
  * PATCH never writes `letterFormat`; only generation does.
  */
 export const PATCH = safeRoute(async function PATCH(request: NextRequest, { params }: RouteContext) {
@@ -112,7 +119,12 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
   if (declaredLength > MAX_BODY_LENGTH) {
     return NextResponse.json({ error: TOO_LONG }, { status: 413 })
   }
-  let body: { status?: 'draft' | 'final' | 'filed'; content?: unknown; expectedContentSha256?: unknown }
+  let body: {
+    status?: 'draft' | 'final' | 'filed'
+    content?: unknown
+    expectedContentSha256?: unknown
+    jurisdiction?: unknown
+  }
   try {
     const raw = await request.text()
     if (raw.length > MAX_BODY_LENGTH) {
@@ -123,13 +135,21 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { status, content, expectedContentSha256 } = body ?? {}
+  const { status, content, expectedContentSha256, jurisdiction } = body ?? {}
 
-  if (!status && content === undefined) {
+  if (!status && content === undefined && jurisdiction === undefined) {
     return NextResponse.json(
-      { error: 'At least one of status or content is required' },
+      { error: 'At least one of status, content or jurisdiction is required' },
       { status: 400 }
     )
+  }
+  if (jurisdiction !== undefined) {
+    if (!isProvinceId(jurisdiction)) {
+      return NextResponse.json({ error: 'jurisdiction must be one of bc, ab, on' }, { status: 400 })
+    }
+    if (status || content !== undefined) {
+      return NextResponse.json({ error: 'jurisdiction is set on its own' }, { status: 400 })
+    }
   }
   if (content !== undefined && typeof content !== 'string') {
     return NextResponse.json({ error: 'content must be a string' }, { status: 400 })
@@ -164,8 +184,13 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
   }
 
   // Block content edits on non-draft actions (content already filed/finalized)
-  if (content !== undefined && existing.status !== 'draft') {
+  // and province changes alike: both are draft-only writes.
+  const draftWrite = content !== undefined || jurisdiction !== undefined
+  if (draftWrite && existing.status !== 'draft') {
     return NextResponse.json({ error: NOT_A_DRAFT }, { status: 409 })
+  }
+  if (jurisdiction !== undefined && existing.actionType !== 'fippa_request') {
+    return NextResponse.json({ error: 'Only an FOI request has a province' }, { status: 400 })
   }
 
   // Validate status transitions: draft→final, final→filed only
@@ -208,7 +233,7 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
   const conditions: SQL[] = [
     eq(leverActions.id, id),
     eq(leverActions.userId, userId),
-    eq(leverActions.status, content !== undefined ? 'draft' : fromStatus),
+    eq(leverActions.status, draftWrite ? 'draft' : fromStatus),
   ]
   if (typeof expectedContentSha256 === 'string') {
     conditions.push(sql`${storedContentSha256} = ${expectedContentSha256}`)
@@ -234,11 +259,19 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
       filedAt: new Date().toISOString(),
     })}::jsonb`
   }
+  // The province, merged into the stored metadata; nothing else in it changes.
+  if (jurisdiction !== undefined) {
+    updates.metadata = sql`coalesce(${leverActions.metadata}, '{}'::jsonb) || ${JSON.stringify({
+      jurisdiction,
+    })}::jsonb`
+  }
 
   // The write, and for a filing its side effects, in ONE transaction: if
   // recording the outcome or credential fails, the filing rolls back with it,
   // so the letter stays final and a repeat "file" retries everything.
-  let updated: { id: string; status: 'draft' | 'final' | 'filed'; updatedAt: Date } | undefined
+  let updated:
+    | { id: string; status: 'draft' | 'final' | 'filed'; content: string | null; updatedAt: Date }
+    | undefined
   try {
     updated = await db.transaction(async (tx) => {
       const [row] = await tx
@@ -248,6 +281,7 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
         .returning({
           id: leverActions.id,
           status: leverActions.status,
+          content: leverActions.content,
           updatedAt: leverActions.updatedAt,
         })
       if (!row) return undefined
@@ -329,7 +363,7 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
     if (!current) {
       return NextResponse.json({ error: 'Action not found' }, { status: 404 })
     }
-    const requiredStatus = content !== undefined ? 'draft' : fromStatus
+    const requiredStatus = draftWrite ? 'draft' : fromStatus
     const error =
       current.status === requiredStatus
         ? CONTENT_CHANGED
