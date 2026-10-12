@@ -78,6 +78,13 @@ describe('safeRedirectTarget: other hosts and schemes', () => {
     },
   )
 
+  it.each(['votes', 'investigate/x'])('relative path %j is refused, not resolved against the origin', (raw) => {
+    // Resolution would give a different URL from the fallback, so an accepted
+    // relative path can't masquerade as a refusal (Razor N1).
+    expect(new URL(raw, `${ORIGIN}/`).href).not.toBe(FALLBACK)
+    expect(safeRedirectTarget(raw, ORIGIN)).toBe(FALLBACK)
+  })
+
   it('a protocol-relative path is refused even when it names this host', () => {
     // Step 2 is a rule of its own, not only a consequence of the origin check.
     // (A path other than the fallback's, so acceptance can't masquerade as refusal.)
