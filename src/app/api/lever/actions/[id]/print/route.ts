@@ -473,6 +473,8 @@ function fippaPrintPage(title: string, content: string, letterFormat: unknown): 
 
   @media screen {
     .guidance-page { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e7e5e4; }
+    /* On screen the notices are in the bar above the letter; this copy is for paper. */
+    .guidance-page .note { display: none; }
   }
 
   @media print {
