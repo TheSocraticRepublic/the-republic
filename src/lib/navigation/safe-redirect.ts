@@ -19,7 +19,6 @@
 export const SAFE_REDIRECT_FALLBACK_PATH = '/investigate'
 
 // Backslash, C0 controls (tab, newline, carriage return among them) and DEL.
-// eslint-disable-next-line no-control-regex
 const FORBIDDEN_CHARACTERS = /[\\\x00-\x1f\x7f]/
 
 function hasForbiddenCharacters(value: string): boolean {
