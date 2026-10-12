@@ -42,9 +42,9 @@ in this project has already been ruled on, usually for a reason that is not obvi
   - **Issue register entries** SEC-UI-1 (the live open redirect in profile setup), DEP-2 and TEST-1 are in `~/marvin/state/the-republic-issue-register.md`.
   - **The `gh` account:** the active one is not the repo owner. Use `GH_TOKEN=$(gh auth token --user TheSocraticRepublic)` per command, and never `gh auth switch`, which is global.
 
-- - **Build-checks fix is live (2026-10-11); Lee owes two follow-ups.** Main is `fa16447` (PR #5), Netlify deploy `6acc1bbeb27b4900083c30a8`; the rollback target is `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which brings back the affected `next` 16.3.0. (1) **One sign-in on the live site with the audit account**, to confirm sign-in still works after the framework change. Next 16.3.1 changed how request headers are read, and identity reaches handlers through the middleware's `x-user-id` (Razor N2). The local production smoke passed 11/11, but no signed-in check has run on production. (2) **The untested non-owner export case:** no test exports one account's letter while signed in as another, on two real accounts (register TEST-1). Lee accepts the gap or closes it; UI plan r4 covers it on the local harness in A4. Sentry has no project in the org, so it is no post-deploy signal (OBS-1).
-
 - - **UI and filings plan r4.1: gate open; relay under way from Q0a.** The Fable critic (Lee, 2026-10-11: "go ahead and use Fable instead of Astra for now. Always opt to change models instead of impeding work to wait for resets per se.") returned CONCERN, no FAIL: all 16 r3 points closed, 14 outright and 2 with residue. Its 9 must-fix items are folded as r4.1 without another round. The review is `republic-ui-filings-critic.md` beside the plan in `~/marvin/state/plans/republic-ui-filings-2026-10/`. Batch 0 is done (Parking Lot entries written). Every release waits for Lee's yes, and the legacy-letter question goes on the first A-series release card. The machine is short of memory: one worker at a time, and no build under 4 GB available.
+
+- - **Build-checks fix is live (2026-10-11); Lee owes one follow-up.** Main is `fa16447` (PR #5) on Netlify deploy `6acc1bbeb27b4900083c30a8`; the rollback target is `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which brings back the affected `next` 16.3.0. **Lee to sign in once on the live site with the audit account**, to confirm sign-in still works after the framework change: Next 16.3.1 changed how request headers are read, and identity reaches handlers through the middleware's `x-user-id` (Razor N2). The local production smoke passed 11/11, but no signed-in check has run on production. Sentry has no project in the org, so it gives no post-deploy signal (OBS-1). *The non-owner export gap (TEST-1) was accepted by Lee on 2026-10-12; see the log.*
 
 ## Open questions awaiting Lee
 
@@ -70,6 +70,10 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 (TEST-1 accepted)
+
+Lee, through the coordinator, 2026-10-12: "For the Republic accept it". The non-owner letter export, untested across two real accounts, is accepted as shipped. UI plan r4.1 closes it with owner, non-owner and anonymous tests on `POST /api/lever/export` through the real middleware on the local harness (A4). No DECISIONS entry, because the acceptance is temporary and ends when A4 ships. Q0a is with Ted.
 
 ### 2026-10-11 (plan r4 gate open, session marvin/republic-r2)
 
