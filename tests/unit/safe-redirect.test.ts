@@ -78,6 +78,11 @@ describe('safeRedirectTarget: other hosts and schemes', () => {
     },
   )
 
+  it('a protocol-relative path is refused even when it names this host', () => {
+    // Step 2 is a rule of its own, not only a consequence of the origin check.
+    expect(safeRedirectTarget('//127.0.0.1:3177/investigate', ORIGIN)).toBe(FALLBACK)
+  })
+
   it('/%2F/evil stays an encoded path on this site', () => {
     expect(safeRedirectTarget('/%2F/evil', ORIGIN)).toBe(`${ORIGIN}/%2F/evil`)
   })
@@ -152,6 +157,23 @@ describe('the postcondition', () => {
       const result = safeRedirectTarget('/parser-disagrees', ORIGIN)
       expect(result).toBe(FALLBACK)
       expect(new RealURL(result).origin).toBe(ORIGIN)
+    })
+
+    it('step 3 refuses a parse that reports a foreign origin', () => {
+      // The mirror case: the parse reports another origin while its href
+      // still looks local. Step 3 must refuse on the reported origin alone.
+      const RealURL = URL
+      class ForeignOriginURL extends RealURL {
+        constructor(input: string | URL, base?: string | URL) {
+          super(input, base)
+          if (input === '/origin-disagrees' && base !== undefined) {
+            Object.defineProperty(this, 'origin', { value: 'https://evil.example' })
+          }
+        }
+      }
+      vi.stubGlobal('URL', ForeignOriginURL)
+
+      expect(safeRedirectTarget('/origin-disagrees', ORIGIN)).toBe(FALLBACK)
     })
   })
 })
