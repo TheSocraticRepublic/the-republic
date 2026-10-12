@@ -773,7 +773,7 @@ describe('export route: the answer comes within 8.5 s for any letter PATCH admit
     const t0 = performance.now()
     const res = await exportRequest('pdf')
     expect(res.status).toBe(503)
-    expect(await res.json()).toEqual({ error: "The PDF couldn't be made right now. Use Print or Plain text instead." })
+    expect(await res.json()).toEqual({ error: 'This letter is too long to make into a PDF. Use Print or Plain text instead.' })
     expect(performance.now() - t0).toBeLessThan(1_500)
   }, ANSWER_TEST_TIMEOUT)
 
@@ -795,7 +795,7 @@ describe('export route: the answer comes within 8.5 s for any letter PATCH admit
       } else {
         expect(res.status).toBe(503)
         expect(JSON.parse(body.toString('utf8'))).toEqual({
-          error: "The PDF couldn't be made right now. Use Print or Plain text instead.",
+          error: 'This letter is too long to make into a PDF. Use Print or Plain text instead.',
         })
       }
     },

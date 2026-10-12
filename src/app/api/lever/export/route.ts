@@ -13,6 +13,8 @@ import { loadRecipientResolution } from '@/lib/lever/load-recipient'
  */
 const PDF_RENDER_TIMEOUT_MS = 8_000
 const PDF_UNAVAILABLE = "The PDF couldn't be made right now. Use Print or Plain text instead."
+/** The cost bound's refusal: not transient, so not "right now" (Jen C5). */
+const PDF_TOO_LONG = 'This letter is too long to make into a PDF. Use Print or Plain text instead.'
 
 class PdfTimeout extends Error {}
 
@@ -168,7 +170,7 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
             ts: new Date().toISOString(),
           })
         )
-        return new Response(JSON.stringify({ error: PDF_UNAVAILABLE }), {
+        return new Response(JSON.stringify({ error: err instanceof PdfTooCostly ? PDF_TOO_LONG : PDF_UNAVAILABLE }), {
           status: 503,
           headers: { 'Content-Type': 'application/json', 'Retry-After': '30' },
         })

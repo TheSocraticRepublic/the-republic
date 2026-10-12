@@ -103,6 +103,10 @@ export function conflictMessage(reason: WriteConflict | null, kind: WriteKind, s
     if (reason === 'content-changed') return EDIT_CONFLICT_MESSAGE
     if (reason === 'not-a-draft') return EDIT_NOT_A_DRAFT_MESSAGE
   }
+  // A status write the server refused for any reason this viewer doesn't
+  // know (an invalid transition reached from a stale view) is a status that
+  // changed elsewhere (Jen C2); developer text never reaches the citizen.
+  if (kind === 'status' && reason === null) return STATUS_CHANGED
   switch (reason) {
     case 'content-changed':
       return STALE_VIEW_MESSAGE
@@ -113,7 +117,7 @@ export function conflictMessage(reason: WriteConflict | null, kind: WriteKind, s
     case 'unclean-split':
       return UNCLEAN_SPLIT
     default:
-      return serverError ?? 'That change could not be saved. Try again.'
+      return serverError && !serverError.includes('→') ? serverError : 'That change could not be saved. Try again.'
   }
 }
 
@@ -366,7 +370,15 @@ export function ActionViewer({
       } else if (result.reason === 'unclean-split') {
         onUncleanSplitRefused()
       } else {
-        setActionError(conflictMessage(result.reason, 'status', result.error))
+        // Only a 409 is a conflict; any other refusal shows its own message
+        // (never developer text with an arrow).
+        setActionError(
+          result.status === 409
+            ? conflictMessage(result.reason, 'status', result.error)
+            : result.error && !result.error.includes('→')
+              ? result.error
+              : 'Failed to update status. Try again.'
+        )
       }
     } catch (err) {
       console.error('[action-viewer] Status update failed:', err)
@@ -502,6 +514,7 @@ export function ActionViewer({
   }, [actionId])
 
   const handlePrint = useCallback(() => {
+    setActionError(null)
     window.open(`/api/lever/actions/${actionId}/print`, '_blank')
   }, [actionId])
 

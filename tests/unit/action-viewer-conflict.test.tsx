@@ -304,6 +304,15 @@ describe('the editor and 409s (filings §4)', () => {
     expect((await screen.findByRole('alert')).textContent).toBe(STATUS_CHANGED)
   })
 
+  it('an invalid transition from a stale view reads as a status change, never developer text (Jen C2)', async () => {
+    plan_extra = { patch409: 'Invalid status transition: filed → final' }
+    renderViewer({ content: 'Text.' })
+    fireEvent.click(screen.getByText('Mark as Final'))
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toBe(STATUS_CHANGED)
+    expect(alert.textContent).not.toContain('→')
+  })
+
   it('a finalise of text this tab never displayed is a conflict, worded for a stale view', async () => {
     renderViewer({ content: 'What this tab shows.' })
     plan.row.content = 'What another tab saved.'
