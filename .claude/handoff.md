@@ -44,9 +44,9 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - - **Build-checks fix is live (2026-10-11); Lee owes one follow-up.** Main is `fa16447` (PR #5) on Netlify deploy `6acc1bbeb27b4900083c30a8`; the rollback target is `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which brings back the affected `next` 16.3.0. **Lee to sign in once on the live site with the audit account**, to confirm sign-in still works after the framework change: Next 16.3.1 changed how request headers are read, and identity reaches handlers through the middleware's `x-user-id` (Razor N2). The local production smoke passed 11/11, but no signed-in check has run on production. Sentry has no project in the org, so it gives no post-deploy signal (OBS-1). *The non-owner export gap (TEST-1) was accepted by Lee on 2026-10-12; see the log.*
 
-- - **UI and filings plan r4.1: relay under way; Q0a, Q0b and S1 merged to the session branch, A1 next.** The plan and its Fable critic (CONCERN, no FAIL) are in `~/marvin/state/plans/republic-ui-filings-2026-10/`. The local QA harness runs with `npx tsx scripts/qa/harness.ts run`; browser tests import `interceptSendCode` from `scripts/qa/browser.ts`, and `scripts/qa/redirect-check.ts` is the reusable redirect browser check (B3a needs it for login). Plan corrections: Mirror comparisons aren't persisted, so `/mirror` uses the AI-stub path; S1's privacy wording was amended by Petra and Jen. Named limit: the harness has no network isolation. **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only). Every release waits for Lee's yes, and the legacy-letter question goes on the first A-series release card. Keep the memory guard on.
-
 - - **S1 release card is with Lee: DECISION NEEDED.** Draft PR #6 (`release/s1-redirect-privacy`) holds S1's five files alone, cherry-picked onto main `fa16447` and byte-identical to the reviewed head `44b3af4`; CI is green (run 38201423939). The rollback target is the live deploy `6acc1bbeb27b4900083c30a8`. **The blocker:** the privacy contact, and `SECURITY.md` line 9, send people to the email on the TheSocraticRepublic GitHub profile, and the profile shows no public email (`gh api users/TheSocraticRepublic`: `email: null`). Lee publishes a monitored address there, names an address for the page, or ships only the redirect fix. Razor RN2: whoever answers privacy requests must reply only to the account's sign-in address.
+
+- - **UI and filings plan r4.1: relay under way; Q0a, Q0b, S1 and A1 merged to the session branch, A2 next.** The plan, with its amendments, and its Fable critic are in `~/marvin/state/plans/republic-ui-filings-2026-10/`. The local QA harness runs with `npx tsx scripts/qa/harness.ts run`; browser tests use `scripts/qa/browser.ts`, and `scripts/qa/redirect-check.ts` is the reusable redirect check B3a needs. **Do not release A1 alone:** the PDF still uses the old template until A4, so the A-series (A1-A4) releases together. Amendments recorded in the plan: Jen's Export menu order and per-status notice wording (A1), S1's privacy wording, and the absent Mirror table. Named limit: the harness has no network isolation. **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only). Every release waits for Lee's yes, and the legacy-letter question goes on the first A-series release card. Keep the memory guard on.
 
 ## Open questions awaiting Lee
 
@@ -72,6 +72,16 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 (A1 merged, session marvin/republic-r2)
+
+Relay `republic-ui-a1` merged to the session branch as `a97c7de`. `parseLetter` implements plan §1-§2 and matched all 29 hand-written goldens on its first run (35 with the worker's additions). The print route and viewer render from it, with templates no longer adding letter parts, and TXT and MD export the stored text byte for byte (the MD export used to add frontmatter and an Open Cave footer).
+
+Razor's CRITICAL C1 was a quadratic link scan: a 199,000-character `[a](` line took 112 s to parse, reachable through a citizen's own draft on server render. Fixed in `86ffbf7`; now linear, 86 ms, with a timing regression test. W1 (guidance placeholders highlighted in print) is fixed too. Jen's ten concerns were adopted, two of them as plan amendments. Battery 28/28, harness 250/250, 1031 tests.
+
+The S1 release card is still with Lee (no public email on the GitHub profile).
+
+**Next:** A2.
 
 ### 2026-10-12 (S1 merged; release card filed, session marvin/republic-r2)
 
