@@ -234,7 +234,6 @@ export function ActionViewer({
       setStatus(stored.status)
       setLetterFormat(stored.metadata?.letterFormat)
       setJurisdiction(stored.metadata?.jurisdiction)
-      setNotesConfirmedAt(stored.metadata?.notesRemovalConfirmedAt)
       rebaseline(text)
     },
     [rebaseline, setJurisdiction]
