@@ -116,6 +116,10 @@ describe('NewActionDialog', () => {
     expect(provinceSelect().value).toBe('ab')
     expect(bodySelect().value).toBe('')
     expect([...bodySelect().options].map((o) => o.text)).toContain('City of Edmonton')
+    // The choice itself is cleared, not just hidden by the new option list:
+    // switching back does not bring it back.
+    fireEvent.change(provinceSelect(), { target: { value: 'bc' } })
+    expect(bodySelect().value).toBe('')
   })
 
   it('a late detection never overrides a province the citizen chose', async () => {
