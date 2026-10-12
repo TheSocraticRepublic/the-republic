@@ -679,6 +679,9 @@ describe('confirm a finalise with no marker line (A5)', () => {
     expect(panel()).toBeNull()
     expect(screen.getByLabelText('Edit document text')).toBeTruthy()
     fireEvent.click(screen.getByText('Cancel'))
+    // Back from the editor, the confirmation stays closed.
+    await screen.findByText('Mark as Final')
+    expect(panel()).toBeNull()
     fireEvent.click(screen.getByText('Mark as Final'))
     await waitFor(() => expect(panel()).not.toBeNull())
     plan.generate = { streamed: MISSING, storedAfter: MISSING }
