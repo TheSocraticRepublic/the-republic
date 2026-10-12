@@ -182,6 +182,13 @@ describe('recipient notices (filings §3)', () => {
     expect(noticeLines()).toEqual([CHECK, LISTED_NOT_FOUND])
   })
 
+  it('the notice\'s lines are separate rows: instruction, then evidence (Jen C11)', () => {
+    renderViewer({ content: MARKER_V1_LETTER.content, metadata: FORESTS_BC })
+    const rows = Array.from(notice()!.querySelectorAll('p'))
+    expect(rows[0].className).not.toContain('mt-1.5')
+    expect(rows[1].className).toContain('mt-1.5')
+  })
+
   it('checked with the placeholder on a draft: the insert button', () => {
     renderViewer({ content: FORESTS_PLACEHOLDER, metadata: FORESTS_BC })
     expect(noticeLines()).toEqual([CHECK, LISTED_NOT_FOUND])
