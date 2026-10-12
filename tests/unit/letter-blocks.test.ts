@@ -297,3 +297,48 @@ describe('parseLetter: word-sequence property over 500 fuzzed strings', () => {
     }
   })
 })
+
+/*
+ * Razor C1: parsing must be linear in line length. Every pathological shape
+ * below sits just under the 200,000-character bound, so it is parsed, not a
+ * fallback. Before the fix, `[a](` repeated took 112 s; each must now parse in
+ * under 500 ms. The shapes are Razor's probe set plus the placeholder run
+ * that once went through an argument spread.
+ */
+describe('parseLetter: linear time on pathological lines (Razor C1)', () => {
+  const N = 199_000
+  const shapes: Record<string, string> = {
+    '[a]( run': '[a]('.repeat(N / 4),
+    '[]( run': '[]('.repeat(Math.floor(N / 3)),
+    '[a](((( run': '[a]((('.repeat(Math.floor(N / 6)),
+    '[ run': '['.repeat(N),
+    '( run': '('.repeat(N),
+    '* run': '*'.repeat(N),
+    ' *a run': ' *a'.repeat(Math.floor(N / 3)),
+    ' **a run': ' **a'.repeat(N / 4),
+    '"*a run': '"*a'.repeat(Math.floor(N / 3)),
+    '[x run': '[x'.repeat(N / 2),
+    '[[[...] one close': '['.repeat(N - 1) + ']',
+    ']( after every [': '[a](b'.repeat(Math.floor(N / 5)),
+    '[x] placeholders': '[x]'.repeat(Math.floor(N / 3)),
+    'per-line [': ('['.repeat(1000) + '\n').repeat(190),
+  }
+  for (const [name, s] of Object.entries(shapes)) {
+    it(`${name} (${s.length} chars) parses in under 500 ms`, () => {
+      expect(s.length).toBeLessThanOrEqual(MAX_PARSE_LENGTH)
+      const t0 = performance.now()
+      const parsed = parseLetter(s, 'marker-v1')
+      const ms = performance.now() - t0
+      expect(parsed.fallback).toBe(false)
+      expect(ms).toBeLessThan(500)
+      // Linear AND lossless: the projection keeps every character the rules keep.
+      if (!/[*[]/.test(s)) expect(projectBlocks(parsed.letter)).toBe(s)
+    })
+  }
+
+  it('a link whose URL closes after a long balanced run still matches (index agrees with the old forward scan)', () => {
+    const url = 'https://x.ca/' + '(a)'.repeat(20_000)
+    const parsed = parseLetter(`[t](${url}) end`, undefined)
+    expect(projectBlocks(parsed.letter)).toBe(`t (${url}) end`)
+  })
+})

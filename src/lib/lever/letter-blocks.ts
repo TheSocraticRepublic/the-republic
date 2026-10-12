@@ -82,7 +82,13 @@ export interface ParsedLetter {
  */
 export function parseLetter(content: unknown, format: unknown): ParsedLetter {
   if (typeof content !== 'string') {
-    return fallbackResult(content == null ? '' : String(content), format)
+    let text = ''
+    try {
+      text = content == null ? '' : String(content)
+    } catch {
+      // A value whose toString throws: nothing to show, and still no throw.
+    }
+    return fallbackResult(text, format)
   }
   if (content.length > MAX_PARSE_LENGTH) {
     return fallbackResult(content, format)
@@ -129,8 +135,8 @@ function parseUnchecked(content: string, markerV1: boolean): ParsedLetter {
     }
   }
 
-  const letter = letterLines.map(parseBlock)
-  const guidance = guidanceLines ? guidanceLines.map(parseBlock) : null
+  const letter = letterLines.map((l) => parseBlock(l, true))
+  const guidance = guidanceLines ? guidanceLines.map((l) => parseBlock(l, true)) : null
 
   return {
     letter,
@@ -150,13 +156,13 @@ const RULE = /^ *(?:---|\*\*\*) *$/
 const BULLET = /^- (.*)$/
 const NUMBERED = /^(\d+)\. (.*)$/
 
-function parseBlock(line: string): Block {
+function parseBlock(line: string, placeholders: boolean): Block {
   let m: RegExpExecArray | null
-  if ((m = HEADING.exec(line))) return { kind: 'heading', level: m[1].length, inlines: parseInline(m[2]) }
+  if ((m = HEADING.exec(line))) return { kind: 'heading', level: m[1].length, inlines: parseInline(m[2], placeholders) }
   if (RULE.test(line)) return { kind: 'rule' }
-  if ((m = BULLET.exec(line))) return { kind: 'bullet', inlines: parseInline(m[1]) }
-  if ((m = NUMBERED.exec(line))) return { kind: 'numbered', number: m[1], inlines: parseInline(m[2]) }
-  return { kind: 'line', inlines: parseInline(line) }
+  if ((m = BULLET.exec(line))) return { kind: 'bullet', inlines: parseInline(m[1], placeholders) }
+  if ((m = NUMBERED.exec(line))) return { kind: 'numbered', number: m[1], inlines: parseInline(m[2], placeholders) }
+  return { kind: 'line', inlines: parseInline(line, placeholders) }
 }
 
 // ---------------------------------------------------------------------------
@@ -200,30 +206,61 @@ function matchEmphasis(s: string, i: number, width: 1 | 2): { inner: string; end
 }
 
 /**
- * Try `[text](url)` at i: text has no brackets, url has balanced parentheses,
- * no whitespace, and is not empty.
+ * Per-line lookup tables for link matching, built in one linear pass each, so
+ * that every `[` is checked in O(1) and a whole line parses in linear time.
+ * (Scanning forward from each `[` to its URL's closing parenthesis was
+ * quadratic: 199,000 characters of `[a](` took 112 s. Razor C1.)
+ *
+ * - closeParen[p]: the index of the `)` that balances the `(` at p, or -1.
+ *   A standard stack match: the first position where depth, counted from p,
+ *   returns to zero, exactly what a forward depth scan finds.
+ * - nextWs[i], nextClose[i], nextOpen[i]: the first whitespace, `]` or `[`
+ *   at or after i (s.length when there is none).
  */
-function matchLink(s: string, i: number): { text: string; url: string; end: number } | null {
-  const closeBracket = s.indexOf(']', i + 1)
-  if (closeBracket === -1) return null
-  const text = s.slice(i + 1, closeBracket)
-  if (text.includes('[')) return null
-  if (s[closeBracket + 1] !== '(') return null
-  let depth = 1
-  let j = closeBracket + 2
-  for (; j < s.length; j++) {
-    const ch = s[j]
-    if (WHITESPACE.test(ch)) return null
-    if (ch === '(') depth++
-    else if (ch === ')') {
-      depth--
-      if (depth === 0) break
-    }
+interface LinkIndex {
+  closeParen: Int32Array
+  nextWs: Int32Array
+  nextClose: Int32Array
+  nextOpen: Int32Array
+}
+
+function buildLinkIndex(s: string): LinkIndex {
+  const n = s.length
+  const closeParen = new Int32Array(n).fill(-1)
+  const open: number[] = []
+  for (let i = 0; i < n; i++) {
+    const ch = s[i]
+    if (ch === '(') open.push(i)
+    else if (ch === ')' && open.length > 0) closeParen[open.pop() as number] = i
   }
-  if (depth !== 0) return null
-  const url = s.slice(closeBracket + 2, j)
-  if (url === '') return null
-  return { text, url, end: j + 1 }
+  const nextWs = new Int32Array(n + 1)
+  const nextClose = new Int32Array(n + 1)
+  const nextOpen = new Int32Array(n + 1)
+  nextWs[n] = nextClose[n] = nextOpen[n] = n
+  for (let i = n - 1; i >= 0; i--) {
+    const ch = s[i]
+    nextWs[i] = WHITESPACE.test(ch) ? i : nextWs[i + 1]
+    nextClose[i] = ch === ']' ? i : nextClose[i + 1]
+    nextOpen[i] = ch === '[' ? i : nextOpen[i + 1]
+  }
+  return { closeParen, nextWs, nextClose, nextOpen }
+}
+
+/**
+ * Try `[text](url)` at i: text has no brackets, url has balanced parentheses,
+ * no whitespace, and is not empty. O(1) given the line's index.
+ */
+function matchLink(s: string, i: number, idx: LinkIndex): { text: string; url: string; end: number } | null {
+  const closeBracket = idx.nextClose[i + 1]
+  if (closeBracket >= s.length) return null
+  if (idx.nextOpen[i + 1] < closeBracket) return null
+  if (s[closeBracket + 1] !== '(') return null
+  const paren = closeBracket + 1
+  const close = idx.closeParen[paren]
+  if (close < 0) return null
+  if (close === paren + 1) return null
+  if (idx.nextWs[paren + 1] < close) return null
+  return { text: s.slice(i + 1, closeBracket), url: s.slice(paren + 1, close), end: close + 1 }
 }
 
 const PLACEHOLDER = /\[[^[\]\n]+\]/g
@@ -243,19 +280,24 @@ function textWithPlaceholders(text: string, allowPlaceholders: boolean): Inline[
 }
 
 /** Left-to-right scan of one line's text. A link's text holds no placeholders. */
-function parseInline(s: string, allowPlaceholders = true): Inline[] {
+function parseInline(s: string, allowPlaceholders: boolean): Inline[] {
   const out: Inline[] = []
   let buf = ''
   const flush = () => {
-    if (buf) out.push(...textWithPlaceholders(buf, allowPlaceholders))
+    // A loop, not push(...spread): a line of 100,000 placeholders must not
+    // overflow the argument limit.
+    if (buf) for (const inl of textWithPlaceholders(buf, allowPlaceholders)) out.push(inl)
     buf = ''
   }
+  // Built only for a line that can hold a link.
+  let idx: LinkIndex | null = null
 
   let i = 0
   while (i < s.length) {
     const ch = s[i]
     if (ch === '[') {
-      const link = matchLink(s, i)
+      idx ??= buildLinkIndex(s)
+      const link = matchLink(s, i, idx)
       if (link) {
         flush()
         out.push({ kind: 'link', url: link.url, children: parseInline(link.text, false) })

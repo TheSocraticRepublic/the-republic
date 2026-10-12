@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react'
+import { Fragment, useMemo, type ReactNode } from 'react'
 import {
   parseLetter,
   blockPrefix,
@@ -43,6 +43,10 @@ interface LetterPaperProps {
 }
 
 export function LetterPaper({ content, letterFormat }: LetterPaperProps) {
+  // Parse once per (content, format), not on every re-render of the viewer
+  // (menu toggles, busy states). Razor C1.
+  const parsed = useMemo(() => parseLetter(content, letterFormat), [content, letterFormat])
+
   if (typeof content !== 'string') {
     return (
       <p role="alert" className="text-sm text-status-danger">
@@ -51,7 +55,6 @@ export function LetterPaper({ content, letterFormat }: LetterPaperProps) {
     )
   }
 
-  const parsed = parseLetter(content, letterFormat)
   const clean = parsed.split === 'marker' && !parsed.fallback
   const notes: string[] = []
   if (!clean) notes.push(UNCLEAN_SPLIT_NOTICE)
