@@ -30,7 +30,7 @@ export default function PrivacyPage() {
         >
           Privacy Policy
         </h1>
-        <p className="mt-0.5 text-xs text-text-muted">Last updated 2026-08-26</p>
+        <p className="mt-0.5 text-xs text-text-muted">Last updated 2026-10-11</p>
       </header>
 
       <p className="text-sm leading-relaxed text-text-secondary">
@@ -206,8 +206,8 @@ export default function PrivacyPage() {
 
       <Section title="Contact">
         <p>
-          Questions about privacy or data handling: open an issue on the public repository or reach
-          out through the forum. This policy mirrors the canonical{' '}
+          {"For privacy or data requests, email the maintainer at the address on the project's GitHub profile, with the subject 'Privacy: Open Cave'. Don't put personal details in a public issue."}{' '}
+          This policy mirrors the canonical{' '}
           <code className="text-text-muted">PRIVACY.md</code> in the open-source repository.
         </p>
       </Section>

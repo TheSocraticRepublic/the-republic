@@ -3,16 +3,7 @@
 import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
-
-function getSafeRedirect(param: string | null): string {
-  const fallback = '/investigate'
-  if (!param) return fallback
-  // Must start with / and not be protocol-relative (//)
-  if (!param.startsWith('/') || param.startsWith('//')) return fallback
-  // Block anything containing a colon (catches javascript:, data:, etc.)
-  if (param.includes(':')) return fallback
-  return param
-}
+import { safeRedirectTarget } from '@/lib/navigation/safe-redirect'
 
 function ProfileSetupForm() {
   const searchParams = useSearchParams()
@@ -94,8 +85,11 @@ function ProfileSetupForm() {
         throw new Error(data.error ?? 'Something went wrong')
       }
 
-      const redirect = getSafeRedirect(searchParams.get('redirect'))
-      window.location.href = redirect
+      // An absolute URL already checked against this origin; never a relative
+      // string the browser could re-read as another host.
+      window.location.assign(
+        safeRedirectTarget(searchParams.get('redirect'), window.location.origin),
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {

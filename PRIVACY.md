@@ -230,7 +230,6 @@ access requests within 30 days. We require nothing beyond an email to use the to
 
 ## Contact
 
-Questions about privacy or data handling: open an issue on the public repository or reach
-out through the forum. We will respond.
+For privacy or data requests, email the maintainer at the address on the project's GitHub profile, with the subject 'Privacy: Open Cave'. Don't put personal details in a public issue.
 
-Last updated: 2026-08-26
+Last updated: 2026-10-11
