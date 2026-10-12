@@ -42,20 +42,20 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **Findings inventory and audit artifacts** are private, in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/` (mode 700). It holds 120 findings with dispositions mapped to the r4 batch IDs (updated 2026-10-11). Screenshots and reports are deleted at relay close, except the inventory (owner Lee).
 
-- **UI and filings plan r4.1: Q0a, Q0b, S1, A1, A2 and A3 merged to the session branch; A4 is next.**
-  - **The plan:** `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md`. Its Fable critic is `-critic.md` (CONCERN, no FAIL); r3 and earlier critics sit beside it. Amendments recorded in the plan: S1's privacy wording; A1's Export menu order, per-status notice wording and full-bleed phone paper; no persisted Mirror comparisons; A4's "Carried from A2" and "Carried from A3" lines (viewer sends the content hash and re-reads after a stream; all four conflict reasons mapped; a province choice on the "Choose the province" refusal; the recipient notice stays an occurrence check for letters that carry retired ministry boxes).
-  - **The A-series release rule:** A1-A4 release together, never A1 alone, because the PDF keeps the old template until A4. The first A-series release card also carries the legacy-letter question (plan Decision 2), the Netlify mid-stream abort check (Parking Lot), and A4's hosted capacity reading against Netlify's documented function limit.
-  - **A4 and Lee's open ruling:** A4 is built with the plan's current unclean-split message. If Lee rules that a letter whose marker line was deleted may be finalised after a confirmation, that is a small follow-up batch (server accepts the confirmation for `split: 'none'`; the viewer asks for it) before the A-series release.
+- **UI and filings plan r4.1: Q0a, Q0b, S1, A1, A2, A3 and A4 merged to the session branch (A4 at `1bd2524`); the A-series release card goes to Lee next, then B1.**
+  - **The plan:** `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md`. Its Fable critic is `-critic.md` (CONCERN, no FAIL); r3 and earlier critics sit beside it. Amendments recorded in the plan: S1's privacy wording; A1's Export menu order, per-status notice wording and full-bleed phone paper; no persisted Mirror comparisons; A4's Carried lines and its two review amendments (the 8 s bound holds for any admitted content via a pre-render cost bound; words cut by measured width; page numbers count letter pages only; the length refusal has its own copy).
+  - **The A-series release rule:** A1-A4 release together, never A1 alone, because the PDF keeps the old template until A4. The first A-series release card also carries the legacy-letter question (plan Decision 2), the Netlify mid-stream abort check (Parking Lot), A4's hosted capacity reading against Netlify's documented 60 s synchronous limit, the D_prev compatibility run, and Lee's signed-in look check. It also lists A4's plan amendments (letter-only page numbers, the length refusal) and Razor's carried RW1 (the cost estimate admits a contrived 8 s letter and refuses some 4 s schedules).
+  - **Lee's open ruling (marker line):** A4 shipped with the plan's current unclean-split message. If Lee rules that a letter whose marker line was deleted may be finalised after a confirmation, that is a small follow-up batch (server accepts the confirmation for `split: 'none'`; the viewer asks for it) before the A-series release.
   - **The harness:** `npx tsx scripts/qa/harness.ts run` (or `up` / `check` / `down`; see `scripts/qa/README.md`). Browser tests use `scripts/qa/browser.ts`, and signed-in evidence runs in Chromium on 127.0.0.1. Every non-GET request sends `Origin: http://127.0.0.1:3177`. Named limits: no network isolation; its ports sit in the ephemeral range, so `up` can be refused on a TIME_WAIT (retry). A fresh relay worktree needs `npm ci` (the session checkout's `node_modules` lacks the Q0a dev tools).
   - **Machine:** keep the memory guard on (no build or harness under 4 GB available; never both at once). **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only).
 
-- **Cold start for the next batch (A4).**
-  1. Read the plan's "### A4" (with its Carried lines), "### 0." to "### 4." and "Releases: promotion, rollback and evidence". A4 has UI: Jen reviews (opus, xhigh) after Razor.
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-a3-pack.json` as a template and write the new pack directly. Set `branch` to `relay/ui-a4`, `parallel_batches` to `[["A4"]]`, `ui_work` true, and leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-a4 --stage implement --batch 1 --step A4`; `git worktree add -b relay/ui-a4-A4 ../relay-republic-ui-a4-A4 HEAD`.
-  4. Ted (opus, medium), then Razor (opus, high) from a brief file holding the coverage checklist and plan summary, then Jen. Resume the implementer for fixes; Razor re-checks only. A falling CRITICAL needs `razor.fixed_at`. A4's capacity test runs locally under `taskset -c 0`; the hosted half waits for the release.
-  5. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree. Then the A-series release card goes to Lee via the coordinator; nothing reaches main without his yes.
-  - Where things live: packs, briefs, reports and reviews in `~/marvin/state/relay/republic-ui-*`; mutation specs `republic-ui-filings-<batch>-mutants.json`; private audit artifacts and evidence under `~/.local/share/marvin/private/` (mode 700, outside the repo). `gh` needs `GH_TOKEN=$(gh auth token --user TheSocraticRepublic)` per command.
+- **Cold start for the next batch (B1).**
+  1. Read the plan's "### B1", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether B1 has UI (Jen, opus xhigh, after Razor).
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-a4-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-b1`, `parallel_batches` to `[["B1"]]`, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-b1 --stage implement --batch 1 --step B1`; `git worktree add -b relay/ui-b1-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
+  4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only. Carry Razor's A4 RW1 into B1's review only if B1 touches the PDF engine; otherwise it stays in the Parking Lot.
+  5. Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
+  6. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
 
 ## Open questions awaiting Lee
 
@@ -84,6 +84,13 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 — A4 merged to the session branch (`1bd2524`)
+
+- **What it does:** the FIPPA PDF is built from the parsed letter on pure white, with a separate "Not part of your request" guidance page, letter-only page numbers in the embedded letter face, measured-width line breaking and a pre-render cost bound (letters too long for a PDF are refused in under a second with their own message). On screen: recipient notices, Insert directory address for checked entries on drafts, conflict handling that never discards the citizen's text, and a province choice for refused drafts.
+- **Review:** Razor CRITICAL (an 8 s timer cannot interrupt synchronous react-pdf layout; worst case 31 s) fixed by linear layout plus the cost bound and re-checked; RW1 (the estimate is not proportional to render time across shapes) carried to the Parking Lot. Jen's 12 concerns adopted at floor (two were plan gaps); Razor PASS on the design fix. 63 mutants killed.
+- **Process:** a mutant that disarmed the bound hung the battery for 30 min; answer-time tests now carry 12 s per-test timeouts. An orphaned vitest worker escaped the battery's process-group kill (a marvin battery gap).
+- **Next:** the A-series release card to Lee via the coordinator, then B1.
 
 ### 2026-10-12 — A3 merged to the session branch (`ce54117`)
 
