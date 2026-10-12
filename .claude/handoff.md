@@ -44,7 +44,7 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - - **Build-checks fix is live (2026-10-11); Lee owes one follow-up.** Main is `fa16447` (PR #5) on Netlify deploy `6acc1bbeb27b4900083c30a8`; the rollback target is `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which brings back the affected `next` 16.3.0. **Lee to sign in once on the live site with the audit account**, to confirm sign-in still works after the framework change: Next 16.3.1 changed how request headers are read, and identity reaches handlers through the middleware's `x-user-id` (Razor N2). The local production smoke passed 11/11, but no signed-in check has run on production. Sentry has no project in the org, so it gives no post-deploy signal (OBS-1). *The non-owner export gap (TEST-1) was accepted by Lee on 2026-10-12; see the log.*
 
-- - **UI and filings plan r4.1: relay under way; Q0a merged, Q0b next.** The Fable critic (Lee, 2026-10-11: "go ahead and use Fable instead of Astra for now. Always opt to change models instead of impeding work to wait for resets per se.") returned CONCERN, no FAIL, and its 9 must-fix items are folded as r4.1. The plan and its review are in `~/marvin/state/plans/republic-ui-filings-2026-10/`. Q0a was merged to the session branch on 2026-10-12 (`8558cd8`). **Q0b carries Razor W2** (drizzle-kit 0.31.10 loads `./.env` before its config resolves the URL, so the harness must set `DIRECT_DATABASE_URL` explicitly in each writer's environment and point `DOTENV_CONFIG_PATH` at a file that doesn't exist) and **N3** (the database TLS refusal fires on first database use, so probe a database-backed route before treating the server as ready). Q0b must guard every writer with `assertLocalQaTargets()`. Migrations 0013 and 0014 carry their own BEGIN/COMMIT inside the runner's transaction (Ted's Q0b heads-up). **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only). Every release waits for Lee's yes, and the legacy-letter question goes on the first A-series release card. Keep the memory guard on: no build under 4 GB available.
+- - **UI and filings plan r4.1: relay under way; Q0a and Q0b merged, S1 next.** The Fable critic (Lee, 2026-10-11: "go ahead and use Fable instead of Astra for now. Always opt to change models instead of impeding work to wait for resets per se.") returned CONCERN, no FAIL; r4.1 folds its must-fix list. The plan is at `~/marvin/state/plans/republic-ui-filings-2026-10/`. The local QA harness is live on the session branch: `npx tsx scripts/qa/harness.ts run` builds the app in production mode against local Postgres (Supabase shim), Redis REST and an AI stub, seeds synthetic data, and passes 8/8. Browser tests import `interceptSendCode` from `scripts/qa/browser.ts`. **S1's review must confirm Razor RW1** (that helper lives in a module with no import side effects, and `harness.ts` runs `main()` only when executed directly). Plan correction: Mirror comparisons are not persisted by the app, so the seed can't include one, and the final gate's `/mirror` row uses the AI-stub path. Named limit: the harness has no network isolation (see `scripts/qa/README.md`). **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only). Every release waits for Lee's yes, and the legacy-letter question goes on the first A-series release card. Keep the memory guard on (no build under 4 GB available).
 
 ## Open questions awaiting Lee
 
@@ -70,6 +70,22 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 (Q0b merged, session marvin/republic-r2)
+
+Relay `republic-ui-q0b` merged to the session branch as `c0b87b5`. It is the local QA harness:
+- Docker Postgres with a Supabase shim and the BYPASSRLS `qa_app` role, Redis behind the Upstash REST shim, and an Anthropic-format AI stub;
+- synthetic seed, including two real Commons divisions with their openparliament.ca URLs;
+- minted sessions and a real `verify-code` browser login;
+- every writer guarded by `assertLocalQaTargets()` with an explicit `DIRECT_DATABASE_URL` and a missing `DOTENV_CONFIG_PATH` (closes Q0a's W2; a dotenv file pointed at 192.0.2.1 is ignored);
+- readiness on `/api/health` plus an authenticated database route (closes N3);
+- 29 letter fixtures with hand-written golden projections, which Razor checked against his own implementation of §1-§2.
+
+Razor gave WARNING (W1: a refused `up` tore down the live harness and signalled unowned pids; W2: build reuse was unsound; W3: no network isolation). Fixes `f0018b8` and `69a63b4` closed them, plus N2, N3, N6 and the re-check's RW1, which I verified myself.
+
+The expired production audit cookie (`republic_token`, expired 2026-10-08) was deleted per the plan's custody rule.
+
+**Next:** S1.
 
 ### 2026-10-12 (Q0a merged, session marvin/republic-r2)
 
