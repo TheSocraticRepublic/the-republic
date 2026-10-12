@@ -119,6 +119,8 @@ describe.skipIf(!APP_UP)('Forum gate over HTTP on the harness (signed in, gate o
       const { status, text } = await fetchText(p)
       expect(status, p).toBe(200)
       expect(text, p).toContain(HONEST)
+      // Jen C6: one working way onward.
+      expect(text, p).toMatch(/<a[^>]+href="\/investigate"[^>]*>Start an investigation<\/a>/)
       const title = /<title>([^<]*)<\/title>/.exec(text)?.[1] ?? ''
       expect(title, `${p} <title>`).toContain('Forum')
       expect(title, `${p} <title>`).not.toContain('FGCANARY')

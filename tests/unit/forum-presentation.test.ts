@@ -66,6 +66,8 @@ const { Sidebar } = await import('@/components/layout/sidebar')
 const { AppShell } = await import('@/components/layout/app-shell')
 const { default: PublicLayout } = await import('@/app/(public)/layout')
 const { default: NotFound } = await import('@/app/not-found')
+const { default: AppNotFound } = await import('@/app/(app)/not-found')
+const { default: PublicNotFound } = await import('@/app/(public)/not-found')
 const { signJWT } = await import('@/lib/auth/jwt')
 
 const HONEST = 'The Forum opens later. Nothing here yet.'
@@ -102,6 +104,9 @@ describe('Forum layout while the gate is off (R9)', () => {
     expect(container.textContent).toContain(HONEST)
     expect(container.querySelector('h1')?.textContent).toBe('Forum')
     expect(container.querySelector('[data-testid="forum-child"]')).toBeNull()
+    // Jen C6: one working way onward, into the app.
+    const onward = within(container).getByRole('link', { name: 'Start an investigation' })
+    expect(onward.getAttribute('href')).toBe('/investigate')
     expect(container.textContent).not.toContain(CHILD)
   })
 
@@ -227,6 +232,13 @@ describe('Sidebar identity (P2-16, P1-1 step 3)', () => {
     const profileLinks = container.querySelectorAll('a[href="/profile"]')
     expect(profileLinks.length).toBe(1)
     expect(profileLinks[0].textContent).toContain('Ada Citizen')
+    // Jen C5: the destination is in the accessible name; a long name truncates
+    // at the size of "Sign out" instead of painting out of the sidebar.
+    expect(profileLinks[0].getAttribute('aria-label')).toBe('Your profile, Ada Citizen')
+    expect(profileLinks[0].className).toContain('min-w-0')
+    const name = within(profileLinks[0] as HTMLElement).getByText('Ada Citizen')
+    for (const c of ['truncate', 'min-w-0', 'text-sm']) expect(name.className, c).toContain(c)
+    expect(name.parentElement!.className).toContain('min-w-0')
     expect(container.textContent).not.toContain('Your identity')
   })
 
@@ -288,7 +300,7 @@ describe('Sidebar rows', () => {
     expect(dot.className).toContain('absolute')
     expect(dot.className).not.toContain('ml-auto')
     // Two-line arm descriptions no longer collide (leading-none was the cause).
-    const description = within(lever as HTMLElement).getByText('Turn findings into filings')
+    const description = within(lever as HTMLElement).getByText('Draft a filing')
     expect(description.className).toContain('leading-tight')
     expect(description.className).not.toContain('leading-none')
   })
@@ -317,17 +329,107 @@ describe('Sidebar rows', () => {
     expect(list()?.hasAttribute('hidden')).toBe(false)
   })
 
-  it('scrolls the current row into view on mount and on route change', () => {
-    pathname = '/mirror'
-    const { rerender } = mountSidebar()
-    const call = scrollIntoView.mock.contexts.at(-1) as HTMLElement
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' })
-    expect(call.getAttribute('href')).toBe('/mirror')
+  // jsdom has no layout: give the scroller and the current row boxes.
+  function boxes(scrollerBox: { top: number; bottom: number }, rowBox: { top: number; bottom: number }) {
+    const orig = Element.prototype.getBoundingClientRect
+    Element.prototype.getBoundingClientRect = function (this: Element) {
+      if (this.getAttribute('aria-current') === 'page') return { ...rowBox, left: 0, right: 0, width: 0, height: rowBox.bottom - rowBox.top, x: 0, y: rowBox.top, toJSON() {} } as DOMRect
+      if (this.classList.contains('overflow-y-auto')) return { ...scrollerBox, left: 0, right: 0, width: 0, height: scrollerBox.bottom - scrollerBox.top, x: 0, y: scrollerBox.top, toJSON() {} } as DOMRect
+      return orig.call(this)
+    }
+    return () => { Element.prototype.getBoundingClientRect = orig }
+  }
 
-    pathname = '/foundations'
-    rerender(h(Sidebar, { displayName: 'Ada Citizen' }))
-    const next = scrollIntoView.mock.contexts.at(-1) as HTMLElement
-    expect(next.getAttribute('href')).toBe('/foundations')
+  it('keeps the current row in view with scrollTop, never scrollIntoView (Jen C1: Tab start point)', () => {
+    pathname = '/mirror'
+    // Row below the scroller's bottom edge: scroll down by exactly the overhang.
+    const restore = boxes({ top: 90, bottom: 600 }, { top: 640, bottom: 683 })
+    try {
+      const { container } = mountSidebar({ variant: 'sidebar' })
+      const scroller = container.querySelector<HTMLElement>('nav .overflow-y-auto')!
+      expect(scroller.scrollTop).toBe(83)
+      // scrollIntoView moves Chromium's sequential-focus start point, so the
+      // first Tab would skip "Skip to content". It must never be used here.
+      expect(scrollIntoView).not.toHaveBeenCalled()
+    } finally {
+      restore()
+    }
+  })
+
+  it('scrolls up to a row above the scroller, and leaves a visible row alone', () => {
+    pathname = '/scout'
+    const restore = boxes({ top: 90, bottom: 600 }, { top: 60, bottom: 103 })
+    try {
+      const { container, unmount } = mountSidebar({ variant: 'sidebar' })
+      const scroller = container.querySelector<HTMLElement>('nav .overflow-y-auto')!
+      // Row 30px above the scroller's top edge: scroll up by exactly that.
+      // (jsdom does not clamp at 0, so the raw arithmetic shows.)
+      expect(scroller.scrollTop).toBe(-30)
+      unmount()
+    } finally {
+      restore()
+    }
+    const restore2 = boxes({ top: 90, bottom: 600 }, { top: 200, bottom: 243 })
+    try {
+      const { container } = mountSidebar({ variant: 'sidebar' })
+      const scroller = container.querySelector<HTMLElement>('nav .overflow-y-auto')!
+      expect(scroller.scrollTop).toBe(0)
+      expect(scrollIntoView).not.toHaveBeenCalled()
+    } finally {
+      restore2()
+    }
+  })
+
+  it('re-runs on route change', () => {
+    pathname = '/investigate'
+    const restore = boxes({ top: 90, bottom: 600 }, { top: 640, bottom: 650 })
+    try {
+      const { container, rerender } = mountSidebar({ variant: 'sidebar' })
+      const scroller = container.querySelector<HTMLElement>('nav .overflow-y-auto')!
+      expect(scroller.scrollTop).toBe(50)
+      pathname = '/foundations'
+      rerender(h(Sidebar, { displayName: 'Ada Citizen', variant: 'sidebar' }))
+      expect(scroller.scrollTop).toBe(100)
+    } finally {
+      restore()
+    }
+  })
+})
+
+describe('Arm descriptions (Jen C4)', () => {
+  it('are the reviewed one-line copy, mapped to their arms', () => {
+    const { container } = mountSidebar()
+    const want: Record<string, string> = {
+      '/scout': 'Find the documents',
+      '/oracle': 'See who it serves',
+      '/gadfly': 'Test your thinking',
+      '/lever': 'Draft a filing',
+      '/mirror': 'Compare other places',
+    }
+    for (const [href, text] of Object.entries(want)) {
+      const row = container.querySelector(`#instruments-list a[href="${href}"]`)!
+      expect(row.querySelector('.text-2xs')?.textContent, href).toBe(text)
+    }
+  })
+})
+
+describe('Drawer close band (Jen C3)', () => {
+  it('the drawer wordmark is a sticky opaque band with room for the X; the X is 44px inside it', async () => {
+    const { container } = render(h(AppShell, { displayName: 'Ada Citizen', children: h('p', null, 'page') }))
+    await act(async () => {
+      fireEvent.click(within(container.querySelector('header')!).getByRole('button', { name: 'Open navigation' }))
+    })
+    const dialog = document.querySelector('[role="dialog"]')!
+    const band = dialog.querySelector<HTMLElement>('[data-nav="band"]')!
+    for (const c of ['sticky', 'top-0', 'z-10', 'bg-surface-2', 'pr-14', 'py-4']) expect(band.className, c).toContain(c)
+    const close = within(dialog as HTMLElement).getByRole('button', { name: 'Close navigation' })
+    for (const c of ['h-11', 'w-11', 'top-2', 'right-2', 'z-20']) expect(close.className, c).toContain(c)
+    expect(dialog.querySelector('nav')!.className).toContain('scroll-pt-16')
+  })
+
+  it('the desktop sidebar wordmark is not sticky', () => {
+    const { container } = mountSidebar({ variant: 'sidebar' })
+    expect(container.querySelector('[data-nav="band"]')!.className).not.toContain('sticky')
   })
 })
 
@@ -427,15 +529,67 @@ describe('not-found', () => {
     delete process.env.JWT_SECRET
   })
 
-  async function mountNotFound() {
-    return render(await NotFound())
+  // The card is an async server component; resolve async elements before
+  // handing the tree to React (testing-library cannot render them).
+  async function resolve(node: unknown): Promise<unknown> {
+    if (Array.isArray(node)) return Promise.all(node.map(resolve))
+    if (!node || typeof node !== 'object' || !('type' in node)) return node
+    const el = node as React.ReactElement<Record<string, unknown>>
+    if (typeof el.type === 'function' && el.type.constructor.name === 'AsyncFunction') {
+      return resolve(await (el.type as (p: unknown) => Promise<unknown>)(el.props))
+    }
+    const children = el.props.children
+    if (children === undefined) return el
+    return { ...el, props: { ...el.props, children: await resolve(children) } }
   }
 
-  it('wraps its content in <main>', async () => {
+  async function mount(component: () => unknown) {
+    return render((await resolve(component())) as React.ReactElement)
+  }
+  const mountNotFound = () => mount(NotFound)
+
+  it('top level: its own wordmark and exactly one <main>, holding the card', async () => {
     const { container } = await mountNotFound()
-    const main = container.querySelector('main')!
-    expect(main).not.toBeNull()
-    expect(main.querySelector('h1')?.textContent).toBe('Page not found')
+    const mains = container.querySelectorAll('main')
+    expect(mains.length).toBe(1)
+    expect(mains[0].querySelector('h1')?.textContent).toBe('Page not found')
+    const marks = within(container).getAllByText('Open Cave')
+    expect(marks.length).toBe(1)
+    expect(marks[0].className).toContain('min-h-11')
+  })
+
+  it('app group: the card only, no wordmark and no <main> (the shell has both; Jen C2)', async () => {
+    const { container } = await mount(AppNotFound)
+    expect(container.querySelector('[data-not-found-card]')).not.toBeNull()
+    expect(container.querySelector('h1')?.textContent).toBe('Page not found')
+    expect(container.querySelectorAll('main').length).toBe(0)
+    expect(container.textContent).not.toContain('Open Cave')
+    expect(container.innerHTML).not.toContain('min-h-dvh')
+    const action = container.querySelector('a[data-not-found-action]')!
+    expect(action.getAttribute('href')).toBe('/investigations')
+  })
+
+  it('app group inside the real shell: one <main> in all', async () => {
+    const card = await resolve(AppNotFound())
+    const { container } = render(h(AppShell, { displayName: 'Ada Citizen', children: card as React.ReactElement }))
+    expect(container.querySelectorAll('main').length).toBe(1)
+    expect(container.querySelector('main [data-not-found-card]')).not.toBeNull()
+  })
+
+  it('public group: the card only, with the session-aware action (Jen C2)', async () => {
+    cookieToken = undefined
+    const { container } = await mount(PublicNotFound)
+    expect(container.querySelector('[data-not-found-card]')).not.toBeNull()
+    expect(container.querySelectorAll('main').length).toBe(0)
+    expect(container.textContent).not.toContain('Open Cave')
+    expect(container.querySelector('a[data-not-found-action]')!.getAttribute('href')).toBe('/')
+  })
+
+  it('public group inside the real public layout: one <main>, one wordmark', async () => {
+    const card = await resolve(PublicNotFound())
+    const { container } = render(PublicLayout({ children: card as React.ReactElement }))
+    expect(container.querySelectorAll('main').length).toBe(1)
+    expect(within(container).getAllByText('Open Cave').length).toBe(1)
   })
 
   it('sends a signed-in citizen to their investigations', async () => {

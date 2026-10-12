@@ -45,9 +45,16 @@ describe('isForumPath', () => {
       '/forum', '/forum/', '/forum/new', '/forum/policy', '/forum/moderation',
       '/forum/7d6f0c1e-0000-4000-8000-000000000001', '/Forum', '/FORUM/new',
       '/%66orum', '/%66orum/new', '/forum%2Fnew', '//forum', '//forum//policy', '/forum.rsc',
-      '/%E0%A4%A', // undecodable: fail closed
+      // Undecodable, but could be the Forum: fail closed (Razor RN1).
+      '/forum%E0', '/forum/%E0%A4%A', '/FORUM%E0', '/%66orum%E0', '/%46ORUM/x%E0', '//forum%E0',
     ]) {
       expect(isForumPath(p), p).toBe(true)
+    }
+  })
+
+  it('leaves malformed non-Forum paths to the app, not the honest page (Razor RN1)', () => {
+    for (const p of ['/votes%E0', '/%E0%A4%A', '/api/forum%E0', '/api/lever/actions/%E0', '/lever/%E0', '/%E0forum', '/x/forum%E0']) {
+      expect(isForumPath(p), p).toBe(false)
     }
   })
 
@@ -90,6 +97,13 @@ describe('middleware Forum gate', () => {
     const res = await get('/forum/new')
     expect(rewriteOf(res)).toBeNull()
     expect(res.headers.get('x-middleware-next')).toBe('1')
+  })
+
+  it('does not rewrite a malformed non-Forum URL (Razor RN1)', async () => {
+    for (const p of ['/votes%E0', '/lever/%E0']) {
+      expect(rewriteOf(await get(p)), p).toBeNull()
+    }
+    expect(new URL(rewriteOf(await get('/forum%E0'))!).pathname).toBe(FORUM_GATED_PATH)
   })
 
   it('leaves other app routes unrewritten', async () => {
