@@ -8,9 +8,8 @@ import { Sidebar } from './sidebar'
 
 interface AppShellProps {
   children: React.ReactNode
-  /** Accepted from the (app) layout but deliberately never displayed: the
-   *  shell shows the display name only (app-arms P2-16). */
-  userEmail?: string
+  // No email: the shell shows the display name only, and the email is not
+  // even sent to the client (app-arms P2-16, Razor N1).
   displayName?: string
   effectiveWeight?: number
 }

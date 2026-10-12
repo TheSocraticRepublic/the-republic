@@ -12,7 +12,6 @@ export default async function AppLayout({
   children: React.ReactNode
 }) {
   const headersList = await headers()
-  const userEmail = headersList.get('x-user-email') ?? undefined
   const userId = headersList.get('x-user-id') ?? undefined
 
   let displayName: string | undefined = undefined
@@ -45,12 +44,16 @@ export default async function AppLayout({
       }
     } catch (e) {
       if (e && typeof e === 'object' && 'digest' in e) throw e
-      displayName = 'Dev User'
+      // Shell chrome only: the page itself still renders and surfaces its own
+      // errors. No invented name (it once showed "Dev User" in production);
+      // with displayName unset the footer reads "Your profile" (Razor N2).
+      // The error's name only: a driver message can echo query values (the user id).
+      console.error('[app-layout] profile lookup failed:', e instanceof Error ? e.name : 'unknown error')
     }
   }
 
   return (
-    <AppShell userEmail={userEmail} displayName={displayName} effectiveWeight={effectiveWeight}>
+    <AppShell displayName={displayName} effectiveWeight={effectiveWeight}>
       {children}
     </AppShell>
   )

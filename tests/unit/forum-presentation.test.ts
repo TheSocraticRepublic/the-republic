@@ -27,7 +27,9 @@ vi.mock('next/navigation', () => ({
 }))
 
 let cookieToken: string | undefined
+let requestHeaders: Record<string, string> = {}
 vi.mock('next/headers', () => ({
+  headers: async () => new Headers(requestHeaders),
   cookies: async () => ({
     get: (name: string) => (name === 'republic_token' && cookieToken ? { name, value: cookieToken } : undefined),
   }),
@@ -46,7 +48,19 @@ class RealmTextEncoder extends NodeTextEncoder {
 }
 globalThis.TextEncoder = RealmTextEncoder as unknown as typeof TextEncoder
 
+// The (app) layout's two lookups: the profile row and the credential weight.
+let profileLookup: () => Promise<{ displayName: string }[]> = async () => [{ displayName: 'Ada Citizen' }]
+vi.mock('@/lib/db', () => ({
+  getDb: () => ({
+    select: () => ({ from: () => ({ where: () => ({ limit: () => profileLookup() }) }) }),
+  }),
+}))
+vi.mock('@/lib/credentials/check-moderator', () => ({
+  checkModeratorAccess: async () => ({ effectiveWeight: 0 }),
+}))
+
 const { default: ForumLayout } = await import('@/app/(app)/forum/layout')
+const { default: AppLayout } = await import('@/app/(app)/layout')
 const { isForumEnabled } = await import('@/lib/forum/flag')
 const { Sidebar } = await import('@/components/layout/sidebar')
 const { AppShell } = await import('@/components/layout/app-shell')
@@ -70,6 +84,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  requestHeaders = {}
+  profileLookup = async () => [{ displayName: 'Ada Citizen' }]
   delete process.env.FORUM_ENABLED
   pathname = '/investigate'
   cookieToken = undefined
@@ -220,10 +236,34 @@ describe('Sidebar identity (P2-16, P1-1 step 3)', () => {
     expect(link?.textContent).toBe('Your profile')
   })
 
-  it('never shows the email, even when the shell is handed one', () => {
-    render(h(AppShell, { userEmail: 'ada@example.test', displayName: 'Ada Citizen', children: h('p', null, 'page') }))
+  it('never sends the email to the client: the (app) layout does not hand it to the shell (Razor N1)', async () => {
+    requestHeaders = { 'x-user-id': 'user-a', 'x-user-email': 'ada@example.test', 'x-pathname': '/votes' }
+    const el = (await AppLayout({ children: h('p', null, 'page') })) as React.ReactElement<Record<string, unknown>>
+    expect(el.type).toBe(AppShell)
+    expect(el.props.displayName).toBe('Ada Citizen')
+    expect(JSON.stringify(Object.keys(el.props))).not.toContain('Email')
+    render(el)
     expect(document.body.textContent).toContain('Ada Citizen')
     expect(document.body.textContent).not.toContain('ada@example.test')
+  })
+
+  it('invents no name when the profile lookup fails: the footer says "Your profile" (Razor N2)', async () => {
+    requestHeaders = { 'x-user-id': 'user-a', 'x-user-email': 'ada@example.test', 'x-pathname': '/votes' }
+    profileLookup = async () => {
+      throw new Error('db down')
+    }
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      const el = (await AppLayout({ children: h('p', null, 'page') })) as React.ReactElement<Record<string, unknown>>
+      expect(el.props.displayName).toBeUndefined()
+      render(el)
+      const link = document.querySelector('a[href="/profile"]')
+      expect(link?.textContent).toBe('Your profile')
+      expect(document.body.textContent).not.toContain('Dev User')
+      expect(spy).toHaveBeenCalled()
+    } finally {
+      spy.mockRestore()
+    }
   })
 })
 
