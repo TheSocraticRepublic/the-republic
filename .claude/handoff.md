@@ -40,36 +40,22 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
   Never merge PR #6 or anything to main without his yes. Razor RN2: whoever answers privacy requests replies only to the account's sign-in address.
 
-- **UI and filings plan r4.1: Q0a, Q0b, S1 and A1 merged to the session branch; A2 is next.**
-  - **The plan:** `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md`. Its Fable critic is `-critic.md` (CONCERN, no FAIL); r3 and earlier critics sit beside it. Amendments recorded in the plan: S1's privacy wording; A1's Export menu order, per-status notice wording and full-bleed phone paper; no persisted Mirror comparisons.
-  - **The A-series release rule:** A1-A4 release together, never A1 alone, because the PDF keeps the old template until A4. The first A-series release card also carries the legacy-letter question (plan Decision 2).
-  - **The harness:** `npx tsx scripts/qa/harness.ts run` (or `up` / `check` / `down`; see `scripts/qa/README.md`). Browser tests use `scripts/qa/browser.ts`, and signed-in evidence runs in Chromium on 127.0.0.1. Every non-GET request sends `Origin: http://127.0.0.1:3177`. Named limit: no network isolation.
+- **Findings inventory and audit artifacts** are private, in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/` (mode 700). It holds 120 findings with dispositions mapped to the r4 batch IDs (updated 2026-10-11). Screenshots and reports are deleted at relay close, except the inventory (owner Lee).
+
+- **UI and filings plan r4.1: Q0a, Q0b, S1, A1 and A2 merged to the session branch; A3 is next.**
+  - **The plan:** `~/marvin/state/plans/republic-ui-filings-2026-10/republic-ui-filings.md`. Its Fable critic is `-critic.md` (CONCERN, no FAIL); r3 and earlier critics sit beside it. Amendments recorded in the plan: S1's privacy wording; A1's Export menu order, per-status notice wording and full-bleed phone paper; no persisted Mirror comparisons; A4's "Carried from A2" block (viewer sends the content hash and re-reads after a stream; all four conflict reasons mapped; a province choice on the "Choose the province" refusal).
+  - **The A-series release rule:** A1-A4 release together, never A1 alone, because the PDF keeps the old template until A4. The first A-series release card also carries the legacy-letter question (plan Decision 2) and a check that a mid-stream reload behaves on Netlify as it does on `next start` (Parking Lot).
+  - **A4 waits on Lee for one part:** the unclean-split message and behaviour, until he rules on a new letter whose marker line was deleted (open question below). The rest of A4 can be built.
+  - **The harness:** `npx tsx scripts/qa/harness.ts run` (or `up` / `check` / `down`; see `scripts/qa/README.md`). Browser tests use `scripts/qa/browser.ts`, and signed-in evidence runs in Chromium on 127.0.0.1. Every non-GET request sends `Origin: http://127.0.0.1:3177`. Named limits: no network isolation; its ports sit in the ephemeral range, so `up` can be refused on a TIME_WAIT (retry).
   - **Machine:** keep the memory guard on (no build or harness under 4 GB available; never both at once). **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only).
 
-- **Cold start for the next batch (A2).**
-  1. Read the plan's "### A2" and "### 4. Atomic writes" sections.
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-a1-pack.json` as a template.
-  3. Make the new pack `republic-ui-a2-pack.json`. Set `branch` to `relay/ui-a2`; relay-brief appends the step, giving `relay/ui-a2-A2`. Set `parallel_batches` to `[["A2"]]`. Leave `plan_section` unset, so the whole plan goes in the brief.
-  4. Add the ledger entry with `update-relay-ledger.mjs` (project `the-republic`).
-  5. Run `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-a2 --stage implement --batch 1 --step A2`, then `git worktree add -b relay/ui-a2-A2 ../relay-republic-ui-a2-A2 HEAD`.
-  6. Spawn Ted (opus, medium). Razor (opus, high) and Jen (opus, xhigh, for the dialog) review. Resume the implementer for fixes; Razor re-checks only.
-  7. A CRITICAL that falls needs `razor.fixed_at` in the ledger op.
-  8. Merge with `--no-ff` into `marvin/republic-r2` after a ROADMAP commit on the relay branch. Close the pack with `relay-pack-write.mjs`, and remove the worktree.
-
-  **A2 specifics:**
-  - the province select is always shown and confirmed;
-  - finalising a marker-v1 letter is blocked on an unclean split (409);
-  - the race tests use the AI stub's control endpoint, not a test hook in the route;
-  - assert the stream closes only after `onFinish` resolves.
-
-  **Where things live:**
-  - packs, briefs, reports and reviews: `~/marvin/state/relay/republic-ui-*`;
-  - mutation specs: `republic-ui-filings-<batch>-mutants.json`;
-  - private UI audit artifacts and the inventory (r4 batch IDs): `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/`. The production cookie is deleted.
-  - The `gh` account is not the repo owner: use `GH_TOKEN=$(gh auth token --user TheSocraticRepublic)` per command, never `gh auth switch`.
-  - The CI plan and evidence are in `~/.claude/plans/republic-ci-green-2026-10*`.
-
-- **Findings inventory and audit artifacts** are private, in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/` (mode 700). It holds 120 findings with dispositions mapped to the r4 batch IDs (updated 2026-10-11). Screenshots and reports are deleted at relay close, except the inventory (owner Lee).
+- **Cold start for the next batch (A3).**
+  1. Read the plan's "### A3" and "### 3. Recipient" sections. A3 is data: optional `sourceUrl`, `checkedOn`, `sourceQuote` on `PublicBody`, and the orchestrator itself opens each provincial BC entry's government page and records URL, date and quoted address in the private evidence file `~/.local/share/marvin/private/republic-public-body-sources-2026-10.md` before the worker runs. An address that contradicts its page is corrected to the page; one that can't be confirmed stays unchecked.
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-a2-pack.json` as a template (write the new pack directly; `relay-pack-write.mjs` only stamps a closing `ledger_entry`). Set `branch` to `relay/ui-a3`, `parallel_batches` to `[["A3"]]`, leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); then `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-a3 --stage implement --batch 1 --step A3` and `git worktree add -b relay/ui-a3-A3 ../relay-republic-ui-a3-A3 HEAD`.
+  4. Ted (opus, medium) from the brief; Razor (opus, high) with a coverage checklist and plan summary in a brief file; no Jen (no UI). Resume the implementer for fixes; Razor re-checks only. A falling CRITICAL needs `razor.fixed_at`.
+  5. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree.
+  - Where things live: packs, briefs, reports and reviews in `~/marvin/state/relay/republic-ui-*`; mutation specs `republic-ui-filings-<batch>-mutants.json`; the private inventory in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/`. `gh` needs `GH_TOKEN=$(gh auth token --user TheSocraticRepublic)` per command.
 
 ## Open questions awaiting Lee
 
@@ -89,6 +75,7 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | If UI plan r3's critic passes, may it proceed under your 2026-10-05 twenty-batch approval (same findings, regrouped into 28 smaller batches, plus Q0 harness, S1 security and privacy, G1 Gadfly)? (resolved 2026-10-11) | The plan's own rule sends any re-review FAIL back to you; r2 failed | 2026-10-07 |
 | Release S1 to opencave.ca, and which inbox should the privacy and security contact name? (a) publish a monitored email on the TheSocraticRepublic GitHub profile; (b) name an address for the page; (c, recommended) ship the redirect fix only and hold the privacy text; (d) hold all | The live open redirect stays open until S1 ships, and the contact line points at a profile with no public email | 2026-10-12 |
 | Lee's signed-in check on opencave.ca with the audit account after the build-checks deploy | Next 16.3.1 changed request-header reads; identity reaches handlers via the middleware, and no signed-in check has run on production | 2026-10-11 |
+| A new letter's notes sit under the line '=== NOT PART OF YOUR REQUEST ==='. If the citizen deletes that line and the notes, may they finalise the letter? Today (as the plan specifies) they can't, and the refusal tells them to remove notes they already removed. Recommended: when the line is missing, Finalise asks them to confirm they've removed everything that isn't part of the request, then proceeds; two copies of the line still block. | A4 builds the Finalise message on this; the rest of the A-series can proceed. Nothing is live until A1-A4 release together. | 2026-10-12 (Razor W1, relay republic-ui-a2) |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
 2026-07-16 hand-off). SEC-1, FORUM-1's cosmetic gate, Relay 1, Relay 2 and Relay 3 are all
@@ -97,6 +84,13 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 — A2 merged to the session branch (`94f3977`)
+
+- **What it does:** one recipient resolver (`src/lib/lever/public-body.ts`; stored province, then the investigation's resolved province, then keyword detection, never a BC default); a confirmed province select and a body select in the new-action dialog; compare-and-set writes for edit, finalise and generation; generation refuses final letters; FIPPA prompt 0.6.0 with the guidance marker and address placeholder (non-FIPPA prompts byte-identical); filing side effects in the same transaction as the status change; oversized bodies refused before parsing.
+- **Evidence:** every §4 overlap forced on the harness with two real connections and the stub's hold/release; full suite 1143/1143 with the harness up; 55/55 mutants killed; lint, tsc, token lint and build pass.
+- **Reviews:** Razor WARNING (2 warnings, 9 notes), fixed and re-checked twice to PASS; W1 is the plan's own finalise rule and went to Lee. Jen CONCERNS 5 on the dialog, all adopted (server message shown on refusal, reason line and aria-disabled Generate, focus kept while pending, Other name cleared on province change, AB/ON caveat line). One off-manifest file: `GET /api/investigate/[id]` gains `jurisdictionProvince` (Razor: ownership unchanged, public reference data).
+- **Parked:** harness ports in the ephemeral range; developer-worded 4xx reaching citizens; the discard event onto `logEvent()`; mid-stream abort on Netlify (ROADMAP → Deferred from republic-ui-a2).
 
 ### 2026-10-12 (context floor: hand-off rewritten, session marvin/republic-r2)
 
