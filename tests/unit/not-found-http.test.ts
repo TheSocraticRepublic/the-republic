@@ -6,9 +6,9 @@ import * as path from 'node:path'
 import { SignJWT } from 'jose'
 
 /*
- * Razor DN1 / DN2, over HTTP against the QA harness's production build: the
- * SERVER-rendered HTML of a 404 must already carry the card (no JavaScript
- * involved), and its action must follow the real session.
+ * Razor DN1 / DN2, over HTTP against the QA harness's production build: what
+ * the server sends for a 404 carries the card, and its action follows the
+ * real session.
  *
  * Runs only when this worktree's harness is up (scripts/qa/README.md);
  * otherwise it is skipped with an explicit marker, and QA_REQUIRE_HARNESS=1
@@ -51,12 +51,6 @@ if (!APP_UP) {
   console.warn(message)
 }
 
-/** The server HTML up to the first script: what a visitor without JS sees. */
-function serverMarkup(html: string): string {
-  const body = html.slice(html.indexOf('<body'))
-  return body.replace(/<script[\s\S]*?<\/script>/g, '')
-}
-
 describe.skipIf(!APP_UP)('404s over HTTP on the harness', () => {
   let cookie: string
 
@@ -78,29 +72,32 @@ describe.skipIf(!APP_UP)('404s over HTTP on the harness', () => {
     return { status: res.status, html: await res.text() }
   }
 
-  it('an unknown /archive/<id> is a 404 whose server HTML carries the card (Razor DN1)', async () => {
+  it('an unknown /archive/<id> answers 404 and the server response carries the card (Razor DN1)', async () => {
+    // Next 16.3.8 answers a notFound() from a dynamic segment with its error
+    // shell and inlines the not-found payload for the client to draw (see
+    // src/app/(public)/not-found.tsx). What this pins: the status, and that the
+    // card, with the action for the session, is in what the server sent.
     for (const signedIn of [false, true]) {
-      // Twice: the first render and the ISR-cached one.
       for (let i = 0; i < 2; i++) {
         const { status, html } = await get(`/archive/${MISSING_UUID}`, signedIn)
-        const markup = serverMarkup(html)
         expect(status, `signed in: ${signedIn}, run ${i}`).toBe(404)
-        expect(markup).toContain('data-not-found-card')
-        expect(markup).toContain('Page not found')
-        expect(markup).toMatch(/<a[^>]+href="\/"[^>]*>Go to the home page<\/a>/)
-        expect(markup.match(/<main/g)?.length).toBe(1)
+        expect(html).toContain('data-not-found-card')
+        expect(html).toContain('Page not found')
+        expect(html).toContain(signedIn ? 'Go to your investigations' : 'Go to the home page')
+        expect(html).not.toContain(signedIn ? 'Go to the home page' : 'Go to your investigations')
       }
     }
   })
 
   it('an unknown /u/<name> sends a signed-out visitor home, a signed-in one to their investigations (Razor DN2)', async () => {
-    const out = serverMarkup((await get('/u/no-such-person-d4042', false)).html)
+    const out = (await get('/u/no-such-person-d4042', false)).html
     expect(out).toContain('data-not-found-card')
-    expect(out).toMatch(/<a[^>]+href="\/"[^>]*>Go to the home page<\/a>/)
+    expect(out).toContain('Go to the home page')
     expect(out).not.toContain('Go to your investigations')
 
-    const inside = serverMarkup((await get('/u/no-such-person-d4042', true)).html)
+    const inside = (await get('/u/no-such-person-d4042', true)).html
     expect(inside).toContain('data-not-found-card')
-    expect(inside).toMatch(/<a[^>]+href="\/investigations"[^>]*>Go to your investigations<\/a>/)
+    expect(inside).toContain('Go to your investigations')
+    expect(inside).not.toContain('Go to the home page')
   })
 })

@@ -27,11 +27,10 @@ vi.mock('next/navigation', () => ({
 }))
 
 let cookieToken: string | undefined
-let cookieReads = 0
 let requestHeaders: Record<string, string> = {}
 vi.mock('next/headers', () => ({
   headers: async () => new Headers(requestHeaders),
-  cookies: async () => (cookieReads++, {
+  cookies: async () => ({
     get: (name: string) => (name === 'republic_token' && cookieToken ? { name, value: cookieToken } : undefined),
   }),
 }))
@@ -586,19 +585,17 @@ describe('not-found', () => {
     expect(container.querySelector('main [data-not-found-card]')).not.toBeNull()
   })
 
-  it('public group: the card only, always home, and it never reads the session (Jen C2, Razor DN1)', async () => {
-    // A valid session is present, and is ignored: a cookie read under the
-    // statically generated public routes dropped the 404's server render.
-    cookieToken = await signJWT({ sub: 'user-a', email: 'a@example.test' })
-    cookieReads = 0
+  it('public group: the card only, with the session-aware action (Jen C2)', async () => {
+    cookieToken = undefined
     const { container } = await mount(PublicNotFound)
     expect(container.querySelector('[data-not-found-card]')).not.toBeNull()
     expect(container.querySelectorAll('main').length).toBe(0)
     expect(container.textContent).not.toContain('Open Cave')
-    const action = container.querySelector('a[data-not-found-action]')!
-    expect(action.getAttribute('href')).toBe('/')
-    expect(action.textContent).toBe('Go to the home page')
-    expect(cookieReads).toBe(0)
+    expect(container.querySelector('a[data-not-found-action]')!.getAttribute('href')).toBe('/')
+    cleanup()
+    cookieToken = await signJWT({ sub: 'user-a', email: 'a@example.test' })
+    const signedIn = await mount(PublicNotFound)
+    expect(signedIn.container.querySelector('a[data-not-found-action]')!.getAttribute('href')).toBe('/investigations')
   })
 
   it('public group inside the real public layout: one <main>, one wordmark', async () => {

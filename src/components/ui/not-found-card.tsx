@@ -20,17 +20,13 @@ async function isSignedIn(): Promise<boolean> {
  * thrown inside a route group renders INSIDE that group's layout, which
  * already has a wordmark and a <main> (Jen, B2 design review C2).
  *
- * `action`:
- * - 'session': a signed-in citizen is sent back into the app, anyone else to
- *   the home page (landing L13, mobile P2-2). Reads the session cookie, so
- *   only for boundaries under dynamically rendered routes;
- * - 'home': always the home page, and NO cookie read. For boundaries under
- *   statically generated / ISR routes (the (public) group): reading cookies()
- *   there made Next abandon the server render of the 404, so the server HTML
- *   had an empty body and the card appeared only after JavaScript (Razor DN1).
+ * The action follows the session everywhere: a signed-in citizen is sent
+ * back into the app, anyone else to the home page (landing L13, mobile P2-2).
+ * That holds in the (app) group too, because the public /u/<name> lives
+ * there (Razor DN2).
  */
-export async function NotFoundCard({ action }: { action: 'session' | 'home' }) {
-  const signedIn = action === 'home' ? false : await isSignedIn()
+export async function NotFoundCard() {
+  const signedIn = await isSignedIn()
   const target = signedIn
     ? { href: '/investigations', label: 'Go to your investigations' }
     : { href: '/', label: 'Go to the home page' }

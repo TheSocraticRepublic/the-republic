@@ -22,7 +22,7 @@ export default function NotFound() {
         </Link>
       </header>
       <main className="flex flex-1 items-center justify-center px-6 pb-16">
-        <NotFoundCard action="session" />
+        <NotFoundCard />
       </main>
     </div>
   )

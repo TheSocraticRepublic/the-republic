@@ -15,7 +15,7 @@ export const metadata = { title: 'Page not found' }
 export default function AppNotFound() {
   return (
     <div className="flex min-h-full items-center justify-center px-6 py-16">
-      <NotFoundCard action="session" />
+      <NotFoundCard />
     </div>
   )
 }
