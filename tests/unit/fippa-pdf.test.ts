@@ -572,8 +572,14 @@ async function harnessAppUp(): Promise<boolean> {
 }
 
 const HARNESS_SECRET = harnessJwtSecret()
-const HARNESS_APP = HARNESS_SECRET !== null && (await harnessAppUp())
-if (!HARNESS_APP) {
+// QA_SKIP_HARNESS_HTTP=1: the mutation battery's runs. This layer tests the
+// BUILT app, which a source mutant never reaches, and it paces itself under
+// the live rate limit (minutes per run), so a mutant run skips it, loudly.
+const HARNESS_HTTP_SKIPPED = process.env.QA_SKIP_HARNESS_HTTP === '1'
+const HARNESS_APP = !HARNESS_HTTP_SKIPPED && HARNESS_SECRET !== null && (await harnessAppUp())
+if (HARNESS_HTTP_SKIPPED) {
+  console.warn('[fippa-pdf] harness layer SKIPPED by QA_SKIP_HARNESS_HTTP=1 (mutation runs only).')
+} else if (!HARNESS_APP) {
   const message = '[fippa-pdf] harness layer SKIPPED: no running QA harness app for this worktree (npx tsx scripts/qa/harness.ts up).'
   if (process.env.QA_REQUIRE_HARNESS === '1') throw new Error(message.replace('SKIPPED', 'REQUIRED'))
   console.warn(message)

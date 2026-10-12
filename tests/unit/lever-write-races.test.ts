@@ -609,6 +609,31 @@ describe.skipIf(!HARNESS_UP)(SUITE_TITLE, () => {
       expect((fin.json.action as Record<string, unknown>).content).toBe('After.\r\n')
     })
 
+    it("A4: print reads the recipient through the action's OWN investigation, never another user's", async () => {
+      const PRINT = (await import('@/app/api/lever/actions/[id]/print/route')).GET as unknown as Handler
+      const where = async (id: string) => {
+        const res = await PRINT(request('GET', `http://localhost/api/lever/actions/${id}/print`, OWNER.id), {
+          params: Promise.resolve({ id }),
+        })
+        expect(res.status).toBe(200)
+        const html = await res.text()
+        return html.slice(html.indexOf('where-to-send'))
+      }
+      const meta = { publicBody: 'BC Ministry of Forests', letterFormat: 'marker-v1' }
+      // The owner's BC investigation resolves the province: a checked listing.
+      const own = await insertAction({ content: MARKER_V1_LETTER.content, metadata: meta, investigationId: BC_INVESTIGATION_ID })
+      expect(await where(own)).toContain('(checked 2026-10-12)')
+      // The same link to another user's BC investigation resolves nothing.
+      const [theirs] = await db1<{ id: string }[]>`
+        insert into investigations (user_id, concern, jurisdiction_name, status)
+        values (${OTHER.id}, 'Synthetic QA concern', 'Victoria, British Columbia', 'complete')
+        returning id`
+      const crossed = await insertAction({ content: MARKER_V1_LETTER.content, metadata: meta, investigationId: theirs.id })
+      const crossedWhere = await where(crossed)
+      expect(crossedWhere).toContain('Open Cave has no checked address for this body.')
+      expect(crossedWhere).not.toContain('(checked 2026-10-12)')
+    })
+
     it('ownership: another user gets 404 and no header gets 401, and nothing is written', async () => {
       const id = await insertAction({ content: 'Owner text.' })
       expect((await patch(id, { content: 'Theirs.' }, OTHER.id)).status).toBe(404)
