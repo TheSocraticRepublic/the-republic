@@ -377,6 +377,19 @@ describe('focus ring on island paper (the grounds the ring actually lands on)', 
     return { ...hexVar(vars, name), a: Number(m[2]) / 100 }
   }
 
+  /**
+   * The variables an element actually sees: `:root` and `.dark` are both on
+   * `<html>`, so `.dark` overrides `:root` wherever it redeclares; a
+   * `.dark-island` ancestor overrides both.
+   */
+  function effective(...selectors: string[]): Map<string, string> {
+    const out = new Map<string, string>()
+    for (const sel of selectors) for (const [k, v] of scopeVars(sel)) out.set(k, v)
+    return out
+  }
+  const LIGHT_PAPER = [':root', '.dark']
+  const DARK_PAPER = [':root', '.dark', '.dark-island']
+
   function lowOn(ring: RGBA, vars: Map<string, string>, grounds: readonly string[]): string[] {
     return grounds
       .map((g) => ({ g, r: contrast(over(ring, hexVar(vars, g)), hexVar(vars, g)) }))
@@ -393,8 +406,9 @@ describe('focus ring on island paper (the grounds the ring actually lands on)', 
   it('paper re-points the ring at its island text: >= 3:1 on every light and dark island ground', () => {
     const value = ruleVars(paperRule()).get('--focus-ring')
     expect(value).toBeDefined()
-    expect(lowOn(resolveRing(value as string, scopeVars(':root')), scopeVars(':root'), ISLAND_GROUNDS)).toEqual([])
-    const dark = scopeVars('.dark-island')
+    const light = effective(...LIGHT_PAPER)
+    expect(lowOn(resolveRing(value as string, light), light, ISLAND_GROUNDS)).toEqual([])
+    const dark = effective(...DARK_PAPER)
     expect(lowOn(resolveRing(value as string, dark), dark, ISLAND_GROUNDS)).toEqual([])
   })
 
@@ -470,8 +484,8 @@ describe('focus ring on island paper (the grounds the ring actually lands on)', 
     expect(hits).toHaveLength(1)
     const value = ruleVars(hits[0]).get('outline-color')
     expect(value).toBeDefined()
-    const root = scopeVars(':root')
-    expect(lowOn(resolveRing(value as string, root), root, ISLAND_GROUNDS)).toEqual([])
+    const light = effective(...LIGHT_PAPER)
+    expect(lowOn(resolveRing(value as string, light), light, ISLAND_GROUNDS)).toEqual([])
   })
 })
 
