@@ -80,6 +80,9 @@ DATABASE_URL=<direct-connection-url> npm run db:migrate-custom
 ```
 
 This runs `scripts/apply-custom-migrations.ts`, which:
+- Connects with TLS verified against the pinned Supabase CA, always (unless the
+  local-only QA rule applies: `QA_LOCAL_DB=1` and a `127.0.0.1`/`localhost`
+  host; see "Running `db:migrate-custom` against live infrastructure")
 - Reads `drizzle/migrations/000N_*.sql` in sorted order
 - Applies each in a transaction (files containing `ALTER TYPE ... ADD VALUE` run
   outside a transaction, as required by PostgreSQL)
@@ -143,8 +146,12 @@ WHERE indexname IN (
 | `0008_archive_survivability.sql` | archive_records: drop investigation FK (keep NOT NULL), userId SET NULL, 3 snapshot columns | Yes |
 | `0009_audit_trail_survivability.sql` | governance_votes/moderation_actions/peer_reviews: user FKs → SET NULL | Yes |
 | `0010_player_description_scope.sql` | Drop players.description (private briefing output in global table) | Yes |
+| `0011_fk_indexes.sql` | credential_events partial unique index, indexes on 19 unindexed FK columns | Yes |
+| `0012_nonce_turn_unique_contradictions.sql` | investigations.generation_nonce, gadfly_turns (session_id, turn_index) unique after renumbering duplicates, mp_voting_patterns.pattern_analysis nullable | Yes |
+| `0013_timestamps_withtz.sql` | Every `timestamp` column converted to `timestamptz` (as UTC); the file carries its own `BEGIN`/`COMMIT` | Yes |
+| `0014_peer_review_checks.sql` | CHECK constraints (1–5) on the five peer_reviews rating columns; the file carries its own `BEGIN`/`COMMIT` | Yes |
 
-All files are **idempotent living scripts** — not immutable history. They can be
+There are **fourteen** custom migrations. All files are **idempotent living scripts** — not immutable history. They can be
 updated (e.g., to add new policies) and re-applied safely. The `_custom_migrations`
 tracking table records the first successful application per filename; if a file is
 updated after its first run, delete its row from `_custom_migrations` to re-apply:
@@ -159,24 +166,29 @@ DELETE FROM _custom_migrations WHERE filename = '0001_enable_rls.sql';
 Migration tooling reads `DIRECT_DATABASE_URL` (falling back to `DATABASE_URL`
 when unset) — see "Connection architecture" above for the full two-URL model.
 The transaction pooler (`:6543`) does not support all DDL operations (e.g.,
-`CREATE EXTENSION`, multi-statement transactions). The CA cert in
-`scripts/apply-custom-migrations.ts` and `src/lib/db/index.ts` covers both the
-`:5432` and `:6543` pooler endpoints.
+`CREATE EXTENSION`, multi-statement transactions). The pinned CA cert lives in
+`scripts/lib/supabase-ssl.ts` (used by the custom runner) and
+`src/lib/db/index.ts` (the app runtime), and covers both the `:5432` and
+`:6543` pooler endpoints.
 
 ## Running `db:migrate-custom` against live infrastructure
 
-Two prerequisites apply when running the custom migration runner against a real Supabase
+Two things to know when running the custom migration runner against a real Supabase
 project (staging or production):
 
-**1. Set `NODE_ENV=production`.**
-The runner (`scripts/apply-custom-migrations.ts`) branches on `NODE_ENV`:
+**1. TLS is always verified against the pinned CA; `NODE_ENV` does not change it.**
+The runner (`scripts/apply-custom-migrations.ts`) always connects with
+`rejectUnauthorized: true` and the pinned Supabase Root 2021 CA
+(`migrationSslConfig()` in `scripts/lib/supabase-ssl.ts`), whatever `NODE_ENV` is.
 
-- `production` → TLS with `rejectUnauthorized: true` and the pinned Supabase Root 2021 CA
-- anything else → `rejectUnauthorized: false` (safe for local dev, NOT acceptable for live infra)
+The one exception is the local QA harness: TLS is switched off **only** when
+`QA_LOCAL_DB=1` **and** the URL's host is `127.0.0.1` or `localhost`. With
+`QA_LOCAL_DB=1` and any other host the runner refuses to start rather than
+connect. Never set `QA_LOCAL_DB` against live infrastructure; it cannot weaken
+TLS to a remote host, but it will stop the run.
 
-Always prefix the command:
 ```bash
-NODE_ENV=production DATABASE_URL=<direct-url> npm run db:migrate-custom
+DIRECT_DATABASE_URL=<session-pooler-url> npm run db:migrate-custom
 ```
 
 **2. Install devDependencies first.**

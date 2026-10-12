@@ -30,14 +30,19 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as url from 'url'
 import { resolveMigrationDatabaseUrl } from './lib/migration-database-url'
-import { supabaseSslConfig } from './lib/supabase-ssl'
+import { migrationSslConfig } from './lib/supabase-ssl'
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
 async function main() {
   let databaseUrl: string
+  let ssl: ReturnType<typeof migrationSslConfig>
   try {
     databaseUrl = resolveMigrationDatabaseUrl()
+    // Pinned Supabase CA, unless the local-only QA rule applies
+    // (QA_LOCAL_DB=1 and a loopback host). The rule throws, before any
+    // connection is opened, if the flag is set against a remote host.
+    ssl = migrationSslConfig(databaseUrl)
   } catch (err) {
     console.error(`ERROR: ${err instanceof Error ? err.message : err}`)
     console.error('See drizzle/DR.md for setup instructions.')
@@ -46,7 +51,7 @@ async function main() {
 
   const sql = postgres(databaseUrl, {
     max: 1,
-    ssl: supabaseSslConfig(),
+    ssl,
   })
 
   try {
