@@ -38,7 +38,7 @@ afterEach(() => {
 
 function renderButton(disabled: boolean) {
   const onClick = vi.fn()
-  render(createElement(CTAButton, { onClick, disabled }, 'Start Investigation'))
+  render(createElement(CTAButton, { onClick, disabled, children: 'Start Investigation' }))
   return { onClick, button: screen.getByRole('button', { name: 'Start Investigation' }) }
 }
 
