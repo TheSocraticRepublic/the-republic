@@ -247,6 +247,16 @@ describe('Sidebar rows', () => {
     expect(dot).not.toBeNull()
     expect(dot.className).toContain('absolute')
     expect(dot.className).not.toContain('ml-auto')
+    // Two-line arm descriptions no longer collide (leading-none was the cause).
+    const description = within(lever as HTMLElement).getByText('Turn findings into filings')
+    expect(description.className).toContain('leading-tight')
+    expect(description.className).not.toContain('leading-none')
+  })
+
+  it('pads the top of the row scroller so the first focus ring is not clipped (P2-10)', () => {
+    const { container } = mountSidebar({ variant: 'sidebar' })
+    const scroller = container.querySelector('nav .overflow-y-auto')!
+    expect(scroller.className.split(/\s+/)).toContain('pt-1')
   })
 
   it('hides the Instruments list on collapse instead of unmounting it (P2-7)', () => {
