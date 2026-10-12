@@ -3,6 +3,9 @@ import { createHash } from 'crypto'
 // @ts-expect-error -- jsdom ships no types and @types/jsdom is not a dependency; one constructor is used, typed below.
 import { JSDOM as UntypedJSDOM } from 'jsdom'
 import { NextRequest } from 'next/server'
+// Imported at module scope (vi.mock is hoisted above it), so the route's cold
+// import is paid at collection, not inside the first test's 5s timeout.
+import { GET } from '@/app/api/lever/actions/[id]/print/route'
 import {
   LETTER_FIXTURES,
   MARKER_V1_LETTER,
@@ -58,7 +61,6 @@ function fippaRow(fx: LetterFixture, extra: Record<string, unknown> = {}): Row {
 }
 
 async function print(userId: string | null = 'user-a') {
-  const { GET } = await import('@/app/api/lever/actions/[id]/print/route')
   const headers: Record<string, string> = {}
   if (userId) headers['x-user-id'] = userId
   return GET(new NextRequest(`http://localhost/api/lever/actions/${ID}/print`, { headers }), {
