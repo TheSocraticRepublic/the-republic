@@ -124,15 +124,12 @@ describe('login: redirect after verify-code', () => {
   )
 
   it.each(['/.//evil.example', '/a/..//evil.example', '/%2e//evil.example'])(
-    '%s assigns an absolute URL whose origin is this origin',
+    '%s (normalises to a "//" path) assigns /investigate',
     async (raw) => {
       setLocation(`?redirect=${encodeURIComponent(raw)}`)
       await signIn()
       expect(assign).toHaveBeenCalledTimes(1)
-      const target = assign.mock.calls[0][0] as string
-      // Absolute: resolved against any base, it stays on this origin.
-      expect(target.startsWith(`${ORIGIN}/`)).toBe(true)
-      expect(new URL(target, 'http://other.example/x/').origin).toBe(ORIGIN)
+      expect(assign).toHaveBeenCalledWith(FALLBACK)
     }
   )
 
