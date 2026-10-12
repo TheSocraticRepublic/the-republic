@@ -402,7 +402,9 @@ export function blocksToHtml(blocks: Block[]): string {
             ? '<p class="lb lb-blank"></p>'
             : `<p class="lb">${inlinesToHtml(b.inlines)}</p>`
         case 'verbatim':
-          return `<pre class="lb lb-verbatim">${escapeHtml(b.text)}</pre>`
+          // The HTML parser drops one newline directly after <pre>, so one is
+          // written there on purpose: a text that starts with a newline keeps it.
+          return `<pre class="lb lb-verbatim">\n${escapeHtml(b.text)}</pre>`
       }
     })
     .join('\n')
