@@ -5,6 +5,7 @@ import { PageNumberFooter, FOOTER_BAND_TOP } from '../primitives'
 import {
   parseLetter,
   blockPrefix,
+  projectBlock,
   uncleanSplitNotice,
   type Block,
   type Inline,
@@ -256,9 +257,21 @@ export function FippaRequestTemplate({ data }: { data: FippaRequestData }) {
     <Document title={data.title} author="" creator="">
       <Page size="LETTER" style={styles.page}>
         <View>
-          {parsed.letter.map((b, i) => (
-            <PdfBlock key={i} block={b} placeholders m={m} />
-          ))}
+          {(() => {
+            // The closing never starts a page alone (Jen C12): the last body
+            // paragraph and everything after it are kept on one page.
+            const keep = closingGroupStart(parsed.letter, m)
+            const blocks = (from: number, to: number) =>
+              parsed.letter.slice(from, to).map((b, i) => <PdfBlock key={from + i} block={b} placeholders m={m} />)
+            return keep === null ? (
+              blocks(0, parsed.letter.length)
+            ) : (
+              <>
+                {blocks(0, keep)}
+                <View wrap={false}>{blocks(keep, parsed.letter.length)}</View>
+              </>
+            )
+          })()}
         </View>
         <PageNumberFooter insetX={PDF_PAPER.margin} />
       </Page>
@@ -753,4 +766,42 @@ export function estimateRenderCost(content: string, letterFormat: unknown, metri
   if (parsed.guidance) tallyBlocks(parsed.guidance, m, guidance)
   const pages = (t: Tally) => Math.max(1, Math.ceil(t.lines / LINES_PER_PAGE))
   return letter.nodes * pages(letter) + guidance.nodes * pages(guidance)
+}
+
+// ---------------------------------------------------------------------------
+// Keeping the closing with the letter (Jen C12)
+// ---------------------------------------------------------------------------
+
+/** A body paragraph is longer than this; shorter ones are closings and names. */
+const BODY_PARAGRAPH_CHARS = 60
+
+function isBlank(b: Block): boolean {
+  return (b.kind === 'line' && b.inlines.length === 0) || b.kind === 'rule'
+}
+
+/**
+ * Where the kept-together tail starts: the last body paragraph (a run of
+ * non-blank blocks holding more than BODY_PARAGRAPH_CHARS characters), so
+ * "Sincerely," and the name below it always travel with the paragraph
+ * before them. Null when there is no such paragraph, or the tail would not
+ * fit on a page anyway (then react-pdf breaks it as usual).
+ */
+export function closingGroupStart(blocks: Block[], m: Measure): number | null {
+  let end = blocks.length
+  while (end > 0) {
+    let start = end
+    while (start > 0 && !isBlank(blocks[start - 1])) start--
+    if (start < end) {
+      const chars = blocks.slice(start, end).reduce((n, b) => n + projectBlock(b).length, 0)
+      if (chars > BODY_PARAGRAPH_CHARS) {
+        if (start === 0) return null
+        const t: Tally = { nodes: 0, lines: 0 }
+        tallyBlocks(blocks.slice(start), m, t)
+        return t.lines <= LINES_PER_PAGE - 2 ? start : null
+      }
+    }
+    end = start
+    while (end > 0 && isBlank(blocks[end - 1])) end--
+  }
+  return null
 }

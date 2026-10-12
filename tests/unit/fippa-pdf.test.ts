@@ -362,6 +362,26 @@ describe('FIPPA PDF: where a word is cut (Jen C3)', () => {
   })
 })
 
+describe('FIPPA PDF: the closing never starts a page alone (Jen C12)', () => {
+  it('wherever the page break falls, "Sincerely," shares its page with the last body paragraph', async () => {
+    const final = 'FINAL please send the records electronically, by email, to the address above if you can.'
+    let crossings = 0
+    for (let n = 26; n <= 38; n++) {
+      const filler = Array.from({ length: n }, (_, i) => `Line ${i + 1} of the request.`)
+      const content = [...filler, '', final, '', 'Sincerely,', '', '[Your name]'].join('\n')
+      const { pdf } = await renderFixture({ content, format: undefined })
+      const letterPages = pdf.pages.slice(0, guidanceIndex(pdf)).map(bodyText)
+      const at = letterPages.findIndex((t) => t.includes('Sincerely,'))
+      expect(at, `n=${n}`).toBeGreaterThanOrEqual(0)
+      expect(letterPages[at], `n=${n}`).toContain('FINAL')
+      expect(letterPages[at], `n=${n}`).toContain('[Your name]')
+      if (at > 0) crossings++
+    }
+    // The sweep did push the closing onto a later page (so the check bit).
+    expect(crossings).toBeGreaterThan(0)
+  }, 60_000)
+})
+
 const GEOMETRY_FIXTURES = [
   FIFTY_KB_LETTER,
   LONG_TOKEN_LETTER,
