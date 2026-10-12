@@ -471,9 +471,14 @@ body {
  * the Lens panel, the civic strip, the Votes letter, bill and explanation
  * views. These paint an island ground inline, `var(--color-island-*)`, without
  * being a theme scope, so the chrome's light ring would be ~1.04:1 on them.
- * Any element that paints an island ground re-points `--focus-ring` at the
- * island text through the SAME chain as its ground, `--color-island-text`,
- * so ring and paper always resolve together.
+ * Everything INSIDE an element that paints an island ground re-points
+ * `--focus-ring` at the island text through the SAME chain as its ground,
+ * `--color-island-text`, so ring and paper always resolve together.
+ *
+ * Descendants only, never the paper element itself: an outline is drawn
+ * outside its own box, so a focusable paper (the civic strip cards) draws its
+ * ring on whatever is around it, the dark page, and must keep the chrome
+ * ring there (an ink ring measured 1.09:1).
  *
  * That chain matters: Tailwind emits `--color-island-*: var(--island-*)` once,
  * at the theme root, where it resolves to the light `:root` island set and is
@@ -488,11 +493,14 @@ body {
  * after every theme scope so it wins on an element that is both `.dark-island`
  * and paper.
  */
-[style*="background-color:var(--color-island-"],
-[style*="background-color: var(--color-island-"],
-[style*="background:var(--color-island-"],
-[style*="background: var(--color-island-"],
-[class*="bg-island-"] {
+:is(
+    [style*="background-color:var(--color-island-"],
+    [style*="background-color: var(--color-island-"],
+    [style*="background:var(--color-island-"],
+    [style*="background: var(--color-island-"],
+    [class*="bg-island-"]
+  )
+  * {
   --focus-ring: color-mix(in srgb, var(--color-island-text) 70%, transparent);
 }
 
@@ -554,8 +562,13 @@ body {
 [data-arm="mirror"] { --arm-tint: var(--accent-mirror); }
 [data-arm="votes"] { --arm-tint: var(--accent-votes); }
 
+/*
+ * Mixed in OKLCH, not sRGB: in sRGB a cool accent (Oracle's blue) cancels the
+ * R4 umber and the room rendered neutral #101111. In OKLCH every room keeps a
+ * warm hue at this 4% (R4, Lee).
+ */
 [data-arm] {
-  background: color-mix(in srgb, var(--surface-0) 96%, var(--arm-tint) 4%);
+  background: color-mix(in oklch, var(--surface-0) 96%, var(--arm-tint) 4%);
   min-height: 100vh;
 }
 

@@ -970,7 +970,6 @@ function DocumentCard({
           {docName && (
             <span
               style={{
-                fontFamily: 'var(--font-display)',
                 fontSize: '14px',
                 fontWeight: 700,
                 lineHeight: '1.4',

@@ -81,7 +81,6 @@ export function FeedbackDialog() {
           <div className="mb-5 flex items-center justify-between">
             <Dialog.Title
               className="text-base font-semibold text-text-primary"
-              style={{ fontFamily: 'var(--font-display)' }}
             >
               {submitted ? 'Thanks' : 'Send feedback'}
             </Dialog.Title>

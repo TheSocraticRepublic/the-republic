@@ -25,7 +25,15 @@
  *     (light) paper.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
+
+// The civic strip (rendered below for its real markup) reaches the app router
+// through a child; give it an inert one. Only markup is read, nothing navigates.
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: () => {}, replace: () => {}, refresh: () => {}, back: () => {}, prefetch: () => {} }),
+  usePathname: () => '/investigate/c0000000-0000-4000-8000-0000000000c1',
+  useSearchParams: () => new URLSearchParams(),
+}))
 import fs from 'fs'
 import path from 'path'
 import postcss, { type Root, type Rule, type AtRule, type Container } from 'postcss'
@@ -77,6 +85,58 @@ function contrast(fg: RGBA, bg: RGBA): number {
 function mix(a: RGBA, p: number, b: RGBA, q: number): RGBA {
   const t = p / (p + q)
   return { r: a.r * t + b.r * (1 - t), g: a.g * t + b.g * (1 - t), b: a.b * t + b.b * (1 - t), a: 1 }
+}
+
+// OKLab / OKLCH (Björn Ottosson's matrices, as CSS Color 4 uses them).
+const toLin = (c: number) => {
+  const s = c / 255
+  return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
+}
+const fromLin = (c: number) => 255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055)
+
+type LCH = { L: number; C: number; h: number }
+
+function toOklch({ r, g, b }: RGBA): LCH {
+  const [lr, lg, lb] = [toLin(r), toLin(g), toLin(b)]
+  const l = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb)
+  const m = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb)
+  const s = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb)
+  const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s
+  const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s
+  const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s
+  return { L, C: Math.hypot(A, B), h: ((Math.atan2(B, A) * 180) / Math.PI + 360) % 360 }
+}
+
+function fromOklch({ L, C, h }: LCH): RGBA {
+  const A = C * Math.cos((h * Math.PI) / 180)
+  const B = C * Math.sin((h * Math.PI) / 180)
+  const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3
+  const m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3
+  const s = (L - 0.0894841775 * A - 1.291485548 * B) ** 3
+  const clamp = (x: number) => Math.min(255, Math.max(0, x))
+  return {
+    r: clamp(fromLin(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s)),
+    g: clamp(fromLin(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s)),
+    b: clamp(fromLin(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s)),
+    a: 1,
+  }
+}
+
+/** `color-mix(in oklch, A p%, B q%)` for opaque A and B: shorter-arc hue, as CSS defaults. */
+function mixOklch(a: RGBA, p: number, b: RGBA, q: number): RGBA {
+  const t = q / (p + q)
+  const x = toOklch(a)
+  const y = toOklch(b)
+  let dh = y.h - x.h
+  if (dh > 180) dh -= 360
+  if (dh < -180) dh += 360
+  return fromOklch({ L: x.L + (y.L - x.L) * t, C: x.C + (y.C - x.C) * t, h: (x.h + dh * t + 360) % 360 })
+}
+
+function mixIn(space: string, a: RGBA, p: number, b: RGBA, q: number): RGBA {
+  if (space === 'srgb') return mix(a, p, b, q)
+  if (space === 'oklch') return mixOklch(a, p, b, q)
+  throw new Error(`unmodelled color-mix space: ${space}`)
 }
 
 /** Composite a translucent colour over an opaque ground. */
@@ -139,12 +199,12 @@ function focusRing(vars: Map<string, string>): RGBA {
 }
 
 /** The arm tint recipe as the compiled `[data-arm]` rule writes it. */
-function armTintRecipe(): { surface: number; tint: number } {
-  let found: { surface: number; tint: number } | null = null
+function armTintRecipe(): { space: string; surface: number; tint: number } {
+  let found: { space: string; surface: number; tint: number } | null = null
   compiled.walkRules('[data-arm]', (rule) => {
     rule.walkDecls('background', (d) => {
-      const m = /color-mix\(in srgb, var\(--surface-0\) (\d+)%, var\(--arm-tint\) (\d+)%\)/.exec(d.value)
-      if (m) found = { surface: Number(m[1]), tint: Number(m[2]) }
+      const m = /color-mix\(in ([a-z]+), var\(--surface-0\) (\d+)%, var\(--arm-tint\) (\d+)%\)/.exec(d.value)
+      if (m) found = { space: m[1], surface: Number(m[2]), tint: Number(m[3]) }
     })
   })
   if (!found) throw new Error('[data-arm] tint recipe not found')
@@ -202,14 +262,38 @@ describe('text contrast, .dark (app chrome)', () => {
 
   it('every text and status token clears 4.5:1 on every arm tint', () => {
     const v = scopeVars('.dark')
-    const { surface, tint } = armTintRecipe()
+    const { space, surface, tint } = armTintRecipe()
     const pairs: Pair[] = []
     for (const arm of ARMS) {
-      const ground = mix(hexVar(v, '--surface-0'), surface, hexVar(v, `--accent-${arm}`), tint)
+      const ground = mixIn(space, hexVar(v, '--surface-0'), surface, hexVar(v, `--accent-${arm}`), tint)
       for (const fg of [...TEXT, ...STATUS]) pairs.push({ fg, bg: `${arm} tint`, ratio: contrast(hexVar(v, fg), ground) })
     }
     expect(pairs).toHaveLength(48)
     expect(failures(pairs, BODY_MIN)).toEqual([])
+  })
+
+  // R4 (Lee): the app's dark surfaces are warm. Warm here means the OKLCH hue of
+  // the tinted room sits in 30°-100° (the umber band; S0 itself is ~69°) with
+  // chroma >= 0.003, so the hue is not a rounding artefact of a neutral grey.
+  it('every arm-tinted room stays warm (OKLCH hue 30-100°, chroma >= 0.003)', () => {
+    const v = scopeVars('.dark')
+    const { space, surface, tint } = armTintRecipe()
+    const cold: string[] = []
+    for (const arm of ARMS) {
+      const ground = toOklch(mixIn(space, hexVar(v, '--surface-0'), surface, hexVar(v, `--accent-${arm}`), tint))
+      if (!(ground.h >= 30 && ground.h <= 100 && ground.C >= 0.003)) cold.push(`${arm}: h ${ground.h.toFixed(0)}, C ${ground.C.toFixed(4)}`)
+    }
+    expect(cold).toEqual([])
+  })
+
+  it('the warmth check sees the sRGB mix that turned the Oracle room grey', () => {
+    const v = scopeVars('.dark')
+    const oracle = toOklch(mix(hexVar(v, '--surface-0'), 96, hexVar(v, '--accent-oracle'), 4))
+    expect(oracle.C).toBeLessThan(0.003)
+    // and the converter round-trips
+    const back = fromOklch(toOklch(parseHex('#292623')))
+    expect(Math.round(back.r)).toBe(0x29)
+    expect(Math.round(back.b)).toBe(0x23)
   })
 })
 
@@ -364,7 +448,7 @@ describe('focus ring on island paper (the grounds the ring actually lands on)', 
   }
 
   function paperRule(): Rule {
-    const hits = topRules().filter((r) => PAPER_SELECTORS.every((s) => r.selectors.map((x) => x.trim()).includes(s)))
+    const hits = topRules().filter((r) => PAPER_SELECTORS.every((s) => r.selector.includes(s)))
     expect(hits).toHaveLength(1)
     return hits[0]
   }
@@ -437,8 +521,14 @@ describe('focus ring on island paper (the grounds the ring actually lands on)', 
     expect(rules.indexOf(paper)).toBeGreaterThan(lastIsland)
   })
 
-  it('the paper selector matches both inline-style spellings React produces, and not the chrome', () => {
+  it('the paper rule reaches what is INSIDE a paper, in every inline-style spelling, never the paper itself', () => {
     const sel = paperRule().selector
+    expect(sel.replace(/\s+/g, ' ')).toMatch(/\) \*$/)
+    const inside = (paper: HTMLElement) => {
+      const b = document.createElement('button')
+      paper.appendChild(b)
+      return b
+    }
     // Server render: React writes `background-color:var(...)`.
     const host = document.createElement('div')
     host.innerHTML = renderToStaticMarkup(
@@ -446,23 +536,108 @@ describe('focus ring on island paper (the grounds the ring actually lands on)', 
     )
     const ssr = host.querySelector('#ssr') as HTMLElement
     expect(ssr.getAttribute('style')).toBe('background-color:var(--color-island-bg)')
-    expect(ssr.matches(sel)).toBe(true)
+    expect((ssr.querySelector('button') as HTMLElement).matches(sel)).toBe(true)
+    expect(ssr.matches(sel)).toBe(false)
     // Client: the CSSOM (React's client renderer, hover handlers) writes `background-color: var(...)`.
     const client = document.createElement('div')
     client.style.backgroundColor = 'var(--color-island-hover)'
     expect(client.getAttribute('style')).toContain('background-color: var(--color-island-hover)')
-    expect(client.matches(sel)).toBe(true)
+    expect(inside(client).matches(sel)).toBe(true)
+    expect(client.matches(sel)).toBe(false)
     const shorthand = document.createElement('div')
     shorthand.setAttribute('style', 'background: var(--color-island-card)')
-    expect(shorthand.matches(sel)).toBe(true)
+    expect(inside(shorthand).matches(sel)).toBe(true)
     const utility = document.createElement('header')
     utility.className = 'bg-island-bg/80 backdrop-blur-md'
-    expect(utility.matches(sel)).toBe(true)
+    expect(inside(utility).matches(sel)).toBe(true)
+    expect(utility.matches(sel)).toBe(false)
     // Chrome grounds and island borders do not re-point the ring.
     const chrome = document.createElement('div')
     chrome.setAttribute('style', 'background-color: var(--surface-1); border: 1px solid var(--color-island-border)')
     chrome.className = 'bg-surface-1'
-    expect(chrome.matches(sel)).toBe(false)
+    expect(inside(chrome).matches(sel)).toBe(false)
+  })
+
+  /**
+   * The ring a focused element gets, and the ground its outline is painted on.
+   * The outline sits OUTSIDE the element's box, so its ground is the nearest
+   * ANCESTOR's paint, never the element's own background.
+   */
+  function ringAndGround(el: HTMLElement): { ring: RGBA; ground: RGBA; where: string } {
+    const chrome = scopeVars('.dark')
+    const islandValue = ruleVars(paperRule()).get('--focus-ring') as string
+    const ring = el.matches(paperRule().selector)
+      ? resolveRing(islandValue, effective(...LIGHT_PAPER))
+      : focusRing(chrome)
+    let ground = hexVar(chrome, '--surface-0')
+    let where = 'page S0'
+    for (let a = el.parentElement; a; a = a.parentElement) {
+      const m = /background(?:-color)?:\s*var\(--color-island-([a-z-]+)\)/.exec(a.getAttribute('style') ?? '')
+      if (m) {
+        ground = hexVar(themeRoot(), `--island-${m[1]}`)
+        where = `--island-${m[1]}`
+        break
+      }
+    }
+    return { ring, ground, where }
+  }
+
+  async function renderStrip(expanded: string | null): Promise<HTMLElement> {
+    const { CivicContextStrip } = await import('@/components/investigation/civic-context-strip')
+    const page = document.createElement('main')
+    page.innerHTML = renderToStaticMarkup(
+      createElement(CivicContextStrip, {
+        investigationId: 'c0000000-0000-4000-8000-0000000000c1',
+        isAuthor: true,
+        archiveStatus: null,
+        expanded: expanded as never,
+        onExpand: () => {},
+      })
+    )
+    return page
+  }
+
+  it('civic strip cards (the paper IS the button) keep a ring >= 3:1 on the dark page: rest, hover, expanded', async () => {
+    const rows: string[] = []
+    const low: string[] = []
+    const collapsed = await renderStrip(null)
+    const cards = [...collapsed.querySelectorAll('button')].filter((b) => /--color-island-bg/.test(b.getAttribute('style') ?? ''))
+    expect(cards.length).toBe(4)
+    for (const card of cards) {
+      const { ring, ground, where } = ringAndGround(card)
+      const r = contrast(over(ring, ground), ground)
+      rows.push(`rest ${where} ${r.toFixed(2)}`)
+      if (r < NON_TEXT_MIN) low.push(`rest: ${r.toFixed(2)}:1`)
+    }
+    // Hover: the handler writes the CSSOM spelling onto the card itself.
+    cards[0].style.backgroundColor = 'var(--color-island-hover)'
+    {
+      const { ring, ground } = ringAndGround(cards[0])
+      const r = contrast(over(ring, ground), ground)
+      if (r < NON_TEXT_MIN) low.push(`hover: ${r.toFixed(2)}:1`)
+    }
+    const expanded = await renderStrip('archive')
+    const active = [...expanded.querySelectorAll('button')].find((b) => /color-mix\(in srgb/.test(b.getAttribute('style') ?? ''))
+    expect(active).toBeDefined()
+    {
+      const { ring, ground } = ringAndGround(active as HTMLElement)
+      const r = contrast(over(ring, ground), ground)
+      if (r < NON_TEXT_MIN) low.push(`expanded: ${r.toFixed(2)}:1`)
+    }
+    expect(rows).toHaveLength(4)
+    expect(low).toEqual([])
+  })
+
+  it('controls inside a paper keep the ink ring at about 6.3:1 on that paper', () => {
+    for (const g of ISLAND_GROUNDS.filter((x) => x !== '--island-hover')) {
+      const paper = document.createElement('div')
+      paper.setAttribute('style', `background-color: var(--color-${g.slice(2)})`)
+      const btn = document.createElement('button')
+      paper.appendChild(btn)
+      const { ring, ground, where } = ringAndGround(btn)
+      expect(where).toBe(g)
+      expect(contrast(over(ring, ground), ground)).toBeGreaterThan(6)
+    }
   })
 
   it('every inline island ground in src is written as a bare var(), so the selector sees it', () => {
@@ -532,7 +707,7 @@ describe('fonts', () => {
     expect(`fontFamily: 'var(--font-serif)',`).not.toMatch(literal)
     for (const [file, wants] of [
       ['src/components/briefing/briefing-view.tsx', ['var(--font-body)', 'var(--font-serif)', 'var(--font-display)']],
-      ['src/components/layout/feedback-dialog.tsx', ['var(--font-display)']],
+      ['src/components/layout/feedback-dialog.tsx', []],
     ] as const) {
       const src = fs.readFileSync(path.join(REPO, file), 'utf8')
       for (const w of wants) expect(src).toContain(`fontFamily: '${w}'`)
@@ -553,9 +728,26 @@ describe('fonts', () => {
         if (vars.length === 0 || vars.some((v) => !emitted.has(v))) unknown.push(`${file}: ${m[2]}`)
       }
     }
-    // 2 serif base fonts + 7 body + 2 serif + 2 display in briefing-view, 1 display in the dialog.
-    expect(sites).toHaveLength(14)
+    // briefing-view: 2 serif base fonts + 7 body + 2 serif + 1 display (the H1). The dialog: none.
+    expect(sites).toHaveLength(12)
     expect(unknown).toEqual([])
+  })
+
+  it('Fraunces is the briefing H1 only: the document names and the feedback title use the body face (Jen C2, C3)', () => {
+    const bv = fs.readFileSync(path.join(REPO, 'src/components/briefing/briefing-view.tsx'), 'utf8')
+    const display = [...bv.matchAll(/fontFamily: 'var\(--font-display\)'/g)]
+    expect(display).toHaveLength(1)
+    // ...and that one site is the 22px H1.
+    expect(bv.slice(display[0].index, (display[0].index as number) + 120)).toContain("fontSize: '22px'")
+    // The primary document name: the span rendering {docName} sets no family.
+    const docName = bv.indexOf('{docName && (\n            <span')
+    expect(docName).toBeGreaterThan(-1)
+    const span = bv.slice(docName, bv.indexOf('</span>', docName))
+    expect(span).toContain('{docName}')
+    expect(span).not.toContain('fontFamily')
+    const fd = fs.readFileSync(path.join(REPO, 'src/components/layout/feedback-dialog.tsx'), 'utf8')
+    expect(fd).toContain('<Dialog.Title')
+    expect(fd).not.toContain('fontFamily')
   })
 })
 
