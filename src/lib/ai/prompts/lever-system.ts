@@ -139,6 +139,35 @@ Length: keep the letter above the line under about 600 words, and the notes belo
 Voice: Formal. This is a legal document, not a blog post.`
 }
 
+/**
+ * The INVESTIGATION CONTEXT block of the user message. With
+ * `includeBriefing: true` it is byte-identical to the block before A2's fix
+ * pass; `false` drops only the briefing analysis (the concern, jurisdiction
+ * name and lens analysis stay).
+ */
+export function buildInvestigationContext(
+  investigation: {
+    concern: string
+    jurisdictionName: string | null
+    briefingText: string | null
+    lensContextText: string | null
+  },
+  opts: { includeBriefing: boolean }
+): string {
+  const invParts: string[] = ['INVESTIGATION CONTEXT:']
+  invParts.push(`Citizen concern: ${investigation.concern}`)
+  if (investigation.jurisdictionName) {
+    invParts.push(`Jurisdiction: ${investigation.jurisdictionName}`)
+  }
+  if (opts.includeBriefing && investigation.briefingText) {
+    invParts.push(`Briefing analysis:\n${investigation.briefingText.slice(0, 10_000)}`)
+  }
+  if (investigation.lensContextText) {
+    invParts.push(`Lens analysis:\n${investigation.lensContextText.slice(0, 5_000)}`)
+  }
+  return invParts.join('\n')
+}
+
 /** What a generation sends the model. */
 export interface LeverGeneration {
   system: string

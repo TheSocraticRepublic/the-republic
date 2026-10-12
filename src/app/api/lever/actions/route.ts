@@ -6,8 +6,9 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
 import {
   CHOOSE_PROVINCE_ERROR,
-  PUBLIC_BODY_DIRECTORY,
   isProvinceId,
+  listedIn,
+  otherProvinceBodyError,
   type ProvinceId,
 } from '@/lib/lever/public-body'
 
@@ -120,12 +121,18 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
     }
     province = jurisdiction
     if (typedBodyName) {
-      const entry = PUBLIC_BODY_DIRECTORY[province].find((b) => b.name === typedBodyName)
-      if (entry) {
-        publicBody = entry.name
+      // A directory body (by name or legacy alias) is stored under its exact
+      // directory name; one that belongs to another province is refused here,
+      // rather than stored and refused at every generation.
+      const listing = listedIn(typedBodyName)
+      if (listing && listing.province !== province) {
+        return NextResponse.json({ error: otherProvinceBodyError(listing.province) }, { status: 400 })
+      }
+      if (listing) {
+        publicBody = listing.name
       } else if (typedBodyName.length > MAX_PUBLIC_BODY_NAME_LENGTH) {
         return NextResponse.json(
-          { error: `Keep the public body name under ${MAX_PUBLIC_BODY_NAME_LENGTH} characters` },
+          { error: `Keep the public body name to ${MAX_PUBLIC_BODY_NAME_LENGTH} characters or fewer` },
           { status: 400 }
         )
       }

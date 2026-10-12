@@ -93,15 +93,48 @@ export function storedPublicBodyName(metadata: unknown): string | null {
   return nonEmptyString(m.publicBody) ?? nonEmptyString(m.publicBodyName) ?? nonEmptyString(m.addressee)
 }
 
-/** The investigation fields jurisdiction detection reads. */
+/** The province a province NAME (as `jurisdictions.province` stores it, e.g. "British Columbia") is, if supported. */
+export function provinceIdFromName(name: string | null | undefined): ProvinceId | null {
+  if (typeof name !== 'string') return null
+  const wanted = name.trim().toLowerCase()
+  return PROVINCE_OPTIONS.find((p) => p.label.toLowerCase() === wanted)?.id ?? null
+}
+
+export function provinceLabel(id: ProvinceId): string {
+  return PROVINCE_OPTIONS.find((p) => p.id === id)!.label
+}
+
+/**
+ * The investigation fields its jurisdiction is read from. `province` is the
+ * resolved jurisdiction's province (investigations.jurisdictionId ->
+ * jurisdictions.province), the same source the briefing resolves its module
+ * from (run-briefing.ts, via resolveJurisdictionModuleId); null when the
+ * investigation has no resolved jurisdiction.
+ */
 export interface InvestigationJurisdictionSource {
   concern: string
   jurisdictionName: string | null
+  province?: string | null
+}
+
+/**
+ * The investigation's province: its resolved jurisdiction's province first,
+ * keyword detection on its jurisdiction name second, else null. Never a
+ * default.
+ */
+export function resolveInvestigationProvince(
+  investigation: InvestigationJurisdictionSource | null | undefined
+): ProvinceId | null {
+  if (!investigation) return null
+  const resolved = provinceIdFromName(investigation.province)
+  if (resolved) return resolved
+  const detected = detectJurisdiction(investigation.concern, investigation.jurisdictionName ?? undefined)
+  return isProvinceId(detected) ? detected : null
 }
 
 /**
  * The action's jurisdiction: `metadata.jurisdiction` when it is a known
- * province, else the investigation's detected one, else null. Never a default.
+ * province, else the investigation's province, else null. Never a default.
  */
 export function resolveActionJurisdiction(
   metadata: unknown,
@@ -110,11 +143,7 @@ export function resolveActionJurisdiction(
   const stored =
     metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).jurisdiction : undefined
   if (isProvinceId(stored)) return stored
-  if (investigation) {
-    const detected = detectJurisdiction(investigation.concern, investigation.jurisdictionName ?? undefined)
-    if (isProvinceId(detected)) return detected
-  }
-  return null
+  return resolveInvestigationProvince(investigation)
 }
 
 /**
@@ -182,8 +211,8 @@ function findEntry(
   return directory[province].find((b) => b.name === name)
 }
 
-/** The province whose directory lists this name (directly or by alias), if any. */
-function listedIn(directory: PublicBodyDirectory, name: string): { province: ProvinceId; name: string } | null {
+/** The province whose directory lists this name (directly or by alias), and the entry name, if any. */
+export function listedIn(name: string, directory: PublicBodyDirectory = PUBLIC_BODY_DIRECTORY): { province: ProvinceId; name: string } | null {
   for (const province of PROVINCE_IDS) {
     if (findEntry(directory, province, name)) return { province, name }
   }
@@ -210,7 +239,7 @@ export function resolveRecipient(
   if (!province) return { status: 'unresolved', province: null, name, reason: 'no-jurisdiction' }
   if (!name) return { status: 'other', province, name: null }
 
-  const listing = listedIn(directory, name)
+  const listing = listedIn(name, directory)
   if (!listing) return { status: 'other', province, name }
   if (listing.province !== province) {
     return { status: 'unresolved', province, name, reason: 'other-jurisdiction' }
@@ -222,6 +251,15 @@ export function resolveRecipient(
 }
 
 export const CHOOSE_PROVINCE_ERROR = 'Choose the province this request goes to'
+
+/**
+ * The refusal for a body that is in another province's directory. Used at
+ * create (400) and at generation of a legacy row (409).
+ */
+export function otherProvinceBodyError(bodyProvince: ProvinceId): string {
+  const label = provinceLabel(bodyProvince)
+  return `That body is in the ${label} directory. Choose ${label}, or pick a body from the list.`
+}
 
 export type GenerationTarget =
   | { ok: true; jurisdictionId: string; publicBodyName: string | null }
@@ -244,6 +282,17 @@ export function resolveGenerationTarget(input: {
   if (input.actionType === 'fippa_request') {
     const recipient = resolveRecipient({ metadata: input.metadata, investigation: input.investigation })
     if (recipient.status === 'unresolved') {
+      if (recipient.reason === 'other-jurisdiction' && recipient.name) {
+        const listing = listedIn(recipient.name)
+        if (listing) {
+          const label = provinceLabel(listing.province)
+          return {
+            ok: false,
+            status: 409,
+            error: `This request names ${listing.name}, which is in the ${label} directory, but it goes to ${provinceLabel(recipient.province!)}. Start a new request with the right province.`,
+          }
+        }
+      }
       return { ok: false, status: 409, error: CHOOSE_PROVINCE_ERROR }
     }
     return { ok: true, jurisdictionId: recipient.province, publicBodyName: recipient.name }

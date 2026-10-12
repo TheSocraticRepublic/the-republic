@@ -14,6 +14,13 @@ import { parseLetter } from '@/lib/lever/letter-blocks'
 /** PATCH refuses content longer than this (UTF-16 code units, JS string length) with 413. */
 const MAX_CONTENT_LENGTH = 100_000
 const SHA256_HEX = /^[0-9a-f]{64}$/
+/**
+ * The largest request body read at all: the content bound at JSON's worst
+ * case (six characters per escaped code unit, `\uXXXX`) plus room for the
+ * other fields. Anything longer cannot hold valid content.
+ */
+const MAX_BODY_LENGTH = MAX_CONTENT_LENGTH * 6 + 4096
+const TOO_LONG = 'This letter is too long to save. Keep it under 100,000 characters.'
 
 const NOT_A_DRAFT = 'This letter is no longer a draft'
 const CONTENT_CHANGED = 'This letter changed since you opened it'
@@ -74,8 +81,9 @@ export const GET = safeRoute(async function GET(request: NextRequest, { params }
  *   - finalising is also bound to the exact text checked for a clean split.
  * No row updated → 409, with the reason. Content over 100,000 characters → 413.
  *
- * When status transitions to 'filed', and only when this request's UPDATE
- * returned the row (so a double "file" runs them once):
+ * When status transitions to 'filed', in the same transaction as the status
+ * UPDATE and only when it returned the row (so a double "file" runs them once,
+ * and a failure rolls the filing back for a retry):
  *   - Records filedAt timestamp in metadata
  *   - Auto-creates investigation outcome (if investigationId present)
  *   - Awards foi_filed credential for FIPPA requests (with dedup)
@@ -98,9 +106,19 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
 
   const { id } = await params
 
+  // An oversized body is refused before it is parsed: by its declared length
+  // when there is one, else by the length of the text read.
+  const declaredLength = Number(request.headers.get('content-length') ?? '0')
+  if (declaredLength > MAX_BODY_LENGTH) {
+    return NextResponse.json({ error: TOO_LONG }, { status: 413 })
+  }
   let body: { status?: 'draft' | 'final' | 'filed'; content?: unknown; expectedContentSha256?: unknown }
   try {
-    body = await request.json()
+    const raw = await request.text()
+    if (raw.length > MAX_BODY_LENGTH) {
+      return NextResponse.json({ error: TOO_LONG }, { status: 413 })
+    }
+    body = JSON.parse(raw)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
@@ -127,7 +145,7 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
   }
   if (typeof content === 'string' && content.length > MAX_CONTENT_LENGTH) {
     return NextResponse.json(
-      { error: 'This letter is too long to save. Keep it under 100,000 characters.' },
+      { error: TOO_LONG },
       { status: 413 }
     )
   }
@@ -217,41 +235,26 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
     })}::jsonb`
   }
 
-  const [updated] = await db
-    .update(leverActions)
-    .set(updates)
-    .where(and(...conditions))
-    .returning({
-      id: leverActions.id,
-      status: leverActions.status,
-      updatedAt: leverActions.updatedAt,
-    })
+  // The write, and for a filing its side effects, in ONE transaction: if
+  // recording the outcome or credential fails, the filing rolls back with it,
+  // so the letter stays final and a repeat "file" retries everything.
+  let updated: { id: string; status: 'draft' | 'final' | 'filed'; updatedAt: Date } | undefined
+  try {
+    updated = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(leverActions)
+        .set(updates)
+        .where(and(...conditions))
+        .returning({
+          id: leverActions.id,
+          status: leverActions.status,
+          updatedAt: leverActions.updatedAt,
+        })
+      if (!row) return undefined
 
-  if (!updated) {
-    // Lost the compare-and-set. Say which precondition no longer holds.
-    const [current] = await db
-      .select({ status: leverActions.status })
-      .from(leverActions)
-      .where(and(eq(leverActions.id, id), eq(leverActions.userId, userId)))
-      .limit(1)
-    if (!current) {
-      return NextResponse.json({ error: 'Action not found' }, { status: 404 })
-    }
-    const requiredStatus = content !== undefined ? 'draft' : fromStatus
-    const error =
-      current.status === requiredStatus
-        ? CONTENT_CHANGED
-        : requiredStatus === 'draft'
-          ? NOT_A_DRAFT
-          : STATUS_CHANGED
-    return NextResponse.json({ error }, { status: 409 })
-  }
-
-  // Post-filing side effects (non-blocking — update already returned).
-  // Reached only when this request's UPDATE returned the row.
-  if (isFilingTransition && existing.investigationId) {
-    try {
-      await db.transaction(async (tx) => {
+      // Filing side effects. Reached only when this request's UPDATE
+      // returned the row, so a double "file" runs them once.
+      if (isFilingTransition && existing.investigationId) {
         // Auto-create outcome based on action type
         const outcomeMap: Record<
           string,
@@ -304,11 +307,36 @@ export const PATCH = safeRoute(async function PATCH(request: NextRequest, { para
             }).onConflictDoNothing()
           }
         }
-      })
-    } catch (err) {
-      // Log but don't fail the PATCH — the status update itself succeeded
-      console.error('[lever/actions] Post-filing side effects failed:', err)
+      }
+      return row
+    })
+  } catch (err) {
+    if (!isFilingTransition) throw err
+    console.error('[lever/actions] Filing failed and was rolled back:', err)
+    return NextResponse.json(
+      { error: "The filing couldn't be recorded. Nothing was changed. Try again." },
+      { status: 500 }
+    )
+  }
+
+  if (!updated) {
+    // Lost the compare-and-set. Say which precondition no longer holds.
+    const [current] = await db
+      .select({ status: leverActions.status })
+      .from(leverActions)
+      .where(and(eq(leverActions.id, id), eq(leverActions.userId, userId)))
+      .limit(1)
+    if (!current) {
+      return NextResponse.json({ error: 'Action not found' }, { status: 404 })
     }
+    const requiredStatus = content !== undefined ? 'draft' : fromStatus
+    const error =
+      current.status === requiredStatus
+        ? CONTENT_CHANGED
+        : requiredStatus === 'draft'
+          ? NOT_A_DRAFT
+          : STATUS_CHANGED
+    return NextResponse.json({ error }, { status: 409 })
   }
 
   return NextResponse.json({ action: updated })

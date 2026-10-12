@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation'
 import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react'
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
-import { detectJurisdiction } from '@/lib/jurisdictions'
 import {
   PROVINCE_OPTIONS,
   PUBLIC_BODY_DIRECTORY,
   isProvinceId,
+  resolveInvestigationProvince,
   type ProvinceId,
 } from '@/lib/lever/public-body'
 
@@ -106,7 +106,7 @@ export function NewActionDialog({
     type ContextResponse = {
       documents?: Document[]
       sessions?: Session[]
-      investigation?: { jurisdictionName?: string | null; concern?: string | null }
+      investigation?: { jurisdictionName?: string | null; concern?: string | null; jurisdictionProvince?: string | null }
       actions?: ExistingAction[]
     } | null
 
@@ -135,14 +135,19 @@ export function NewActionDialog({
       setDocuments(ready)
       setSessions(sessionsData?.sessions ?? [])
 
-      // Pre-select the province from the investigation's detected
-      // jurisdiction (the same keyword heuristic the server uses). The
-      // citizen confirms it; with no detection they must choose one.
+      // Pre-select the province from the investigation, by the same rule the
+      // server resolves it with: its resolved jurisdiction's province first,
+      // keyword detection second. The citizen confirms it; with neither they
+      // must choose one.
       const inv = investigationData?.investigation
       const detected = inv
-        ? detectJurisdiction(inv.concern ?? '', inv.jurisdictionName ?? undefined)
-        : undefined
-      if (isProvinceId(detected) && !provinceTouchedRef.current) {
+        ? resolveInvestigationProvince({
+            concern: inv.concern ?? '',
+            jurisdictionName: inv.jurisdictionName ?? null,
+            province: inv.jurisdictionProvince ?? null,
+          })
+        : null
+      if (detected && !provinceTouchedRef.current) {
         setProvince(detected)
         setProvinceDetected(true)
       }
@@ -166,6 +171,18 @@ export function NewActionDialog({
   const publicBodyName =
     publicBodyChoice === OTHER_BODY ? otherBodyName.trim() : publicBodyChoice
   const canCreate = !!description.trim() && (!isFippa || !!province)
+  const provinceUnverified = !!province && PROVINCE_OPTIONS.find((p) => p.id === province)?.verified === false
+  const provinceHint = !province
+    ? 'Choose the province this request goes to.'
+    : [
+        provinceDetected ? 'Detected from your investigation. Change it if it is wrong.' : null,
+        provinceUnverified
+          ? "This province's legal citations are not verified yet. Confirm them before you file."
+          : null,
+        !provinceDetected && !provinceUnverified ? "The request cites this province's access law." : null,
+      ]
+        .filter(Boolean)
+        .join(' ')
 
   const handleCreate = useCallback(async () => {
     if (!description.trim()) return
@@ -319,13 +336,7 @@ export function NewActionDialog({
                   />
                 </div>
                 <p id={`${provinceSelectId}-hint`} className="mt-1.5 text-2xs text-text-muted">
-                  {!province
-                    ? 'Choose the province this request goes to.'
-                    : provinceDetected
-                      ? 'Detected from your investigation. Change it if it is wrong.'
-                      : PROVINCE_OPTIONS.find((p) => p.id === province)?.verified === false
-                        ? "This province's legal citations are not verified yet. Confirm them before you file."
-                        : 'The request cites this province\'s access law.'}
+                  {provinceHint}
                 </p>
               </div>
             )}

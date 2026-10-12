@@ -8,14 +8,20 @@ import {
   gadflySessions,
   gadflyTurns,
   investigations,
+  jurisdictions,
 } from '@/lib/db/schema'
 import {
+  buildInvestigationContext,
   buildLeverGeneration,
   FIPPA_LETTER_FORMAT,
   LEVER_PROMPT_VERSION,
 } from '@/lib/ai/prompts/lever-system'
 import { loadJurisdictionModule } from '@/lib/jurisdictions'
-import { resolveGenerationTarget, type InvestigationJurisdictionSource } from '@/lib/lever/public-body'
+import {
+  resolveGenerationTarget,
+  resolveInvestigationProvince,
+  type InvestigationJurisdictionSource,
+} from '@/lib/lever/public-body'
 import { anthropic } from '@ai-sdk/anthropic'
 import { streamText } from 'ai'
 import { eq, asc, desc, and, sql } from 'drizzle-orm'
@@ -124,8 +130,12 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
         briefingText: investigations.briefingText,
         lensContextText: investigations.lensContextText,
         concern: investigations.concern,
+        // The investigation's resolved jurisdiction, the source the briefing
+        // itself was written under (run-briefing.ts).
+        province: jurisdictions.province,
       })
       .from(investigations)
+      .leftJoin(jurisdictions, eq(jurisdictions.id, investigations.jurisdictionId))
       .where(and(eq(investigations.id, action.investigationId), eq(investigations.userId, userId)))
       .limit(1)
     investigation = row ?? null
@@ -202,26 +212,19 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
   }
 
   // 3. Investigation context for richer FIPPA/comment generation
-  let investigationContext = ''
-  if (investigation) {
-    const invParts: string[] = ['INVESTIGATION CONTEXT:']
-    invParts.push(`Citizen concern: ${investigation.concern}`)
-    if (investigation.jurisdictionName) {
-      invParts.push(`Jurisdiction: ${investigation.jurisdictionName}`)
-    }
-    if (investigation.briefingText) {
-      invParts.push(`Briefing analysis:\n${investigation.briefingText.slice(0, 10_000)}`)
-    }
-    if (investigation.lensContextText) {
-      invParts.push(`Lens analysis:\n${investigation.lensContextText.slice(0, 5_000)}`)
-    }
-    investigationContext = invParts.join('\n')
-  }
+  // For a FIPPA request the briefing (written under the investigation's own
+  // province, with its FOI contacts) is included only when that province is
+  // the request's; otherwise another province's citations and addresses could
+  // reach the prompt. The concern always stays.
+  const isFippa = action.actionType === 'fippa_request'
+  const includeBriefing = !isFippa || resolveInvestigationProvince(investigation) === target.jurisdictionId
+  const investigationContext = investigation
+    ? buildInvestigationContext(investigation, { includeBriefing })
+    : ''
 
   // 4. The jurisdiction module. A FIPPA target is always a registered
   // province, so a missing module is an error, never a BC substitute. Other
   // action types keep their pre-A2 fallback to BC.
-  const isFippa = action.actionType === 'fippa_request'
   const jurisdictionModule = isFippa
     ? await loadJurisdictionModule(target.jurisdictionId)
     : (await loadJurisdictionModule(target.jurisdictionId)) ?? (await loadJurisdictionModule('bc'))
