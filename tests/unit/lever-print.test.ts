@@ -97,6 +97,7 @@ function partText(container: Element | null): string | null {
 
 beforeEach(() => {
   rows = []
+  investigationRows = []
 })
 
 describe('print route: access', () => {
@@ -313,5 +314,35 @@ describe('print route: fix pass (Razor W1, Jen)', () => {
     expect(tip!.closest('main')).toBeNull()
     // The long copy stays on the guidance page.
     expect(doc.querySelector('.guidance-page .tip')?.textContent).toContain('Headers and footers')
+  })
+})
+
+describe('print route: "Where to send this" on the guidance page (A4, filings §3)', () => {
+  const CHECK = "Check the recipient before you send. Open Cave doesn't confirm it for you."
+  const where = (doc: Document) =>
+    Array.from(doc.querySelectorAll('.guidance-page .where-to-send p')).map((p) => p.textContent)
+
+  it('a body with no province anywhere: no checked address; never in the letter', async () => {
+    const { doc } = await printFixture(MARKER_V1_LETTER)
+    expect(doc.querySelector('.guidance-page .where-to-send h2')?.textContent).toBe('Where to send this')
+    expect(where(doc)).toEqual([
+      CHECK,
+      'Open Cave has no checked address for this body. Find its FOI contact on its own website and confirm it before you send.',
+    ])
+    expect(doc.querySelector('.letter')!.textContent).not.toContain('Where to send this')
+    expect(doc.querySelector('.letter')!.textContent).not.toContain(CHECK)
+  })
+
+  it("the action's investigation resolves the province: a checked body is listed with its date and source", async () => {
+    rows = [{ ...fippaRow(MARKER_V1_LETTER, { publicBody: 'BC Ministry of Forests' }), investigationId: 'inv-1' } as Row]
+    investigationRows = [{ concern: 'Synthetic', jurisdictionName: null, province: 'British Columbia' }]
+    const doc = new JSDOM(await (await print()).text()).window.document
+    expect(where(doc)).toEqual([
+      CHECK,
+      "Open Cave's directory lists BC Ministry of Forests's FOI address as FOI Operations, PO Box 9569, Stn Prov Govt, Victoria BC V8W 9K1 (checked 2026-10-12). We couldn't find that address in your letter.",
+      'Source: https://www2.gov.bc.ca/gov/content/governments/about-the-bc-government/open-government/open-information/freedom-of-information/foi-faq',
+    ])
+    // The letter keeps its own (old) box: nothing is substituted.
+    expect(doc.querySelector('.letter')!.textContent).toContain('PO Box 9049')
   })
 })
