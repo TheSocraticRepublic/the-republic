@@ -304,7 +304,13 @@ describe('fonts', () => {
   })
 
   it('briefing view and feedback dialog name no font family by hand', () => {
-    const literal = /fontFamily:\s*['"`][^'"`]*(Inter|Plus Jakarta Sans|Source Serif 4|Georgia|system-ui)/
+    // A quoted string value (any quote style) that names a family by hand.
+    const literal = /fontFamily:\s*(['"`])(?:(?!\1)[^\n])*?(Inter|Plus Jakarta Sans|Source Serif 4|Georgia|system-ui)/
+    // The pattern really catches the literals B1 removed.
+    expect(`fontFamily: '"Source Serif 4", Georgia, serif',`).toMatch(literal)
+    expect(`fontFamily: '"Inter", system-ui, sans-serif',`).toMatch(literal)
+    expect(`fontFamily: "'Plus Jakarta Sans', system-ui"`).toMatch(literal)
+    expect(`fontFamily: 'var(--font-serif)',`).not.toMatch(literal)
     for (const [file, wants] of [
       ['src/components/briefing/briefing-view.tsx', ['var(--font-body)', 'var(--font-serif)', 'var(--font-display)']],
       ['src/components/layout/feedback-dialog.tsx', ['var(--font-display)']],
