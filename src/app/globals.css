@@ -80,6 +80,9 @@
   --font-body: var(--font-instrument-sans), "Trebuchet MS", system-ui, sans-serif;
   --font-mono: var(--font-geist-mono, var(--font-jetbrains-mono)), "SF Mono", "JetBrains Mono", ui-monospace, monospace;
   --font-serif: var(--font-source-serif, "Source Serif 4"), "Georgia", serif;
+  /* Tailwind's own default sans (preflight's html font, the `font-sans`
+     utility) points at the app body face, not ui-sans-serif. */
+  --font-sans: var(--font-body);
 
   /* Type floor (Beatrice) — 9px abolished, 10px reserved for uppercase micro-labels */
   --text-2xs: 0.6875rem;              /* 11px */
@@ -145,20 +148,27 @@
   --island-role-organization: #047857;
   --island-role-rights-holder: #b45309;
 
+  /* Neutral focus ring: ink at 70%, never an arm accent. Redeclared in every
+     scope below because a var() inside a custom property resolves where the
+     property is declared, not where the ring is drawn. */
+  --focus-ring: color-mix(in srgb, var(--text-primary) 70%, transparent);
+
   color-scheme: light;
 }
 
 /* Dark mode tokens */
 .dark {
-  --surface-0: #090909;
-  --surface-1: #111113;
-  --surface-2: #18181b;
-  --surface-3: #27272a;
+  /* R4 (Lee, ruled 2026-10-02): warm, matched to the landing's umber
+     (--journey-cave #0B0A09), not neutral black. */
+  --surface-0: #0B0A09;
+  --surface-1: #121110;
+  --surface-2: #1A1816;
+  --surface-3: #292623;
 
   --text-primary: #f4f4f5;
   --text-secondary: #d4d4d8;
   --text-muted: #a1a1aa;
-  --text-faint: #83838c;
+  --text-faint: #8e8e97;   /* 4.63:1 on S3, the darkest pair */
 
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.15);
@@ -175,20 +185,24 @@
   --status-warning: #f59e0b;   /* keep — 8.25:1 S2 */
   --status-neutral: #a1a1aa;   /* lift from #737373 — 6.91:1 S2, 5.81:1 S3 */
 
+  --focus-ring: color-mix(in srgb, var(--text-primary) 70%, transparent);
+
   color-scheme: dark;
 }
 
 /* Dark island — focused-attention overlay (Gadfly, etc.) + dark island tokens */
 .dark-island {
-  --surface-0: #090909;
-  --surface-1: #111113;
-  --surface-2: #18181b;
-  --surface-3: #27272a;
+  /* R4 (Lee, ruled 2026-10-02): warm, matched to the landing's umber
+     (--journey-cave #0B0A09), not neutral black. */
+  --surface-0: #0B0A09;
+  --surface-1: #121110;
+  --surface-2: #1A1816;
+  --surface-3: #292623;
 
   --text-primary: #f4f4f5;
   --text-secondary: #d4d4d8;
   --text-muted: #a1a1aa;
-  --text-faint: #83838c;
+  --text-faint: #8e8e97;   /* mirrors .dark */
 
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.15);
@@ -211,7 +225,7 @@
   --island-secondary: #d4d4d8;
   --island-body: #d4d4d8;
   --island-muted: #a1a1aa;
-  --island-faint: #71717a;
+  --island-faint: #8e8e97;   /* was #71717a (3.1:1 on hover); 4.59:1 on island-hover, the darkest */
   --island-border: rgba(255, 255, 255, 0.08);
   --island-card: #18181b;
   --island-card-border: rgba(255, 255, 255, 0.1);
@@ -226,6 +240,8 @@
   --island-role-agency: #22d3ee;
   --island-role-organization: #4ade80;
   --island-role-rights-holder: #f59e0b;
+
+  --focus-ring: color-mix(in srgb, var(--text-primary) 70%, transparent);
 
   color-scheme: dark;
 }
@@ -251,7 +267,7 @@
   --text-primary: #1C1917;
   --text-secondary: #3D3833;
   --text-muted: #6B6560;
-  --text-faint: #9A948E;
+  --text-faint: #6f6963;   /* 4.59:1 on the daylight ground, 5.19:1 on paper */
 
   --border: rgba(28, 25, 23, 0.10);
   --border-strong: rgba(28, 25, 23, 0.18);
@@ -267,6 +283,8 @@
   --status-danger:  #AC1717;   /* 5.37:1 on light S2, 4.87:1 on light S3 */
   --status-warning: #8E3F07;   /* 5.41:1 on light S2, 4.91:1 on light S3 */
   --status-neutral: #5C5650;   /* 5.34:1 on light S2, 4.84:1 on light S3 */
+
+  --focus-ring: color-mix(in srgb, var(--text-primary) 70%, transparent);
 
   color-scheme: light;
 }
@@ -427,26 +445,21 @@ body {
   background: var(--text-faint);
 }
 
-/* Focus rings */
-*:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent-oracle) 75%, transparent);
-  outline-offset: 2px;
-}
-
 /*
- * Light-surface focus ring override (A11Y-1). The oracle-blue ring above
- * computes to ~1.73:1 against light reading surfaces (#fafaf9 / #EFECE6) —
- * under the WCAG 2.4.11 3:1 floor and effectively invisible to keyboard
- * users. `.light-scope` (landing page daylight movements) and
- * `.content-island` (briefing paper) get a dark-ink ring instead, computing
- * to ~6:1 against both surfaces. The dark-chrome ring above is untouched
- * (already 5.34:1) and still applies everywhere else, including inside
- * `.content-island` when BriefingView's in-component dark toggle is on
- * (DARK_PALETTE) — `.content-island--dark` marks that state so this
- * override backs off and the ring falls back to the oracle-blue default.
+ * Focus rings. One neutral token, `--focus-ring` (ink at 70% of the scope's
+ * `--text-primary`), declared in every theme scope above: light on the dark
+ * chrome, dark ink inside `.light-scope`. The old ring was oracle blue, which
+ * read as "Oracle" on every arm and fell to ~1.73:1 on light grounds.
+ *
+ * `.content-island` (briefing paper) is not a theme scope — its paper comes
+ * from the component's palette under the app's `.dark` tokens — so it keeps
+ * its own ink ring from the island text colour. `.content-island--dark` marks
+ * BriefingView's in-component dark toggle (DARK_PALETTE), where the override
+ * backs off to the token.
  */
-.light-scope *:focus-visible {
-  outline-color: color-mix(in srgb, var(--text-primary) 70%, transparent);
+*:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .content-island:not(.content-island--dark) *:focus-visible {
@@ -593,5 +606,25 @@ body {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+}
+
+/*
+ * Phones: every form field renders at 16px or more below 768px. iOS Safari
+ * zooms the page on focus into any field set smaller than 16px; this rule is
+ * the fix, and `maximum-scale` in the viewport is never the fix (it takes
+ * pinch-zoom away from the people who need it).
+ *
+ * This rule must stay UNLAYERED. Tailwind's utilities (`text-sm` on an input)
+ * live in `@layer utilities`, and an unlayered declaration beats every layered
+ * one whatever its specificity. Moved into any `@layer`, it loses to `text-sm`
+ * and the zoom comes back. Inline `style` font sizes still win; don't set one
+ * on a field. `tests/unit/tokens-contrast.test.ts` holds both properties.
+ */
+@media (max-width: 767.98px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
   }
 }
