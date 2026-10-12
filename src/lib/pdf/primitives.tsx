@@ -26,11 +26,25 @@ export function pageNumberLabel(pageNumber: number, totalPages: number): string 
   return `Page ${pageNumber} of ${totalPages}`
 }
 
+/**
+ * A View's `render` receives the page count too (react-pdf passes the same
+ * props to every dynamic node on its final pass), but its type declares only
+ * the page number.
+ */
+type PageProps = { pageNumber: number; totalPages: number }
+const withPages = (fn: (p: PageProps) => React.ReactNode) =>
+  fn as unknown as (p: { pageNumber: number; subPageNumber: number }) => React.ReactNode
+
 const footerBandStyles = StyleSheet.create({
+  // react-pdf 4.5.1 silently drops a <Text render> whose line height is set
+  // or inherited (measured: the dynamic text is re-laid out in a zero-height
+  // box). So the band is a <View render> that returns fresh <Text>s, each
+  // with its own explicit lineHeight, and the band has no fixed height. Its
+  // extent is FOOTER_BAND_HEIGHT by construction (one line of 9pt text at
+  // 1.3), and the PDF tests check the footer's glyphs stay inside it.
   band: {
     position: 'absolute',
     bottom: FOOTER_BAND_BOTTOM,
-    height: FOOTER_BAND_HEIGHT,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -41,13 +55,13 @@ const footerBandStyles = StyleSheet.create({
   text: {
     fontFamily: 'Inter',
     fontSize: typeScale.micro,
-    lineHeight: 1,
+    lineHeight: 1.3,
     color: colors.footerText,
   },
   pageNumber: {
     fontFamily: 'Inter',
     fontSize: 9,
-    lineHeight: 1,
+    lineHeight: 1.3,
     color: colors.textMuted,
   },
 })
@@ -58,12 +72,13 @@ const footerBandStyles = StyleSheet.create({
  */
 export function PageNumberFooter({ insetX = space.pageMargin }: { insetX?: number }) {
   return (
-    <View fixed style={[footerBandStyles.band, footerBandStyles.centred, { left: insetX, right: insetX }]}>
-      <Text
-        style={footerBandStyles.pageNumber}
-        render={({ pageNumber, totalPages }) => pageNumberLabel(pageNumber, totalPages)}
-      />
-    </View>
+    <View
+      fixed
+      style={[footerBandStyles.band, footerBandStyles.centred, { left: insetX, right: insetX }]}
+      render={withPages(({ pageNumber, totalPages }) => (
+        <Text style={footerBandStyles.pageNumber}>{pageNumberLabel(pageNumber, totalPages)}</Text>
+      ))}
+    />
   )
 }
 
@@ -672,16 +687,17 @@ function RepublicFooter({ insetX = space.pageMargin }: { insetX?: number }) {
   })
 
   return (
-    <View fixed style={[footerBandStyles.band, { left: insetX, right: insetX }]}>
-      <Text style={footerBandStyles.text}>
-        Generated from Open Cave -- opencave.ca
-      </Text>
-      <Text
-        style={footerBandStyles.text}
-        render={({ pageNumber, totalPages }) => pageNumberLabel(pageNumber, totalPages)}
-      />
-      <Text style={footerBandStyles.text}>{date}</Text>
-    </View>
+    <View
+      fixed
+      style={[footerBandStyles.band, { left: insetX, right: insetX }]}
+      render={withPages(({ pageNumber, totalPages }) => (
+        <>
+          <Text style={footerBandStyles.text}>Generated from Open Cave -- opencave.ca</Text>
+          <Text style={footerBandStyles.text}>{pageNumberLabel(pageNumber, totalPages)}</Text>
+          <Text style={footerBandStyles.text}>{date}</Text>
+        </>
+      ))}
+    />
   )
 }
 
