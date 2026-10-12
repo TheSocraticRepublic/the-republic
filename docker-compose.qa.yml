@@ -1,0 +1,68 @@
+# Local QA harness services. Disposable: `npx tsx scripts/qa/harness.ts down`
+# removes the containers and the database volume. Driven by scripts/qa/harness.ts;
+# see scripts/qa/README.md.
+#
+# Rules this file keeps:
+#   - every image is pinned BY DIGEST (the tag beside it is a comment for humans);
+#   - every published port binds 127.0.0.1 only;
+#   - every credential is a dummy, harness-only value. Nothing here is a real key.
+#
+# Digests recorded 2026-10-11 from `docker image inspect --format '{{.RepoDigests}}'`
+# after `docker pull`:
+#   pgvector/pgvector:pg17               sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d
+#   redis:7                              sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85
+#   hiett/serverless-redis-http:latest   sha256:5b0bb9239fce53abf87b2018a7a0deb9ec7bd900c5360738fe5fbeeb426f9150
+
+# No fixed `name:`. scripts/qa/harness.ts passes `-p open-cave-qa-<hash of the
+# worktree path>`, so each worktree gets its own project, and a `down` in one
+# worktree can never remove another's containers or volume. Drive it through
+# the harness (`harness.ts down`), which prints the project name it uses.
+
+services:
+  postgres:
+    # pgvector/pgvector:pg17 (production runs PostgreSQL 17)
+    image: pgvector/pgvector@sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d
+    environment:
+      # The container superuser. Used ONLY to run scripts/qa/supabase-shim.sql
+      # (roles, the auth schema, CREATE EXTENSION vector). The app, migrations
+      # and seed connect as qa_app, which the shim creates.
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: qa_superuser_dummy
+      POSTGRES_DB: republic_qa
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - qa_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d republic_qa"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    # redis:7. Not published: only the REST proxy below talks to it.
+    image: redis@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis-rest:
+    # hiett/serverless-redis-http: an Upstash-compatible REST endpoint, so the
+    # app's @upstash/redis client and its production-mode rate limiter (which
+    # fails CLOSED without Redis) run unmodified.
+    image: hiett/serverless-redis-http@sha256:5b0bb9239fce53abf87b2018a7a0deb9ec7bd900c5360738fe5fbeeb426f9150
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: qa_redis_token_dummy
+      SRH_CONNECTION_STRING: redis://redis:6379
+    ports:
+      - "127.0.0.1:58079:80"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  qa_pgdata:
