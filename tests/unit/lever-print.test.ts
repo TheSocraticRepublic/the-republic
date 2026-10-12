@@ -14,6 +14,7 @@ import {
   LITERAL_EXAMPLES,
   OVERSIZE_FALLBACK,
   MARKER_FIRST_LINE,
+  PLACEHOLDER_LETTER,
   PUBLIC_COMMENT_FIXTURE,
   type LetterFixture,
 } from '../fixtures/letters'
@@ -134,7 +135,8 @@ describe('print route: structure (filings §1, A1 Print)', () => {
     const { html, doc } = await printFixture(MARKER_V1_LETTER)
     const marks = Array.from(doc.querySelectorAll('.letter mark.ph')).map((m) => m.textContent)
     expect(marks).toEqual(['[Your name]', '[Your email]'])
-    expect(html).toContain('mark.ph { background: #FDF2D0; color: #6B3A06;')
+    expect(html).toContain('background: #FDF2D0; color: #6B3A06;')
+    expect(html).toMatch(/mark\.ph \{\s*background: #FDF2D0; color: #6B3A06;/)
   })
 
   it('no template header, date, addressee, signature or branding inside the letter', async () => {
@@ -248,5 +250,55 @@ describe('print route: non-FIPPA output is unchanged', () => {
     // And, readably: the old shell is still there.
     expect(html).toContain('<p class="wordmark">OPEN CAVE</p>')
     expect(html).toContain('Submitted to: Synthetic Regional District (QA)')
+  })
+})
+
+describe('print route: fix pass (Razor W1, Jen)', () => {
+  it('marks exactly `placeholders` spans, in the letter only, for every fixture (W1)', async () => {
+    const { parseLetter } = await import('@/lib/lever/letter-blocks')
+    for (const fx of LETTER_FIXTURES) {
+      if (fx.content.length > 60_000) continue // the counts are covered by the parser test; jsdom is slow at 200K
+      const { doc } = await printFixture(fx)
+      const parsed = parseLetter(fx.content, fx.format)
+      expect(doc.querySelectorAll('mark').length, fx.id).toBe(parsed.placeholders)
+      expect(doc.querySelectorAll('.letter mark.ph').length, fx.id).toBe(parsed.placeholders)
+      expect(doc.querySelectorAll('.guidance-page mark').length, fx.id).toBe(0)
+    }
+  }, 60_000)
+
+  it('the placeholder fixture marks 8, not 9: the guidance bracket is text', async () => {
+    const { doc } = await printFixture(PLACEHOLDER_LETTER)
+    expect(doc.querySelectorAll('mark').length).toBe(8)
+    expect(doc.querySelector('.guidance-text')!.textContent).toContain('[bracketed]')
+  })
+
+  it('words the §2 notice by status', async () => {
+    const say = async (status: string) => {
+      rows = [{ ...fippaRow(LEGACY_LETTER), status }]
+      const doc = new JSDOM(await (await print()).text()).window.document
+      return doc.querySelector('.screen-bar .notes')!.textContent!.trim()
+    }
+    expect(await say('draft')).toBe(
+      "This letter may include notes that aren't part of your request. Read it through and remove anything that isn't before you send it."
+    )
+    expect(await say('final')).toBe(
+      "This letter may include notes that aren't part of your request. Export it as plain text and remove anything that isn't part of your request before you send it."
+    )
+    expect(await say('filed')).toBe("This letter may include notes that weren't part of your request.")
+  })
+
+  it('rules draw a hairline with empty text; items hang; marks print their colour; the short tip sits by Print', async () => {
+    const { html, doc } = await printFixture(LEGACY_LETTER)
+    const rule = doc.querySelector('.letter .lb-rule')
+    expect(rule).not.toBeNull()
+    expect(rule!.textContent).toBe('')
+    expect(html).toContain('border-top: 1px solid #A8A29E;')
+    expect(html).toContain('.lb-item { padding-left: 1.5em; text-indent: -1.5em; }')
+    expect(html).toContain('-webkit-print-color-adjust: exact; print-color-adjust: exact;')
+    const tip = doc.querySelector('.screen-bar .print-tip')
+    expect(tip?.textContent).toContain('Headers and footers')
+    expect(tip!.closest('main')).toBeNull()
+    // The long copy stays on the guidance page.
+    expect(doc.querySelector('.guidance-page .tip')?.textContent).toContain('Headers and footers')
   })
 })

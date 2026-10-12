@@ -208,7 +208,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
   return (
     <div className="space-y-4">
       {/* Controls row */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-start gap-2">
         {/* Status badge */}
         <span
           className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium"
@@ -217,8 +217,8 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
           {statusStyle.label}
         </span>
 
-        <div className="flex-1" />
-
+        {/* The actions wrap onto their own lines on a phone, right-aligned. */}
+        <div className="flex flex-1 flex-wrap justify-end gap-2">
         {mode === 'viewing' && (
           <>
             {/* Advance status */}
@@ -301,6 +301,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
             </button>
           </>
         )}
+        </div>
       </div>
 
       {/* Error alert */}
@@ -337,7 +338,7 @@ export function ActionViewer({ actionId, initialContent, initialStatus, actionTy
       )}
 
       {mode === 'viewing' && actionType === 'fippa_request' && content && (
-        <LetterPaper content={content} letterFormat={letterFormat} />
+        <LetterPaper content={content} letterFormat={letterFormat} status={status} />
       )}
 
       {mode === 'viewing' && !(actionType === 'fippa_request' && content) && (
@@ -407,11 +408,14 @@ function ExportMenu({ disabled, busy, pdf, onExport, onPrint }: ExportMenuProps)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  const items: { key: string; label: string; run: () => void }[] = [
-    { key: 'txt', label: busy === 'txt' ? 'Preparing...' : 'Plain text (as written)', run: () => onExport('txt') },
-    { key: 'md', label: busy === 'md' ? 'Preparing...' : 'Markdown (as written)', run: () => onExport('md') },
+  // The rendered letter first, then the stored text as written (Jen).
+  const rendered: { key: string; label: string; run: () => void }[] = [
+    ...(pdf ? [{ key: 'pdf', label: 'PDF', run: () => onExport('pdf') }] : []),
     { key: 'print', label: 'Print', run: onPrint },
-    ...(pdf ? [{ key: 'pdf', label: busy === 'pdf' ? 'Making the PDF...' : 'PDF', run: () => onExport('pdf') }] : []),
+  ]
+  const asWritten: { key: string; label: string; run: () => void }[] = [
+    { key: 'txt', label: 'Plain text (as written)', run: () => onExport('txt') },
+    { key: 'md', label: 'Markdown (as written)', run: () => onExport('md') },
   ]
 
   const close = useCallback((refocus: boolean) => {
@@ -452,21 +456,28 @@ function ExportMenu({ disabled, busy, pdf, onExport, onPrint }: ExportMenuProps)
     }
   }
 
-  const off = disabled || busy !== null
+  // While an export runs the trigger stays focusable and at full ink
+  // (aria-busy + aria-disabled, clicks ignored), so focus is never dropped.
+  const isBusy = busy !== null
 
   return (
     <div ref={rootRef} className="relative">
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        disabled={off}
+        onClick={() => {
+          if (!isBusy) setOpen((o) => !o)
+        }}
+        disabled={disabled}
+        aria-busy={isBusy || undefined}
+        aria-disabled={isBusy || undefined}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls="lever-export-menu"
         className={clsx(
           'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
-          off ? MENU_TRIGGER_OFF : MENU_TRIGGER_ON
+          disabled ? MENU_TRIGGER_OFF : MENU_TRIGGER_ON,
+          isBusy && 'cursor-progress'
         )}
       >
         <Download size={12} strokeWidth={2} />
@@ -483,23 +494,29 @@ function ExportMenu({ disabled, busy, pdf, onExport, onPrint }: ExportMenuProps)
           onKeyDown={onMenuKeyDown}
           className="absolute right-0 z-20 mt-1.5 min-w-[13rem] rounded-xl border border-border bg-surface-1 p-1 shadow-lg"
         >
-          {items.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              role="menuitem"
-              tabIndex={-1}
-              onClick={() => {
-                close(true)
-                item.run()
-              }}
-              className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-text-secondary transition-colors hover:bg-surface-2 hover:text-text-primary focus-visible:bg-surface-2 focus-visible:text-text-primary"
-            >
-              {item.label}
-            </button>
+          {rendered.map((item) => (
+            <MenuItem key={item.key} label={item.label} onSelect={() => { close(true); item.run() }} />
+          ))}
+          <div role="separator" className="my-1 border-t border-border" />
+          {asWritten.map((item) => (
+            <MenuItem key={item.key} label={item.label} onSelect={() => { close(true); item.run() }} />
           ))}
         </div>
       )}
     </div>
+  )
+}
+
+function MenuItem({ label, onSelect }: { label: string; onSelect: () => void }) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      tabIndex={-1}
+      onClick={onSelect}
+      className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-text-secondary transition-colors hover:bg-surface-2 hover:text-text-primary focus-visible:bg-surface-2 focus-visible:text-text-primary"
+    >
+      {label}
+    </button>
   )
 }

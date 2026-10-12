@@ -37,9 +37,22 @@ export const GUIDANCE_MARKER = '=== NOT PART OF YOUR REQUEST ==='
 /** Inputs longer than this are not parsed (§1 "Bounds and failure"). */
 export const MAX_PARSE_LENGTH = 200_000
 
-/** The notice §2 puts outside any letter that is not a clean split. */
+/** The notice §2 puts outside any letter that is not a clean split (a draft, which can be edited). */
 export const UNCLEAN_SPLIT_NOTICE =
   "This letter may include notes that aren't part of your request. Read it through and remove anything that isn't before you send it."
+
+/**
+ * The §2 notice, worded for what the citizen can still do (Jen, A1 design
+ * gate): a draft can be edited; a final letter can't, but its plain-text
+ * export can; a filed letter has gone, so the notice only states the fact.
+ */
+export function uncleanSplitNotice(status: unknown): string {
+  if (status === 'final') {
+    return "This letter may include notes that aren't part of your request. Export it as plain text and remove anything that isn't part of your request before you send it."
+  }
+  if (status === 'filed') return "This letter may include notes that weren't part of your request."
+  return UNCLEAN_SPLIT_NOTICE
+}
 
 export type LetterSplit = 'marker' | 'none' | 'ambiguous' | 'legacy'
 
@@ -136,7 +149,10 @@ function parseUnchecked(content: string, markerV1: boolean): ParsedLetter {
   }
 
   const letter = letterLines.map((l) => parseBlock(l, true))
-  const guidance = guidanceLines ? guidanceLines.map((l) => parseBlock(l, true)) : null
+  // A bracket in the guidance is just a bracket: placeholders are the letter's
+  // fields to fill, so they are found, counted and highlighted in the letter
+  // only, by every renderer (Razor W1).
+  const guidance = guidanceLines ? guidanceLines.map((l) => parseBlock(l, false)) : null
 
   return {
     letter,
@@ -435,7 +451,8 @@ export function blocksToHtml(blocks: Block[]): string {
           return `<h${level} class="lb lb-h">${inlinesToHtml(b.inlines)}</h${level}>`
         }
         case 'rule':
-          return '<p class="lb lb-blank"></p>'
+          // A drawn hairline (CSS ::before); the element's text stays empty.
+          return '<p class="lb lb-rule"></p>'
         case 'bullet':
         case 'numbered':
           return `<p class="lb lb-item">${escapeHtml(blockPrefix(b))}${inlinesToHtml(b.inlines)}</p>`

@@ -3,7 +3,7 @@ import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { esc, errorPage, PRINT_CSP } from '@/lib/campaign/print-utils'
-import { parseLetter, blocksToHtml, escapeHtml, UNCLEAN_SPLIT_NOTICE } from '@/lib/lever/letter-blocks'
+import { parseLetter, blocksToHtml, escapeHtml, uncleanSplitNotice } from '@/lib/lever/letter-blocks'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { safeRoute } from '@/lib/api/safe-route'
 
@@ -77,7 +77,7 @@ export const GET = safeRoute(async (request: NextRequest, { params }: RouteConte
   // it gets its own page with no template header, date, addressee, signature
   // or branding. Every other action type keeps the shell below, unchanged.
   if (action.actionType === 'fippa_request') {
-    return new Response(fippaPrintPage(action.title, action.content, metadata.letterFormat), {
+    return new Response(fippaPrintPage(action.title, action.content, metadata.letterFormat, action.status), {
       status: 200,
       headers: printHeaders,
     })
@@ -372,6 +372,10 @@ function printPage(opts: {
  * title, address, date and page numbers in the margins, and CSS can't turn
  * that off, so the guidance page says how (A1, "no app page numbers").
  */
+/** The same advice, one sentence, beside the Print button (screen only). */
+const BROWSER_MARGIN_TIP_SHORT =
+  'For a clean page, turn off "Headers and footers" in the print dialog.'
+
 const BROWSER_MARGIN_TIP =
   'Your browser may print the page address, the date and page numbers in the margins. To leave them off, turn off "Headers and footers" in the print dialog (under "More settings" in Chrome and Edge, "Show details" in Safari).'
 
@@ -383,13 +387,13 @@ const BROWSER_MARGIN_TIP =
  * that is not the letter (the Print button, the §2 notice, the empty-letter
  * note) sits outside it: the screen-only bar above, or the guidance page.
  */
-function fippaPrintPage(title: string, content: string, letterFormat: unknown): string {
+function fippaPrintPage(title: string, content: string, letterFormat: unknown, status: unknown): string {
   const parsed = parseLetter(content, letterFormat)
   const clean = parsed.split === 'marker' && !parsed.fallback
   const letterEmpty = parsed.letter.length === 0
 
   const notes: string[] = []
-  if (!clean) notes.push(UNCLEAN_SPLIT_NOTICE)
+  if (!clean) notes.push(uncleanSplitNotice(status))
   if (parsed.fallback) notes.push('Shown as plain text.')
   if (letterEmpty) notes.push('This letter part is empty.')
   const notesHtml = notes.map((n) => `<p class="note">${escapeHtml(n)}</p>`).join('\n')
@@ -438,9 +442,17 @@ function fippaPrintPage(title: string, content: string, letterFormat: unknown): 
   }
   .screen-bar .notes { flex: 1 1 18rem; }
   .screen-bar .note + .note { margin-top: 0.25rem; }
-  .print-btn {
-    flex: 0 0 auto;
+  .print-action {
+    flex: 0 1 15rem;
     margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+    text-align: right;
+  }
+  .print-tip { font-size: 12px; line-height: 1.4; color: #57534e; }
+  .print-btn {
     font: inherit;
     font-weight: 500;
     min-height: 44px;
@@ -458,7 +470,18 @@ function fippaPrintPage(title: string, content: string, letterFormat: unknown): 
   .lb { min-height: 1.5em; white-space: pre-wrap; overflow-wrap: anywhere; }
   .lb-h { font-size: inherit; font-weight: 600; }
   .lb-verbatim { font: inherit; }
-  mark.ph { background: #FDF2D0; color: #6B3A06; padding: 0 0.1em; border-radius: 2px; }
+  mark.ph {
+    background: #FDF2D0; color: #6B3A06; padding: 0 0.1em; border-radius: 2px;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  /* Hanging indent: wrapped lines of an item align after its prefix. */
+  .lb-item { padding-left: 1.5em; text-indent: -1.5em; }
+  /* A rule is a 1px hairline centred in its line; the element's text stays empty. */
+  .lb-rule { position: relative; }
+  .lb-rule::before {
+    content: ''; position: absolute; left: 0; right: 0; top: 50%;
+    border-top: 1px solid #A8A29E;
+  }
 
   .guidance-page { break-before: page; page-break-before: always; }
   .guidance-page h1 {
@@ -489,7 +512,10 @@ function fippaPrintPage(title: string, content: string, letterFormat: unknown): 
 <div class="notes">
 ${notesHtml}
 </div>
+<div class="print-action">
 <button type="button" class="print-btn" onclick="window.print()">Print</button>
+<p class="print-tip">${escapeHtml(BROWSER_MARGIN_TIP_SHORT)}</p>
+</div>
 </div>
 <main>
 <div class="letter">
