@@ -6,8 +6,9 @@
  * Drives the real profile-setup flow in Chromium on 127.0.0.1: open
  * /profile/setup?redirect=<value> signed in, submit the form, let the page
  * navigate with whatever safeRedirectTarget() returned, and read
- * `location.origin` once navigation settles. Every hostile value must end on
- * the app's origin; `/investigate?x=1#h` must keep its path, query and hash.
+ * `location.origin` and `location.pathname` once navigation settles. Every
+ * hostile value must end on the app's origin at `/investigate` (the fallback);
+ * `/investigate?x=1#h` must keep its path, query and hash.
  *
  * A control case shows the check can fail: it performs the assignment the old
  * page-local helper made (`location.href = '/\\evil.example'`) in the same
@@ -56,6 +57,8 @@ const HOSTILE_HOST = 'evil.example'
 /** The values the helper must contain (S1 browser check). */
 const HOSTILE = ['/.//evil.example', '/a/..//evil.example', '/%2e//evil.example', '/%5Cevil.example', '/\\evil.example']
 const KEEPS = { value: '/investigate?x=1#h', expect: `${APP_URL}/investigate?x=1#h` }
+/** Where every hostile value must land: safeRedirectTarget's fallback. */
+const HOSTILE_EXPECT_PATH = '/investigate'
 
 function fail(message: string): never {
   console.error(`[redirect-check] ${message}`)
@@ -101,6 +104,7 @@ interface CaseResult {
   patchStatus: number | null
   finalUrl: string
   origin: string
+  pathname: string
   hostileRequests: string[]
   pass: boolean
 }
@@ -124,7 +128,11 @@ async function main() {
   const results: CaseResult[] = []
   let failed = false
 
-  async function runCase(value: string, user: 'a' | 'b', expectHref?: string): Promise<CaseResult> {
+  async function runCase(
+    value: string,
+    user: 'a' | 'b',
+    expect: { href?: string; pathname?: string }
+  ): Promise<CaseResult> {
     // One display-name change per 30 days: clear the clock so the submit succeeds.
     psql(`update user_profiles set display_name_changed_at = null where user_id = '${ids[user]}'`)
     const context = await browser.newContext()
@@ -145,23 +153,24 @@ async function main() {
     await page.getByRole('button', { name: 'Save changes' }).click()
     await page.waitForURL((u) => u.pathname !== '/profile/setup', { timeout: 30_000 })
     await page.waitForLoadState('load')
-    const origin = await page.evaluate(() => location.origin)
+    const { origin, pathname } = await page.evaluate(() => ({ origin: location.origin, pathname: location.pathname }))
     const finalUrl = page.url()
     await context.close()
     const pass =
       patchStatus === 200 &&
       origin === APP_URL &&
       hostileRequests.length === 0 &&
-      (expectHref === undefined || finalUrl === expectHref)
-    return { value, user, url: target, patchStatus, finalUrl, origin, hostileRequests, pass }
+      (expect.href === undefined || finalUrl === expect.href) &&
+      (expect.pathname === undefined || pathname === expect.pathname)
+    return { value, user, url: target, patchStatus, finalUrl, origin, pathname, hostileRequests, pass }
   }
 
   try {
     // Alternate users: the profile PATCH limit is 5 per 60 s per user.
     const users: Array<'a' | 'b'> = ['a', 'b']
     let i = 0
-    for (const value of HOSTILE) results.push(await runCase(value, users[i++ % 2]))
-    results.push(await runCase(KEEPS.value, users[i++ % 2], KEEPS.expect))
+    for (const value of HOSTILE) results.push(await runCase(value, users[i++ % 2], { pathname: HOSTILE_EXPECT_PATH }))
+    results.push(await runCase(KEEPS.value, users[i++ % 2], { href: KEEPS.expect }))
 
     for (const r of results) {
       console.log(
@@ -169,7 +178,7 @@ async function main() {
           `      opened   ${r.url}\n` +
           `      PATCH /api/profile -> ${r.patchStatus}\n` +
           `      landed   ${r.finalUrl}\n` +
-          `      location.origin = ${r.origin}; requests to ${HOSTILE_HOST}: ${r.hostileRequests.length}`
+          `      location.origin = ${r.origin}; location.pathname = ${r.pathname}; requests to ${HOSTILE_HOST}: ${r.hostileRequests.length}`
       )
       if (!r.pass) failed = true
     }

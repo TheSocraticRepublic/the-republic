@@ -156,6 +156,25 @@ describe('login: Enter handler checks canSubmit (path 3)', () => {
     expect(sendCodeCalls).toBe(0)
   })
 
+  // type=email sanitisation strips ASCII whitespace only; these survive into
+  // the value (a paste), and only `.trim()` in canSubmit stops the dispatch
+  // (Razor W1).
+  it.each([
+    ['NBSP', '\u00A0'],
+    ['ideographic space', '\u3000'],
+    ['BOM / ZWNBSP', '\uFEFF'],
+    ['narrow NBSP', '\u202F'],
+  ])('Enter, and the button, with a lone %s dispatch nothing', async (_name, ch) => {
+    const email = (await renderLogin()) as HTMLInputElement
+    fireEvent.change(email, { target: { value: ch } })
+    expect(email.value).toBe(ch)
+    await enter(email)
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send code' }))
+    })
+    expect(sendCodeCalls).toBe(0)
+  })
+
   it('Enter with an email dispatches send-code once', async () => {
     await toCodeStep()
     expect(sendCodeCalls).toBe(1)
@@ -235,10 +254,22 @@ describe('login: landmark, focus, error copy', () => {
     expect(document.activeElement).toBe(code)
   })
 
-  it('does not focus the code input on a coarse pointer', async () => {
+  it('does not focus the code input on a coarse pointer; focus moves to the instruction text', async () => {
     stubMatchMedia(true)
     const code = await toCodeStep()
     expect(document.activeElement).not.toBe(code)
+    const active = document.activeElement as HTMLElement
+    expect(active).not.toBe(document.body)
+    expect(active.tagName).toBe('P')
+    expect(active.textContent).toBe('Code sent to qa-owner-a@example.test')
+    expect(active.tabIndex).toBe(-1)
+  })
+
+  it('on a fine pointer the code step focuses the input, not the instruction text', async () => {
+    stubMatchMedia(false)
+    const code = await toCodeStep()
+    expect(document.activeElement).toBe(code)
+    expect(screen.getByText('Code sent to qa-owner-a@example.test')).not.toBe(document.activeElement)
   })
 
   it.each([

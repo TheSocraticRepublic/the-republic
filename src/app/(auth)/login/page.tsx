@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
   const codeRef = useRef<HTMLInputElement>(null)
+  const instructionRef = useRef<HTMLParagraphElement>(null)
 
   // The one predicate both submit paths of the current step check before
   // dispatching: the step's button (`disabled`) and the input's Enter handler.
@@ -30,8 +31,15 @@ export default function LoginPage() {
   const canSubmit = step === 'email' ? email.trim().length > 0 && !loading : code.length === 8 && !loading
 
   // Focus the step's input on fine pointers only (replaces `autoFocus`).
+  // On a coarse pointer nothing is focused on load, but the switch to the code
+  // step unmounts the focused "Send code" button; leaving focus on <body>
+  // would lose a screen-reader user's place. Focus moves to the instruction
+  // text instead ("Code sent to ..."), which raises no keyboard.
   useEffect(() => {
-    if (hasCoarsePointer()) return
+    if (hasCoarsePointer()) {
+      if (step === 'code') instructionRef.current?.focus()
+      return
+    }
     const input = step === 'email' ? emailRef.current : codeRef.current
     input?.focus()
   }, [step])
@@ -129,7 +137,7 @@ export default function LoginPage() {
           <p className="text-sm font-serif italic text-white/50">
             A Republic for the examined institution
           </p>
-          <p className="mt-4 text-sm text-white/60">
+          <p ref={instructionRef} tabIndex={-1} className="mt-4 text-sm text-white/60 focus:outline-none">
             {step === 'email'
               ? 'Enter your email to continue'
               : `Code sent to ${email}`}
