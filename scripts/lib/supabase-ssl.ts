@@ -10,6 +10,8 @@
  * under tsx/Node and the app under Next.js with different module roots).
  */
 
+import { isLoopbackDatabaseUrl } from './local-db-guard'
+
 const SUPABASE_ROOT_CA = `-----BEGIN CERTIFICATE-----
 MIIDxDCCAqygAwIBAgIUbLxMod62P2ktCiAkxnKJwtE9VPYwDQYJKoZIhvcNAQEL
 BQAwazELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB0RlbHdhcmUxEzARBgNVBAcMCk5l
@@ -36,4 +38,26 @@ o/bKiIz+Fq8=
 
 export function supabaseSslConfig(): { ca: string; rejectUnauthorized: true } {
   return { ca: SUPABASE_ROOT_CA, rejectUnauthorized: true }
+}
+
+/**
+ * SSL config for the migration runner, given the URL it will dial.
+ *
+ * The local-only rule: TLS is off (`false`) ONLY when QA_LOCAL_DB=1 AND the
+ * URL's host is 127.0.0.1 or localhost (the QA harness Postgres has no TLS).
+ * QA_LOCAL_DB=1 with any other host throws, so the flag can never weaken TLS
+ * to a remote database. In every other case the pinned Supabase CA is used,
+ * exactly as before.
+ */
+export function migrationSslConfig(
+  url: string,
+  qaLocalDb: string | undefined = process.env.QA_LOCAL_DB
+): false | { ca: string; rejectUnauthorized: true } {
+  if (qaLocalDb === '1') {
+    if (isLoopbackDatabaseUrl(url)) return false
+    throw new Error(
+      'QA_LOCAL_DB=1 is set but the migration database host is not 127.0.0.1 or localhost; refusing to connect'
+    )
+  }
+  return supabaseSslConfig()
 }
