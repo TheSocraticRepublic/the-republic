@@ -131,8 +131,8 @@
   --island-text: #1c1917;
   --island-secondary: #44403c;
   --island-body: #292524;
-  --island-muted: #78716c;
-  --island-faint: #a8a29e;
+  --island-muted: #625c56;   /* was #78716c (4.07:1 on hover); 5.59:1 on island-hover, the darkest */
+  --island-faint: #6f6963;   /* was #a8a29e (2.14:1 on hover); 4.59:1 on island-hover, the darkest */
   --island-border: #e7e5e4;
   --island-card: #f5f4f3;
   --island-card-border: #e0ddd9;
@@ -466,6 +466,30 @@ body {
   outline-color: color-mix(in srgb, var(--color-island-text) 70%, transparent);
 }
 
+/*
+ * Island paper outside the briefing: the Campaign panel and reasoning card,
+ * the Lens panel, the civic strip, the Votes letter, bill and explanation
+ * views. These paint an `--island-*` ground inline (light paper by default,
+ * since `.dark` never redeclares the island set; dark under `.dark-island`)
+ * without being a theme scope, so the chrome's light ring would be ~1.04:1 on
+ * them. Any element that paints an island ground re-points `--focus-ring` at
+ * its own `--island-text`, which is ink on paper and light under
+ * `.dark-island`, so every focusable inside inherits the right ring.
+ *
+ * Both spellings of the inline style are matched: React's server render
+ * writes `background-color:var(...)`, the browser's CSSOM (React on the
+ * client, hover handlers) writes `background-color: var(...)`. This rule sits
+ * after every theme scope so it wins on an element that is both `.dark-island`
+ * and paper.
+ */
+[style*="background-color:var(--color-island-"],
+[style*="background-color: var(--color-island-"],
+[style*="background:var(--color-island-"],
+[style*="background: var(--color-island-"],
+[class*="bg-island-"] {
+  --focus-ring: color-mix(in srgb, var(--island-text) 70%, transparent);
+}
+
 /* Content island entrance animation */
 @keyframes island-entrance {
   from {
@@ -615,6 +639,10 @@ body {
  * the fix, and `maximum-scale` in the viewport is never the fix (it takes
  * pinch-zoom away from the people who need it).
  *
+ * It is a floor, not a size: a field that already asks for 16px or more
+ * (`text-base` up to `text-4xl`, e.g. the login code and the Votes postal
+ * code at `text-lg`) is left out of the selector and keeps its own size.
+ *
  * This rule must stay UNLAYERED. Tailwind's utilities (`text-sm` on an input)
  * live in `@layer utilities`, and an unlayered declaration beats every layered
  * one whatever its specificity. Moved into any `@layer`, it loses to `text-sm`
@@ -622,9 +650,14 @@ body {
  * on a field. `tests/unit/tokens-contrast.test.ts` holds both properties.
  */
 @media (max-width: 767.98px) {
-  input,
-  select,
-  textarea {
+  :is(input, select, textarea):not(
+      [class~="text-base"],
+      [class~="text-lg"],
+      [class~="text-xl"],
+      [class~="text-2xl"],
+      [class~="text-3xl"],
+      [class~="text-4xl"]
+    ) {
     font-size: 16px;
   }
 }
