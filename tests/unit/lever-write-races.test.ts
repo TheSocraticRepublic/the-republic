@@ -542,6 +542,73 @@ describe.skipIf(!HARNESS_UP)(SUITE_TITLE, () => {
       expect(row.metadata).toEqual({ publicBody: 'BC Ministry of Forests', jurisdiction: 'bc', description: 'Synthetic QA request' })
     })
 
+    // ------------------------------------------ A4: province, stored content
+
+    it('A4: a legacy draft refused for want of a province takes one through PATCH, then generates', async () => {
+      await stub('/__qa/reset')
+      const id = await insertAction({ content: '', metadata: { publicBody: 'BC Ministry of Forests', description: 'Synthetic QA request' } })
+      expect(await generate(id)).toEqual({ status: 409, text: JSON.stringify({ error: CHOOSE_PROVINCE }) })
+      const res = await patch(id, { jurisdiction: 'bc', expectedContentSha256: sha256('') })
+      expect(res.status).toBe(200)
+      const row = await readRow(id)
+      expect(row.metadata).toEqual({ publicBody: 'BC Ministry of Forests', description: 'Synthetic QA request', jurisdiction: 'bc' })
+      expect(row.content).toBe('')
+      expect((await generate(id)).status).toBe(200)
+      expect((await readRow(id)).metadata).toMatchObject({ jurisdiction: 'bc', letterFormat: 'marker-v1' })
+    })
+
+    it('A4: the province is a draft-only write, by the same compare-and-set', async () => {
+      const meta = { publicBody: 'BC Ministry of Forests', description: 'Synthetic QA request' }
+      const final = await insertAction({ content: 'Final text.', status: 'final', metadata: meta })
+      expect(await patch(final, { jurisdiction: 'bc' })).toEqual({ status: 409, json: { error: NOT_A_DRAFT } })
+      expect((await readRow(final)).metadata).toEqual(meta)
+
+      const stale = await insertAction({ content: 'Draft text.', metadata: meta })
+      expect(await patch(stale, { jurisdiction: 'ab', expectedContentSha256: sha256('Other text.') })).toEqual({
+        status: 409,
+        json: { error: CONTENT_CHANGED },
+      })
+      expect((await readRow(stale)).metadata).toEqual(meta)
+
+      // A finalise that lands first wins: the province write then finds no draft.
+      const raced = await insertAction({ content: 'Draft text.', metadata: meta })
+      let result: { status: number; json: Record<string, unknown> } | undefined
+      await withRowLock(
+        raced,
+        async () => {
+          const pending = patch(raced, { jurisdiction: 'on' })
+          await blockedUpdates(1)
+          void pending.then((r) => (result = r))
+        },
+        async (tx) => {
+          await tx`update lever_actions set status = 'final' where id = ${raced}`
+        }
+      )
+      await waitFor('the province PATCH', async () => result ?? null)
+      expect(result).toEqual({ status: 409, json: { error: NOT_A_DRAFT } })
+      expect((await readRow(raced)).metadata).toEqual(meta)
+    })
+
+    it('A4: a province must be bc, ab or on, alone, on an FOI request', async () => {
+      const id = await insertAction({ content: 'Draft.', metadata: { publicBody: 'BC Ministry of Forests' } })
+      expect((await patch(id, { jurisdiction: 'xx' })).status).toBe(400)
+      expect((await patch(id, { jurisdiction: 'bc', content: 'Draft.' })).status).toBe(400)
+      expect((await patch(id, { jurisdiction: 'bc', status: 'final' })).status).toBe(400)
+      const comment = await insertAction({ content: 'Comment.', actionType: 'public_comment', metadata: {} })
+      expect((await patch(comment, { jurisdiction: 'bc' })).status).toBe(400)
+      expect((await readRow(id)).metadata).toEqual({ publicBody: 'BC Ministry of Forests' })
+      expect((await readRow(comment)).metadata).toEqual({})
+    })
+
+    it('A4: a 200 carries the content as stored, for the client to re-baseline on', async () => {
+      const id = await insertAction({ content: 'Before.' })
+      const res = await patch(id, { content: 'After.\r\n', expectedContentSha256: sha256('Before.') })
+      expect(res.status).toBe(200)
+      expect((res.json.action as Record<string, unknown>).content).toBe('After.\r\n')
+      const fin = await patch(id, { status: 'final', expectedContentSha256: sha256('After.\r\n') })
+      expect((fin.json.action as Record<string, unknown>).content).toBe('After.\r\n')
+    })
+
     it('ownership: another user gets 404 and no header gets 401, and nothing is written', async () => {
       const id = await insertAction({ content: 'Owner text.' })
       expect((await patch(id, { content: 'Theirs.' }, OTHER.id)).status).toBe(404)

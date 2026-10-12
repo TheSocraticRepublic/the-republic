@@ -19,8 +19,15 @@
  * The capacity benchmark at the end runs only with PDF_CAPACITY=1 (see the
  * relay report for the taskset / heap-limit command).
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest'
 import { NextRequest } from 'next/server'
+import postgres from 'postgres'
+import { createHash } from 'node:crypto'
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
+// @ts-expect-error -- jsdom ships no types and @types/jsdom is not a dependency; one constructor is used, typed below.
+import { JSDOM as UntypedJSDOM } from 'jsdom'
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { renderLeverPdf } from '@/lib/pdf/render'
 import { FOOTER_BAND_TOP, FOOTER_BAND_BOTTOM } from '@/lib/pdf/primitives'
@@ -535,3 +542,233 @@ describe.skipIf(process.env.PDF_CAPACITY !== '1')('FIPPA PDF: capacity (PDF_CAPA
     expect(p95).toBeLessThanOrEqual(5_000)
   }, 120_000)
 })
+
+// ---------------------------------------------------------------------------
+// On the running QA harness: ownership through the real middleware, and the
+// A-series acceptance over the seeded fixtures (scripts/qa/README.md).
+// ---------------------------------------------------------------------------
+
+const APP_URL = 'http://127.0.0.1:3177'
+const QA_DATABASE_URL = 'postgres://qa_app:qa_app_dummy@127.0.0.1:55432/republic_qa'
+const QA_USER_A = 'a0000000-0000-4000-8000-00000000000a'
+const QA_USER_B = 'b0000000-0000-4000-8000-00000000000b'
+
+function harnessJwtSecret(): string | null {
+  const root = path.resolve(__dirname, '..', '..')
+  const dir = path.join(os.tmpdir(), `open-cave-qa-${createHash('sha1').update(root).digest('hex').slice(0, 10)}`)
+  try {
+    return (JSON.parse(fs.readFileSync(path.join(dir, 'state.json'), 'utf8')) as { jwtSecret: string }).jwtSecret
+  } catch {
+    return null
+  }
+}
+
+async function harnessAppUp(): Promise<boolean> {
+  try {
+    return (await fetch(`${APP_URL}/api/health`, { signal: AbortSignal.timeout(3000) })).ok
+  } catch {
+    return false
+  }
+}
+
+const HARNESS_SECRET = harnessJwtSecret()
+const HARNESS_APP = HARNESS_SECRET !== null && (await harnessAppUp())
+if (!HARNESS_APP) {
+  const message = '[fippa-pdf] harness layer SKIPPED: no running QA harness app for this worktree (npx tsx scripts/qa/harness.ts up).'
+  if (process.env.QA_REQUIRE_HARNESS === '1') throw new Error(message.replace('SKIPPED', 'REQUIRED'))
+  console.warn(message)
+}
+
+describe.skipIf(!HARNESS_APP)(
+  HARNESS_APP ? 'on the QA harness (production build, real middleware)' : 'on the QA harness: SKIPPED (not running)',
+  () => {
+    let ownerCookie = ''
+    let otherCookie = ''
+    let sql: postgres.Sql
+    const created: string[] = []
+
+    beforeAll(async () => {
+      process.env.JWT_SECRET = HARNESS_SECRET!
+      const { signJWT } = await import('@/lib/auth/jwt')
+      const { AUTH_COOKIE } = await import('@/lib/auth/middleware')
+      ownerCookie = `${AUTH_COOKIE}=${await signJWT({ sub: QA_USER_A, email: 'qa-owner-a@example.test' })}`
+      otherCookie = `${AUTH_COOKIE}=${await signJWT({ sub: QA_USER_B, email: 'qa-other-b@example.test' })}`
+      sql = postgres(QA_DATABASE_URL, { max: 1, onnotice: () => {} })
+    })
+
+    afterAll(async () => {
+      if (sql) {
+        if (created.length) await sql`delete from lever_actions where id in ${sql(created)}`
+        await sql.end({ timeout: 5 })
+      }
+    })
+
+    /*
+     * The production-mode limiter is live on the harness: 30 requests a
+     * minute per user per route (sliding window, with an in-process block
+     * list, so emptying Redis does not lift a block). This layer makes more
+     * than that as user A, so it paces itself: at most 25 of A's requests to
+     * one rate-limited route in any 61 seconds. Nothing in the app is changed.
+     */
+    const sent = new Map<string, number[]>()
+    async function pace(method: string, pathname: string, cookie: string | null) {
+      if (cookie !== ownerCookie) return
+      const key = pathname.startsWith('/api/lever/export')
+        ? 'export'
+        : pathname.endsWith('/print')
+          ? 'print'
+          : pathname.startsWith('/api/lever/actions/')
+            ? 'action'
+            : null
+      if (!key) return
+      const times = (sent.get(key) ?? []).filter((t) => Date.now() - t < 61_000)
+      if (times.length >= 14) await new Promise((r) => setTimeout(r, 61_000 - (Date.now() - times[0]) + 50))
+      sent.set(key, [...times.filter((t) => Date.now() - t < 61_000), Date.now()])
+    }
+
+    async function http(method: string, pathname: string, cookie: string | null, body?: unknown) {
+      await pace(method, pathname, cookie)
+      const headers: Record<string, string> = { 'content-type': 'application/json' }
+      if (cookie) headers.cookie = cookie
+      if (method !== 'GET') headers.origin = APP_URL
+      return fetch(`${APP_URL}${pathname}`, {
+        method,
+        redirect: 'manual',
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      })
+    }
+
+    async function seeded(key: string, status: 'draft' | 'final' | 'filed') {
+      const [row] = await sql<{ id: string; content: string; metadata: Record<string, unknown> }[]>`
+        select id, content, metadata from lever_actions
+        where user_id = ${QA_USER_A} and title = ${`FIPPA Request: QA ${key} (${status})`}`
+      expect(row, `seeded ${key} (${status})`).toBeDefined()
+      return row
+    }
+
+    const partOf = (el: Element | null) => (el ? Array.from(el.children).map((c) => c.textContent ?? '').join('\n') : null)
+    const JSDOMCtor = UntypedJSDOM as new (html: string) => { window: { document: Document } }
+
+    it('POST /api/lever/export, every format: owner 200, non-owner 404, anonymous 401', async () => {
+      const { id } = await seeded('marker-v1', 'final')
+      for (const format of ['txt', 'md', 'pdf'] as const) {
+        expect((await http('POST', '/api/lever/export', ownerCookie, { actionId: id, format })).status, format).toBe(200)
+        expect((await http('POST', '/api/lever/export', otherCookie, { actionId: id, format })).status, format).toBe(404)
+        expect((await http('POST', '/api/lever/export', null, { actionId: id, format })).status, format).toBe(401)
+      }
+      expect((await http('GET', `/api/lever/actions/${id}/print`, ownerCookie)).status).toBe(200)
+      expect((await http('GET', `/api/lever/actions/${id}/print`, otherCookie)).status).toBe(404)
+      expect((await http('GET', `/api/lever/actions/${id}/print`, null)).status).toBe(401)
+      const page = await http('GET', `/lever/${id}`, null)
+      expect([302, 303, 307, 308]).toContain(page.status)
+      expect(page.headers.get('location') ?? '').toContain('/login')
+    }, 180_000)
+
+    const ACCEPTANCE = SEEDED_LETTER_FIXTURES.flatMap((fx) =>
+      (['draft', 'final', 'filed'] as const).map((status) => [`${fx.id} (${status})`, fx, status] as const)
+    )
+
+    it.each(ACCEPTANCE)(
+      'A-series acceptance, %s: one letter in screen, print and PDF, equal to the golden; no branding; numbered; TXT and MD as stored',
+      async (_label, fx, status) => {
+        const row = await seeded(fx.seed!.key, status)
+
+        // Screen: the server-rendered Lever page.
+        const screenHtml = await (await http('GET', `/lever/${row.id}`, ownerCookie)).text()
+        const screenDoc = new JSDOMCtor(screenHtml).window.document
+        expect(screenDoc.querySelectorAll('[data-letter-paper]').length).toBe(1)
+        expect(partOf(screenDoc.querySelector('[data-letter-text]'))).toBe(fx.expectedLetter)
+        expect(screenDoc.querySelector('[data-letter-paper]')!.textContent).not.toMatch(/open\s*cave/i)
+        expect(screenDoc.querySelector('[data-recipient-notice]')!.textContent).toContain(CHECK)
+
+        // Print.
+        const printDoc = new JSDOMCtor(await (await http('GET', `/api/lever/actions/${row.id}/print`, ownerCookie)).text())
+          .window.document
+        expect(printDoc.querySelectorAll('main > .letter').length).toBe(1)
+        expect(partOf(printDoc.querySelector('main > .letter'))).toBe(fx.expectedLetter)
+        expect(printDoc.querySelector('main > .letter')!.textContent).not.toMatch(/open\s*cave/i)
+        expect(printDoc.querySelector('.guidance-page .where-to-send')!.textContent).toContain(CHECK)
+
+        // PDF.
+        const pdfRes = await http('POST', '/api/lever/export', ownerCookie, { actionId: row.id, format: 'pdf' })
+        expect(pdfRes.status).toBe(200)
+        const pdf = await readPdf(new Uint8Array(await pdfRes.arrayBuffer()))
+        expect(squash(letterPagesText(pdf))).toBe(squash(fx.expectedLetter))
+        expect(letterPagesText(pdf)).not.toMatch(/open\s*cave/i)
+        expect(pdf.info.Author ?? '').toBe('')
+        pdf.pages.forEach((p, k) => {
+          expect(p.items.filter((i) => isFooter(i.str)).map((i) => i.str)).toEqual([`Page ${k + 1} of ${pdf.pages.length}`])
+        })
+        const g = guidanceIndex(pdf)
+        expect(g).toBeGreaterThanOrEqual(1)
+        if (fx.expectedGuidance) expect(squash(guidancePagesText(pdf))).toContain(squash(fx.expectedGuidance))
+
+        // TXT and MD: the stored text, byte for byte.
+        for (const format of ['txt', 'md'] as const) {
+          const res = await http('POST', '/api/lever/export', ownerCookie, { actionId: row.id, format })
+          expect(res.status, format).toBe(200)
+          const body = Buffer.from(await res.arrayBuffer())
+          expect(body.equals(Buffer.from(row.content, 'utf8')), format).toBe(true)
+        }
+      },
+      600_000
+    )
+
+    it('edit, save and reload round-trip on a draft, with the hash, and the 409 on a stale one', async () => {
+      const [row] = await sql<{ id: string }[]>`
+        insert into lever_actions (user_id, action_type, title, content, metadata, status)
+        values (${QA_USER_A}, 'fippa_request', 'QA A4 round trip', ${MARKER_V1_LETTER.content},
+                ${sql.json({ publicBody: 'BC Ministry of Forests', jurisdiction: 'bc', letterFormat: 'marker-v1' })}, 'draft')
+        returning id`
+      created.push(row.id)
+      const sha = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex')
+      const edited = MARKER_V1_LETTER.content.replace('Dear FOI Coordinator,', 'Dear Records Officer,')
+      const saved = await http('PATCH', `/api/lever/actions/${row.id}`, ownerCookie, {
+        content: edited,
+        expectedContentSha256: sha(MARKER_V1_LETTER.content),
+      })
+      expect(saved.status).toBe(200)
+      expect(((await saved.json()) as { action: { content: string } }).action.content).toBe(edited)
+      const doc = new JSDOMCtor(await (await http('GET', `/lever/${row.id}`, ownerCookie)).text()).window.document
+      expect(partOf(doc.querySelector('[data-letter-text]'))).toBe(
+        MARKER_V1_LETTER.expectedLetter.replace('Dear FOI Coordinator,', 'Dear Records Officer,')
+      )
+      const stale = await http('PATCH', `/api/lever/actions/${row.id}`, ownerCookie, {
+        content: 'Lost?',
+        expectedContentSha256: sha(MARKER_V1_LETTER.content),
+      })
+      expect(stale.status).toBe(409)
+      expect(await stale.json()).toEqual({ error: 'This letter changed since you opened it' })
+    }, 180_000)
+
+    it('final and filed letter pages are unchanged when the recipient resolution changes (the directory-change proxy on a built app)', async () => {
+      // The built app's directory can't be edited at runtime, so the resolver's
+      // answer is changed the other way: the row's body moves from a checked
+      // entry to an unlisted one. Only "Where to send this" may change. (The
+      // directory itself is changed in the route test above.)
+      for (const status of ['final', 'filed'] as const) {
+        const [row] = await sql<{ id: string }[]>`
+          insert into lever_actions (user_id, action_type, title, content, metadata, status)
+          values (${QA_USER_A}, 'fippa_request', ${`QA A4 directory ${status}`}, ${MARKER_V1_LETTER.content},
+                  ${sql.json({ publicBody: 'BC Ministry of Forests', jurisdiction: 'bc', letterFormat: 'marker-v1' })}, ${status})
+          returning id`
+        created.push(row.id)
+        const get = async () => {
+          const pdf = await readPdf(
+            new Uint8Array(await (await http('POST', '/api/lever/export', ownerCookie, { actionId: row.id, format: 'pdf' })).arrayBuffer())
+          )
+          const print = new JSDOMCtor(await (await http('GET', `/api/lever/actions/${row.id}/print`, ownerCookie)).text()).window.document
+          return { pdf, print }
+        }
+        const before = await get()
+        await sql`update lever_actions set metadata = metadata || ${sql.json({ publicBody: 'Synthetic Unlisted Body (QA)' })} where id = ${row.id}`
+        const after = await get()
+        expect(letterPagesText(after.pdf)).toBe(letterPagesText(before.pdf))
+        expect(partOf(after.print.querySelector('main > .letter'))).toBe(partOf(before.print.querySelector('main > .letter')))
+        expect(guidancePagesText(before.pdf)).toContain('(checked 2026-10-12)')
+        expect(guidancePagesText(after.pdf)).not.toContain('(checked 2026-10-12)')
+      }
+    }, 180_000)
+  }
+)
