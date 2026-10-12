@@ -44,7 +44,9 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - - **Build-checks fix is live (2026-10-11); Lee owes one follow-up.** Main is `fa16447` (PR #5) on Netlify deploy `6acc1bbeb27b4900083c30a8`; the rollback target is `6ac01a4ef8c65100089a3faa` (`c80dcfe`), which brings back the affected `next` 16.3.0. **Lee to sign in once on the live site with the audit account**, to confirm sign-in still works after the framework change: Next 16.3.1 changed how request headers are read, and identity reaches handlers through the middleware's `x-user-id` (Razor N2). The local production smoke passed 11/11, but no signed-in check has run on production. Sentry has no project in the org, so it gives no post-deploy signal (OBS-1). *The non-owner export gap (TEST-1) was accepted by Lee on 2026-10-12; see the log.*
 
-- - **UI and filings plan r4.1: relay under way; Q0a and Q0b merged, S1 next.** The Fable critic (Lee, 2026-10-11: "go ahead and use Fable instead of Astra for now. Always opt to change models instead of impeding work to wait for resets per se.") returned CONCERN, no FAIL; r4.1 folds its must-fix list. The plan is at `~/marvin/state/plans/republic-ui-filings-2026-10/`. The local QA harness is live on the session branch: `npx tsx scripts/qa/harness.ts run` builds the app in production mode against local Postgres (Supabase shim), Redis REST and an AI stub, seeds synthetic data, and passes 8/8. Browser tests import `interceptSendCode` from `scripts/qa/browser.ts`. **S1's review must confirm Razor RW1** (that helper lives in a module with no import side effects, and `harness.ts` runs `main()` only when executed directly). Plan correction: Mirror comparisons are not persisted by the app, so the seed can't include one, and the final gate's `/mirror` row uses the AI-stub path. Named limit: the harness has no network isolation (see `scripts/qa/README.md`). **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only). Every release waits for Lee's yes, and the legacy-letter question goes on the first A-series release card. Keep the memory guard on (no build under 4 GB available).
+- - **UI and filings plan r4.1: relay under way; Q0a, Q0b and S1 merged to the session branch, A1 next.** The plan and its Fable critic (CONCERN, no FAIL) are in `~/marvin/state/plans/republic-ui-filings-2026-10/`. The local QA harness runs with `npx tsx scripts/qa/harness.ts run`; browser tests import `interceptSendCode` from `scripts/qa/browser.ts`, and `scripts/qa/redirect-check.ts` is the reusable redirect browser check (B3a needs it for login). Plan corrections: Mirror comparisons aren't persisted, so `/mirror` uses the AI-stub path; S1's privacy wording was amended by Petra and Jen. Named limit: the harness has no network isolation. **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only). Every release waits for Lee's yes, and the legacy-letter question goes on the first A-series release card. Keep the memory guard on.
+
+- - **S1 release card is with Lee: DECISION NEEDED.** Draft PR #6 (`release/s1-redirect-privacy`) holds S1's five files alone, cherry-picked onto main `fa16447` and byte-identical to the reviewed head `44b3af4`; CI is green (run 38201423939). The rollback target is the live deploy `6acc1bbeb27b4900083c30a8`. **The blocker:** the privacy contact, and `SECURITY.md` line 9, send people to the email on the TheSocraticRepublic GitHub profile, and the profile shows no public email (`gh api users/TheSocraticRepublic`: `email: null`). Lee publishes a monitored address there, names an address for the page, or ships only the redirect fix. Razor RN2: whoever answers privacy requests must reply only to the account's sign-in address.
 
 ## Open questions awaiting Lee
 
@@ -70,6 +72,17 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 (S1 merged; release card filed, session marvin/republic-r2)
+
+Relay `republic-ui-s1` merged to the session branch as `5430e85`.
+- **The redirect fix:** `safeRedirectTarget` returns the checked absolute same-origin URL with an origin postcondition, and profile setup navigates with it. Razor's 52 hostile inputs all held. On the harness, the four escapes and the original backslash case all land on the app's origin, and the old code goes to `evil.example`. Battery 9/9 (one documented equivalent mutant).
+- **The privacy contact:** reworded by Petra (accountability, identity, 30 days, complaint routes) and Jen (link, code subject, one voice, two paragraphs); Razor RN2 added "we reply only to the address on your account".
+- **The blocker,** found independently by all three reviewers: the GitHub profile the contact points at has no public email.
+
+An S1-only release branch is open as draft PR #6 with CI green, waiting for Lee.
+
+**Next:** A1, while the S1 card waits.
 
 ### 2026-10-12 (Q0b merged, session marvin/republic-r2)
 
