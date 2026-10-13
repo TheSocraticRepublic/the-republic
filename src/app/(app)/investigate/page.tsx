@@ -191,18 +191,11 @@ export default async function InvestigatePage() {
                 What concerns you?
               </h1>
               <p className="text-base leading-relaxed text-text-secondary">
-                Describe a civic issue and we will investigate it for you —
-                documents, analysis, actions, and context in one briefing.
+                Describe a civic issue in your own words. You get one briefing:
+                the documents that govern it, who is involved, and what you
+                can do next.
               </p>
             </div>
-
-            {/* Epigraph — above the form */}
-            <p
-              className="mb-8 text-lg italic text-text-faint"
-              style={{ fontFamily: 'var(--font-serif)' }}
-            >
-              Every investigation begins with a question you didn&apos;t know how to ask.
-            </p>
 
             <ConcernForm />
           </div>
