@@ -75,11 +75,11 @@ const LANDINGS = ['/scout', '/oracle', '/gadfly', '/lever', '/mirror', '/votes']
  * (digest 3702761282, routed separately; see the C2a report), so its wrapper
  * is held by the structure test in arm-pages.test.tsx only.
  */
-const SUBPAGES: { from: string; link: string }[] = [
-  { from: '/lever', link: 'a[href^="/lever/"]' },
-  { from: '/votes/mp', link: 'a[href^="/votes/mp/"]' },
-  { from: '/votes/recent', link: 'a[href^="/votes/vote/"]' },
-  { from: '/votes/recent', link: 'a[href^="/votes/bill/"]' },
+const SUBPAGES: { from: string; link: string }[][] = [
+  [{ from: '/lever', link: 'a[href^="/lever/"]' }],
+  [{ from: '/votes/mp', link: 'a[href^="/votes/mp/"]' }],
+  // a division, then its bill: the bill is linked from the division's page
+  [{ from: '/votes/recent', link: 'a[href^="/votes/vote/"]' }, { from: '', link: 'a[href^="/votes/bill/"]' }],
 ]
 const LISTS = ['/votes/mp', '/votes/recent']
 
@@ -172,18 +172,21 @@ describe.skipIf(!APP_UP)('arm rooms and ?new=1 dialogs on the harness (Chromium)
           visited.push(route)
           for (const p of await roomProblems(page)) found.push(`${route}: ${p}`)
         }
-        for (const { from, link } of SUBPAGES) {
-          await page.goto(`${APP_URL}${from}`, { waitUntil: 'networkidle' })
-          const href = await page.locator(link).first().getAttribute('href')
-          expect(href, `${from} has a ${link}`).toBeTruthy()
-          await page.goto(`${APP_URL}${href}`, { waitUntil: 'networkidle' })
-          visited.push(href!)
-          for (const p of await roomProblems(page)) found.push(`${href}: ${p}`)
+        for (const chain of SUBPAGES) {
+          for (const { from, link } of chain) {
+            // an empty `from` follows the link on the page the chain is already on
+            if (from) await page.goto(`${APP_URL}${from}`, { waitUntil: 'networkidle' })
+            const href = await page.locator(link).first().getAttribute('href', { timeout: 10_000 })
+            expect(href, `${from || page.url()} has a ${link}`).toBeTruthy()
+            await page.goto(`${APP_URL}${href}`, { waitUntil: 'networkidle' })
+            visited.push(href!)
+            for (const p of await roomProblems(page)) found.push(`${href}: ${p}`)
+          }
         }
       } finally {
         await context.close()
       }
-      expect(visited).toHaveLength(LISTS.length + SUBPAGES.length)
+      expect(visited).toHaveLength(LISTS.length + SUBPAGES.flat().length)
       expect(found).toEqual([])
     }, 180_000)
   }
