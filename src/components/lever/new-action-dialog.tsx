@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useId, useRef } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react'
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
@@ -94,7 +94,12 @@ export function NewActionDialog({
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
   const createErrorRef = useRef<HTMLParagraphElement>(null)
 
-  const [open, setOpen] = useState(!!(initialOpen || initialDocumentId || initialSessionId || initialInvestigationId))
+  // The address is the truth for ?new=1, not the page's prop: Back restores
+  // a cached render whose prop still says open, while the entry it lands on
+  // no longer carries the flag (measured on the harness after a create).
+  const urlFlag = useSearchParams().get('new') === '1'
+  const flagged = !!initialOpen && urlFlag
+  const [open, setOpen] = useState(!!(flagged || initialDocumentId || initialSessionId || initialInvestigationId))
   const [actionType, setActionType] = useState<ActionType>(
     (initialActionType as ActionType) || 'fippa_request'
   )
@@ -127,10 +132,10 @@ export function NewActionDialog({
   // Open on the flag's rising edge, adjusting state during render (not an
   // effect, and not a key: a remount would detach the trigger that Radix
   // hands focus back to on close, dropping focus to <body>; Razor C2a W1).
-  const [flagSeen, setFlagSeen] = useState(initialOpen)
-  if (initialOpen !== flagSeen) {
-    setFlagSeen(initialOpen)
-    if (initialOpen) setOpen(true)
+  const [flagSeen, setFlagSeen] = useState(flagged)
+  if (flagged !== flagSeen) {
+    setFlagSeen(flagged)
+    if (flagged) setOpen(true)
   }
   const clearNewFlag = useCallback(() => {
     router.replace(withoutNewFlag(), { scroll: false })
@@ -280,7 +285,7 @@ export function NewActionDialog({
       // at once by router.push is superseded by the push, which left the
       // flag in history behind the new page (measured on the harness).
       // Next syncs native replaceState with its router; the state is kept.
-      if (initialOpen) window.history.replaceState(window.history.state, '', withoutNewFlag())
+      if (flagged) window.history.replaceState(window.history.state, '', withoutNewFlag())
       router.push(`/lever/${data.actionId}`)
     } catch (err) {
       console.error(err)
@@ -289,13 +294,13 @@ export function NewActionDialog({
       creatingRef.current = false
       setLoading(false)
     }
-  }, [actionType, publicBodyName, province, selectedDocId, selectedSessionId, investigationId, description, router, initialOpen])
+  }, [actionType, publicBodyName, province, selectedDocId, selectedSessionId, investigationId, description, router, flagged])
 
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v)
     // Opened by ?new=1: take the flag off the address on close, so a reload
     // doesn't reopen it and the empty state's link opens it again next time.
-    if (!v && initialOpen) clearNewFlag()
+    if (!v && flagged) clearNewFlag()
     if (!v) {
       setActionType((initialActionType as ActionType) || 'fippa_request')
       setPublicBodyChoice('')
@@ -310,7 +315,7 @@ export function NewActionDialog({
       setDupWarning(false)
       setCreateError(null)
     }
-  }, [initialActionType, initialOpen, clearNewFlag])
+  }, [initialActionType, flagged, clearNewFlag])
 
   // When pre-filled from cross-arm nav, trigger document/session fetch on mount
   // The existing useEffect already handles this when open=true

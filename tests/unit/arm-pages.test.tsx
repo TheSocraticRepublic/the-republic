@@ -31,7 +31,8 @@ const push = vi.fn()
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push, replace, refresh: () => {}, back: () => {}, prefetch: () => {} }),
   usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
+  // the address jsdom stands on, as the app router's hook reads it
+  useSearchParams: () => new URLSearchParams(window.location.search),
 }))
 vi.mock('next/headers', () => ({
   headers: async () => new Headers({ 'x-user-id': 'user-a' }),
@@ -66,7 +67,13 @@ const REPO = path.resolve(__dirname, '../..')
 
 type Arm = 'oracle' | 'gadfly' | 'lever' | 'mirror' | 'votes' | 'scout'
 
+/** Stand on an address (the dialogs read ?new=1 from it). */
+const at = (address: string) => window.history.replaceState(null, '', address)
+
 async function renderArm(arm: Arm, params: Record<string, string> = {}) {
+  // A test that set its own address with the flag keeps it; otherwise the
+  // address carries the flag the page is rendered with.
+  if ('new' in params && !window.location.search.includes('new=')) at(`/${arm}?new=${params.new}`)
   const searchParams = Promise.resolve(params)
   switch (arm) {
     case 'oracle':
@@ -140,6 +147,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  at('/')
   vi.unstubAllGlobals()
 })
 
@@ -260,8 +268,10 @@ describe('empty-state actions go somewhere real', () => {
   for (const arm of ['gadfly', 'lever'] as const) {
     it(`${arm}: a client navigation from the list to ?new=1 opens the dialog in the kept tree`, async () => {
       const Page = arm === 'gadfly' ? GadflyPage : LeverPage
+      at(`/${arm}`)
       const view = render(await Page({ searchParams: Promise.resolve({}) }))
       expect(screen.queryByRole('dialog')).toBeNull()
+      at(`/${arm}?new=1`)
       view.rerender(await Page({ searchParams: Promise.resolve({ new: '1' }) }))
       expect(await screen.findByRole('dialog')).toBeTruthy()
     })
@@ -279,18 +289,23 @@ describe('empty-state actions go somewhere real', () => {
     it(`${arm}: closing a ?new=1 dialog hands focus back to the trigger, which survives the flag going away (Razor W1)`, async () => {
       const Page = arm === 'gadfly' ? GadflyPage : LeverPage
       const triggerName = arm === 'gadfly' ? 'New Inquiry' : 'New Action'
+      at(`/${arm}`)
       const view = render(await Page({ searchParams: Promise.resolve({}) }))
       const trigger = screen.getByRole('button', { name: triggerName })
+      at(`/${arm}?new=1`)
       view.rerender(await Page({ searchParams: Promise.resolve({ new: '1' }) }))
       await screen.findByRole('dialog')
       fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
       // the replace lands: the page renders again without the flag
+      expect(replace).toHaveBeenCalledWith(`/${arm}`, { scroll: false })
+      at(`/${arm}`)
       view.rerender(await Page({ searchParams: Promise.resolve({}) }))
       await waitFor(() => expect(document.activeElement).toBe(trigger))
       expect(trigger.isConnected).toBe(true)
       expect(screen.getByRole('button', { name: triggerName })).toBe(trigger)
       // and the flag coming back opens it again in the same tree
+      at(`/${arm}?new=1`)
       view.rerender(await Page({ searchParams: Promise.resolve({ new: '1' }) }))
       expect(await screen.findByRole('dialog')).toBeTruthy()
     })
@@ -330,6 +345,17 @@ describe('empty-state actions go somewhere real', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
       expect(replace).not.toHaveBeenCalled()
+    })
+  }
+
+  for (const arm of ['gadfly', 'lever'] as const) {
+    it(`${arm}: Back to an entry without the flag, restoring a render whose props still carry it, stays closed (Razor W2)`, async () => {
+      const Page = arm === 'gadfly' ? GadflyPage : LeverPage
+      at(`/${arm}`)
+      render(await Page({ searchParams: Promise.resolve({ new: '1' }) }))
+      // the trigger is there, the dialog is not
+      expect(screen.getByRole('button', { name: arm === 'gadfly' ? 'New Inquiry' : 'New Action' })).toBeTruthy()
+      expect(screen.queryByRole('dialog')).toBeNull()
     })
   }
 

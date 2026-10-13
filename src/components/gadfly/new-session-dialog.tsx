@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, X, ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -34,8 +34,13 @@ function withoutNewFlag(): string {
 }
 
 export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen }: NewSessionDialogProps = {}) {
+  // The address is the truth for ?new=1, not the page's prop: Back restores
+  // a cached render whose prop still says open, while the entry it lands on
+  // no longer carries the flag (measured on the harness after a create).
+  const urlFlag = useSearchParams().get('new') === '1'
+  const flagged = !!initialOpen && urlFlag
   // Auto-open when pre-filled from cross-arm navigation, or asked for by ?new=1
-  const [open, setOpen] = useState(!!(initialOpen || initialDocumentId))
+  const [open, setOpen] = useState(!!(flagged || initialDocumentId))
   const [documents, setDocuments] = useState<Document[]>([])
   const [selectedDocId, setSelectedDocId] = useState(initialDocumentId ?? '')
   const [title, setTitle] = useState(initialTitle ?? '')
@@ -47,10 +52,10 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
   // Open on the flag's rising edge, adjusting state during render (not an
   // effect, and not a key: a remount would detach the trigger that Radix
   // hands focus back to on close, dropping focus to <body>; Razor C2a W1).
-  const [flagSeen, setFlagSeen] = useState(initialOpen)
-  if (initialOpen !== flagSeen) {
-    setFlagSeen(initialOpen)
-    if (initialOpen) setOpen(true)
+  const [flagSeen, setFlagSeen] = useState(flagged)
+  if (flagged !== flagSeen) {
+    setFlagSeen(flagged)
+    if (flagged) setOpen(true)
   }
   const clearNewFlag = useCallback(() => {
     router.replace(withoutNewFlag(), { scroll: false })
@@ -90,7 +95,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
       // at once by router.push is superseded by the push, which left the
       // flag in history behind the new page (measured on the harness).
       // Next syncs native replaceState with its router; the state is kept.
-      if (initialOpen) window.history.replaceState(window.history.state, '', withoutNewFlag())
+      if (flagged) window.history.replaceState(window.history.state, '', withoutNewFlag())
       router.push(`/gadfly/${data.sessionId}`)
     } catch (err) {
       console.error(err)
@@ -98,13 +103,13 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
     } finally {
       setLoading(false)
     }
-  }, [selectedDocId, title, mode, router, initialOpen])
+  }, [selectedDocId, title, mode, router, flagged])
 
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v)
     // Opened by ?new=1: take the flag off the address on close, so a reload
     // doesn't reopen it and the empty state's link opens it again next time.
-    if (!v && initialOpen) clearNewFlag()
+    if (!v && flagged) clearNewFlag()
     if (!v) {
       // Reset to empty (not initial values) after dialog is closed
       setSelectedDocId('')
@@ -112,7 +117,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
       setMode('socratic')
       setCreateError(null)
     }
-  }, [initialOpen, clearNewFlag])
+  }, [flagged, clearNewFlag])
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
