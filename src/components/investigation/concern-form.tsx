@@ -172,7 +172,7 @@ export function ConcernForm() {
       {/* Jurisdiction selector */}
       <div>
         <label htmlFor="concern-jurisdiction" className="mb-1.5 block text-xs font-medium text-text-muted">
-          Jurisdiction <span className="text-text-faint">(optional — helps with document discovery)</span>
+          Jurisdiction <span className="text-text-faint">(optional)</span>
         </label>
         {fetchingJurisdictions ? (
           <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
@@ -183,7 +183,7 @@ export function ConcernForm() {
               value={selectedJurisdictionId}
               onChange={(e) => setSelectedJurisdictionId(e.target.value)}
               aria-describedby="concern-jurisdiction-hint"
-              className="w-full appearance-none rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-secondary outline-none focus:border-border-strong focus:ring-0"
+              className="w-full appearance-none rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-border-strong focus:ring-0"
               disabled={loading}
             >
               <option value="">Any jurisdiction</option>
@@ -202,7 +202,7 @@ export function ConcernForm() {
           </div>
         )}
         <p id="concern-jurisdiction-hint" className="mt-1.5 text-xs text-text-muted">
-          Which government&apos;s rules apply — usually your province.
+          The city, district or province your concern is about. It helps find the right documents.
         </p>
       </div>
 
@@ -220,24 +220,32 @@ export function ConcernForm() {
             setPostalCode(clean.length > 3 ? `${clean.slice(0, 3)} ${clean.slice(3)}` : clean)
           }}
           placeholder="V8B 0A1"
-          className="w-full rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 text-sm text-text-secondary font-mono tracking-wider placeholder-text-faint outline-none focus:border-border-strong"
+          className="w-full rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 text-sm text-text-primary font-mono tracking-wider placeholder-text-faint outline-none focus:border-border-strong"
           disabled={loading}
           maxLength={7}
           autoComplete="postal-code"
         />
       </div>
 
-      {/* Actions */}
+      {/* Actions. Start keeps one box at rest, typed and busy, and Cancel
+          never lands inside it, so a second press 250 ms later can only hit
+          Start, whose busy guard refuses it (Jen C2). From md, Cancel sits left
+          of Start in its row; below md, where Start is full width, it comes
+          after Start on its own row (order-last), so Start never moves. */}
       <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
+        {/* The reason line has its own row under Start at every width: beside
+            Start it does not fit a narrow column (352px at 1024), wraps above,
+            and Start jumps on the first keystroke (Razor N2). */}
         {!concern.trim() && !loading && (
-          <p id="concern-submit-reason" className="text-xs text-text-muted">
+          <p id="concern-submit-reason" className="order-last basis-full text-right text-xs text-text-muted">
             Describe your concern to start.
           </p>
         )}
         {loading && (
           <button
+            type="button"
             onClick={handleCancel}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-text-muted transition-colors hover:text-text-secondary"
+            className="order-last inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-text-muted transition-colors hover:text-text-secondary md:order-none"
           >
             <X size={12} strokeWidth={2} />
             Cancel
@@ -250,18 +258,28 @@ export function ConcernForm() {
           busy={loading}
           describedBy="concern-submit-reason"
           size="md"
+          variant="primary"
+          className="w-full justify-center md:w-auto"
         >
-          {loading ? (
-            <>
-              <Loader2 size={14} strokeWidth={2} className="animate-spin" />
-              Starting…
-            </>
-          ) : (
-            <>
+          {/* Both labels share one grid cell; the one not showing is
+              invisible and out of the accessible name, so the button is as
+              wide as its wider label in every state. */}
+          <span className="grid">
+            <span
+              aria-hidden={loading ? 'true' : undefined}
+              className={clsx('col-start-1 row-start-1 inline-flex items-center justify-center gap-2', loading && 'invisible')}
+            >
               <Search size={14} strokeWidth={2} />
               Start Investigation
-            </>
-          )}
+            </span>
+            <span
+              aria-hidden={loading ? undefined : 'true'}
+              className={clsx('col-start-1 row-start-1 inline-flex items-center justify-center gap-2', !loading && 'invisible')}
+            >
+              <Loader2 size={14} strokeWidth={2} className={clsx(loading && 'animate-spin')} />
+              Starting…
+            </span>
+          </span>
         </CTAButton>
       </div>
     </div>

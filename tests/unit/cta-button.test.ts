@@ -294,7 +294,10 @@ describe('ConcernForm submit paths', () => {
     await shortcut(textarea, 'ctrlKey')
     const busy = screen.getByRole('button', { name: /Starting…/ })
     expect(busy.getAttribute('aria-busy')).toBe('true')
-    expect(busy.style.color).toBe('var(--text-primary)')
+    // The concern form's Start is the primary variant (UI plan C1): full ink
+    // is the inverted fill, never the recessed disabled style.
+    expect(busy.style.backgroundColor).toBe('var(--text-primary)')
+    expect(busy.style.color).toBe('var(--surface-0)')
     expect(document.getElementById('concern-submit-reason')).toBeNull()
   })
 
