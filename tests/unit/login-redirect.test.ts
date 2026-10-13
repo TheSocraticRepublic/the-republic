@@ -24,6 +24,10 @@ let assign: ReturnType<typeof vi.fn>
 let sendCodeCalls: number
 let verifyCalls: number
 let verifyResponse: { status: number; body: Record<string, unknown> }
+let sendResponse: { status: number; body: Record<string, unknown> }
+let sendBodies: Array<Record<string, unknown>>
+/** When set, fetch to this route rejects, as a browser does offline. */
+let offline: string | null
 let holdVerify: Promise<void> | null
 const realLocation = window.location
 
@@ -46,15 +50,20 @@ beforeEach(() => {
   sendCodeCalls = 0
   verifyCalls = 0
   verifyResponse = { status: 200, body: { success: true } }
+  sendResponse = { status: 200, body: { ok: true } }
+  sendBodies = []
+  offline = null
   holdVerify = null
   setLocation('')
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
       const respond = (body: Record<string, unknown>, status = 200) => ({ ok: status < 400, status, json: async () => body })
+      if (url === offline) throw new TypeError('Failed to fetch')
       if (url === '/api/auth/send-code' && init?.method === 'POST') {
         sendCodeCalls++
-        return respond({ success: true })
+        sendBodies.push(JSON.parse(String(init.body)))
+        return respond(sendResponse.body, sendResponse.status)
       }
       if (url === '/api/auth/verify-code' && init?.method === 'POST') {
         verifyCalls++
@@ -146,7 +155,17 @@ describe('login: Enter handler checks canSubmit (path 3)', () => {
     const email = await renderLogin()
     await enter(email)
     expect(sendCodeCalls).toBe(0)
-    expect((screen.getByRole('button', { name: 'Send code' }) as HTMLButtonElement).disabled).toBe(true)
+    const button = screen.getByRole('button', { name: 'Send code' }) as HTMLButtonElement
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    expect(button.disabled).toBe(false)
+  })
+
+  it('clicking the aria-disabled Send code dispatches nothing', async () => {
+    await renderLogin()
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send code' }))
+    })
+    expect(sendCodeCalls).toBe(0)
   })
 
   it('Enter with a whitespace-only email dispatches nothing', async () => {
@@ -185,7 +204,13 @@ describe('login: Enter handler checks canSubmit (path 3)', () => {
     fireEvent.change(code, { target: { value: '1234567' } })
     await enter(code)
     expect(verifyCalls).toBe(0)
-    expect((screen.getByRole('button', { name: 'Verify code' }) as HTMLButtonElement).disabled).toBe(true)
+    const button = screen.getByRole('button', { name: 'Verify code' }) as HTMLButtonElement
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    expect(button.disabled).toBe(false)
+    await act(async () => {
+      fireEvent.click(button)
+    })
+    expect(verifyCalls).toBe(0)
   })
 
   it('a second Enter while verify-code is in flight dispatches nothing', async () => {
@@ -272,15 +297,238 @@ describe('login: landmark, focus, error copy', () => {
     expect(screen.getByText('Code sent to qa-owner-a@example.test')).not.toBe(document.activeElement)
   })
 
-  it.each([
-    ['expired', 'This code has expired. Request a new one.'],
-    ['too_many_attempts', 'Too many attempts. Request a new code.'],
-    ['invalid', 'Invalid code. Try again.'],
-  ])('the %s error reads without "Please"', async (error, expected) => {
-    verifyResponse = { status: 401, body: { error } }
+  it('nothing on the page says "Please"', async () => {
+    verifyResponse = { status: 401, body: { error: 'invalid' } }
     await signIn()
-    const alert = screen.getByRole('alert')
-    expect(alert.textContent).toBe(expected)
-    expect(alert.textContent).not.toMatch(/please/i)
+    expect(document.body.textContent).toContain("That code didn't work.")
+    expect(document.body.textContent).not.toMatch(/please/i)
+  })
+})
+
+/* Jen C5: the copy table, exactly. Raw server or browser strings never reach the page. */
+const RAW_STRINGS = ['Failed to fetch', 'Internal server error', 'Invalid email address', 'Too many requests.', 'Too many codes requested']
+
+function expectAlert(expected: string) {
+  const alert = screen.getByRole('alert')
+  expect(alert.textContent).toBe(expected)
+  for (const raw of RAW_STRINGS.filter((r) => !expected.includes(r))) expect(alert.textContent).not.toContain(raw)
+}
+
+describe('login: error copy (Jen C5)', () => {
+  it.each([
+    [401, { error: 'invalid' }, "That code didn't work. Check the 8 digits, or send a new code."],
+    [401, { error: 'expired' }, "That code didn't work. Check the 8 digits, or send a new code."],
+    [401, { error: 'too_many_attempts' }, 'Too many wrong codes. Send a new code.'],
+    [429, { error: 'Too many requests' }, 'Too many tries from this connection. Wait a minute, then try again.'],
+    [500, { error: 'Internal server error' }, "Open Cave couldn't check that code. Try again."],
+    [400, { error: 'Email and code are required' }, "Open Cave couldn't check that code. Try again."],
+  ])('verify %i %j shows the table copy', async (status, body, expected) => {
+    verifyResponse = { status, body }
+    await signIn()
+    expectAlert(expected)
+    expect(assign).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [400, { error: 'Invalid email address' }, "That isn't a valid email address. Check it and try again."],
+    [429, { error: 'Too many codes requested. Try again later.' }, 'Too many codes for this email in the last hour. Try again in an hour.'],
+    [429, { error: 'Too many requests. Wait before requesting another code.' }, 'Too many requests. Wait a few minutes, then try again.'],
+    [500, { error: 'Internal server error' }, "Open Cave couldn't send a code. Try again."],
+  ])('send %i %j shows the table copy and stays on the email step', async (status, body, expected) => {
+    sendResponse = { status, body }
+    const email = await renderLogin()
+    fireEvent.change(email, { target: { value: 'qa-owner-a@example.test' } })
+    await enter(email)
+    expectAlert(expected)
+    expect(screen.getByLabelText('Email address')).toBeTruthy()
+  })
+
+  it('offline on send shows the connection copy, not "Failed to fetch"', async () => {
+    offline = '/api/auth/send-code'
+    const email = await renderLogin()
+    fireEvent.change(email, { target: { value: 'qa-owner-a@example.test' } })
+    await enter(email)
+    expectAlert("Open Cave can't be reached. Check your connection, then try again.")
+  })
+
+  it('offline on verify shows the connection copy, not "Failed to fetch"', async () => {
+    offline = '/api/auth/verify-code'
+    await signIn()
+    expectAlert("Open Cave can't be reached. Check your connection, then try again.")
+  })
+})
+
+describe('login: buttons keep focus through a failed submit (Jen C4)', () => {
+  it('a failed verify started from the button leaves focus on the button', async () => {
+    stubMatchMedia(false)
+    verifyResponse = { status: 401, body: { error: 'invalid' } }
+    const code = await toCodeStep()
+    fireEvent.change(code, { target: { value: '12345678' } })
+    const button = screen.getByRole('button', { name: 'Verify code' })
+    button.focus()
+    await act(async () => {
+      fireEvent.click(button)
+    })
+    expect(verifyCalls).toBe(1)
+    expect(screen.getByRole('alert')).toBeTruthy()
+    expect(document.activeElement).toBe(button)
+    expect(button.hasAttribute('disabled')).toBe(false)
+  })
+
+  it('a failed send started from the button leaves focus on the button', async () => {
+    sendResponse = { status: 500, body: {} }
+    const email = await renderLogin()
+    fireEvent.change(email, { target: { value: 'qa-owner-a@example.test' } })
+    const button = screen.getByRole('button', { name: 'Send code' })
+    button.focus()
+    await act(async () => {
+      fireEvent.click(button)
+    })
+    expect(sendCodeCalls).toBe(1)
+    expect(document.activeElement).toBe(button)
+  })
+
+  it('the busy button is aria-busy and aria-disabled, not natively disabled', async () => {
+    let release!: () => void
+    holdVerify = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    await signIn()
+    const button = screen.getByRole('button', { name: 'Verify code' })
+    expect(button.getAttribute('aria-busy')).toBe('true')
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    expect(button.hasAttribute('disabled')).toBe(false)
+    expect(button.className).not.toContain('opacity-40')
+    await act(async () => {
+      fireEvent.click(button)
+    })
+    expect(verifyCalls).toBe(1)
+    await act(async () => {
+      release()
+    })
+  })
+})
+
+describe('login: "Send a new code" (Jen C5)', () => {
+  it('resends to the same email, clears the code and the error, stays on the code step', async () => {
+    stubMatchMedia(false)
+    verifyResponse = { status: 401, body: { error: 'too_many_attempts' } }
+    const code = await signIn()
+    expect(screen.getByRole('alert').textContent).toBe('Too many wrong codes. Send a new code.')
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send a new code' }))
+    })
+    expect(sendCodeCalls).toBe(2)
+    expect(sendBodies[1]).toEqual({ email: 'qa-owner-a@example.test' })
+    expect((code as HTMLInputElement).value).toBe('')
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByLabelText('8-digit code')).toBe(code)
+    expect(document.activeElement).toBe(code)
+  })
+
+  it('on a coarse pointer a resend focuses the instruction line', async () => {
+    stubMatchMedia(true)
+    await toCodeStep()
+    ;(document.activeElement as HTMLElement).blur()
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send a new code' }))
+    })
+    expect(sendCodeCalls).toBe(2)
+    expect((document.activeElement as HTMLElement).textContent).toBe('Code sent to qa-owner-a@example.test')
+  })
+
+  it("a rate-limited resend shows the server's limit in the table copy", async () => {
+    await toCodeStep()
+    sendResponse = { status: 429, body: { error: 'Too many codes requested. Try again later.' } }
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send a new code' }))
+    })
+    expectAlert('Too many codes for this email in the last hour. Try again in an hour.')
+    expect(screen.getByLabelText('8-digit code')).toBeTruthy()
+  })
+
+  it('is ignored while a request is in flight', async () => {
+    let release!: () => void
+    holdVerify = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    await signIn()
+    const resend = screen.getByRole('button', { name: 'Send a new code' })
+    expect(resend.getAttribute('aria-disabled')).toBe('true')
+    await act(async () => {
+      fireEvent.click(resend)
+    })
+    expect(sendCodeCalls).toBe(1)
+    await act(async () => {
+      release()
+    })
+  })
+})
+
+describe('login: touch focus both ways, long address, pasted code (Jen C6, C7, C8)', () => {
+  async function backToEmail() {
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Use a different email' }))
+    })
+  }
+
+  it('coarse: "Use a different email" focuses the instruction line, never the body', async () => {
+    stubMatchMedia(true)
+    await toCodeStep()
+    await backToEmail()
+    const active = document.activeElement as HTMLElement
+    expect(active).not.toBe(document.body)
+    expect(active.textContent).toBe('Enter your email to continue')
+    expect(active.tabIndex).toBe(-1)
+    // The next element in the tab order after it is the email field.
+    const tabbables = Array.from(document.querySelectorAll<HTMLElement>('a[href], button, input'))
+    const following = tabbables.find((el) => active.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(following?.id).toBe('email')
+  })
+
+  it('fine: "Use a different email" focuses the email field', async () => {
+    stubMatchMedia(false)
+    await toCodeStep()
+    await backToEmail()
+    expect(document.activeElement).toBe(screen.getByLabelText('Email address'))
+  })
+
+  it('coarse: nothing is focused on first load', async () => {
+    stubMatchMedia(true)
+    await renderLogin()
+    expect(document.activeElement).toBe(document.body)
+  })
+
+  it('the instruction line wraps anywhere, so a long address cannot widen the page', async () => {
+    const long = 'margaret_fitzgerald_okonkwo_of_the_squamish_valley@example.test'
+    const email = await renderLogin()
+    fireEvent.change(email, { target: { value: long } })
+    await enter(email)
+    const line = screen.getByText(`Code sent to ${long}`)
+    expect(line.className).toContain('[overflow-wrap:anywhere]')
+  })
+
+  it.each([
+    [' 24681357', '24681357'],
+    ['2468 1357', '24681357'],
+    ['2468-1357', '24681357'],
+    ['24681357 ', '24681357'],
+    ['246813579', '24681357'],
+  ])('a pasted %j keeps every digit (%s)', async (pasted, expected) => {
+    const code = (await toCodeStep()) as HTMLInputElement
+    fireEvent.change(code, { target: { value: pasted } })
+    expect(code.value).toBe(expected)
+    expect(code.hasAttribute('maxlength')).toBe(false)
+  })
+
+  it('the code field offers one-time-code autofill and a numeric keyboard; the email field autofills', async () => {
+    const email = await renderLogin()
+    expect(email.getAttribute('autocomplete')).toBe('email')
+    const code = await (async () => {
+      cleanup()
+      return toCodeStep()
+    })()
+    expect(code.getAttribute('autocomplete')).toBe('one-time-code')
+    expect(code.getAttribute('inputmode')).toBe('numeric')
   })
 })

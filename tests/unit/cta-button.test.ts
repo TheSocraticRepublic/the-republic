@@ -33,14 +33,15 @@ import { ConcernForm } from '@/components/investigation/concern-form'
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
   push.mockReset()
 })
 
-function renderButton(disabled: boolean) {
+function renderButton(disabled: boolean, extra: { busy?: boolean; describedBy?: string; ref?: unknown } = {}) {
   const onClick = vi.fn()
   // children travel as createElement's third argument; the cast only satisfies
   // the props type, which declares children as required.
-  const props = { onClick, disabled } as unknown as ComponentProps<typeof CTAButton>
+  const props = { onClick, disabled, ...extra } as unknown as ComponentProps<typeof CTAButton>
   render(createElement(CTAButton, props, 'Start Investigation'))
   return { onClick, button: screen.getByRole('button', { name: 'Start Investigation' }) }
 }
@@ -110,13 +111,72 @@ describe('CTAButton enabled', () => {
   })
 })
 
+describe('CTAButton states (Jen C1, C2)', () => {
+  it('disabled: recessed fill and faint ink inline, no opacity class', () => {
+    const { button } = renderButton(true)
+    expect(button.style.backgroundColor).toBe('var(--surface-2)')
+    expect(button.style.color).toBe('var(--text-faint)')
+    expect(button.style.border).toBe('1px solid var(--border)')
+    expect(button.className).not.toMatch(/opacity-/)
+    expect(button.className).toContain('cursor-not-allowed')
+  })
+
+  it('enabled: the full-ink pill', () => {
+    const { button } = renderButton(false)
+    expect(button.style.backgroundColor).toBe('var(--surface-3)')
+    expect(button.style.color).toBe('var(--text-primary)')
+    expect(button.style.border).toBe('1px solid var(--border-strong)')
+  })
+
+  it('busy: full ink, aria-busy and aria-disabled, cursor-progress, and the click is refused', () => {
+    const { button, onClick } = renderButton(false, { busy: true })
+    expect(button.getAttribute('aria-busy')).toBe('true')
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    expect(button.style.color).toBe('var(--text-primary)')
+    expect(button.style.backgroundColor).toBe('var(--surface-3)')
+    expect(button.className).toContain('cursor-progress')
+    expect(button.className).not.toMatch(/opacity-/)
+    fireEvent.click(button)
+    keyboardActivate(button, 'Enter')
+    expect(onClick).not.toHaveBeenCalled()
+  })
+
+  it('busy wins over disabled: full ink, not the recessed style', () => {
+    const { button } = renderButton(true, { busy: true })
+    expect(button.style.color).toBe('var(--text-primary)')
+    expect(button.getAttribute('aria-busy')).toBe('true')
+  })
+
+  it('the label never wraps', () => {
+    const { button } = renderButton(false)
+    expect(button.className).toContain('whitespace-nowrap')
+  })
+
+  it('describedBy is rendered only while disabled (not enabled, not busy)', () => {
+    const disabled = renderButton(true, { describedBy: 'why' }).button
+    expect(disabled.getAttribute('aria-describedby')).toBe('why')
+    cleanup()
+    expect(renderButton(false, { describedBy: 'why' }).button.hasAttribute('aria-describedby')).toBe(false)
+    cleanup()
+    expect(renderButton(true, { describedBy: 'why', busy: true }).button.hasAttribute('aria-describedby')).toBe(false)
+  })
+
+  it('passes ref to the <button>', () => {
+    const ref = { current: null as HTMLButtonElement | null }
+    const { button } = renderButton(false, { ref })
+    expect(ref.current).toBe(button)
+  })
+})
+
 describe('ConcernForm submit paths', () => {
   let investigatePosts: number
   let releaseInvestigate: (() => void) | null
+  let failInvestigate: boolean
 
   beforeEach(() => {
     investigatePosts = 0
     releaseInvestigate = null
+    failInvestigate = false
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string, init?: RequestInit) => {
@@ -127,6 +187,7 @@ describe('ConcernForm submit paths', () => {
           await new Promise<void>((resolve) => {
             releaseInvestigate = resolve
           })
+          if (failInvestigate) return { ok: false, status: 500, json: async () => ({ error: 'held' }) }
           return { ok: true, status: 202, json: async () => ({ id: 'inv-1' }) }
         }
         throw new Error(`unexpected fetch ${url}`)
@@ -211,9 +272,57 @@ describe('ConcernForm submit paths', () => {
     })
     expect(investigatePosts).toBe(1)
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Starting investigation/ }))
+      fireEvent.click(screen.getByRole('button', { name: /Starting…/ }))
     })
     expect(investigatePosts).toBe(1)
+  })
+
+  it('the disabled button names what is missing: a visible reason line it is described by (Jen C2)', async () => {
+    const { submit, textarea } = await renderForm()
+    const reason = document.getElementById('concern-submit-reason')
+    expect(reason?.textContent).toBe('Describe your concern to start.')
+    expect(submit.getAttribute('aria-describedby')).toBe('concern-submit-reason')
+    fireEvent.change(textarea, { target: { value: 'A gravel mine expansion' } })
+    expect(document.getElementById('concern-submit-reason')).toBeNull()
+    expect(submit.hasAttribute('aria-describedby')).toBe(false)
+    expect(submit.hasAttribute('aria-disabled')).toBe(false)
+  })
+
+  it('busy: "Starting…" at full ink with aria-busy, and no reason line', async () => {
+    const { textarea } = await renderForm()
+    fireEvent.change(textarea, { target: { value: 'A gravel mine expansion' } })
+    await shortcut(textarea, 'ctrlKey')
+    const busy = screen.getByRole('button', { name: /Starting…/ })
+    expect(busy.getAttribute('aria-busy')).toBe('true')
+    expect(busy.style.color).toBe('var(--text-primary)')
+    expect(document.getElementById('concern-submit-reason')).toBeNull()
+  })
+
+  it.each(['metaKey', 'ctrlKey'] as const)(
+    'the %s+Enter shortcut moves focus to the Start button, and it stays there after an error (Jen C3)',
+    async (modifier) => {
+      failInvestigate = true
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      const { textarea, submit } = await renderForm()
+      fireEvent.change(textarea, { target: { value: 'A gravel mine expansion' } })
+      textarea.focus()
+      await shortcut(textarea, modifier)
+      expect(document.activeElement).toBe(submit)
+      expect(document.activeElement).not.toBe(document.body)
+      await act(async () => {
+        releaseInvestigate?.()
+      })
+      expect(screen.getByText('Something went wrong. Try again.')).toBeTruthy()
+      expect(document.activeElement).toBe(submit)
+      expect(submit.textContent).toContain('Start Investigation')
+    }
+  )
+
+  it('the shortcut with an empty concern leaves focus in the textarea', async () => {
+    const { textarea } = await renderForm()
+    textarea.focus()
+    await shortcut(textarea, 'ctrlKey')
+    expect(document.activeElement).toBe(textarea)
   })
 
   it('a plain Enter (no modifier) never submits', async () => {

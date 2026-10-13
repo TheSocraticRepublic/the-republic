@@ -27,6 +27,7 @@ export function ConcernForm() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const submitRef = useRef<HTMLButtonElement>(null)
 
   // Auto-focus the textarea on mount
   useEffect(() => {
@@ -115,6 +116,10 @@ export function ConcernForm() {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
         if (!canSubmit) return
+        // The textarea locks while loading, which would drop focus to the
+        // body; move it to the Start button first, which scrolls the busy
+        // state into view and keeps the place after an error (Jen C3).
+        submitRef.current?.focus()
         handleStartInvestigation()
       }
     },
@@ -211,7 +216,12 @@ export function ConcernForm() {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-3 pt-1">
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
+        {!concern.trim() && !loading && (
+          <p id="concern-submit-reason" className="text-xs text-text-muted">
+            Describe your concern to start.
+          </p>
+        )}
         {loading && (
           <button
             onClick={handleCancel}
@@ -221,11 +231,18 @@ export function ConcernForm() {
             Cancel
           </button>
         )}
-        <CTAButton onClick={handleStartInvestigation} disabled={!canSubmit} size="md">
+        <CTAButton
+          ref={submitRef}
+          onClick={handleStartInvestigation}
+          disabled={!concern.trim()}
+          busy={loading}
+          describedBy="concern-submit-reason"
+          size="md"
+        >
           {loading ? (
             <>
               <Loader2 size={14} strokeWidth={2} className="animate-spin" />
-              Starting investigation...
+              Starting…
             </>
           ) : (
             <>
