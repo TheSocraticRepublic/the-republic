@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderToString } from 'react-dom/server'
 
 /*
  * Form semantics (UI plan B3b), the three forms rendered for real. Only their
@@ -11,8 +12,9 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
  * Covered: the Votes postal helper as the input's description; the concern
  * form's shortcut hint, worded per platform, hidden on a coarse pointer and
  * referenced by the textarea only while shown; autofocus on a fine pointer
- * only; the Oracle upload zone as the file input's 44px <label>, reading
- * "Choose a PDF" on a coarse pointer.
+ * only; the Oracle upload zone as the file input's 44px <label>, its copy
+ * chosen by CSS pointer media, "Try again" outside the label; the server
+ * snapshots of input-modality and its unsubscribe.
  */
 
 const push = vi.fn()
@@ -21,6 +23,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 import { PostalCodeForm } from '@/components/votes/postal-code-form'
 import { ConcernForm } from '@/components/investigation/concern-form'
 import { UploadZone } from '@/components/oracle/upload-zone'
+import { useCoarsePointer, useModifierKeyLabel } from '@/lib/ui/input-modality'
 
 type ChangeListener = () => void
 let coarse: boolean
@@ -188,10 +191,14 @@ describe('concern form autofocus', () => {
 })
 
 describe('Oracle upload zone', () => {
-  const NAME = 'Upload a government PDF, 10 MB maximum'
+  const NAME = 'Choose a PDF, government documents only, 10 MB maximum'
 
   function fileInput() {
     return screen.getByLabelText(NAME) as HTMLInputElement
+  }
+
+  function classes(el: Element | null) {
+    return (el?.getAttribute('class') ?? '').split(/\s+/)
   }
 
   it('is the named file input\'s <label>, at least 44px tall (min-h-11)', () => {
@@ -203,28 +210,38 @@ describe('Oracle upload zone', () => {
     expect(zone).not.toBeNull()
     expect(zone.htmlFor).toBe('oracle-file')
     expect(Array.from(input.labels ?? [])).toContain(zone)
-    expect(zone.className.split(/\s+/)).toContain('min-h-11')
+    expect(classes(zone)).toContain('min-h-11')
     // The old inline "browse" button is gone: the zone is the one control.
     expect(screen.queryByRole('button')).toBeNull()
   })
 
-  it('reads "Drop a PDF here or browse" on a fine pointer', () => {
+  it('names the input with the coarse-pointer copy first (WCAG 2.5.3, label in name)', () => {
     render(<UploadZone />)
-    expect(screen.getByText(/Drop a PDF here or/)).toBeTruthy()
-    expect(screen.getByText('browse')).toBeTruthy()
-    expect(screen.queryByText('Choose a PDF')).toBeNull()
+    const input = fileInput()
+    expect(input.getAttribute('aria-label')?.startsWith('Choose a PDF')).toBe(true)
   })
 
-  it('reads "Choose a PDF" on a coarse pointer, without the drag copy', () => {
+  it('chooses its copy by CSS pointer media, so the server render is right on both pointers', () => {
+    // The pointer stub is coarse, and must not matter: the copy is not scripted.
     stubMatchMedia(true)
-    render(<UploadZone />)
-    expect(screen.getByText('Choose a PDF')).toBeTruthy()
-    expect(screen.queryByText(/Drop a PDF here/)).toBeNull()
-    expect(screen.getByText('Government documents only. Max 10MB.')).toBeTruthy()
+    const html = renderToString(<UploadZone />)
+    const host = document.createElement('div')
+    host.innerHTML = html
+    const fine = host.querySelector('[data-pointer-copy="fine"]')
+    const coarseCopy = host.querySelector('[data-pointer-copy="coarse"]')
+    expect(fine?.textContent).toMatch(/^Drop a PDF here or\s*browse$/)
+    expect(coarseCopy?.textContent).toBe('Choose a PDF')
+    // Fine copy hidden on a coarse pointer; coarse copy hidden unless coarse.
+    expect(classes(fine)).toContain('pointer-coarse:hidden')
+    expect(classes(fine)).not.toContain('hidden')
+    expect(classes(coarseCopy)).toContain('hidden')
+    expect(classes(coarseCopy)).toContain('pointer-coarse:block')
+    // Both copies sit inside the label, so a tap on either opens the picker.
+    expect(fine?.closest('label')?.getAttribute('for')).toBe('oracle-file')
+    expect(coarseCopy?.closest('label')?.getAttribute('for')).toBe('oracle-file')
   })
 
   it('a tap anywhere on the zone reaches the file input', () => {
-    stubMatchMedia(true)
     render(<UploadZone />)
     let opened = 0
     fileInput().addEventListener('click', () => opened++)
@@ -234,20 +251,82 @@ describe('Oracle upload zone', () => {
     expect(opened).toBe(2)
   })
 
-  it('a file chosen through the zone uploads; after a refused file, "Try again" resets without opening the picker', async () => {
+  it('"Try again" sits beside the label, never inside it, and returns focus to the input', () => {
     render(<UploadZone />)
     const input = fileInput()
     let opened = 0
     input.addEventListener('click', () => opened++)
-
     fireEvent.change(input, { target: { files: [new File(['x'], 'notes.txt', { type: 'text/plain' })] } })
     expect(screen.getByText('Only PDF files are accepted.')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    const button = screen.getByRole('button', { name: 'Try again' })
+    const label = input.closest('label') as HTMLLabelElement
+    // Not a descendant of the label (an engine that checks the click target
+    // after React unmounts it would forward the click to the input) ...
+    expect(label.contains(button)).toBe(false)
+    expect(button.closest('label')).toBeNull()
+    // ... but still in the zone's box, beside the label.
+    expect(label.parentElement?.contains(button)).toBe(true)
+
+    fireEvent.click(button)
     expect(opened).toBe(0)
     expect(screen.getByText(/Drop a PDF here or/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+    expect(document.activeElement).toBe(input)
+  })
 
-    fireEvent.change(input, { target: { files: [new File(['%PDF'], 'bylaw.pdf', { type: 'application/pdf' })] } })
+  it('clears the input after reading a file, so the same file can be chosen again', () => {
+    render(<UploadZone />)
+    const input = fileInput()
+    const written: string[] = []
+    Object.defineProperty(input, 'value', {
+      configurable: true,
+      get: () => '',
+      set: (v: string) => {
+        written.push(v)
+      },
+    })
+    fireEvent.change(input, { target: { files: [new File(['x'], 'notes.txt', { type: 'text/plain' })] } })
+    expect(screen.getByText('Only PDF files are accepted.')).toBeTruthy()
+    expect(written).toEqual([''])
+  })
+
+  it('a file chosen through the zone uploads', async () => {
+    render(<UploadZone />)
+    fireEvent.change(fileInput(), { target: { files: [new File(['%PDF'], 'bylaw.pdf', { type: 'application/pdf' })] } })
     await waitFor(() => expect(push).toHaveBeenCalledWith('/oracle/doc-1'))
     expect(ingestCalls).toBe(1)
+  })
+})
+
+describe('input-modality on the server and on unmount', () => {
+  function Probe() {
+    const coarsePointer = useCoarsePointer()
+    const key = useModifierKeyLabel()
+    return <span data-probe="">{`${coarsePointer}|${key}`}</span>
+  }
+
+  it('server snapshots: a fine pointer and no platform, whatever the browser would say', () => {
+    stubMatchMedia(true)
+    setPlatform('MacIntel')
+    expect(renderToString(<Probe />)).toContain('false|null')
+    // The client reads the real values (the positive sibling).
+    render(<Probe />)
+    expect(screen.getByText('true|Cmd')).toBeTruthy()
+  })
+
+  it('the concern form server-renders no shortcut hint and no description reference', () => {
+    setPlatform('MacIntel')
+    const html = renderToString(<ConcernForm />)
+    expect(html).toContain('aria-label="Describe your concern"')
+    expect(html).not.toContain('+Enter to start')
+    expect(html).not.toContain('concern-hint')
+  })
+
+  it('stops listening for pointer changes on unmount', () => {
+    const { unmount } = render(<Probe />)
+    expect(pointerListeners.size).toBeGreaterThan(0)
+    unmount()
+    expect(pointerListeners.size).toBe(0)
   })
 })

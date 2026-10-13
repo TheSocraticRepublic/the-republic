@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, FileText, Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
-import { useCoarsePointer } from '@/lib/ui/input-modality'
 
 type UploadState = 'idle' | 'dragging' | 'uploading' | 'error'
 
@@ -13,9 +12,7 @@ export function UploadZone() {
   const [progress, setProgress] = useState('')
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  // A phone cannot drag a file, so on a coarse pointer the zone says what a
-  // tap does instead (mobile P1-4).
-  const coarsePointer = useCoarsePointer()
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const handleUpload = useCallback(async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -69,28 +66,41 @@ export function UploadZone() {
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
+      // Clear the input once the file is read, so choosing the same file
+      // again (after a refusal or a failed upload) fires change again.
+      e.target.value = ''
       if (file) handleUpload(file)
     },
     [handleUpload]
   )
 
   const isUploading = state === 'uploading'
+  const isError = state === 'error'
 
-  // The whole zone is the file input's <label>: a tap or click anywhere on it
-  // opens the file picker, and it is never shorter than a 44px touch target
-  // (mobile P1-4). The input inside stays the one tab stop, named for screen
-  // readers (app-arms P2-11); its focus ring is drawn on the zone, in the
-  // app's one focus-ring recipe (2px, offset 2px, --focus-ring).
+  /*
+   * The zone's box holds two things: the file input's <label>, which fills it
+   * (a tap or click anywhere on it opens the picker, never shorter than a
+   * 44px target, mobile P1-4), and, in the error state only, "Try again".
+   * The button is a sibling of the label, never inside it: a label forwards a
+   * click to its input unless the click landed on interactive content inside
+   * it, and React unmounts the button before older engines (WebKit, Chromium
+   * before M145) make that check, so a button inside opened the picker.
+   *
+   * The input is the zone's one tab stop; its focus ring is drawn on the box
+   * in the app's focus-ring recipe (2px, offset 2px, --focus-ring). Its name
+   * starts with the coarse-pointer copy, "Choose a PDF" (WCAG 2.5.3).
+   *
+   * The copy is chosen by CSS (`pointer-coarse:`), not script, so the server
+   * render is already right on a phone: no "Drop a PDF here" until hydration.
+   */
   return (
-    <label
-      htmlFor="oracle-file"
+    <div
       className={clsx(
-        'group relative flex min-h-11 flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-all duration-150',
-        isUploading ? 'cursor-default' : 'cursor-pointer',
+        'group relative flex flex-col items-center rounded-xl border-2 border-dashed transition-all duration-150',
         'has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-[color:var(--focus-ring)]',
         state === 'dragging'
           ? 'border-[var(--accent-oracle)]/60 bg-[var(--accent-oracle)]/[0.06]'
-          : state === 'error'
+          : isError
           ? 'border-status-danger/40 bg-status-danger/[0.04]'
           : 'border-border bg-surface-1 hover:border-border-strong hover:bg-surface-3'
       )}
@@ -103,69 +113,87 @@ export function UploadZone() {
       }}
       onDrop={handleDrop}
     >
-      {/* Icon */}
-      <span
-        className="flex h-12 w-12 items-center justify-center rounded-xl border"
-        style={{
-          borderColor: 'color-mix(in srgb, var(--accent-oracle) 25%, transparent)',
-          backgroundColor: 'color-mix(in srgb, var(--accent-oracle) 8%, transparent)',
-        }}
-      >
-        {isUploading ? (
-          <Loader2 size={22} strokeWidth={1.75} style={{ color: 'var(--accent-oracle)' }} className="animate-spin" />
-        ) : state === 'error' ? (
-          <FileText size={22} strokeWidth={1.75} className="text-status-danger" />
-        ) : (
-          <Upload size={22} strokeWidth={1.75} style={{ color: 'var(--accent-oracle)' }} />
+      <label
+        htmlFor="oracle-file"
+        className={clsx(
+          'flex min-h-11 w-full flex-col items-center justify-center gap-4 px-10 pt-10',
+          isError ? 'pb-2' : 'pb-10',
+          isUploading ? 'cursor-default' : 'cursor-pointer'
         )}
-      </span>
+      >
+        {/* Icon */}
+        <span
+          className="flex h-12 w-12 items-center justify-center rounded-xl border"
+          style={{
+            borderColor: 'color-mix(in srgb, var(--accent-oracle) 25%, transparent)',
+            backgroundColor: 'color-mix(in srgb, var(--accent-oracle) 8%, transparent)',
+          }}
+        >
+          {isUploading ? (
+            <Loader2 size={22} strokeWidth={1.75} style={{ color: 'var(--accent-oracle)' }} className="animate-spin" />
+          ) : isError ? (
+            <FileText size={22} strokeWidth={1.75} className="text-status-danger" />
+          ) : (
+            <Upload size={22} strokeWidth={1.75} style={{ color: 'var(--accent-oracle)' }} />
+          )}
+        </span>
 
-      {/* Text */}
-      <div className="text-center">
-        {isUploading ? (
-          <p className="text-sm text-text-secondary">{progress}</p>
-        ) : state === 'error' ? (
-          <>
-            <p className="text-sm font-medium text-status-danger">{error}</p>
-            <button
-              type="button"
-              className="mt-2 text-xs text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
-              onClick={() => {
-                setState('idle')
-                setError(null)
-              }}
-            >
-              Try again
-            </button>
-          </>
-        ) : (
-          <>
-            {coarsePointer ? (
-              <p className="text-sm font-medium" style={{ color: 'var(--accent-oracle)' }}>
-                Choose a PDF
-              </p>
-            ) : (
-              <p className="text-sm font-medium text-text-primary">
+        {/* Text (spans: a label holds phrasing content only) */}
+        <span className="block text-center">
+          {isUploading ? (
+            <span className="block text-sm text-text-secondary">{progress}</span>
+          ) : isError ? (
+            <span className="block text-sm font-medium text-status-danger">{error}</span>
+          ) : (
+            <>
+              <span
+                data-pointer-copy="fine"
+                className="block text-sm font-medium text-text-primary pointer-coarse:hidden"
+              >
                 Drop a PDF here or{' '}
                 <span className="underline-offset-2 group-hover:underline" style={{ color: 'var(--accent-oracle)' }}>
                   browse
                 </span>
-              </p>
-            )}
-            <p className="mt-1 text-xs text-text-muted">Government documents only. Max 10MB.</p>
-          </>
-        )}
-      </div>
+              </span>
+              <span
+                data-pointer-copy="coarse"
+                className="hidden text-sm font-medium pointer-coarse:block"
+                style={{ color: 'var(--accent-oracle)' }}
+              >
+                Choose a PDF
+              </span>
+              <span className="mt-1 block text-xs text-text-muted">Government documents only. Max 10MB.</span>
+            </>
+          )}
+        </span>
 
-      <input
-        id="oracle-file"
-        type="file"
-        aria-label="Upload a government PDF, 10 MB maximum"
-        accept=".pdf"
-        className="sr-only"
-        onChange={handleChange}
-        disabled={isUploading}
-      />
-    </label>
+        <input
+          ref={inputRef}
+          id="oracle-file"
+          type="file"
+          aria-label="Choose a PDF, government documents only, 10 MB maximum"
+          accept=".pdf"
+          className="sr-only"
+          onChange={handleChange}
+          disabled={isUploading}
+        />
+      </label>
+
+      {isError && (
+        <button
+          type="button"
+          className="mb-10 text-xs text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
+          onClick={() => {
+            setState('idle')
+            setError(null)
+            // The button unmounts with the error state; keep the place on the
+            // zone's input rather than dropping focus to the body.
+            inputRef.current?.focus()
+          }}
+        >
+          Try again
+        </button>
+      )}
+    </div>
   )
 }
