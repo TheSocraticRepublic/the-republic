@@ -229,13 +229,15 @@ export function ConcernForm() {
 
       {/* Actions. Start keeps one box at rest, typed and busy, and Cancel
           never lands inside it, so a second press 250 ms later can only hit
-          Start, whose busy guard refuses it (Jen C2). From md, Cancel and the
-          reason sit left of Start in its row; below md, where Start is full
-          width, they come after it on their own row (order-last), so Start
-          never moves. */}
+          Start, whose busy guard refuses it (Jen C2). From md, Cancel sits left
+          of Start in its row; below md, where Start is full width, it comes
+          after Start on its own row (order-last), so Start never moves. */}
       <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
+        {/* The reason line has its own row under Start at every width: beside
+            Start it does not fit a narrow column (352px at 1024), wraps above,
+            and Start jumps on the first keystroke (Razor N2). */}
         {!concern.trim() && !loading && (
-          <p id="concern-submit-reason" className="order-last text-xs text-text-muted md:order-none">
+          <p id="concern-submit-reason" className="order-last basis-full text-right text-xs text-text-muted">
             Describe your concern to start.
           </p>
         )}

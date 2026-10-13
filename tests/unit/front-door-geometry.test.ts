@@ -13,7 +13,7 @@ import { interceptSendCode } from '../../scripts/qa/browser'
  * layout, so these floors can only be held here:
  *   - Start keeps one box at rest, typed and busy, Cancel never intersects
  *     it, and a second press 250 ms after Start never cancels, at 375, 768
- *     and 1440 (C2);
+ *     1024 and 1440 (C2; 1024 is the narrowest two-column form, Razor N2);
  *   - at 768 with activity, the form is not squeezed into a half column (C3);
  *   - Scout's field keeps its width at rest, typed and busy, and its button
  *     paints no opacity (C1);
@@ -68,6 +68,9 @@ type Viewport = { name: string; width: number; height: number; touch: boolean }
 const PHONE: Viewport = { name: '375 coarse', width: 375, height: 667, touch: true }
 const TABLET: Viewport = { name: '768', width: 768, height: 1024, touch: false }
 const DESKTOP: Viewport = { name: '1440', width: 1440, height: 900, touch: false }
+/** The narrowest two-column form: lg:grid-cols-2 splits 752px into 352px
+ *  columns, where the reason line cannot sit beside Start (Razor N2). */
+const NARROW_DESKTOP: Viewport = { name: '1024', width: 1024, height: 768, touch: false }
 
 function intersects(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
@@ -149,7 +152,7 @@ describe.skipIf(!APP_UP)('front door geometry on the harness (Chromium)', () => 
     else await page.mouse.click(x, y)
   }
 
-  for (const vp of [PHONE, TABLET, DESKTOP]) {
+  for (const vp of [PHONE, TABLET, NARROW_DESKTOP, DESKTOP]) {
     it(`${vp.name}: Start keeps one box at rest, typed and busy, and Cancel never intersects it`, async () => {
       const { context, page } = await open(vp, '/investigate')
       let posts = 0

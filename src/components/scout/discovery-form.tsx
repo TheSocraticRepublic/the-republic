@@ -41,8 +41,14 @@ const LOGIN_FOR_SCOUT = '/login?redirect=%2Fscout'
  * that instant as `reset` and the page names it in the reader's own time.
  */
 export const SCOUT_COPY = {
-  rateLimited: 'Too many searches in the last minute. Wait a minute, then search again.',
-  dailyLimit: (time: string) => `You've reached the daily limit on AI requests. It resets at ${time}.`,
+  // Promises no wait: the per-minute limiter runs first, so once the daily
+  // limit is spent a quick retry lands here too, and a Redis outage fails
+  // closed here (Razor N1). "A minute" would be false in both.
+  rateLimited: 'Too many searches for now. Search again later.',
+  // One full stop, whatever the locale's time ends with: en-CA writes
+  // "5:00 p.m." (Razor RW3).
+  dailyLimit: (time: string) =>
+    `You've reached the daily limit on AI requests. It resets at ${time}${time.endsWith('.') ? '' : '.'}`,
   unavailable: "Scout can't search right now. Search again later.",
   failed: "Scout couldn't finish that search. Search again.",
   unreadable: "Scout couldn't read that search. Search again.",
@@ -53,14 +59,21 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 /** The message for a non-OK, non-401 answer. `body` is the parsed JSON body,
  *  or null when it was not JSON. */
-export function scoutErrorMessage(status: number, body: unknown, now: number = Date.now()): string {
+export function scoutErrorMessage(
+  status: number,
+  body: unknown,
+  now: number = Date.now(),
+  // The reader's locale (undefined); tests pass one explicitly.
+  locale?: string,
+  timeZone?: string
+): string {
   const data = (body && typeof body === 'object' ? body : {}) as { code?: unknown; reset?: unknown }
   if (status === 429 && data.code === 'daily_limit') {
     const reset = typeof data.reset === 'number' ? data.reset : NaN
     // A reset that is not in the next day is not a real window (the limiter
     // fails closed with reset = now when Redis is down): name no time.
     if (!(reset > now && reset <= now + DAY_MS)) return SCOUT_COPY.unavailable
-    const time = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(reset)
+    const time = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit', timeZone }).format(reset)
     return SCOUT_COPY.dailyLimit(time)
   }
   if (status === 429) return SCOUT_COPY.rateLimited

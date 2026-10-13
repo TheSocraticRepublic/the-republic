@@ -585,10 +585,14 @@ describe('Investigate Start keeps one box (Jen C2)', () => {
     expect(busy.hasAttribute('aria-hidden')).toBe(false)
   })
 
-  it('below md, Cancel and the reason line come after Start (order-last), beside it from md', async () => {
+  it('the reason line has its own row under Start at every width; Cancel comes after Start below md, beside it from md', async () => {
     const { textarea } = await renderInvestigate()
     const reason = document.getElementById('concern-submit-reason') as HTMLElement
-    expect(reason.className.split(/\s+/)).toEqual(expect.arrayContaining(['order-last', 'md:order-none']))
+    const reasonClasses = reason.className.split(/\s+/)
+    // Beside Start it wraps above it in a 352px column (1024) and Start jumps
+    // on the first keystroke (Razor N2): always its own row, after Start.
+    expect(reasonClasses).toEqual(expect.arrayContaining(['order-last', 'basis-full']))
+    expect(reasonClasses).not.toContain('md:order-none')
     fireEvent.change(textarea, { target: { value: 'A gravel mine expansion' } })
     // Hold the POST so the busy state (and Cancel) shows.
     vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
@@ -645,6 +649,22 @@ describe('Scout errors: plain copy by status, in the slot under the query (Jen C
     [403, { error: 'Forbidden' }, SCOUT_COPY.failed],
   ])('%i %j -> plain copy', (status, body, expected) => {
     expect(scoutErrorMessage(status, body, NOW)).toBe(expected)
+  })
+
+  it.each([
+    ['en-CA', 'It resets at 5:00 p.m.'],
+    ['en-US', 'It resets at 5:00 PM.'],
+    ['fr-CA', 'It resets at 17 h 00.'],
+  ])('%s: the sentence ends in exactly one full stop (Razor RW3)', (locale, ending) => {
+    const reset = Date.UTC(2026, 9, 13, 0, 0, 0)
+    const message = scoutErrorMessage(429, { code: 'daily_limit', reset }, NOW, locale, 'America/Vancouver')
+    expect(message).toBe(`You've reached the daily limit on AI requests. ${ending}`)
+    expect(message).not.toMatch(/\.\.$/)
+  })
+
+  it('the per-minute line promises no wait: a spent daily limit or a Redis outage also lands there (Razor N1)', () => {
+    expect(scoutErrorMessage(429, { code: 'rate_limited' }, NOW)).toBe('Too many searches for now. Search again later.')
+    expect(SCOUT_COPY.rateLimited).not.toMatch(/minute|second|hour/i)
   })
 
   it('the daily limit names its reset in the reader\'s own clock, never "tomorrow"', () => {
