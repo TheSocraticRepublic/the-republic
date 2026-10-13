@@ -79,14 +79,15 @@ export function UploadZone() {
   // The whole zone is the file input's <label>: a tap or click anywhere on it
   // opens the file picker, and it is never shorter than a 44px touch target
   // (mobile P1-4). The input inside stays the one tab stop, named for screen
-  // readers (app-arms P2-11); its focus ring is drawn on the zone.
+  // readers (app-arms P2-11); its focus ring is drawn on the zone, in the
+  // app's one focus-ring recipe (2px, offset 2px, --focus-ring).
   return (
     <label
       htmlFor="oracle-file"
       className={clsx(
         'group relative flex min-h-11 flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-all duration-150',
         isUploading ? 'cursor-default' : 'cursor-pointer',
-        'has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-[var(--accent-oracle)]',
+        'has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-[color:var(--focus-ring)]',
         state === 'dragging'
           ? 'border-[var(--accent-oracle)]/60 bg-[var(--accent-oracle)]/[0.06]'
           : state === 'error'
