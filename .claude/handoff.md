@@ -43,10 +43,10 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **A-series LIVE since 2026-10-12 17:48:49Z; Lee's look check owed.** Main `b9d9139` (PR #7, merge commit), Netlify deploy `6acd1d516cdac21aab7e88f4`; D_prev / rollback target `6acc1bbeb27b4900083c30a8` at `fa16447`. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-12-a-series.md`. Lee's standing authority for this release: restore D_prev without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route, or his look check), then `git revert -m 1 b9d9139` on main through a PR. The look-check steps are in `~/marvin/state/relay/republic-ui-a-series-release-card.md` ("After promotion"). PR #6 closed as superseded. Still open with Lee: the privacy contact address (S1's held wording returns with it; Razor S1b N1-N3 in the Parking Lot).
 
-- **Cold start for the next batch (B3a).**
-  1. Read the plan's "### B3a", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether B3a has UI (Jen, opus xhigh, after Razor).
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-b2-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-b3a`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-b3a --stage implement --batch 1 --step B3a`; `git worktree add -b relay/ui-b3a-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
+- **Cold start for the next batch (B3b).**
+  1. Read the plan's "### B3b", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether B3b has UI (Jen, opus xhigh, after Razor).
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-b3a-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-b3b`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-b3b --stage implement --batch 1 --step B3b`; `git worktree add -b relay/ui-b3b-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
   4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only.
   5. Harness runs: clear `.next/cache` first (a stale turbopack cache served old CSS in B1). Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
   6. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
@@ -83,6 +83,13 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 — B3a merged to the session branch (`7582fac`)
+
+- **What it does:** honest disabled controls on the four event paths (CTAButton click and Enter/Space, login Enter, concern-form Cmd/Ctrl+Enter), a readable disabled and busy CTAButton, login as `<main>` honouring `?redirect=`, plain error copy, "Send a new code", touch-aware focus, one-time-code autofill.
+- **Security:** `safeRedirectTarget` (live since the A-series) now refuses normalised `//` targets; Razor probed 70 inputs. The send-code route never deduplicates a locked-out code and reports a skipped send. No user path double-submits.
+- **Parked, live and predating B3a:** the magic-code hourly cap leaks (9 codes an hour measured, not 5), plus four smaller sign-in quirks; first in line for the next auth change.
+- **Next:** B3b. Lee owes the A-series look check and the Forum-posts question.
 
 ### 2026-10-12 — B2 merged to the session branch (`111c185`)
 
