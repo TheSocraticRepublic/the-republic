@@ -125,6 +125,8 @@ describe('Votes postal code form', () => {
     const input = screen.getByLabelText('Your postal code')
     expect(input.getAttribute('aria-describedby')).toBe('postal-code-helper')
     expect(description(input)).toBe("Sent to Open North's Represent service to find your riding.")
+    // Balanced wrapping, so "riding." is never alone on a line at 375.
+    expect(document.getElementById('postal-code-helper')?.className.split(/\s+/)).toContain('text-pretty')
   })
 })
 

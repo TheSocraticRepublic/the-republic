@@ -58,6 +58,8 @@ export function UploadZone() {
     setState('error')
   }, [])
 
+  // Every pick and drop comes through here; while one upload is in flight,
+  // another is refused (Jen C3).
   const handleUpload = useCallback(async (file: File) => {
     if (busyRef.current) return
     if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -112,7 +114,6 @@ export function UploadZone() {
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault()
-      if (busyRef.current) return
       const file = e.dataTransfer.files[0]
       if (file) handleUpload(file)
     },
@@ -125,7 +126,6 @@ export function UploadZone() {
       // Clear the input once the file is read, so choosing the same file
       // again (after a refusal or a failed upload) fires change again.
       e.target.value = ''
-      if (busyRef.current) return
       if (file) handleUpload(file)
     },
     [handleUpload]
