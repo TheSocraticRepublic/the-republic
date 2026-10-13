@@ -43,13 +43,15 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **A-series LIVE since 2026-10-12 17:48:49Z; Lee's look check owed.** Main `b9d9139` (PR #7, merge commit), Netlify deploy `6acd1d516cdac21aab7e88f4`; D_prev / rollback target `6acc1bbeb27b4900083c30a8` at `fa16447`. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-12-a-series.md`. Lee's standing authority for this release: restore D_prev without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route, or his look check), then `git revert -m 1 b9d9139` on main through a PR. The look-check steps are in `~/marvin/state/relay/republic-ui-a-series-release-card.md` ("After promotion"). PR #6 closed as superseded. Still open with Lee: the privacy contact address (S1's held wording returns with it; Razor S1b N1-N3 in the Parking Lot).
 
-- **Cold start for the next batch (C2a).**
-  1. Read the plan's "### C2a", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether C2a has UI (Jen, opus xhigh, after Razor).
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-c1-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-c2a`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-c2a --stage implement --batch 1 --step C2a`; `git worktree add -b relay/ui-c2a-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
+- **Cold start for the next batch (C2b).**
+  1. Read the plan's "### C2b", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether C2b has UI (Jen, opus xhigh, after Razor).
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-c2a-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-c2b`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-c2b --stage implement --batch 1 --step C2b`; `git worktree add -b relay/ui-c2b-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
   4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only.
   5. Harness runs: clear `.next/cache` first (a stale turbopack cache served old CSS in B1). Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
   6. Before merging, run the harness-only tests with `QA_REQUIRE_HARNESS=1` on a live harness (CI skips them). ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
+
+- **LIVE BUG, fix waiting on a release: every ready Oracle document page (`/oracle/[id]`) very likely errors on opencave.ca**, and so do Lever actions with a linked document. Since 555c402 (2026-03-30), server components passed lucide icon components to the client `CrossArmActions`. It is fixed on the session branch in C2a (`29c9c6b`, string icon keys), and Razor's app-wide sweep found no other site. Production logs keep only about 100 lines, so this is unconfirmed live; Lee can confirm by opening any analysed document. It ships with the next release Lee approves (B1-C2a, which also carries the Forum gate fix).
 
 ## Open questions awaiting Lee
 
@@ -75,6 +77,7 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | Rollback authority for the A-series release: may the session restore the current deploy (6acc1bbe at fa16447) without asking if a named post-release check fails (health or signed-out probe, a new server error on a touched route in the first 30 minutes, or your look check)? (resolved 2026-10-12) | Without it, a failed check leaves a broken release live while you are reached | 2026-10-12 (plan Decision 3) |
 | Which inbox should Open Cave's privacy and security contact name? (a) publish a monitored email on the TheSocraticRepublic GitHub profile; (b) name an address for the page directly. The S1 wording, reviewed and held, returns with your answer; SECURITY.md is fixed in the same change. | Live today, the privacy page sends requests to a public GitHub issue or the gated forum, with no warning against posting personal details, and SECURITY.md points at a profile email that doesn't exist | 2026-10-12 (S1, carried past the A-series release) |
 | Has anyone posted in the live Forum? Razor found that while the Forum is gated, a signed-in user who knows a thread's address can still read its title, post text and author id (live since before this work; the old 404 leaked the same in its page source). The fix is merged on the session branch. (a) If real posts exist: release the gate fix on its own as soon as it is ready, same checks and rollback as the A-series. (b) If the Forum is empty or holds only test posts: ship it with the next B-series release. | Decides whether a fix for a live content exposure waits for the B-series release; the session has no read path to production data to check | 2026-10-12 (Razor W1, relay republic-ui-b2) |
+| Release everything merged since the A-series (B1, B2, B3a, B3b, C1, C2a) to opencave.ca? It fixes two live problems: every analysed Oracle document page very likely shows an error today, and gated Forum threads are readable by URL to signed-in users. (a, recommended) release once you've done the A-series look check, with the same checks, compatibility run and standing rollback authority as the A-series; (b) release the two fixes alone first; (c) hold. | Two live faults are fixed only on the session branch; a release is everything merged since main, so it also carries the B-series and C1-C2a interface work | 2026-10-13 (C2a, Razor W1 relay republic-ui-b2) |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
 2026-07-16 hand-off). SEC-1, FORUM-1's cosmetic gate, Relay 1, Relay 2 and Relay 3 are all
@@ -83,6 +86,12 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-13 — C2a merged to the session branch (`29c9c6b`)
+
+- **What it does:** an intro in each arm's register (Jen's copy), empty-state actions including `?new=1` create dialogs, the arm tint filling the whole room on landings and seven subpages, Mirror's question first, and Scout's misleading "Recently found" removed.
+- **Found and fixed:** a live crash on every ready Oracle document page since 2026-03-30 (component props passed from server to client). Razor swept all 239 server components and found no other site.
+- **Next:** a D_prev compatibility run against the A-series deploy so the next release is ready, then C2b. Lee owes the A-series look check, the Forum-posts answer and the release call.
 
 ### 2026-10-12 — C1 merged to the session branch (`1de761f`)
 
