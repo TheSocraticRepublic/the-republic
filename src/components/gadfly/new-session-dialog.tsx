@@ -176,6 +176,13 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
                       className={fieldControlClass('select')}
                     >
                       <option value="">No document — open inquiry</option>
+                      {/* While the list loads, the chosen document (from
+                          Oracle) is its own selected option, so the select
+                          shows and announces what Begin will send (Razor C2b
+                          check W1). Its title when an earlier list knew it. */}
+                      {fetchingDocs && selectedDocId && !documents.some((d) => d.id === selectedDocId) && (
+                        <option value={selectedDocId}>Loading your document…</option>
+                      )}
                       {documents.map((doc) => (
                         <option key={doc.id} value={doc.id}>
                           {doc.title}

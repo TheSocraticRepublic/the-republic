@@ -128,8 +128,12 @@ const PILL_STYLE_UNAVAILABLE: CSSProperties = {
 /** Passed-through handlers that can activate a button: a wrapper (a Radix
  *  DropdownMenu or Select trigger) may open on pointerdown or keydown rather
  *  than click. While disabled or busy they are not called, the same as
- *  onClick (Razor C2b N1). Focus, blur and hover handlers pass untouched. */
+ *  onClick (Razor C2b N1). Enter and leave (pointer and mouse), focus and
+ *  blur are not activation and pass untouched, so a tooltip still opens on a
+ *  disabled button and still closes when it turns busy (Razor C2b check N2).
+ *  Key handlers stay guarded: keydown is how a menu trigger opens. */
 const ACTIVATION_HANDLER = /^on(Pointer|Mouse|Key|Touch|Click|Context|Aux)/
+const NOT_ACTIVATION = /^on(Pointer|Mouse)(Enter|Leave)(Capture)?$/
 
 function guardActivation(
   props: Record<string, unknown>,
@@ -138,7 +142,7 @@ function guardActivation(
   if (!refuse) return props
   const out: Record<string, unknown> = {}
   for (const [name, value] of Object.entries(props)) {
-    if (typeof value === 'function' && ACTIVATION_HANDLER.test(name)) {
+    if (typeof value === 'function' && ACTIVATION_HANDLER.test(name) && !NOT_ACTIVATION.test(name)) {
       // Swallowed, never preventDefault'd: Tab must still move focus off
       // the button, and a press must still focus it.
       out[name] = () => {}

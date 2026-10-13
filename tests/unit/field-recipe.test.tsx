@@ -432,6 +432,43 @@ describe('CTAButton pass-through and onUnavailable', () => {
     for (const h of Object.values(handlers)) expect(h).toHaveBeenCalledTimes(1)
   })
 
+  it('disabled or busy, enter, leave, focus and blur handlers still run (Razor C2b check N2)', () => {
+    const passing = {
+      onPointerEnter: vi.fn(),
+      onPointerLeave: vi.fn(),
+      onMouseEnter: vi.fn(),
+      onMouseLeave: vi.fn(),
+      onFocus: vi.fn(),
+      onBlur: vi.fn(),
+    }
+    const guarded = { onKeyDown: vi.fn(), onPointerDown: vi.fn() }
+    const { rerender } = render(
+      <CTAButton disabled {...passing} {...guarded}>
+        Go
+      </CTAButton>
+    )
+    const button = screen.getByRole('button', { name: 'Go' })
+    const fire = () => {
+      fireEvent.pointerEnter(button)
+      fireEvent.pointerLeave(button)
+      fireEvent.mouseEnter(button)
+      fireEvent.mouseLeave(button)
+      fireEvent.focus(button)
+      fireEvent.blur(button)
+      fireEvent.keyDown(button, { key: 'ArrowRight' })
+      fireEvent.pointerDown(button)
+    }
+    fire()
+    rerender(
+      <CTAButton busy {...passing} {...guarded}>
+        Go
+      </CTAButton>
+    )
+    fire()
+    for (const [name, h] of Object.entries(passing)) expect(h, name).toHaveBeenCalledTimes(2)
+    for (const h of Object.values(guarded)) expect(h).not.toHaveBeenCalled()
+  })
+
   it('onUnavailable runs on a disabled activation, never on an available or busy one', () => {
     const onClick = vi.fn()
     const onUnavailable = vi.fn()
@@ -520,6 +557,43 @@ describe('Gadfly’s create dialog', () => {
     expect(close.className).toContain('[@media(pointer:coarse)]:w-11')
     const armed = [...dialog.querySelectorAll('button')].filter((b) => b.style.color.includes('-ink)'))
     expect(armed.map((b) => b.textContent)).toEqual(['Begin Inquiry'])
+  })
+
+  it('opened from Oracle, the select shows and announces the chosen document while the list loads (Razor C2b check W1)', async () => {
+    let list!: (v: unknown) => void
+    installFetch({
+      'GET /api/oracle/documents': () =>
+        new Promise((r) => {
+          list = r
+        }),
+      'POST /api/gadfly/session': () => new Promise(() => {}),
+    })
+    render(<NewSessionDialog initialDocumentId="doc-7" />)
+    const select = (await screen.findByLabelText('Document (optional)')) as HTMLSelectElement
+    expect(select.getAttribute('aria-busy')).toBe('true')
+    expect(select.value).toBe('doc-7')
+    expect(select.selectedOptions[0].textContent).toBe('Loading your document…')
+    expect(document.activeElement).toBe(select)
+    // What the select shows is what Begin sends.
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Inquiry' }))
+    await waitFor(() => expect(posts('/api/gadfly/session')).toHaveLength(1))
+    expect(JSON.parse(String(posts('/api/gadfly/session')[0].init!.body)).documentId).toBe('doc-7')
+    await act(async () => {
+      list({ ok: true, status: 200, json: async () => ({ documents: [{ id: 'doc-7', title: 'Bylaw 12', status: 'ready' }] }) })
+    })
+    await waitFor(() => expect(select.hasAttribute('aria-busy')).toBe(false))
+    expect(select.value).toBe('doc-7')
+    expect(select.selectedOptions[0].textContent).toBe('Bylaw 12')
+    expect(screen.queryByText('Loading your document…')).toBeNull()
+  })
+
+  it('opened with no document, the loading select offers only "No document"', async () => {
+    installFetch({ 'GET /api/oracle/documents': () => new Promise(() => {}) })
+    render(<NewSessionDialog initialOpen />)
+    fireEvent.click(screen.getByRole('button', { name: 'New Inquiry' }))
+    const select = (await screen.findByLabelText('Document (optional)')) as HTMLSelectElement
+    await waitFor(() => expect(select.getAttribute('aria-busy')).toBe('true'))
+    expect([...select.options].map((o) => o.textContent)).toEqual(['No document — open inquiry'])
   })
 
   it('Begin Inquiry is the arm button: busy, it keeps focus and sends one create', async () => {
