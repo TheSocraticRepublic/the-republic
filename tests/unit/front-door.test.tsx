@@ -42,9 +42,16 @@ const JURISDICTIONS = [
 ]
 
 let scoutBodies: Array<Record<string, unknown>>
+/** How the stubbed discover answers: an empty finished stream (default), a
+ *  stream held open until `releaseDiscover` and then one chunk of text, or a
+ *  500 held the same way. */
+let discoverMode: 'empty' | 'held' | 'held-error'
+let releaseDiscover: (() => void) | null
 
 beforeEach(() => {
   scoutBodies = []
+  discoverMode = 'empty'
+  releaseDiscover = null
   push.mockReset()
   getDb.mockClear()
   vi.stubGlobal(
@@ -64,8 +71,27 @@ beforeEach(() => {
       }
       if (url === '/api/scout/discover' && init?.method === 'POST') {
         scoutBodies.push(JSON.parse(String(init.body)))
-        // An empty finished stream: the search ran and returned nothing.
-        return { ok: true, status: 200, body: new ReadableStream({ start: (c) => c.close() }) }
+        if (discoverMode === 'empty') {
+          // An empty finished stream: the search ran and returned nothing.
+          return { ok: true, status: 200, body: new ReadableStream({ start: (c) => c.close() }) }
+        }
+        await new Promise<void>((resolve) => {
+          releaseDiscover = resolve
+        })
+        if (discoverMode === 'held-error') {
+          return { ok: false, status: 500, json: async () => ({ error: 'Discovery failed. Try again.' }) }
+        }
+        const text = new TextEncoder().encode('## Council minutes\nFound one record.')
+        return {
+          ok: true,
+          status: 200,
+          body: new ReadableStream({
+            start: (c) => {
+              c.enqueue(text)
+              c.close()
+            },
+          }),
+        }
       }
       throw new Error(`unexpected fetch ${url}`)
     })
@@ -345,5 +371,134 @@ describe('Scout is search-shaped', () => {
       fireEvent.click(screen.getByRole('button', { name: /Scout/ }))
     })
     expect(scoutBodies).toEqual([{ concern: 'budget 2024' }])
+  })
+
+  async function enter(query: HTMLElement, init: Record<string, unknown> = {}) {
+    let notPrevented = true
+    await act(async () => {
+      notPrevented = fireEvent.keyDown(query, { key: 'Enter', ...init })
+    })
+    return notPrevented
+  }
+
+  // ─── submit guards (Razor W2) ──────────────────────────────────────────
+
+  it('a whitespace-only query: Enter searches nothing, and the button says it is unavailable', async () => {
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: '   ' } })
+    await enter(query)
+    const button = screen.getByRole('button', { name: /Scout/ })
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    await act(async () => {
+      fireEvent.click(button)
+    })
+    expect(scoutBodies).toEqual([])
+  })
+
+  it('the button is not natively disabled, so it keeps focus; it is enabled once there is a query', async () => {
+    const { query } = await renderScout()
+    const button = screen.getByRole('button', { name: /Scout/ }) as HTMLButtonElement
+    expect(button.disabled).toBe(false)
+    expect(button.getAttribute('type')).toBe('button')
+    fireEvent.change(query, { target: { value: 'budget' } })
+    expect(button.hasAttribute('aria-disabled')).toBe(false)
+  })
+
+  it('Enter while an IME is composing searches nothing', async () => {
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: '議事録' } })
+    await enter(query, { isComposing: true })
+    expect(scoutBodies).toEqual([])
+  })
+
+  it('Enter is consumed (default prevented) when it searches', async () => {
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    expect(await enter(query)).toBe(false)
+    expect(scoutBodies).toHaveLength(1)
+  })
+
+  it('a second Enter while a search is in flight searches nothing; the field is locked but never disabled', async () => {
+    discoverMode = 'held'
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    await enter(query)
+    expect(scoutBodies).toHaveLength(1)
+    expect(query.readOnly).toBe(true)
+    expect(query.getAttribute('aria-disabled')).toBe('true')
+    expect(query.disabled).toBe(false)
+    await enter(query)
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Scouting/ }))
+    })
+    expect(scoutBodies).toHaveLength(1)
+    await act(async () => {
+      releaseDiscover?.()
+    })
+    await waitFor(() => expect(query.readOnly).toBe(false))
+    expect(query.hasAttribute('aria-disabled')).toBe(false)
+  })
+
+  it('two Enters dispatched in the same task search once (Razor N1)', async () => {
+    discoverMode = 'held'
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    expect(scoutBodies).toHaveLength(1)
+  })
+
+  // ─── focus (Razor W1, Jen C3's lesson) ─────────────────────────────────
+
+  it('focus stays on the query across Enter and the results rendering', async () => {
+    discoverMode = 'held'
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    query.focus()
+    await enter(query)
+    expect(document.activeElement).toBe(query)
+    await act(async () => {
+      releaseDiscover?.()
+    })
+    await waitFor(() => expect(screen.getByText('Discovery results')).toBeTruthy())
+    expect(document.activeElement).toBe(query)
+    expect(document.activeElement).not.toBe(document.body)
+  })
+
+  it('focus stays on the query when the search fails', async () => {
+    discoverMode = 'held-error'
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    query.focus()
+    await enter(query)
+    expect(document.activeElement).toBe(query)
+    await act(async () => {
+      releaseDiscover?.()
+    })
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('Discovery failed. Try again.'))
+    expect(document.activeElement).toBe(query)
+  })
+
+  it('focus stays on the Scout button when it is clicked to search', async () => {
+    discoverMode = 'held'
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    const button = screen.getByRole('button', { name: /Scout/ })
+    button.focus()
+    await act(async () => {
+      fireEvent.click(button)
+    })
+    expect(document.activeElement).toBe(button)
+    expect(button.getAttribute('aria-busy')).toBe('true')
+    // jsdom has no focus fixup, so a natively disabled button would keep focus
+    // here; the attribute is what the browser would drop focus on.
+    expect((button as HTMLButtonElement).disabled).toBe(false)
+    await act(async () => {
+      releaseDiscover?.()
+    })
+    await waitFor(() => expect(screen.getByText('Discovery results')).toBeTruthy())
+    expect(document.activeElement).toBe(button)
   })
 })

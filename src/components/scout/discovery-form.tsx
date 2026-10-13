@@ -43,6 +43,9 @@ export function DiscoveryForm() {
   const jurisdictionId = useId()
   const policyAreaId = useId()
   const abortRef = useRef<AbortController | null>(null)
+  // In flight, read synchronously: two key events dispatched in one task both
+  // see `loading` false (it is render state), so the guard reads this ref.
+  const busyRef = useRef(false)
 
   // Fetch jurisdictions on mount (reuse Mirror's endpoint)
   useEffect(() => {
@@ -61,7 +64,8 @@ export function DiscoveryForm() {
   }, [])
 
   const handleDiscover = useCallback(async () => {
-    if (!query.trim() || loading) return
+    if (!query.trim() || busyRef.current) return
+    busyRef.current = true
 
     // Cancel any in-progress request
     if (abortRef.current) {
@@ -121,10 +125,11 @@ export function DiscoveryForm() {
         setErrorMessage('An unexpected error occurred. Try again.')
       }
     } finally {
+      busyRef.current = false
       setIsStreaming(false)
       setLoading(false)
     }
-  }, [query, selectedJurisdictionId, policyArea, loading])
+  }, [query, selectedJurisdictionId, policyArea])
 
   const handleCancel = useCallback(() => {
     if (abortRef.current) {
@@ -174,11 +179,22 @@ export function DiscoveryForm() {
                 // 189px); a longer example is cut mid-word on a phone.
                 placeholder="Rental bylaw minutes"
                 className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-3 text-base text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-scout)]/40"
-                disabled={loading}
+                // Locked while searching, but never natively disabled: a
+                // disabled field drops focus to the body, and Enter is pressed
+                // here (Jen C3's lesson on the concern form). readOnly keeps
+                // focus and the caret; aria-disabled says it is unavailable.
+                readOnly={loading}
+                aria-disabled={loading ? 'true' : undefined}
               />
               <button
-                onClick={handleDiscover}
-                disabled={!canSubmit}
+                type="button"
+                // aria-disabled, not disabled, so a focused button keeps focus
+                // through the search and after an error (the B3a pattern).
+                onClick={() => {
+                  if (canSubmit) handleDiscover()
+                }}
+                aria-disabled={canSubmit ? undefined : 'true'}
+                aria-busy={loading ? 'true' : undefined}
                 className={clsx(
                   'inline-flex shrink-0 items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-150',
                   canSubmit
