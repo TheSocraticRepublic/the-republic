@@ -288,7 +288,7 @@ describe('Scout is search-shaped', () => {
     const { query } = await renderScout()
     expect(query.tagName).toBe('INPUT')
     expect(query.type).toBe('search')
-    expect(query.placeholder).toBe('Council minutes on short-term rental bylaws, 2024')
+    expect(query.placeholder).toBe('Rental bylaw minutes')
     expect(document.querySelectorAll('textarea')).toHaveLength(0)
     const landmark = screen.getByRole('search', { name: 'Search public records' })
     expect(landmark.contains(query)).toBe(true)

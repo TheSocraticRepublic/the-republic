@@ -170,7 +170,9 @@ export function DiscoveryForm() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleQueryKeyDown}
-                placeholder="Council minutes on short-term rental bylaws, 2024"
+                // Short enough to show whole beside the button at 375 (156 of
+                // 189px); a longer example is cut mid-word on a phone.
+                placeholder="Rental bylaw minutes"
                 className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-3 text-base text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-scout)]/40"
                 disabled={loading}
               />
