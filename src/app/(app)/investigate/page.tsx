@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { ConcernForm } from '@/components/investigation/concern-form'
 import { formatRelativeTime } from '@/lib/format-relative-time'
 import { StatusPill } from '@/components/ui/status-pill'
+import { SECTION_LABEL_CLASS } from '@/components/ui/field'
 import {
   mergeRecentActivity,
   type ActivityItem,
@@ -147,7 +148,10 @@ export default async function InvestigatePage() {
   const hasActivity = activityItems.length > 0
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)]">
+    // min-h-full, not a viewport sum: the app shell's scroller is already the
+    // viewport less its header, so 100vh less a guessed 4rem scrolled a
+    // phantom strip with nothing below (mobile P2-12).
+    <div className="relative min-h-full">
       {/* Faint landscape backdrop */}
       <div
         className="pointer-events-none absolute inset-0 overflow-hidden"
@@ -205,12 +209,7 @@ export default async function InvestigatePage() {
               dashboard. Title / type / status / relative-time only. */}
           {hasActivity && (
             <div>
-              <h2
-                className="mb-6 text-sm font-semibold uppercase tracking-wider text-text-muted"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                Recent Activity
-              </h2>
+              <h2 className={`mb-6 ${SECTION_LABEL_CLASS}`}>Recent Activity</h2>
               <div className="space-y-3">
                 {activityItems.map((item) => {
                   const statusStyle = getActivityStatusStyle(item)

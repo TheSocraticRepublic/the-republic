@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { ChevronDown, GitCompare, Loader2 } from 'lucide-react'
-import { clsx } from 'clsx'
+import { CTAButton } from '@/components/ui/cta-button'
+import { Field, SECTION_LABEL_CLASS, fieldControlClass } from '@/components/ui/field'
 import { ComparisonView } from './comparison-view'
 
 interface Document {
@@ -126,53 +127,85 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
     }
   }, [description, selectedDocId, policyArea, loading])
 
-  const canSubmit = description.trim().length > 0 && !loading
+  const hasQuestion = description.trim().length > 0
 
   return (
     <div className="space-y-8">
       {/* Form */}
       <section>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
+        <h2 className={`mb-4 ${SECTION_LABEL_CLASS}`}>
           Comparison parameters
         </h2>
 
         <div className="space-y-4">
           {/* The question first, as Scout and Investigate do (app-arms P2-12, C2a) */}
-          <div>
-            <label htmlFor="compare-description" className="mb-1.5 block text-xs font-medium text-text-secondary">
-              What policy question do you want to compare?
-            </label>
-            <textarea
-              id="compare-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. How have other BC municipalities handled short-term rental bylaws? What did they actually do, and what happened?"
-              rows={4}
-              className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-mirror)]/40"
-              disabled={loading}
-            />
-          </div>
+          <Field id="compare-description" label="What policy question do you want to compare?">
+            {(control) => (
+              <textarea
+                {...control}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. How have other BC municipalities handled short-term rental bylaws? What did they actually do, and what happened?"
+                rows={4}
+                className={fieldControlClass('mirror', 'textarea')}
+                disabled={loading}
+              />
+            )}
+          </Field>
 
-          {/* Document selector */}
-          <div>
-            <label htmlFor="compare-document" className="mb-1.5 block text-xs font-medium text-text-secondary">
-              Linked document <span className="text-text-faint">(optional)</span>
-            </label>
-            {fetchingDocs ? (
-              <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
-            ) : (
+          {/* Document selector. A failed list is announced, but the select
+              is not invalid: the comparison runs without a document. */}
+          <Field id="compare-document" label="Linked document" optional>
+            {(control) => (
+              <>
+                {fetchingDocs ? (
+                  <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
+                ) : (
+                  <div className="relative">
+                    <select
+                      {...control}
+                      value={selectedDocId}
+                      onChange={(e) => setSelectedDocId(e.target.value)}
+                      className={fieldControlClass('mirror', 'select')}
+                      disabled={loading}
+                    >
+                      <option value="">No linked document</option>
+                      {documents.map((doc) => (
+                        <option key={doc.id} value={doc.id}>
+                          {doc.title}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={13}
+                      strokeWidth={2}
+                      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+                    />
+                  </div>
+                )}
+                {docsError && (
+                  <p role="alert" className="mt-1.5 text-xs text-status-danger">
+                    Couldn&apos;t load your documents. You can still compare without a linked document.
+                  </p>
+                )}
+              </>
+            )}
+          </Field>
+
+          {/* Policy area */}
+          <Field id="compare-policy-area" label="Policy area" optional>
+            {(control) => (
               <div className="relative">
                 <select
-                  id="compare-document"
-                  value={selectedDocId}
-                  onChange={(e) => setSelectedDocId(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-mirror)]/40 focus:ring-0"
+                  {...control}
+                  value={policyArea}
+                  onChange={(e) => setPolicyArea(e.target.value)}
+                  className={fieldControlClass('mirror', 'select')}
                   disabled={loading}
                 >
-                  <option value="">No linked document</option>
-                  {documents.map((doc) => (
-                    <option key={doc.id} value={doc.id}>
-                      {doc.title}
+                  {POLICY_AREAS.map((area) => (
+                    <option key={area.value} value={area.value}>
+                      {area.label}
                     </option>
                   ))}
                 </select>
@@ -183,39 +216,7 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
                 />
               </div>
             )}
-            {docsError && (
-              <p role="alert" className="mt-1.5 text-xs text-status-danger">
-                Couldn&apos;t load your documents. You can still compare without a linked document.
-              </p>
-            )}
-          </div>
-
-          {/* Policy area */}
-          <div>
-            <label htmlFor="compare-policy-area" className="mb-1.5 block text-xs font-medium text-text-secondary">
-              Policy area <span className="text-text-faint">(optional)</span>
-            </label>
-            <div className="relative">
-              <select
-                id="compare-policy-area"
-                value={policyArea}
-                onChange={(e) => setPolicyArea(e.target.value)}
-                className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-mirror)]/40 focus:ring-0"
-                disabled={loading}
-              >
-                {POLICY_AREAS.map((area) => (
-                  <option key={area.value} value={area.value}>
-                    {area.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={13}
-                strokeWidth={2}
-                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-              />
-            </div>
-          </div>
+          </Field>
 
           {submitError && (
             <p role="alert" className="text-xs text-status-danger">{submitError}</p>
@@ -223,33 +224,28 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
 
           {/* Submit */}
           <div className="flex justify-end">
-            <button
+            {/* The arm recipe on the Mirror room (an allowed ground). Empty,
+                it is aria-disabled and refuses; busy, it refuses a second
+                comparison and keeps focus. */}
+            <CTAButton
+              variant="arm"
+              arm="mirror"
               onClick={handleCompare}
-              disabled={!canSubmit}
-              className={clsx(
-                'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-150',
-                canSubmit
-                  ? 'opacity-100 hover:opacity-90'
-                  : 'cursor-not-allowed opacity-40'
-              )}
-              style={{
-                backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 15%, transparent)',
-                color: 'var(--accent-mirror)',
-                border: '1px solid color-mix(in srgb, var(--accent-mirror) 30%, transparent)',
-              }}
+              disabled={!hasQuestion}
+              busy={loading}
             >
               {loading ? (
                 <>
-                  <Loader2 size={14} strokeWidth={2} className="animate-spin" />
+                  <Loader2 size={14} strokeWidth={2} className="animate-spin" aria-hidden="true" />
                   Comparing...
                 </>
               ) : (
                 <>
-                  <GitCompare size={14} strokeWidth={2} />
+                  <GitCompare size={14} strokeWidth={2} aria-hidden="true" />
                   Compare
                 </>
               )}
-            </button>
+            </CTAButton>
           </div>
         </div>
       </section>
