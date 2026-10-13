@@ -93,6 +93,8 @@ function scrollParent(el: HTMLElement): HTMLElement {
 
 /** Space kept above the results heading when it is scrolled into view. */
 const RESULTS_TOP_GAP = 16
+/** How long the results are followed as they first lay out. */
+const RESULTS_FOLLOW_MS = 1000
 /** How much of the results must be visible for no scroll to be needed: the
  *  heading and its first line. */
 const RESULTS_FIRST_LINE = 64
@@ -123,6 +125,8 @@ export function DiscoveryForm() {
   const resultsRef = useRef<HTMLElement>(null)
   // The results are brought into view once per search, on the first chunk.
   const scrolledRef = useRef(false)
+  // Follows the results' first layout when the first scroll fell short.
+  const resultsObserverRef = useRef<ResizeObserver | null>(null)
 
   // Fetch jurisdictions on mount (reuse Mirror's endpoint)
   useEffect(() => {
@@ -230,16 +234,34 @@ export function DiscoveryForm() {
     if (!streamedText || !section || scrolledRef.current) return
     scrolledRef.current = true
     const container = scrollParent(section)
-    const box = container.getBoundingClientRect()
-    const top = section.getBoundingClientRect().top
-    if (top + RESULTS_FIRST_LINE <= box.bottom) return
     const reduce =
       typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    container.scrollTo({
-      top: container.scrollTop + (top - box.top) - RESULTS_TOP_GAP,
-      behavior: reduce ? 'auto' : 'smooth',
+    /** Scroll toward the results; true once the first line is in view. */
+    const bring = () => {
+      const box = container.getBoundingClientRect()
+      const top = section.getBoundingClientRect().top
+      if (top + RESULTS_FIRST_LINE <= box.bottom) return true
+      container.scrollTo({
+        top: container.scrollTop + (top - box.top) - RESULTS_TOP_GAP,
+        behavior: reduce ? 'auto' : 'smooth',
+      })
+      return false
+    }
+    if (bring() || typeof ResizeObserver === 'undefined') return
+    // The first chunk's text can lay out after this commit. Until it does,
+    // a page with nothing below the results is too short to scroll that far,
+    // and scrollTo clamps short (measured on the harness once C2a removed the
+    // list that used to sit below). Follow the section as it grows, briefly.
+    resultsObserverRef.current?.disconnect()
+    const observer = new ResizeObserver(() => {
+      if (bring()) observer.disconnect()
     })
+    observer.observe(section)
+    resultsObserverRef.current = observer
+    setTimeout(() => observer.disconnect(), RESULTS_FOLLOW_MS)
   }, [streamedText])
+
+  useEffect(() => () => resultsObserverRef.current?.disconnect(), [])
 
   const handleQueryKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
