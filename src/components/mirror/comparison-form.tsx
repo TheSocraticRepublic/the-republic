@@ -137,6 +137,22 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
         </h2>
 
         <div className="space-y-4">
+          {/* The question first, as Scout and Investigate do (app-arms P2-12, C2a) */}
+          <div>
+            <label htmlFor="compare-description" className="mb-1.5 block text-xs font-medium text-text-secondary">
+              What policy question do you want to compare?
+            </label>
+            <textarea
+              id="compare-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g. How have other BC municipalities handled short-term rental bylaws? What did they actually do, and what happened?"
+              rows={4}
+              className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-mirror)]/40"
+              disabled={loading}
+            />
+          </div>
+
           {/* Document selector */}
           <div>
             <label htmlFor="compare-document" className="mb-1.5 block text-xs font-medium text-text-secondary">
@@ -199,22 +215,6 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
                 className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
               />
             </div>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label htmlFor="compare-description" className="mb-1.5 block text-xs font-medium text-text-secondary">
-              What policy question do you want to compare?
-            </label>
-            <textarea
-              id="compare-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. How have other BC municipalities handled short-term rental bylaws? What did they actually do, and what happened?"
-              rows={4}
-              className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-mirror)]/40"
-              disabled={loading}
-            />
           </div>
 
           {submitError && (

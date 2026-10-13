@@ -57,6 +57,9 @@ interface NewActionDialogProps {
   initialSessionId?: string
   initialInvestigationId?: string
   initialActionType?: string
+  /** Open on arrival: the landing's empty state links to `/lever?new=1`
+   *  (app-arms P1-5), the same way a pre-filled cross-arm link opens it. */
+  initialOpen?: boolean
 }
 
 export function NewActionDialog({
@@ -64,6 +67,7 @@ export function NewActionDialog({
   initialSessionId,
   initialInvestigationId,
   initialActionType,
+  initialOpen,
 }: NewActionDialogProps = {}) {
   const oracleDocId = useId()
   const gadflyInquiryId = useId()
@@ -77,7 +81,7 @@ export function NewActionDialog({
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
   const createErrorRef = useRef<HTMLParagraphElement>(null)
 
-  const [open, setOpen] = useState(!!(initialDocumentId || initialSessionId || initialInvestigationId))
+  const [open, setOpen] = useState(!!(initialOpen || initialDocumentId || initialSessionId || initialInvestigationId))
   const [actionType, setActionType] = useState<ActionType>(
     (initialActionType as ActionType) || 'fippa_request'
   )

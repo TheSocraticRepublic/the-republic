@@ -15,11 +15,14 @@ interface Document {
 interface NewSessionDialogProps {
   initialDocumentId?: string
   initialTitle?: string
+  /** Open on arrival: the landing's empty state links to `/gadfly?new=1`
+   *  (app-arms P1-5), the same way a pre-filled cross-arm link opens it. */
+  initialOpen?: boolean
 }
 
-export function NewSessionDialog({ initialDocumentId, initialTitle }: NewSessionDialogProps = {}) {
-  // Auto-open when pre-filled from cross-arm navigation
-  const [open, setOpen] = useState(!!initialDocumentId)
+export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen }: NewSessionDialogProps = {}) {
+  // Auto-open when pre-filled from cross-arm navigation, or asked for by ?new=1
+  const [open, setOpen] = useState(!!(initialOpen || initialDocumentId))
   const [documents, setDocuments] = useState<Document[]>([])
   const [selectedDocId, setSelectedDocId] = useState(initialDocumentId ?? '')
   const [title, setTitle] = useState(initialTitle ?? '')
