@@ -94,7 +94,9 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
       // Synchronously, not through router.replace: a router.replace followed
       // at once by router.push is superseded by the push, which left the
       // flag in history behind the new page (measured on the harness).
-      // Next syncs native replaceState with its router; the state is kept.
+      // The router is not told of this native replaceState here; it learns
+      // the stripped address when the push below reads the current URL.
+      // Passing history.state through keeps the router's entry intact.
       if (flagged) window.history.replaceState(window.history.state, '', withoutNewFlag())
       router.push(`/gadfly/${data.sessionId}`)
     } catch (err) {

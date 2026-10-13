@@ -30,6 +30,7 @@ import { interceptSendCode } from '../../scripts/qa/browser'
 
 const APP_URL = 'http://127.0.0.1:3177'
 const REPO_ROOT = path.resolve(__dirname, '..', '..')
+const USER_A = 'a0000000-0000-4000-8000-00000000000a'
 const USER_B = 'b0000000-0000-4000-8000-00000000000b'
 
 function harnessState(): { jwtSecret: string } | null {
@@ -63,8 +64,24 @@ type Viewport = { name: string; width: number; height: number; touch: boolean }
 const VIEWPORTS: Viewport[] = [
   { name: '1440', width: 1440, height: 900, touch: false },
   { name: '375 coarse', width: 375, height: 667, touch: true },
+  { name: '768', width: 768, height: 1024, touch: false },
 ]
 const LANDINGS = ['/scout', '/oracle', '/gadfly', '/lever', '/mirror', '/votes']
+
+/**
+ * The arm subpages (Jen C2a C5), each reached the way a citizen reaches it:
+ * the first link of its kind on the page before. `/oracle/[id]` is not here:
+ * the seeded document's page errors on the harness before any room renders
+ * (digest 3702761282, routed separately; see the C2a report), so its wrapper
+ * is held by the structure test in arm-pages.test.tsx only.
+ */
+const SUBPAGES: { from: string; link: string }[] = [
+  { from: '/lever', link: 'a[href^="/lever/"]' },
+  { from: '/votes/mp', link: 'a[href^="/votes/mp/"]' },
+  { from: '/votes/recent', link: 'a[href^="/votes/vote/"]' },
+  { from: '/votes/recent', link: 'a[href^="/votes/bill/"]' },
+]
+const LISTS = ['/votes/mp', '/votes/recent']
 
 /** The room against the shell's scroll box, scrolled to the bottom so a room
  *  that stops short of the content shows it. Empty = the room is the page. */
@@ -90,6 +107,7 @@ async function roomProblems(page: Page): Promise<string[]> {
 describe.skipIf(!APP_UP)('arm rooms and ?new=1 dialogs on the harness (Chromium)', () => {
   let browser: Browser
   let token: string
+  let tokenA: string
 
   beforeAll(async () => {
     const { chromium } = await import('playwright')
@@ -100,13 +118,19 @@ describe.skipIf(!APP_UP)('arm rooms and ?new=1 dialogs on the harness (Chromium)
       .setIssuedAt()
       .setExpirationTime('1h')
       .sign(new TextEncoder().encode(STATE!.jwtSecret))
+    tokenA = await new SignJWT({ email: 'qa-owner-a@example.test' })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setSubject(USER_A)
+      .setIssuedAt()
+      .setExpirationTime('1h')
+      .sign(new TextEncoder().encode(STATE!.jwtSecret))
   }, 60_000)
 
   afterAll(async () => {
     await browser?.close()
   })
 
-  async function open(vp: Viewport, pathname: string): Promise<{ context: BrowserContext; page: Page }> {
+  async function open(vp: Viewport, pathname: string, as: 'a' | 'b' = 'b'): Promise<{ context: BrowserContext; page: Page }> {
     const context = await browser.newContext({
       viewport: { width: vp.width, height: vp.height },
       hasTouch: vp.touch,
@@ -114,7 +138,7 @@ describe.skipIf(!APP_UP)('arm rooms and ?new=1 dialogs on the harness (Chromium)
     })
     await interceptSendCode(context)
     await context.addCookies([
-      { name: 'republic_token', value: token, domain: '127.0.0.1', path: '/', httpOnly: true, secure: true, sameSite: 'Lax' },
+      { name: 'republic_token', value: as === 'a' ? tokenA : token, domain: '127.0.0.1', path: '/', httpOnly: true, secure: true, sameSite: 'Lax' },
     ])
     const page = await context.newPage()
     await page.goto(`${APP_URL}${pathname}`, { waitUntil: 'networkidle' })
@@ -134,6 +158,52 @@ describe.skipIf(!APP_UP)('arm rooms and ?new=1 dialogs on the harness (Chromium)
         await context.close()
       }
       expect(found).toEqual([])
+    }, 120_000)
+  }
+
+  for (const vp of VIEWPORTS) {
+    it(`${vp.name}: the room doesn't shrink one click in: every arm subpage fills the scroll box too (Jen C5)`, async () => {
+      const { context, page } = await open(vp, LISTS[0], 'a')
+      const found: string[] = []
+      const visited: string[] = []
+      try {
+        for (const route of LISTS) {
+          if (route !== LISTS[0]) await page.goto(`${APP_URL}${route}`, { waitUntil: 'networkidle' })
+          visited.push(route)
+          for (const p of await roomProblems(page)) found.push(`${route}: ${p}`)
+        }
+        for (const { from, link } of SUBPAGES) {
+          await page.goto(`${APP_URL}${from}`, { waitUntil: 'networkidle' })
+          const href = await page.locator(link).first().getAttribute('href')
+          expect(href, `${from} has a ${link}`).toBeTruthy()
+          await page.goto(`${APP_URL}${href}`, { waitUntil: 'networkidle' })
+          visited.push(href!)
+          for (const p of await roomProblems(page)) found.push(`${href}: ${p}`)
+        }
+      } finally {
+        await context.close()
+      }
+      expect(visited).toHaveLength(LISTS.length + SUBPAGES.length)
+      expect(found).toEqual([])
+    }, 180_000)
+  }
+
+  for (const vp of [VIEWPORTS[0], VIEWPORTS[1]]) {
+    it(`${vp.name}: the empty-state action is 14px, at least 24px tall, 44px on a coarse pointer (Jen C6)`, async () => {
+      const { context, page } = await open(vp, '/gadfly')
+      try {
+        const link = page.getByRole('link', { name: 'Begin your first inquiry' })
+        const m = await link.evaluate((el) => {
+          const b = el.getBoundingClientRect()
+          const msg = el.closest('div')!.querySelector('p')!
+          return { h: b.height, size: getComputedStyle(el).fontSize, msgSize: getComputedStyle(msg).fontSize }
+        })
+        expect(m.size).toBe('14px')
+        expect(parseFloat(m.size)).toBeGreaterThanOrEqual(parseFloat(m.msgSize))
+        expect(m.h).toBeGreaterThanOrEqual(vp.touch ? 44 : 24)
+      } finally {
+        await context.close()
+      }
     }, 120_000)
   }
 

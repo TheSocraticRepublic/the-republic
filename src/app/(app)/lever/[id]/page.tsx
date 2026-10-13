@@ -63,60 +63,62 @@ export default async function LeverActionPage({ params }: PageProps) {
 
   return (
     // 720px less the 24px gutters leaves the letter paper its 672px (A1).
-    <div data-arm="lever" className="mx-auto max-w-[720px] px-6 py-10">
-      {/* Back nav */}
-      <div className="mb-6 flex items-center gap-4">
-        <Link
-          href="/lever"
-          className="inline-flex items-center gap-1.5 text-xs text-text-muted transition-colors hover:text-text-secondary"
-        >
-          <ArrowLeft size={13} strokeWidth={2} />
-          All actions
-        </Link>
-        {action.investigationId && (
+    <div data-arm="lever">
+      <div className="mx-auto max-w-[720px] px-6 py-10">
+        {/* Back nav */}
+        <div className="mb-6 flex items-center gap-4">
           <Link
-            href={`/investigate/${action.investigationId}`}
+            href="/lever"
             className="inline-flex items-center gap-1.5 text-xs text-text-muted transition-colors hover:text-text-secondary"
           >
-            <ExternalLink size={11} strokeWidth={2} />
-            View investigation
+            <ArrowLeft size={13} strokeWidth={2} />
+            All actions
           </Link>
+          {action.investigationId && (
+            <Link
+              href={`/investigate/${action.investigationId}`}
+              className="inline-flex items-center gap-1.5 text-xs text-text-muted transition-colors hover:text-text-secondary"
+            >
+              <ExternalLink size={11} strokeWidth={2} />
+              View investigation
+            </Link>
+          )}
+        </div>
+
+        {/* Header */}
+        <ArmHeader arm="lever" title={action.title} subtitle={typeLabel} />
+
+        {/* Viewer */}
+        <ActionViewer
+          actionId={action.id}
+          initialContent={action.content ?? ''}
+          initialStatus={action.status}
+          actionType={action.actionType}
+          letterFormat={metadata.letterFormat}
+          recipientMetadata={recipientMetadata}
+          investigationProvince={investigationProvince}
+          notesRemovalConfirmedAt={metadata.notesRemovalConfirmedAt}
+        />
+
+        {/* Cross-arm navigation — only when this action is tied to a document */}
+        {action.documentId && (
+          <div className="mt-6 border-t border-border pt-6">
+            <p className="mb-3 text-3xs font-semibold uppercase text-text-faint">
+              Continue your inquiry
+            </p>
+            <CrossArmActions
+              actions={[
+                {
+                  label: 'Compare governments',
+                  href: `/mirror?documentId=${action.documentId}`,
+                  color: 'var(--accent-mirror)',
+                  icon: GitCompare,
+                },
+              ]}
+            />
+          </div>
         )}
       </div>
-
-      {/* Header */}
-      <ArmHeader arm="lever" title={action.title} subtitle={typeLabel} />
-
-      {/* Viewer */}
-      <ActionViewer
-        actionId={action.id}
-        initialContent={action.content ?? ''}
-        initialStatus={action.status}
-        actionType={action.actionType}
-        letterFormat={metadata.letterFormat}
-        recipientMetadata={recipientMetadata}
-        investigationProvince={investigationProvince}
-        notesRemovalConfirmedAt={metadata.notesRemovalConfirmedAt}
-      />
-
-      {/* Cross-arm navigation — only when this action is tied to a document */}
-      {action.documentId && (
-        <div className="mt-6 border-t border-border pt-6">
-          <p className="mb-3 text-3xs font-semibold uppercase text-text-faint">
-            Continue your inquiry
-          </p>
-          <CrossArmActions
-            actions={[
-              {
-                label: 'Compare governments',
-                href: `/mirror?documentId=${action.documentId}`,
-                color: 'var(--accent-mirror)',
-                icon: GitCompare,
-              },
-            ]}
-          />
-        </div>
-      )}
     </div>
   )
 }

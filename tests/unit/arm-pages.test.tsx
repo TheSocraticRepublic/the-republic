@@ -231,6 +231,12 @@ describe('empty-state actions go somewhere real', () => {
       expect(link.getAttribute('href')).toBe(href)
       // ?new=1 reopens this same page: replace, so dismissing leaves no dead Back step (Razor N2)
       expect(link.getAttribute('data-replace')).toBe(href.includes('?new=1') ? 'true' : 'false')
+      // never smaller than the message: 14px, a 24px hit area, 44px on coarse pointers (Jen C6);
+      // the harness geometry test measures the boxes
+      const classes = link.className.split(/\s+/)
+      expect(classes).toEqual(expect.arrayContaining(['text-sm', 'inline-flex', 'items-center', 'min-h-6', 'pointer-coarse:min-h-11']))
+      expect(classes).not.toContain('text-xs')
+      expect(link.parentElement!.className).not.toMatch(/text-xs/)
       const route = href.split('?')[0]
       expect(fs.existsSync(path.join(REPO, ROUTE_FILES[route]))).toBe(true)
     })
@@ -435,6 +441,27 @@ describe('the arm room is the page, not a column slab (app-arms P2-1)', () => {
       const column = room.firstElementChild as HTMLElement
       expect(column.className.split(/\s+/)).toEqual(expect.arrayContaining(['mx-auto', 'max-w-2xl', 'px-6', 'py-10']))
       expect(column.querySelector('h1')).not.toBeNull()
+    })
+  }
+})
+
+describe('the room holds one click in: every arm route wraps its column the same way (Jen C5)', () => {
+  // Source-level, because the subpages need their own data to render; the
+  // harness geometry test measures the rooms these wrappers paint.
+  const ROUTES = [
+    'scout', 'oracle', 'gadfly', 'lever', 'mirror', 'votes',
+    'lever/[id]', 'oracle/[id]', 'votes/mp', 'votes/recent', 'votes/mp/[mpId]', 'votes/bill/[billId]', 'votes/vote/[voteId]',
+  ]
+  for (const route of ROUTES) {
+    it(`${route}: data-arm sits alone on the outer wrapper, the column inside it`, () => {
+      const src = fs.readFileSync(path.join(REPO, 'src/app/(app)', route, 'page.tsx'), 'utf8')
+      const rooms = [...src.matchAll(/<div data-arm="(\w+)"([^>]*)>/g)]
+      expect(rooms).toHaveLength(1)
+      const [whole, arm, rest] = rooms[0]
+      expect(arm).toBe(route.split('/')[0])
+      expect(rest).toBe('')
+      const after = src.slice(src.indexOf(whole) + whole.length)
+      expect(after).toMatch(/^\s*<div className="mx-auto max-w-[^"]*px-6 py-10[^"]*">/)
     })
   }
 })

@@ -32,102 +32,104 @@ export default function RecentVotesPage() {
   }, [page])
 
   return (
-    <div data-arm="votes" className="mx-auto max-w-2xl px-6 py-10">
-      <div className="mb-8">
-        <h1
-          className="mb-2 text-xl font-bold tracking-tight text-text-primary"
-        >
-          Recent Votes
-        </h1>
-        <p className="text-xs text-text-muted">
-          Recorded divisions in the House of Commons
-        </p>
-      </div>
-
-      {loading ? (
-        <div className="space-y-3">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="h-16 rounded-xl animate-pulse"
-              style={{ backgroundColor: 'var(--surface-1)' }}
-            />
-          ))}
-        </div>
-      ) : votes.length === 0 ? (
-        <div
-          className="rounded-xl border px-6 py-10 text-center"
-          style={{
-            borderColor: 'var(--border)',
-            backgroundColor: 'var(--surface-1)',
-          }}
-        >
-          <p className="text-sm text-text-muted">
-            No vote data yet. This deployment hasn’t synced with Parliament.
+    <div data-arm="votes">
+      <div className="mx-auto max-w-2xl px-6 py-10">
+        <div className="mb-8">
+          <h1
+            className="mb-2 text-xl font-bold tracking-tight text-text-primary"
+          >
+            Recent Votes
+          </h1>
+          <p className="text-xs text-text-muted">
+            Recorded divisions in the House of Commons
           </p>
         </div>
-      ) : (
-        <>
-          <div className="space-y-2">
-            {votes.map((vote) => (
-              <Link
-                key={vote.id}
-                href={`/votes/vote/${vote.id}`}
-                className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
-                style={{
-                  borderColor: 'var(--border)',
-                  backgroundColor: 'var(--surface-1)',
-                }}
-              >
-                <p className="text-xs font-medium text-text-secondary leading-snug line-clamp-2 mb-1.5">
-                  {vote.descriptionEn}
-                </p>
-                <div className="flex items-center gap-3">
-                  <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
-                  <span
-                    className="rounded-md px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wider"
-                    style={{
-                      color: vote.result === 'passed' ? 'var(--status-success)' : vote.result === 'tie' ? 'var(--status-warning)' : 'var(--status-danger)',
-                      backgroundColor: `color-mix(in srgb, ${vote.result === 'passed' ? 'var(--status-success)' : vote.result === 'tie' ? 'var(--status-warning)' : 'var(--status-danger)'} 8%, transparent)`,
-                    }}
-                  >
-                    {vote.result}
-                  </span>
-                  <span className="text-xs text-text-faint">
-                    {vote.yeaTotal}Y / {vote.nayTotal}N
-                  </span>
-                </div>
-              </Link>
+
+        {loading ? (
+          <div className="space-y-3">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="h-16 rounded-xl animate-pulse"
+                style={{ backgroundColor: 'var(--surface-1)' }}
+              />
             ))}
           </div>
-
-          {(page > 1 || hasMore) && (
-            <div className="flex items-center justify-center gap-4 pt-6">
-              <button
-                onClick={() => {
-                  setLoading(true)
-                  setPage((p) => Math.max(1, p - 1))
-                }}
-                disabled={page <= 1}
-                className="text-xs text-text-muted hover:text-text-secondary disabled:opacity-30 transition-colors"
-              >
-                Previous
-              </button>
-              <span className="text-2xs font-medium text-text-faint">Page {page}</span>
-              <button
-                onClick={() => {
-                  setLoading(true)
-                  setPage((p) => p + 1)
-                }}
-                disabled={!hasMore}
-                className="text-xs text-text-muted hover:text-text-secondary disabled:opacity-30 transition-colors"
-              >
-                Next
-              </button>
+        ) : votes.length === 0 ? (
+          <div
+            className="rounded-xl border px-6 py-10 text-center"
+            style={{
+              borderColor: 'var(--border)',
+              backgroundColor: 'var(--surface-1)',
+            }}
+          >
+            <p className="text-sm text-text-muted">
+              No vote data yet. This deployment hasn’t synced with Parliament.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              {votes.map((vote) => (
+                <Link
+                  key={vote.id}
+                  href={`/votes/vote/${vote.id}`}
+                  className="group block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
+                  style={{
+                    borderColor: 'var(--border)',
+                    backgroundColor: 'var(--surface-1)',
+                  }}
+                >
+                  <p className="text-xs font-medium text-text-secondary leading-snug line-clamp-2 mb-1.5">
+                    {vote.descriptionEn}
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
+                    <span
+                      className="rounded-md px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wider"
+                      style={{
+                        color: vote.result === 'passed' ? 'var(--status-success)' : vote.result === 'tie' ? 'var(--status-warning)' : 'var(--status-danger)',
+                        backgroundColor: `color-mix(in srgb, ${vote.result === 'passed' ? 'var(--status-success)' : vote.result === 'tie' ? 'var(--status-warning)' : 'var(--status-danger)'} 8%, transparent)`,
+                      }}
+                    >
+                      {vote.result}
+                    </span>
+                    <span className="text-xs text-text-faint">
+                      {vote.yeaTotal}Y / {vote.nayTotal}N
+                    </span>
+                  </div>
+                </Link>
+              ))}
             </div>
-          )}
-        </>
-      )}
+
+            {(page > 1 || hasMore) && (
+              <div className="flex items-center justify-center gap-4 pt-6">
+                <button
+                  onClick={() => {
+                    setLoading(true)
+                    setPage((p) => Math.max(1, p - 1))
+                  }}
+                  disabled={page <= 1}
+                  className="text-xs text-text-muted hover:text-text-secondary disabled:opacity-30 transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="text-2xs font-medium text-text-faint">Page {page}</span>
+                <button
+                  onClick={() => {
+                    setLoading(true)
+                    setPage((p) => p + 1)
+                  }}
+                  disabled={!hasMore}
+                  className="text-xs text-text-muted hover:text-text-secondary disabled:opacity-30 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }
