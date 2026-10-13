@@ -12,8 +12,11 @@ export type CTAButtonArm = 'scout' | 'oracle' | 'gadfly' | 'lever' | 'mirror' | 
  * - `primary`: the one action a page is for, inverted to full ink
  *   (`--text-primary` fill, `--surface-0` label). One per page.
  * - `secondary`: the neutral pill, the default, so existing callers keep it.
- * - `arm`: the instrument's accent, a 15% tint fill, a 30% border and the
- *   accent as text. Needs `arm`.
+ * - `arm`: the instrument's accent, a 15% tint fill and a 30% border, with
+ *   the label in `--accent-{arm}-ink`, the accent moved in lightness until it
+ *   clears 4.5:1 on that fill. Needs `arm`. Allowed grounds: dark surface-0
+ *   to surface-3 and the arm rooms; light-scope surface-0 to surface-3 and
+ *   the daylight and paper grounds (tokens-contrast.test.ts pins them).
  *
  * Disabled is one recessed style in every variant, the B3a recipe below, so
  * its measured contrast holds whatever the variant. Busy keeps the variant's
@@ -90,7 +93,7 @@ function armStyle(arm: CTAButtonArm): CSSProperties {
   const accent = `var(--accent-${arm})`
   return {
     backgroundColor: `color-mix(in srgb, ${accent} 15%, transparent)`,
-    color: accent,
+    color: `var(--accent-${arm}-ink)`,
     border: `1px solid color-mix(in srgb, ${accent} 30%, transparent)`,
   }
 }

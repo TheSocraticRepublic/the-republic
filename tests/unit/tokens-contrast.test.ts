@@ -40,6 +40,7 @@ import postcss, { type Root, type Rule, type AtRule, type Container } from 'post
 import tailwind from '@tailwindcss/postcss'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { CTAButton, type CTAButtonArm } from '@/components/ui/cta-button'
 
 const REPO = path.resolve(__dirname, '../..')
 const GLOBALS = path.join(REPO, 'src/app/globals.css')
@@ -714,6 +715,146 @@ describe('focus ring on island paper (the grounds the ring actually lands on)', 
 })
 
 // ---- fonts ------------------------------------------------------------------
+
+describe('CTAButton arm recipe (UI plan C1, Razor b)', () => {
+  /*
+   * The recipe is read from the component's own markup, rest and busy, and
+   * resolved against each scope's compiled tokens, so a change to either the
+   * component or the tokens is measured. Hover is the same recipe at the
+   * `hover:opacity-90` the component carries, composited over the ground.
+   *
+   * Allowed grounds, the complete list (anything else is unmeasured):
+   *   .dark          surface-0..3 and all six arm rooms;
+   *   .dark-island   surface-0..3;
+   *   .light-scope   surface-0..3, --journey-daylight and --journey-paper.
+   * The ring is the global outline at 2px offset, so it lands on the ground.
+   */
+  type Style = { fill: RGBA; label: RGBA }
+
+  function armMarkupStyle(arm: CTAButtonArm, busy: boolean): { style: string; className: string } {
+    // children travel as createElement's third argument; the cast only
+    // satisfies the props type, which declares children as required.
+    const props = { variant: 'arm', arm, busy, onClick: () => {} } as unknown as Parameters<typeof CTAButton>[0]
+    const html = renderToStaticMarkup(createElement(CTAButton, props, 'Go'))
+    const style = /style="([^"]*)"/.exec(html)?.[1] ?? ''
+    const className = /class="([^"]*)"/.exec(html)?.[1] ?? ''
+    return { style, className }
+  }
+
+  function resolveColor(value: string, vars: Map<string, string>): RGBA {
+    const plain = /^var\((--[a-z0-9-]+)\)$/.exec(value.trim())
+    if (plain) return hexVar(vars, plain[1])
+    const mixed = /^color-mix\(in srgb, var\((--[a-z0-9-]+)\) (\d+(?:\.\d+)?)%, transparent\)$/.exec(value.trim())
+    if (mixed) return { ...hexVar(vars, mixed[1]), a: Number(mixed[2]) / 100 }
+    throw new Error(`unmodelled colour in the arm recipe: ${value}`)
+  }
+
+  function recipe(arm: CTAButtonArm, busy: boolean, vars: Map<string, string>): Style {
+    const { style } = armMarkupStyle(arm, busy)
+    const decls = new Map(
+      style.split(';').filter(Boolean).map((d) => {
+        const i = d.indexOf(':')
+        return [d.slice(0, i).trim(), d.slice(i + 1).trim()] as const
+      })
+    )
+    return { fill: resolveColor(decls.get('background-color') ?? '', vars), label: resolveColor(decls.get('color') ?? '', vars) }
+  }
+
+  function groundsFor(scope: '.dark' | '.dark-island' | '.light-scope'): Array<[string, RGBA]> {
+    const v = scopeVars(scope)
+    const list: Array<[string, RGBA]> = SURFACES.map((s) => [s, hexVar(v, s)])
+    if (scope === '.dark') {
+      const { space, surface, tint, explicit } = armTintRecipe()
+      for (const room of ARMS)
+        list.push([`${room} room`, mixIn(space, hexVar(v, '--surface-0'), surface, hexVar(v, `--accent-${room}`), tint, explicit)])
+    }
+    if (scope === '.light-scope') {
+      const root = scopeVars(':root')
+      list.push(['--journey-daylight', hexVar(root, '--journey-daylight')], ['--journey-paper', hexVar(root, '--journey-paper')])
+    }
+    return list
+  }
+
+  const HOVER_OPACITY = 0.9
+
+  function measure(scope: '.dark' | '.dark-island' | '.light-scope', labelOverride?: (arm: CTAButtonArm) => string): Pair[] {
+    const v = scopeVars(scope)
+    const pairs: Pair[] = []
+    for (const arm of ARMS) {
+      for (const busy of [false, true]) {
+        const r = recipe(arm, busy, v)
+        const label = labelOverride ? hexVar(v, labelOverride(arm)) : r.label
+        for (const [name, ground] of groundsFor(scope)) {
+          const fill = over(r.fill, ground)
+          const state = busy ? 'busy' : 'rest'
+          pairs.push({ fg: `${scope} ${arm} ${state}`, bg: name, ratio: contrast(over(label, fill), fill) })
+          if (!busy) {
+            const hoverFill = over({ ...fill, a: HOVER_OPACITY }, ground)
+            const hoverLabel = over({ ...over(label, fill), a: HOVER_OPACITY }, ground)
+            pairs.push({ fg: `${scope} ${arm} hover`, bg: name, ratio: contrast(hoverLabel, hoverFill) })
+          }
+        }
+      }
+    }
+    return pairs
+  }
+
+  it('the label is the arm ink token, the fill and border the accent, at rest and busy', () => {
+    for (const arm of ARMS)
+      for (const busy of [false, true]) {
+        const { style, className } = armMarkupStyle(arm, busy)
+        expect(style).toContain(`color:var(--accent-${arm}-ink)`)
+        expect(style).toContain(`background-color:color-mix(in srgb, var(--accent-${arm}) 15%, transparent)`)
+        if (!busy) expect(className.split(/\s+/)).toContain('hover:opacity-90')
+      }
+  })
+
+  it.each(['.dark', '.dark-island', '.light-scope'] as const)(
+    '%s: every arm label clears 4.5:1 at rest, hover and busy on every allowed ground',
+    (scope) => {
+      const pairs = measure(scope)
+      const grounds = groundsFor(scope).length
+      expect(pairs).toHaveLength(ARMS.length * grounds * 3)
+      expect(failures(pairs, BODY_MIN)).toEqual([])
+    }
+  )
+
+  it.each(['.dark', '.dark-island', '.light-scope'] as const)('%s: the focus ring clears 3:1 on every allowed ground', (scope) => {
+    const ring = focusRing(scopeVars(scope))
+    const low = groundsFor(scope)
+      .map(([name, g]) => ({ name, ratio: contrast(over(ring, g), g) }))
+      .filter((x) => x.ratio < NON_TEXT_MIN)
+      .map((x) => `${scope} ${x.name}: ${x.ratio.toFixed(2)}:1`)
+    expect(low).toEqual([])
+  })
+
+  it('the inks are declared in every scope; :root matches .light-scope and .dark-island matches .dark', () => {
+    for (const arm of ARMS) {
+      const name = `--accent-${arm}-ink`
+      expect(scopeVars(':root').get(name)).toBe(scopeVars('.light-scope').get(name))
+      expect(scopeVars('.dark-island').get(name)).toBe(scopeVars('.dark').get(name))
+      expect(scopeVars('.dark').get(name)).toMatch(/^#[0-9A-F]{6}$/i)
+      expect(scopeVars('.light-scope').get(name)).toMatch(/^#[0-9A-F]{6}$/i)
+    }
+  })
+
+  it('each ink keeps its accent hue (OKLCH, within 3 degrees)', () => {
+    for (const scope of ['.dark', '.light-scope'] as const) {
+      const v = scopeVars(scope)
+      for (const arm of ARMS) {
+        const a = toOklch(hexVar(v, `--accent-${arm}`)).h
+        const i = toOklch(hexVar(v, `--accent-${arm}-ink`)).h
+        const d = Math.abs(((a - i + 540) % 360) - 180)
+        expect(d, `${scope} ${arm}`).toBeLessThan(3)
+      }
+    }
+  })
+
+  it('the checker itself: the raw accent as label fails (why the ink exists)', () => {
+    expect(failures(measure('.light-scope', (arm) => `--accent-${arm}`), BODY_MIN).length).toBeGreaterThan(0)
+    expect(failures(measure('.dark', (arm) => `--accent-${arm}`), BODY_MIN).length).toBeGreaterThan(0)
+  })
+})
 
 describe('fonts', () => {
   it('maps Tailwind sans (preflight and font-sans) to the body face', () => {

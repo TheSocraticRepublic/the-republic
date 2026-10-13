@@ -121,6 +121,14 @@
   --accent-mirror: #059669;
   --accent-votes: #D4764E;
 
+  /* Arm label ink (see .dark): the light-ground values. */
+  --accent-scout-ink: #6B02B3;
+  --accent-oracle-ink: #014C5F;
+  --accent-gadfly-ink: #713000;
+  --accent-lever-ink: #95020C;
+  --accent-mirror-ink: #014F36;
+  --accent-votes-ink: #7E2E00;
+
   --status-success: #066048;   /* 5.59:1 on light S2, 5.07:1 on light S3 */
   --status-danger:  #AC1717;   /* 5.37:1 on light S2, 4.87:1 on light S3 */
   --status-warning: #8E3F07;   /* 5.41:1 on light S2, 4.91:1 on light S3 */
@@ -180,6 +188,19 @@
   --accent-mirror: #5BC88A;
   --accent-votes: #D4764E;
 
+  /* Arm label ink for CTAButton variant="arm" (UI plan C1, Razor b). The
+     accent at 15% is the fill; the label is this ink, the accent's own OKLCH
+     hue moved in lightness only (chroma cut where sRGB runs out) until it
+     clears 4.5:1 at rest and at hover on every ground an arm button can sit
+     on: S0-S3 and the arm rooms here, S0-S3 and the daylight and paper
+     journey grounds in the light scopes. tokens-contrast.test.ts holds it. */
+  --accent-scout-ink: #C69EDF;
+  --accent-oracle-ink: #8DB8CC;
+  --accent-gadfly-ink: #CEAE51;
+  --accent-lever-ink: #FA8B89;
+  --accent-mirror-ink: #5BC88A;
+  --accent-votes-ink: #F39269;
+
   --status-success: #4ade80;   /* keep — 10.17:1 S2, 8.55:1 S3 */
   --status-danger:  #f87171;   /* lift from #ef4444 — 6.40:1 S2, 5.38:1 S3 */
   --status-warning: #f59e0b;   /* keep — 8.25:1 S2 */
@@ -213,6 +234,14 @@
   --accent-lever: #DA6E6E;
   --accent-mirror: #5BC88A;
   --accent-votes: #D4764E;
+
+  /* Arm label ink: mirrors .dark. */
+  --accent-scout-ink: #C69EDF;
+  --accent-oracle-ink: #8DB8CC;
+  --accent-gadfly-ink: #CEAE51;
+  --accent-lever-ink: #FA8B89;
+  --accent-mirror-ink: #5BC88A;
+  --accent-votes-ink: #F39269;
 
   --status-success: #4ade80;   /* keep — 10.17:1 S2, 8.55:1 S3 */
   --status-danger:  #f87171;   /* lift from #ef4444 — 6.40:1 S2, 5.38:1 S3 */
@@ -278,6 +307,14 @@
   --accent-lever: #DC2626;
   --accent-mirror: #059669;
   --accent-votes: #D4764E;
+
+  /* Arm label ink (see .dark): the light-ground values. */
+  --accent-scout-ink: #6B02B3;
+  --accent-oracle-ink: #014C5F;
+  --accent-gadfly-ink: #713000;
+  --accent-lever-ink: #95020C;
+  --accent-mirror-ink: #014F36;
+  --accent-votes-ink: #7E2E00;
 
   --status-success: #066048;   /* 5.59:1 on light S2, 5.07:1 on light S3 */
   --status-danger:  #AC1717;   /* 5.37:1 on light S2, 4.87:1 on light S3 */

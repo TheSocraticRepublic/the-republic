@@ -112,7 +112,7 @@ const PRIMARY = {
 function armRecipe(arm: CTAButtonArm) {
   return {
     backgroundColor: `color-mix(in srgb, var(--accent-${arm}) 15%, transparent)`,
-    color: `var(--accent-${arm})`,
+    color: `var(--accent-${arm}-ink)`,
     border: `1px solid color-mix(in srgb, var(--accent-${arm}) 30%, transparent)`,
   }
 }
