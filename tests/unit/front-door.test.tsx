@@ -35,6 +35,7 @@ vi.mock('@/components/scout/scout-history', () => ({ ScoutHistory: () => null })
 import { CTAButton, type CTAButtonArm } from '@/components/ui/cta-button'
 import InvestigatePage from '@/app/(app)/investigate/page'
 import ScoutPage from '@/app/(app)/scout/page'
+import { SCOUT_COPY, scoutErrorMessage } from '@/components/scout/discovery-form'
 
 const JURISDICTIONS = [
   { id: 'j-van', name: 'City of Vancouver', country: 'CA', province: 'BC', municipalType: 'city', population: null, dataPortalUrl: null },
@@ -45,20 +46,36 @@ let scoutBodies: Array<Record<string, unknown>>
 /** How the stubbed discover answers: an empty finished stream (default), a
  *  stream held open until `releaseDiscover` and then one chunk of text, or a
  *  500 held the same way. */
-let discoverMode: 'empty' | 'held' | 'held-error'
+let discoverMode: 'empty' | 'held' | 'held-error' | 'reject' | 'status'
 let releaseDiscover: (() => void) | null
+/** For discoverMode 'status': the status and body the route answers with
+ *  (body null = not JSON, an HTML 502 from the edge). */
+let discoverStatus: number
+let discoverBody: unknown
+let coarsePointer: boolean
+let reducedMotion: boolean
+const scrollTo = vi.fn()
 
 beforeEach(() => {
   scoutBodies = []
   discoverMode = 'empty'
   releaseDiscover = null
+  discoverStatus = 500
+  discoverBody = null
+  coarsePointer = false
+  reducedMotion = false
+  scrollTo.mockReset()
+  // jsdom has no Element.scrollTo; the Scout results scroll calls it.
+  ;(HTMLElement.prototype as unknown as { scrollTo: unknown }).scrollTo = scrollTo
   push.mockReset()
   getDb.mockClear()
   vi.stubGlobal(
     'matchMedia',
     vi.fn((query: string) => ({
       media: query,
-      matches: false,
+      matches:
+        (query === '(pointer: coarse)' && coarsePointer) ||
+        (query === '(prefers-reduced-motion: reduce)' && reducedMotion),
       addEventListener: () => {},
       removeEventListener: () => {},
     }))
@@ -71,6 +88,18 @@ beforeEach(() => {
       }
       if (url === '/api/scout/discover' && init?.method === 'POST') {
         scoutBodies.push(JSON.parse(String(init.body)))
+        if (discoverMode === 'reject') throw new TypeError('Failed to fetch')
+        if (discoverMode === 'status') {
+          const body = discoverBody
+          return {
+            ok: false,
+            status: discoverStatus,
+            json: async () => {
+              if (body === null) throw new SyntaxError('Unexpected token <')
+              return body
+            },
+          }
+        }
         if (discoverMode === 'empty') {
           // An empty finished stream: the search ran and returned nothing.
           return { ok: true, status: 200, body: new ReadableStream({ start: (c) => c.close() }) }
@@ -79,7 +108,7 @@ beforeEach(() => {
           releaseDiscover = resolve
         })
         if (discoverMode === 'held-error') {
-          return { ok: false, status: 500, json: async () => ({ error: 'Discovery failed. Try again.' }) }
+          return { ok: false, status: 500, json: async () => ({ error: 'Internal server error' }) }
         }
         const text = new TextEncoder().encode('## Council minutes\nFound one record.')
         return {
@@ -314,7 +343,7 @@ describe('Scout is search-shaped', () => {
     const { query } = await renderScout()
     expect(query.tagName).toBe('INPUT')
     expect(query.type).toBe('search')
-    expect(query.placeholder).toBe('Rental bylaw minutes')
+    expect(query.placeholder).toBe('Rental bylaws')
     expect(document.querySelectorAll('textarea')).toHaveLength(0)
     const landmark = screen.getByRole('search', { name: 'Search public records' })
     expect(landmark.contains(query)).toBe(true)
@@ -429,7 +458,7 @@ describe('Scout is search-shaped', () => {
     expect(query.disabled).toBe(false)
     await enter(query)
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Scouting/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Scout' }))
     })
     expect(scoutBodies).toHaveLength(1)
     await act(async () => {
@@ -487,7 +516,7 @@ describe('Scout is search-shaped', () => {
     await act(async () => {
       releaseDiscover?.()
     })
-    await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('Discovery failed. Try again.'))
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toBe("Scout couldn't finish that search. Search again."))
     expect(document.activeElement).toBe(query)
   })
 
@@ -510,5 +539,346 @@ describe('Scout is search-shaped', () => {
     })
     await waitFor(() => expect(screen.getByText('Discovery results')).toBeTruthy())
     expect(document.activeElement).toBe(button)
+  })
+})
+
+// ─── design fix pass (Jen C1, C2, C4, C5, C9; Razor RW2) ───────────────────
+
+describe('Investigate Start keeps one box (Jen C2)', () => {
+  it('both labels share one cell; the one not showing is invisible and out of the name', async () => {
+    const { textarea, start } = await renderInvestigate()
+    const [rest, busy] = Array.from(start.querySelectorAll(':scope > span > span')) as HTMLElement[]
+    expect(start.querySelector(':scope > span')?.className).toBe('grid')
+    for (const label of [rest, busy]) expect(label.className).toContain('col-start-1 row-start-1')
+    expect(rest.className).not.toContain('invisible')
+    expect(busy.className.split(/\s+/)).toContain('invisible')
+    expect(busy.getAttribute('aria-hidden')).toBe('true')
+    expect(start.textContent).toContain('Starting…')
+    fireEvent.change(textarea, { target: { value: 'A gravel mine expansion' } })
+    // Hold the POST so the busy state stays.
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
+    await act(async () => {
+      fireEvent.keyDown(textarea, { key: 'Enter', ctrlKey: true })
+    })
+    const busyButton = screen.getByRole('button', { name: 'Starting…' })
+    expect(busyButton).toBe(start)
+    expect(rest.className.split(/\s+/)).toContain('invisible')
+    expect(rest.getAttribute('aria-hidden')).toBe('true')
+    expect(busy.className).not.toContain('invisible')
+    expect(busy.hasAttribute('aria-hidden')).toBe(false)
+  })
+
+  it('below md, Cancel and the reason line come after Start (order-last), beside it from md', async () => {
+    const { textarea } = await renderInvestigate()
+    const reason = document.getElementById('concern-submit-reason') as HTMLElement
+    expect(reason.className.split(/\s+/)).toEqual(expect.arrayContaining(['order-last', 'md:order-none']))
+    fireEvent.change(textarea, { target: { value: 'A gravel mine expansion' } })
+    // Hold the POST so the busy state (and Cancel) shows.
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
+    await act(async () => {
+      fireEvent.keyDown(textarea, { key: 'Enter', ctrlKey: true })
+    })
+    const cancel = screen.getByRole('button', { name: 'Cancel' })
+    expect(cancel.className.split(/\s+/)).toEqual(expect.arrayContaining(['order-last', 'md:order-none']))
+    expect(cancel.getAttribute('type')).toBe('button')
+  })
+})
+
+describe('Scout button is the arm CTAButton (Jen C1, Razor RW1)', () => {
+  it('rest, typed and busy: the arm recipe or the recessed one, never opacity, never natively disabled, always "Scout"', async () => {
+    discoverMode = 'held'
+    const { query } = await renderScout()
+    const button = screen.getByRole('button', { name: 'Scout' }) as HTMLButtonElement
+    const states: Array<[string, ReturnType<typeof styleOf>]> = []
+    states.push(['empty', styleOf(button)])
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    fireEvent.change(query, { target: { value: 'budget' } })
+    states.push(['typed', styleOf(button)])
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    states.push(['busy', styleOf(button)])
+    expect(button.getAttribute('aria-busy')).toBe('true')
+    expect(button.textContent).toBe('Scout')
+    expect(screen.getByRole('button', { name: 'Scout' })).toBe(button)
+    expect(states).toEqual([
+      ['empty', RECESSED],
+      ['typed', armRecipe('scout')],
+      ['busy', armRecipe('scout')],
+    ])
+    expect(button.className).not.toMatch(/(^|\s)opacity-/)
+    expect(button.disabled).toBe(false)
+    expect(button.className.split(/\s+/)).toContain('shrink-0')
+  })
+})
+
+describe('Scout errors: plain copy by status, in the slot under the query (Jen C4)', () => {
+  const NOW = Date.UTC(2026, 9, 12, 20, 0, 0)
+
+  it.each([
+    [429, { error: 'Too many requests', code: 'rate_limited' }, SCOUT_COPY.rateLimited],
+    [429, { error: 'Too many requests' }, SCOUT_COPY.rateLimited],
+    [429, { code: 'daily_limit', reset: NOW }, SCOUT_COPY.unavailable],
+    [429, { code: 'daily_limit', reset: NOW + 2 * 24 * 3600 * 1000 }, SCOUT_COPY.unavailable],
+    [429, { code: 'daily_limit' }, SCOUT_COPY.unavailable],
+    [500, { error: 'Internal server error' }, SCOUT_COPY.failed],
+    [502, null, SCOUT_COPY.failed],
+    [504, null, SCOUT_COPY.failed],
+    [400, { error: 'concern is required' }, SCOUT_COPY.unreadable],
+    [403, { error: 'Forbidden' }, SCOUT_COPY.failed],
+  ])('%i %j -> plain copy', (status, body, expected) => {
+    expect(scoutErrorMessage(status, body, NOW)).toBe(expected)
+  })
+
+  it('the daily limit names its reset in the reader\'s own clock, never "tomorrow"', () => {
+    const reset = Date.UTC(2026, 9, 13, 0, 0, 0) // the next 00:00 UTC
+    const time = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(reset)
+    const message = scoutErrorMessage(429, { code: 'daily_limit', reset }, NOW)
+    expect(message).toBe(`You've reached the daily limit on AI requests. It resets at ${time}.`)
+    expect(message).not.toMatch(/tomorrow/i)
+  })
+
+  it('every message is a sentence: ends in a full stop, no "Please", no server words', () => {
+    const all = [
+      SCOUT_COPY.rateLimited,
+      SCOUT_COPY.dailyLimit('5:00 PM'),
+      SCOUT_COPY.unavailable,
+      SCOUT_COPY.failed,
+      SCOUT_COPY.unreadable,
+      SCOUT_COPY.offline,
+    ]
+    for (const m of all) {
+      expect(m).toMatch(/\.$/)
+      expect(m).not.toMatch(/please|request failed|internal server|unauthorized|concern is required/i)
+    }
+  })
+
+  it.each([
+    ['429 per minute', 429, { error: 'Too many requests', code: 'rate_limited' }, SCOUT_COPY.rateLimited],
+    ['an HTML 502', 502, null, SCOUT_COPY.failed],
+  ])('%s: the page shows the plain line between the query row and the filters, describing the field', async (_n, status, body, expected) => {
+    discoverMode = 'status'
+    discoverStatus = status
+    discoverBody = body
+    const { query, jurisdiction } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toBe(expected)
+    expect(query.getAttribute('aria-describedby')).toBe(alert.id)
+    expect(precedes(query, alert)).toBe(true)
+    expect(precedes(alert, jurisdiction)).toBe(true)
+  })
+
+  it('a thrown fetch (offline) says so', async () => {
+    discoverMode = 'reject'
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    expect((await screen.findByRole('alert')).textContent).toBe(SCOUT_COPY.offline)
+  })
+
+  it('a 401 goes to login and back to Scout, with no message', async () => {
+    discoverMode = 'status'
+    discoverStatus = 401
+    discoverBody = { error: 'Unauthorized' }
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    expect(push).toHaveBeenCalledWith('/login?redirect=%2Fscout')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('the field is described by nothing while there is no error', async () => {
+    const { query } = await renderScout()
+    expect(query.hasAttribute('aria-describedby')).toBe(false)
+  })
+})
+
+describe('Scout working line and Cancel (Jen C5)', () => {
+  it('the start of a search is announced; Cancel sits in the slot under the query row', async () => {
+    discoverMode = 'held'
+    const { query, jurisdiction } = await renderScout()
+    const status = screen.getByRole('status')
+    expect(status.textContent).toBe('')
+    fireEvent.change(query, { target: { value: 'budget' } })
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    expect(status.textContent).toBe('Scouting…')
+    const cancel = screen.getByRole('button', { name: 'Cancel' })
+    expect(cancel.getAttribute('type')).toBe('button')
+    expect(precedes(query, cancel)).toBe(true)
+    expect(precedes(cancel, jurisdiction)).toBe(true)
+    expect(cancel.className.split(/\s+/)).toEqual(expect.arrayContaining(['min-h-6', '[@media(pointer:coarse)]:min-h-11']))
+    await act(async () => {
+      releaseDiscover?.()
+    })
+    await waitFor(() => expect(status.textContent).toBe(''))
+  })
+
+  it('after Cancel, focus is on the query field, nothing is reported, and the next search goes through', async () => {
+    discoverMode = 'held'
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    const cancel = screen.getByRole('button', { name: 'Cancel' })
+    cancel.focus()
+    const signal = (vi.mocked(fetch).mock.calls.at(-1)?.[1] as RequestInit).signal as AbortSignal
+    await act(async () => {
+      fireEvent.click(cancel)
+    })
+    expect(signal.aborted).toBe(true)
+    expect(document.activeElement).toBe(query)
+    // The held stub never settles by itself; an aborted fetch rejects.
+    await act(async () => {
+      releaseDiscover?.()
+    })
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
+    discoverMode = 'empty'
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    expect(scoutBodies).toHaveLength(2)
+  })
+})
+
+describe('Scout frees itself after every failure (Razor RW2)', () => {
+  it.each([
+    ['an HTTP 500', 'status' as const],
+    ['a network reject', 'reject' as const],
+  ])('after %s, the next Enter searches', async (_n, mode) => {
+    discoverMode = mode
+    discoverStatus = 500
+    discoverBody = { error: 'Internal server error' }
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    await screen.findByRole('alert')
+    discoverMode = 'empty'
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    expect(scoutBodies).toHaveLength(2)
+  })
+
+  it('after a 401, the next Enter searches (the redirect may not land)', async () => {
+    discoverMode = 'status'
+    discoverStatus = 401
+    discoverBody = { error: 'Unauthorized' }
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    discoverMode = 'empty'
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    expect(scoutBodies).toHaveLength(2)
+  })
+})
+
+describe('Scout on a phone (Jen C9)', () => {
+  it('on a coarse pointer, Enter moves focus to Scout before searching (closes the soft keyboard)', async () => {
+    coarsePointer = true
+    discoverMode = 'held'
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    query.focus()
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Scout' }))
+    expect(scoutBodies).toHaveLength(1)
+  })
+
+  it('on a coarse pointer, an empty Enter leaves focus in the field', async () => {
+    coarsePointer = true
+    const { query } = await renderScout()
+    query.focus()
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    expect(document.activeElement).toBe(query)
+  })
+
+  /** Lay the page out by hand: jsdom has no layout. The scroll container is
+   *  a wrapper with overflow-y auto, 667px tall, at the top of the screen. */
+  async function renderInContainer(resultsTop: number) {
+    const container = document.createElement('div')
+    container.style.overflowY = 'auto'
+    Object.defineProperty(container, 'scrollHeight', { value: 2000 })
+    Object.defineProperty(container, 'clientHeight', { value: 667 })
+    container.scrollTop = 40
+    container.getBoundingClientRect = () => ({ top: 56, bottom: 667, left: 0, right: 375, width: 375, height: 611, x: 0, y: 56, toJSON: () => ({}) })
+    document.body.appendChild(container)
+    const real = HTMLElement.prototype.getBoundingClientRect
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.tagName === 'SECTION' && this.textContent?.startsWith('Discovery results'))
+        return { top: resultsTop, bottom: resultsTop + 100, left: 0, right: 375, width: 375, height: 100, x: 0, y: resultsTop, toJSON: () => ({}) }
+      return real.call(this)
+    })
+    await act(async () => {
+      render(<ScoutPage />, { container })
+    })
+    await waitFor(() => expect(screen.getByLabelText(/^Jurisdiction/).tagName).toBe('SELECT'))
+    return { container, query: screen.getByLabelText('What documents are you looking for?') as HTMLInputElement }
+  }
+
+  async function searchAndRelease(query: HTMLElement) {
+    fireEvent.change(query, { target: { value: 'budget' } })
+    await act(async () => {
+      fireEvent.keyDown(query, { key: 'Enter' })
+    })
+    await act(async () => {
+      releaseDiscover?.()
+    })
+    await screen.findByText('Discovery results')
+  }
+
+  it('results below the fold: the container scrolls once, by arithmetic, to 16px above the heading', async () => {
+    discoverMode = 'held'
+    const { container, query } = await renderInContainer(640)
+    await searchAndRelease(query)
+    // scrollTop 40 + (640 - 56) - 16
+    expect(scrollTo).toHaveBeenCalledTimes(1)
+    expect(scrollTo.mock.contexts[0]).toBe(container)
+    expect(scrollTo).toHaveBeenCalledWith({ top: 608, behavior: 'smooth' })
+  })
+
+  it('with reduced motion, the same scroll jumps instead of animating', async () => {
+    discoverMode = 'held'
+    reducedMotion = true
+    const { query } = await renderInContainer(640)
+    await searchAndRelease(query)
+    expect(scrollTo).toHaveBeenCalledWith({ top: 608, behavior: 'auto' })
+  })
+
+  it('results already in view (heading and first line): no scroll', async () => {
+    discoverMode = 'held'
+    const { query } = await renderInContainer(400)
+    await searchAndRelease(query)
+    expect(scrollTo).not.toHaveBeenCalled()
+  })
+
+  it('a second search scrolls again (once per search)', async () => {
+    discoverMode = 'held'
+    const { query } = await renderInContainer(640)
+    await searchAndRelease(query)
+    await waitFor(() => expect(query.readOnly).toBe(false))
+    await searchAndRelease(query)
+    expect(scrollTo).toHaveBeenCalledTimes(2)
   })
 })
