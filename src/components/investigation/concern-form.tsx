@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ChevronDown, Loader2, Search, X } from 'lucide-react'
 import { clsx } from 'clsx'
 import { CTAButton } from '@/components/ui/cta-button'
+import { hasCoarsePointer, useCoarsePointer, useModifierKeyLabel } from '@/lib/ui/input-modality'
 
 interface Jurisdiction {
   id: string
@@ -28,10 +29,19 @@ export function ConcernForm() {
   const abortRef = useRef<AbortController | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
+  const coarsePointer = useCoarsePointer()
+  const modifierKey = useModifierKeyLabel()
+  // The shortcut hint names a key, so it shows only where there is a keyboard
+  // to press it on (not on a coarse pointer) and once the platform is known
+  // ("Cmd" on Apple, "Ctrl" elsewhere). The textarea is described by it only
+  // while it is shown (mobile P2-9).
+  const showShortcutHint = modifierKey !== null && !coarsePointer
 
-  // Auto-focus the textarea on mount
+  // Focus the textarea on mount on a fine pointer only. On a touch screen it
+  // would raise the keyboard over the page, and a screen-reader user would
+  // land past the heading and intro (mobile P2-11, the login page's rule).
   useEffect(() => {
-    textareaRef.current?.focus()
+    if (!hasCoarsePointer()) textareaRef.current?.focus()
   }, [])
 
   // Fetch jurisdictions on mount
@@ -139,7 +149,7 @@ export function ConcernForm() {
           rows={6}
           maxLength={2000}
           aria-label="Describe your concern"
-          aria-describedby="concern-hint"
+          aria-describedby={showShortcutHint ? 'concern-hint' : undefined}
           className={clsx(
             'w-full resize-none rounded-xl border bg-surface-1 shadow-sm px-4 py-4 text-base leading-relaxed text-text-primary placeholder-text-faint outline-none transition-all duration-200',
             'focus:border-border-strong',
@@ -147,9 +157,11 @@ export function ConcernForm() {
           )}
           disabled={loading}
         />
-        <p id="concern-hint" className="mt-1.5 text-xs text-text-faint">
-          Press Cmd+Enter to start
-        </p>
+        {showShortcutHint && (
+          <p id="concern-hint" className="mt-1.5 text-xs text-text-faint">
+            Press {modifierKey}+Enter to start.
+          </p>
+        )}
       </div>
 
       {/* Error alert */}
