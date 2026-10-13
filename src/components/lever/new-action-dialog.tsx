@@ -62,6 +62,19 @@ interface NewActionDialogProps {
   initialOpen?: boolean
 }
 
+/**
+ * `?new=1` (the landing's empty-state link) asks for this dialog open. Take the
+ * flag off the current entry with `replace`, keeping every other param: the
+ * empty-state link itself replaces, so closing leaves one entry, not two
+ * (Razor C2a N2), and a create never leaves the flag in history behind the new
+ * page, where Back would reopen an empty dialog (Razor C2a W2).
+ */
+function withoutNewFlag(): string {
+  const url = new URL(window.location.href)
+  url.searchParams.delete('new')
+  return url.pathname + url.search
+}
+
 export function NewActionDialog({
   initialDocumentId,
   initialSessionId,
@@ -111,6 +124,17 @@ export function NewActionDialog({
   // A refusal the server tied to the public-body field, shown under it.
   const [bodyError, setBodyError] = useState<string | null>(null)
   const router = useRouter()
+  // Open on the flag's rising edge, adjusting state during render (not an
+  // effect, and not a key: a remount would detach the trigger that Radix
+  // hands focus back to on close, dropping focus to <body>; Razor C2a W1).
+  const [flagSeen, setFlagSeen] = useState(initialOpen)
+  if (initialOpen !== flagSeen) {
+    setFlagSeen(initialOpen)
+    if (initialOpen) setOpen(true)
+  }
+  const clearNewFlag = useCallback(() => {
+    router.replace(withoutNewFlag(), { scroll: false })
+  }, [router])
 
   // Fetch documents, sessions, and the investigation (for the province) when the dialog opens
   useEffect(() => {
@@ -252,6 +276,7 @@ export function NewActionDialog({
         throw new Error(`Create failed (${res.status})`)
       }
       setOpen(false)
+      if (initialOpen) clearNewFlag()
       router.push(`/lever/${data.actionId}`)
     } catch (err) {
       console.error(err)
@@ -260,18 +285,13 @@ export function NewActionDialog({
       creatingRef.current = false
       setLoading(false)
     }
-  }, [actionType, publicBodyName, province, selectedDocId, selectedSessionId, investigationId, description, router])
+  }, [actionType, publicBodyName, province, selectedDocId, selectedSessionId, investigationId, description, router, initialOpen, clearNewFlag])
 
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v)
-    if (!v && initialOpen) {
-      // Opened by ?new=1: take the flag off the address on close, so a reload
-      // doesn't reopen it and the empty state's link opens it again next time
-      // (the page keys this dialog on the flag, so the flag's return remounts it open).
-      const url = new URL(window.location.href)
-      url.searchParams.delete('new')
-      router.replace(url.pathname + url.search, { scroll: false })
-    }
+    // Opened by ?new=1: take the flag off the address on close, so a reload
+    // doesn't reopen it and the empty state's link opens it again next time.
+    if (!v && initialOpen) clearNewFlag()
     if (!v) {
       setActionType((initialActionType as ActionType) || 'fippa_request')
       setPublicBodyChoice('')
@@ -286,7 +306,7 @@ export function NewActionDialog({
       setDupWarning(false)
       setCreateError(null)
     }
-  }, [initialActionType, initialOpen, router])
+  }, [initialActionType, initialOpen, clearNewFlag])
 
   // When pre-filled from cross-arm nav, trigger document/session fetch on mount
   // The existing useEffect already handles this when open=true

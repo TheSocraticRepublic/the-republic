@@ -54,9 +54,6 @@ export default async function GadflyPage({ searchParams }: GadflyPageProps) {
               initialDocumentId={initialDocumentId}
               initialTitle={initialTitle ? decodeURIComponent(initialTitle) : undefined}
               initialOpen={openNew === '1'}
-              // Remount on the flag: a client navigation from the empty state
-              // to ?new=1 keeps this component, and useState reads its prop once.
-              key={openNew === '1' ? 'new' : 'list'}
             />
           }
         />
@@ -76,7 +73,7 @@ export default async function GadflyPage({ searchParams }: GadflyPageProps) {
             <EmptyState
               serif
               message="No inquiries yet. The unexamined assumption is the dangerous one."
-              action={{ label: 'Begin your first inquiry', href: '/gadfly?new=1' }}
+              action={{ label: 'Begin your first inquiry', href: '/gadfly?new=1', replace: true }}
             />
           ) : (
             <div className="space-y-3">

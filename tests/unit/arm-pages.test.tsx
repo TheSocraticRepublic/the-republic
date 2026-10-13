@@ -27,8 +27,9 @@ import tailwind from '@tailwindcss/postcss'
  */
 
 const replace = vi.fn()
+const push = vi.fn()
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: () => {}, replace, refresh: () => {}, back: () => {}, prefetch: () => {} }),
+  useRouter: () => ({ push, replace, refresh: () => {}, back: () => {}, prefetch: () => {} }),
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
 }))
@@ -43,6 +44,15 @@ vi.mock('@/lib/db', () => ({
   }),
 }))
 vi.mock('@/components/scout/scout-history', () => ({ ScoutHistory: () => null }))
+// next/link, reduced to the anchor it renders plus whether it replaces history
+// (jsdom has no app router for the real Link to navigate with).
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react')
+  return {
+    default: ({ href, replace: rep, children, ...rest }: { href: string; replace?: boolean; children?: import('react').ReactNode } & Record<string, unknown>) =>
+      createElement('a', { href, 'data-replace': rep ? 'true' : 'false', ...rest }, children),
+  }
+})
 
 import OraclePage from '@/app/(app)/oracle/page'
 import GadflyPage from '@/app/(app)/gadfly/page'
@@ -109,10 +119,16 @@ const normalise = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' 
 beforeEach(() => {
   rows.length = 0
   replace.mockClear()
+  push.mockClear()
   // Mirror's form, the dialogs and the Votes badge read these on mount.
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (url: string) => {
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/gadfly/session' && init?.method === 'POST')
+        return new Response(JSON.stringify({ sessionId: 's-new' }), { status: 200 })
+      if (url === '/api/lever/actions' && init?.method === 'POST')
+        return new Response(JSON.stringify({ actionId: 'a-new' }), { status: 200 })
+      if (url === '/api/lever/actions') return new Response(JSON.stringify({ actions: [] }), { status: 200 })
       if (String(url).startsWith('/api/oracle/documents'))
         return new Response(JSON.stringify({ documents: [] }), { status: 200 })
       if (String(url).startsWith('/api/gadfly/sessions'))
@@ -176,6 +192,19 @@ describe('every arm says what it is for, in its own register (app-arms P1-5)', (
   })
 })
 
+/** Fill the minimum and press the dialog's create button. */
+async function submitCreate(arm: 'gadfly' | 'lever') {
+  if (arm === 'gadfly') {
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Inquiry' }))
+    return
+  }
+  fireEvent.change(screen.getByLabelText('Province'), { target: { value: 'bc' } })
+  fireEvent.change(screen.getByLabelText('What records do you want?'), { target: { value: 'Records.' } })
+  const generate = screen.getByRole('button', { name: 'Generate' })
+  await waitFor(() => expect(generate.getAttribute('aria-disabled')).toBe('false'))
+  fireEvent.click(generate)
+}
+
 describe('empty-state actions go somewhere real', () => {
   const ROUTE_FILES: Record<string, string> = {
     '/scout': 'src/app/(app)/scout/page.tsx',
@@ -194,6 +223,8 @@ describe('empty-state actions go somewhere real', () => {
       await renderArm(arm)
       const link = screen.getByRole('link', { name: label })
       expect(link.getAttribute('href')).toBe(href)
+      // ?new=1 reopens this same page: replace, so dismissing leaves no dead Back step (Razor N2)
+      expect(link.getAttribute('data-replace')).toBe(href.includes('?new=1') ? 'true' : 'false')
       const route = href.split('?')[0]
       expect(fs.existsSync(path.join(REPO, ROUTE_FILES[route]))).toBe(true)
     })
@@ -245,6 +276,45 @@ describe('empty-state actions go somewhere real', () => {
       window.history.replaceState(null, '', '/')
     })
 
+    it(`${arm}: closing a ?new=1 dialog hands focus back to the trigger, which survives the flag going away (Razor W1)`, async () => {
+      const Page = arm === 'gadfly' ? GadflyPage : LeverPage
+      const triggerName = arm === 'gadfly' ? 'New Inquiry' : 'New Action'
+      const view = render(await Page({ searchParams: Promise.resolve({}) }))
+      const trigger = screen.getByRole('button', { name: triggerName })
+      view.rerender(await Page({ searchParams: Promise.resolve({ new: '1' }) }))
+      await screen.findByRole('dialog')
+      fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+      // the replace lands: the page renders again without the flag
+      view.rerender(await Page({ searchParams: Promise.resolve({}) }))
+      await waitFor(() => expect(document.activeElement).toBe(trigger))
+      expect(trigger.isConnected).toBe(true)
+      expect(screen.getByRole('button', { name: triggerName })).toBe(trigger)
+      // and the flag coming back opens it again in the same tree
+      view.rerender(await Page({ searchParams: Promise.resolve({ new: '1' }) }))
+      expect(await screen.findByRole('dialog')).toBeTruthy()
+    })
+
+    it(`${arm}: a create from a ?new=1 dialog takes the flag off with replace before it navigates (Razor W2)`, async () => {
+      window.history.replaceState(null, '', `/${arm}?new=1`)
+      await renderArm(arm, { new: '1' })
+      await screen.findByRole('dialog')
+      await submitCreate(arm)
+      await waitFor(() => expect(push).toHaveBeenCalledWith(arm === 'gadfly' ? '/gadfly/s-new' : '/lever/a-new'))
+      expect(replace).toHaveBeenCalledWith(`/${arm}`, { scroll: false })
+      expect(replace.mock.invocationCallOrder[0]).toBeLessThan(push.mock.invocationCallOrder[0])
+      window.history.replaceState(null, '', '/')
+    })
+
+    it(`${arm}: a create from the button-opened dialog leaves the address alone`, async () => {
+      await renderArm(arm)
+      fireEvent.click(screen.getByRole('button', { name: arm === 'gadfly' ? 'New Inquiry' : 'New Action' }))
+      await screen.findByRole('dialog')
+      await submitCreate(arm)
+      await waitFor(() => expect(push).toHaveBeenCalled())
+      expect(replace).not.toHaveBeenCalled()
+    })
+
     it(`${arm}: closing a dialog the button opened leaves the address alone`, async () => {
       await renderArm(arm)
       fireEvent.click(screen.getByRole('button', { name: arm === 'gadfly' ? 'New Inquiry' : 'New Action' }))
@@ -279,6 +349,20 @@ describe('the arm room is the page, not a column slab (app-arms P2-1)', () => {
       })
     })
     expect(minHeights).toEqual(['100%'])
+  })
+
+  it('nothing else sizes the room: no height, width or overflow on [data-arm] (Razor N4)', () => {
+    const sizing: string[] = []
+    compiled.walkRules('[data-arm]', (rule: Rule) => {
+      rule.walkDecls(/^(height|max-height|width|max-width|min-width|overflow.*)$/, (d) => {
+        sizing.push(`${d.prop}: ${d.value}`)
+      })
+    })
+    expect(sizing).toEqual([])
+    // and the walk sees declarations at all (the background recipe is there)
+    let backgrounds = 0
+    compiled.walkRules('[data-arm]', (rule: Rule) => rule.walkDecls('background', () => void backgrounds++))
+    expect(backgrounds).toBeGreaterThan(1)
   })
 
   for (const arm of ARMS) {

@@ -68,9 +68,6 @@ export default async function LeverPage({ searchParams }: LeverPageProps) {
               initialInvestigationId={initialInvestigationId}
               initialActionType={initialActionType}
               initialOpen={openNew === '1'}
-              // Remount on the flag: a client navigation from the empty state
-              // to ?new=1 keeps this component, and useState reads its prop once.
-              key={openNew === '1' ? 'new' : 'list'}
             />
           }
         />
@@ -90,7 +87,7 @@ export default async function LeverPage({ searchParams }: LeverPageProps) {
             <EmptyState
               serif
               message="No civic actions yet. Knowledge without action is incomplete."
-              action={{ label: 'Draft your first civic action', href: '/lever?new=1' }}
+              action={{ label: 'Draft your first civic action', href: '/lever?new=1', replace: true }}
             />
           ) : (
             <div className="space-y-3">

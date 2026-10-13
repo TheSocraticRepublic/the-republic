@@ -5,6 +5,10 @@ import type { ReactNode } from 'react'
 interface EmptyStateAction {
   label: string
   href: string
+  /** Replace the current history entry instead of pushing one: for an action
+   *  that reopens this same page in another state (Gadfly's and Lever's
+   *  `?new=1`), so dismissing it doesn't leave a dead Back step. */
+  replace?: boolean
 }
 
 interface EmptyStateProps {
@@ -58,6 +62,7 @@ export function EmptyState({
         <p className="mt-2 text-xs text-text-faint">
           <Link
             href={action.href}
+            replace={action.replace}
             className="text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
           >
             {action.label}
