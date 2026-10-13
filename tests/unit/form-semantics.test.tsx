@@ -273,6 +273,11 @@ describe('Oracle upload zone', () => {
     const fine = document.querySelector('[data-pointer-copy="fine"]')!
     expect(fine.textContent?.replace(/\s+/g, ' ').trim()).toBe('Choose a PDF or drop one here')
     expect(alert.compareDocumentPosition(fine) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // ... and shown, not merely present: no hidden attribute, no hiding class
+    // beyond the coarse-pointer one.
+    expect(fine.hasAttribute('hidden')).toBe(false)
+    expect((fine.getAttribute('class') ?? '').split(/\s+/)).not.toContain('hidden')
+    expect((fine.getAttribute('class') ?? '').split(/\s+/)).toContain('pointer-coarse:hidden')
     expect(input.getAttribute('aria-describedby')).toBe('oracle-file-error oracle-file-limits')
     expect(description(input)).toBe(`That file isn't a PDF. ${LIMITS}`)
     // No retry button: the zone is the retry, and it is the only control.
