@@ -141,7 +141,9 @@ describe('concern form shortcut hint', () => {
   })
 
   it('reads the platform from userAgentData first when the browser has it', async () => {
-    setPlatform('', { platform: 'macOS' })
+    // userAgentData is the current source; navigator.platform is frozen or
+    // reduced in some browsers, so it is consulted only when the first is absent.
+    setPlatform('Linux x86_64', { platform: 'macOS' })
     render(<ConcernForm />)
     await waitFor(() => expect(screen.getByText('Press Cmd+Enter to start')).toBeTruthy())
   })
