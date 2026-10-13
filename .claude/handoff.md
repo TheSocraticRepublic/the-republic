@@ -43,13 +43,13 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **A-series LIVE since 2026-10-12 17:48:49Z; Lee's look check owed.** Main `b9d9139` (PR #7, merge commit), Netlify deploy `6acd1d516cdac21aab7e88f4`; D_prev / rollback target `6acc1bbeb27b4900083c30a8` at `fa16447`. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-12-a-series.md`. Lee's standing authority for this release: restore D_prev without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route, or his look check), then `git revert -m 1 b9d9139` on main through a PR. The look-check steps are in `~/marvin/state/relay/republic-ui-a-series-release-card.md` ("After promotion"). PR #6 closed as superseded. Still open with Lee: the privacy contact address (S1's held wording returns with it; Razor S1b N1-N3 in the Parking Lot).
 
-- **Cold start for the next batch (C1).**
-  1. Read the plan's "### C1", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether C1 has UI (Jen, opus xhigh, after Razor).
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-b3b-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-c1`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-c1 --stage implement --batch 1 --step C1`; `git worktree add -b relay/ui-c1-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
+- **Cold start for the next batch (C2a).**
+  1. Read the plan's "### C2a", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether C2a has UI (Jen, opus xhigh, after Razor).
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-c1-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-c2a`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-c2a --stage implement --batch 1 --step C2a`; `git worktree add -b relay/ui-c2a-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
   4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only.
   5. Harness runs: clear `.next/cache` first (a stale turbopack cache served old CSS in B1). Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
-  6. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
+  6. Before merging, run the harness-only tests with `QA_REQUIRE_HARNESS=1` on a live harness (CI skips them). ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
 
 ## Open questions awaiting Lee
 
@@ -83,6 +83,13 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-12 — C1 merged to the session branch (`1de761f`)
+
+- **What it does:** CTAButton primary, secondary and arm variants (per-arm ink tokens readable on the listed grounds); Investigate's primary Start, which keeps one box so a second press never lands on Cancel; a plain subhead and one jurisdiction line naming city, district or province; Scout search-first with an arm button, focus kept through a search, plain status-mapped errors, and daily-limit copy naming the reset in the reader's local time.
+- **Review:** Razor W1/W2, then RW1-RW3, fixed; Jen's nine concerns adopted, with C8 carried to C2b; the arm variant's allowed grounds carried into C2b and E3a.
+- **Parked:** harness-only tests don't gate merges (run them by hand with `QA_REQUIRE_HARNESS=1`); "Try again tomorrow" on 13 routes.
+- **Next:** C2a. Lee owes the A-series look check, the Forum-posts answer and the B-series release call.
 
 ### 2026-10-12 — B3b merged to the session branch (`207ef99`)
 
