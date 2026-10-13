@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, FileText, Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
+import { useCoarsePointer } from '@/lib/ui/input-modality'
 
 type UploadState = 'idle' | 'dragging' | 'uploading' | 'error'
 
@@ -11,8 +12,10 @@ export function UploadZone() {
   const [state, setState] = useState<UploadState>('idle')
   const [progress, setProgress] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
+  // A phone cannot drag a file, so on a coarse pointer the zone says what a
+  // tap does instead (mobile P1-4).
+  const coarsePointer = useCoarsePointer()
 
   const handleUpload = useCallback(async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -73,10 +76,17 @@ export function UploadZone() {
 
   const isUploading = state === 'uploading'
 
+  // The whole zone is the file input's <label>: a tap or click anywhere on it
+  // opens the file picker, and it is never shorter than a 44px touch target
+  // (mobile P1-4). The input inside stays the one tab stop, named for screen
+  // readers (app-arms P2-11); its focus ring is drawn on the zone.
   return (
-    <div
+    <label
+      htmlFor="oracle-file"
       className={clsx(
-        'relative flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-all duration-150',
+        'relative flex min-h-11 flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-all duration-150',
+        isUploading ? 'cursor-default' : 'cursor-pointer',
+        'has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-[var(--accent-oracle)]',
         state === 'dragging'
           ? 'border-[var(--accent-oracle)]/60 bg-[var(--accent-oracle)]/[0.06]'
           : state === 'error'
@@ -117,6 +127,7 @@ export function UploadZone() {
           <>
             <p className="text-sm font-medium text-status-danger">{error}</p>
             <button
+              type="button"
               className="mt-2 text-xs text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
               onClick={() => {
                 setState('idle')
@@ -128,29 +139,32 @@ export function UploadZone() {
           </>
         ) : (
           <>
-            <p className="text-sm font-medium text-text-primary">
-              Drop a PDF here or{' '}
-              <button
-                className="hover:underline underline-offset-2 transition-colors"
-                style={{ color: 'var(--accent-oracle)' }}
-                onClick={() => inputRef.current?.click()}
-              >
-                browse
-              </button>
-            </p>
+            {coarsePointer ? (
+              <p className="text-sm font-medium" style={{ color: 'var(--accent-oracle)' }}>
+                Choose a PDF
+              </p>
+            ) : (
+              <p className="text-sm font-medium text-text-primary">
+                Drop a PDF here or{' '}
+                <span className="underline-offset-2 hover:underline" style={{ color: 'var(--accent-oracle)' }}>
+                  browse
+                </span>
+              </p>
+            )}
             <p className="mt-1 text-xs text-text-muted">Government documents only. Max 10MB.</p>
           </>
         )}
       </div>
 
       <input
-        ref={inputRef}
+        id="oracle-file"
         type="file"
+        aria-label="Upload a government PDF, 10 MB maximum"
         accept=".pdf"
         className="sr-only"
         onChange={handleChange}
         disabled={isUploading}
       />
-    </div>
+    </label>
   )
 }
