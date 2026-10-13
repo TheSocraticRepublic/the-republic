@@ -229,6 +229,16 @@ describe.skipIf(!APP_UP)('front door geometry on the harness (Chromium)', () => 
     await context.close()
   }, 60_000)
 
+  it('control, 1024: the reason line back beside Start (pre-N2) moves Start on the first keystroke, and is caught', async () => {
+    const { context, page } = await open(NARROW_DESKTOP, '/investigate')
+    await page.addStyleTag({ content: '#concern-submit-reason{order:0 !important;flex-basis:auto !important}' })
+    const rest = await contentBox(page, START)
+    await page.getByLabel('Describe your concern').fill('A gravel mine expansion near the river was approved.')
+    const typed = await contentBox(page, START)
+    expect(typed).not.toEqual(rest)
+    await context.close()
+  }, 60_000)
+
   it('768 with activity: the form gets the full width, Recent Activity follows below (C3)', async () => {
     const { context, page } = await open(TABLET, '/investigate')
     const textarea = (await page.getByLabel('Describe your concern').boundingBox())!
