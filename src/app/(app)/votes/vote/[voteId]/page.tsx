@@ -44,60 +44,62 @@ export default async function VoteDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div data-arm="votes" className="mx-auto max-w-2xl px-6 py-10 space-y-10">
-      <VoteDetailCard
-        date={vote.date}
-        descriptionEn={vote.descriptionEn}
-        result={vote.result}
-        yeaTotal={vote.yeaTotal}
-        nayTotal={vote.nayTotal}
-        pairedTotal={vote.pairedTotal}
-        session={vote.session}
-        number={vote.number}
-      />
-
-      {bill && (
-        <Link
-          href={`/votes/bill/${bill.id}`}
-          className="block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3"
-          style={{
-            borderColor: 'var(--border)',
-            backgroundColor: 'var(--surface-1)',
-          }}
-        >
-          <span className="text-2xs font-semibold uppercase text-text-faint">Related Bill</span>
-          <p className="mt-1 text-xs text-text-secondary">
-            <span className="font-semibold" style={{ color: 'var(--accent-votes)' }}>{bill.number}</span>
-            {' — '}
-            {bill.titleEn}
-          </p>
-        </Link>
-      )}
-
-      {/* AI Explanation */}
-      <section>
-        <VoteExplanation voteId={voteId} existingExplanation={vote.aiExplanation} />
-      </section>
-
-      {partyVoteData.length > 0 && (
-        <section
-          className="rounded-xl border px-6 py-6"
-          style={{
-            borderColor: 'var(--border)',
-            backgroundColor: 'var(--surface-1)',
-          }}
-        >
-          <PartyBreakdown partyVotes={partyVoteData} />
-        </section>
-      )}
-
-      <section>
-        <div
-          className="mb-6 h-px w-full"
-          style={{ backgroundColor: 'var(--surface-3)' }}
+    <div data-arm="votes">
+      <div className="mx-auto max-w-2xl px-6 py-10 space-y-10">
+        <VoteDetailCard
+          date={vote.date}
+          descriptionEn={vote.descriptionEn}
+          result={vote.result}
+          yeaTotal={vote.yeaTotal}
+          nayTotal={vote.nayTotal}
+          pairedTotal={vote.pairedTotal}
+          session={vote.session}
+          number={vote.number}
         />
-        <BallotList voteId={voteId} />
-      </section>
+
+        {bill && (
+          <Link
+            href={`/votes/bill/${bill.id}`}
+            className="block rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3"
+            style={{
+              borderColor: 'var(--border)',
+              backgroundColor: 'var(--surface-1)',
+            }}
+          >
+            <span className="text-2xs font-semibold uppercase text-text-faint">Related Bill</span>
+            <p className="mt-1 text-xs text-text-secondary">
+              <span className="font-semibold" style={{ color: 'var(--accent-votes)' }}>{bill.number}</span>
+              {' — '}
+              {bill.titleEn}
+            </p>
+          </Link>
+        )}
+
+        {/* AI Explanation */}
+        <section>
+          <VoteExplanation voteId={voteId} existingExplanation={vote.aiExplanation} />
+        </section>
+
+        {partyVoteData.length > 0 && (
+          <section
+            className="rounded-xl border px-6 py-6"
+            style={{
+              borderColor: 'var(--border)',
+              backgroundColor: 'var(--surface-1)',
+            }}
+          >
+            <PartyBreakdown partyVotes={partyVoteData} />
+          </section>
+        )}
+
+        <section>
+          <div
+            className="mb-6 h-px w-full"
+            style={{ backgroundColor: 'var(--surface-3)' }}
+          />
+          <BallotList voteId={voteId} />
+        </section>
+      </div>
     </div>
   )
 }

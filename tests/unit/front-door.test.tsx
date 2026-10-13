@@ -17,8 +17,7 @@ import type { ComponentProps, ReactElement } from 'react'
  *
  * Stubbed only: the request headers (signed out, so no database read), the
  * database itself (asserted never reached), the Next router, the network
- * (fetch) and `matchMedia`. ScoutHistory is an async server component that
- * reads the database; it is replaced by nothing, since it is not C1's.
+ * (fetch) and `matchMedia`.
  */
 
 const push = vi.fn()
@@ -32,7 +31,6 @@ const getDb = vi.fn((): unknown => {
   throw new Error('the database is not reached while signed out')
 })
 vi.mock('@/lib/db', () => ({ getDb: () => getDb() }))
-vi.mock('@/components/scout/scout-history', () => ({ ScoutHistory: () => null }))
 
 import { CTAButton, type CTAButtonArm } from '@/components/ui/cta-button'
 import InvestigatePage from '@/app/(app)/investigate/page'

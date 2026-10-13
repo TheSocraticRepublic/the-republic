@@ -9,7 +9,7 @@ import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-libra
  */
 
 const push = vi.fn()
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }), useSearchParams: () => new URLSearchParams() }))
 
 import { NewActionDialog } from '@/components/lever/new-action-dialog'
 

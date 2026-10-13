@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { FileText } from 'lucide-react'
 import { MATERIAL_TYPE_LABELS, MATERIAL_TYPE_DESCRIPTIONS } from '@/lib/campaign/schemas'
 import { MediaSpecGenerator } from './media-spec-generator'
 import { ReasoningCard } from './reasoning-card'
@@ -251,7 +250,7 @@ export function CampaignPanel({ investigationId, concern: _, jurisdictionName: _
                 label: 'File a freedom-of-information request (FIPPA)',
                 href: `/lever?investigationId=${investigationId}&actionType=fippa_request`,
                 color: 'var(--accent-lever)',
-                icon: FileText,
+                icon: 'document',
               },
             ]}
           />

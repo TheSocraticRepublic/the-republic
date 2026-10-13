@@ -32,57 +32,59 @@ export default async function MpProfilePage({ params }: PageProps) {
   }
 
   return (
-    <div data-arm="votes" className="mx-auto max-w-2xl px-6 py-10 space-y-10">
-      {/* MP Profile */}
-      <MpProfileCard
-        name={mp.name}
-        party={mp.party}
-        ridingName={mp.ridingName}
-        ridingProvince={mp.ridingProvince}
-        email={mp.email}
-        photoUrl={mp.photoUrl}
-      />
-
-      {/* Write to your MP */}
-      <section>
-        <MpLetterGenerator mpId={mpId} mpName={mp.name} />
-      </section>
-
-      {/* Voting Patterns */}
-      <section>
-        <VotingPatterns mpId={mpId} />
-      </section>
-
-      {/* Contradiction Detection */}
-      <section>
-        <ContradictionList mpId={mpId} />
-      </section>
-
-      {/* Voting Record */}
-      <section>
-        <div
-          className="mb-6 h-px w-full"
-          style={{ backgroundColor: 'var(--surface-3)' }}
+    <div data-arm="votes">
+      <div className="mx-auto max-w-2xl px-6 py-10 space-y-10">
+        {/* MP Profile */}
+        <MpProfileCard
+          name={mp.name}
+          party={mp.party}
+          ridingName={mp.ridingName}
+          ridingProvince={mp.ridingProvince}
+          email={mp.email}
+          photoUrl={mp.photoUrl}
         />
-        <div className="flex items-center gap-3 mb-6">
-          <div
-            className="h-px flex-1"
-            style={{ backgroundColor: 'var(--surface-3)' }}
-          />
-          <span
-            className="text-3xs font-semibold uppercase"
-            style={{ color: 'var(--accent-votes)' }}
-          >
-            Voting Record
-          </span>
-          <div
-            className="h-px flex-1"
-            style={{ backgroundColor: 'var(--surface-3)' }}
-          />
-        </div>
 
-        <MpVoteList mpId={mpId} />
-      </section>
+        {/* Write to your MP */}
+        <section>
+          <MpLetterGenerator mpId={mpId} mpName={mp.name} />
+        </section>
+
+        {/* Voting Patterns */}
+        <section>
+          <VotingPatterns mpId={mpId} />
+        </section>
+
+        {/* Contradiction Detection */}
+        <section>
+          <ContradictionList mpId={mpId} />
+        </section>
+
+        {/* Voting Record */}
+        <section>
+          <div
+            className="mb-6 h-px w-full"
+            style={{ backgroundColor: 'var(--surface-3)' }}
+          />
+          <div className="flex items-center gap-3 mb-6">
+            <div
+              className="h-px flex-1"
+              style={{ backgroundColor: 'var(--surface-3)' }}
+            />
+            <span
+              className="text-3xs font-semibold uppercase"
+              style={{ color: 'var(--accent-votes)' }}
+            >
+              Voting Record
+            </span>
+            <div
+              className="h-px flex-1"
+              style={{ backgroundColor: 'var(--surface-3)' }}
+            />
+          </div>
+
+          <MpVoteList mpId={mpId} />
+        </section>
+      </div>
     </div>
   )
 }

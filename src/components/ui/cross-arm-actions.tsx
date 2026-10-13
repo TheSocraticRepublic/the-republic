@@ -1,13 +1,27 @@
 'use client'
 
 import Link from 'next/link'
-import { type LucideIcon } from 'lucide-react'
+import { FileText, GitCompare, MessageCircleQuestion, type LucideIcon } from 'lucide-react'
+
+/**
+ * Icons by key, chosen here on the client. A lucide icon is a forwardRef
+ * component, which React can't serialise from a server component to this
+ * client one: passing it as a prop crashed every ready Oracle document page
+ * (digest 3702761282). Every caller passes a string key instead.
+ */
+export const CROSS_ARM_ICONS = {
+  question: MessageCircleQuestion,
+  compare: GitCompare,
+  document: FileText,
+} satisfies Record<string, LucideIcon>
+
+export type CrossArmIcon = keyof typeof CROSS_ARM_ICONS
 
 export interface CrossArmAction {
   label: string
   href: string
   color: string
-  icon: LucideIcon
+  icon: CrossArmIcon
 }
 
 interface CrossArmActionsProps {
@@ -20,7 +34,7 @@ export function CrossArmActions({ actions }: CrossArmActionsProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       {actions.map((action) => {
-        const Icon = action.icon
+        const Icon = CROSS_ARM_ICONS[action.icon]
         // color-mix works with both hex and CSS custom properties (var(--accent-*)),
         // unlike the manual hex-parsing this replaced — that broke silently once
         // every caller migrated to token-based colors (NaN channels -> invalid rgba()).

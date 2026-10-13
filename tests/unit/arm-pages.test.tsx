@@ -1,0 +1,487 @@
+// @vitest-environment jsdom
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import fs from 'fs'
+import path from 'path'
+import postcss, { type Root, type Rule } from 'postcss'
+import tailwind from '@tailwindcss/postcss'
+
+/*
+ * The arm landings (UI plan C2a), rendered for real.
+ *
+ * - Every arm says what it is for, in an intro inside its header, before the
+ *   rule, in the arm's own copy register (app-arms P1-5; CLAUDE.md "Copy
+ *   register": Gadfly, and Lever's landing, aphoristic; Mirror convivial-plain;
+ *   Oracle, Scout and Votes plain-instructional).
+ * - Each empty state's action goes somewhere real: Gadfly's and Lever's open
+ *   their create dialogs (?new=1), Oracle's goes to Scout.
+ * - The arm room is the page, not the column: `data-arm` sits on a full-width
+ *   wrapper around the `max-w-2xl` column, and the compiled `[data-arm]` rule
+ *   fills its box with `min-height: 100%` (app-arms P2-1).
+ * - Mirror asks its question before its optional selects.
+ *
+ * The pages are the async server components called as Next calls them. Only
+ * the request headers, the database (an empty list for the signed-in user),
+ * the Next router and the network are stubbed.
+ */
+
+const replace = vi.fn()
+const push = vi.fn()
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push, replace, refresh: () => {}, back: () => {}, prefetch: () => {} }),
+  usePathname: () => '/',
+  // the address jsdom stands on, as the app router's hook reads it
+  useSearchParams: () => new URLSearchParams(window.location.search),
+}))
+vi.mock('next/headers', () => ({
+  headers: async () => new Headers({ 'x-user-id': 'user-a' }),
+}))
+/** Rows every list query returns: none, so each landing shows its empty state. */
+const rows: unknown[] = []
+vi.mock('@/lib/db', () => ({
+  getDb: () => ({
+    select: () => ({ from: () => ({ where: () => ({ orderBy: async () => rows }) }) }),
+  }),
+}))
+// next/link, reduced to the anchor it renders plus whether it replaces history
+// (jsdom has no app router for the real Link to navigate with).
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react')
+  return {
+    default: ({ href, replace: rep, children, ...rest }: { href: string; replace?: boolean; children?: import('react').ReactNode } & Record<string, unknown>) =>
+      createElement('a', { href, 'data-replace': rep ? 'true' : 'false', ...rest }, children),
+  }
+})
+
+import OraclePage from '@/app/(app)/oracle/page'
+import GadflyPage from '@/app/(app)/gadfly/page'
+import LeverPage from '@/app/(app)/lever/page'
+import MirrorPage from '@/app/(app)/mirror/page'
+import VotesPage from '@/app/(app)/votes/page'
+import ScoutPage from '@/app/(app)/scout/page'
+import { ARM_REGISTER } from '@/components/layout/arm-header'
+
+const REPO = path.resolve(__dirname, '../..')
+
+type Arm = 'oracle' | 'gadfly' | 'lever' | 'mirror' | 'votes' | 'scout'
+
+/** Stand on an address (the dialogs read ?new=1 from it). */
+const at = (address: string) => window.history.replaceState(null, '', address)
+
+async function renderArm(arm: Arm, params: Record<string, string> = {}) {
+  // A test that set its own address with the flag keeps it; otherwise the
+  // address carries the flag the page is rendered with.
+  if ('new' in params && !window.location.search.includes('new=')) at(`/${arm}?new=${params.new}`)
+  const searchParams = Promise.resolve(params)
+  switch (arm) {
+    case 'oracle':
+      return render(await OraclePage())
+    case 'gadfly':
+      return render(await GadflyPage({ searchParams }))
+    case 'lever':
+      return render(await LeverPage({ searchParams }))
+    case 'mirror':
+      return render(await MirrorPage({ searchParams }))
+    case 'votes':
+      return render(VotesPage())
+    case 'scout':
+      return render(ScoutPage())
+  }
+}
+
+/** The intro copy, verbatim, and the register each must be set in. */
+const INTROS: Record<Arm, { text: string; register: 'aphoristic' | 'convivial-plain' | 'plain-instructional' }> = {
+  oracle: {
+    text: 'Upload a government document. Oracle shows who it benefits, who bears its costs, and what it leaves out.',
+    register: 'plain-instructional',
+  },
+  gadfly: {
+    text: 'Questions that sharpen your thinking. The Gadfly asks; it never answers for you.',
+    register: 'aphoristic',
+  },
+  lever: {
+    text: 'What you have learned, put on the record. Lever drafts the FOI request, the public comment or the policy brief; you send it.',
+    register: 'aphoristic',
+  },
+  mirror: {
+    text: "Mirror sets a document or policy next to how other places handle the same issue, so you can see what's normal and what isn't.",
+    register: 'convivial-plain',
+  },
+  votes: {
+    text: 'Enter your postal code to find your Member of Parliament and see how they have voted in the House of Commons.',
+    register: 'plain-instructional',
+  },
+  scout: {
+    text: 'Name a topic or place. Scout lists the public records likely to cover it, where to look for each, and which ones you have to request.',
+    register: 'plain-instructional',
+  },
+}
+
+const ARMS = Object.keys(INTROS) as Arm[]
+
+const normalise = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').replace(/'/g, '’').trim()
+
+beforeEach(() => {
+  rows.length = 0
+  replace.mockClear()
+  push.mockReset()
+  // Mirror's form, the dialogs and the Votes badge read these on mount.
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/gadfly/session' && init?.method === 'POST')
+        return new Response(JSON.stringify({ sessionId: 's-new' }), { status: 200 })
+      if (url === '/api/lever/actions' && init?.method === 'POST')
+        return new Response(JSON.stringify({ actionId: 'a-new' }), { status: 200 })
+      if (url === '/api/lever/actions') return new Response(JSON.stringify({ actions: [] }), { status: 200 })
+      if (String(url).startsWith('/api/oracle/documents'))
+        return new Response(JSON.stringify({ documents: [] }), { status: 200 })
+      if (String(url).startsWith('/api/gadfly/sessions'))
+        return new Response(JSON.stringify({ sessions: [] }), { status: 200 })
+      return new Response(JSON.stringify({}), { status: 200 })
+    }),
+  )
+})
+
+afterEach(() => {
+  cleanup()
+  at('/')
+  vi.unstubAllGlobals()
+})
+
+describe('every arm says what it is for, in its own register (app-arms P1-5)', () => {
+  it('the register map follows CLAUDE.md', () => {
+    expect(ARM_REGISTER).toEqual({
+      scout: 'plain-instructional',
+      oracle: 'plain-instructional',
+      gadfly: 'aphoristic',
+      lever: 'aphoristic',
+      mirror: 'convivial-plain',
+      votes: 'plain-instructional',
+    })
+  })
+
+  for (const arm of ARMS) {
+    it(`${arm}: the intro is the copy, in the ${INTROS[arm].register} register, inside the header before the rule`, async () => {
+      const { container } = await renderArm(arm)
+      const intros = container.querySelectorAll('[data-arm-intro]')
+      expect(intros).toHaveLength(1)
+      const intro = intros[0] as HTMLElement
+      expect(normalise(intro.textContent)).toBe(normalise(INTROS[arm].text))
+      expect(intro.getAttribute('data-register')).toBe(INTROS[arm].register)
+
+      const classes = intro.className.split(/\s+/)
+      expect(classes).toEqual(expect.arrayContaining(['mt-4', 'text-sm', 'leading-relaxed', 'text-text-secondary']))
+      if (INTROS[arm].register === 'aphoristic') {
+        expect(classes).toEqual(expect.arrayContaining(['font-serif', 'italic']))
+      } else {
+        // the plain voices are sans: no serif, no italics (and the class list is real, above)
+        expect(classes).not.toContain('font-serif')
+        expect(classes).not.toContain('italic')
+      }
+
+      // after the title, before the header's rule, and the only purpose line on the page
+      const h1 = container.querySelector('h1')!
+      const rule = container.querySelector('.h-px.mt-6.mb-8')!
+      expect(h1).not.toBeNull()
+      expect(rule).not.toBeNull()
+      expect(h1.compareDocumentPosition(intro) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      expect(intro.compareDocumentPosition(rule) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      expect(rule.parentElement).toBe(intro.parentElement)
+    })
+  }
+
+  it('Gadfly keeps a two-word subtitle like every other arm; the long line moved into the intro', async () => {
+    const { container } = await renderArm('gadfly')
+    const subtitle = container.querySelector('h1 + p')!
+    expect(subtitle.textContent).toBe('Socratic inquiry')
+  })
+})
+
+/** Fill the minimum and press the dialog's create button. */
+async function submitCreate(arm: 'gadfly' | 'lever') {
+  if (arm === 'gadfly') {
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Inquiry' }))
+    return
+  }
+  fireEvent.change(screen.getByLabelText('Province'), { target: { value: 'bc' } })
+  fireEvent.change(screen.getByLabelText('What records do you want?'), { target: { value: 'Records.' } })
+  const generate = screen.getByRole('button', { name: 'Generate' })
+  await waitFor(() => expect(generate.getAttribute('aria-disabled')).toBe('false'))
+  fireEvent.click(generate)
+}
+
+describe('empty-state actions go somewhere real', () => {
+  const ROUTE_FILES: Record<string, string> = {
+    '/scout': 'src/app/(app)/scout/page.tsx',
+    '/gadfly': 'src/app/(app)/gadfly/page.tsx',
+    '/lever': 'src/app/(app)/lever/page.tsx',
+  }
+
+  const cases: { arm: Arm; label: string; href: string }[] = [
+    { arm: 'oracle', label: 'Find a document with Scout', href: '/scout' },
+    { arm: 'gadfly', label: 'Begin your first inquiry', href: '/gadfly?new=1' },
+    { arm: 'lever', label: 'Draft your first civic action', href: '/lever?new=1' },
+  ]
+
+  for (const { arm, label, href } of cases) {
+    it(`${arm}: the empty state links "${label}" to ${href}, a route that exists`, async () => {
+      await renderArm(arm)
+      const link = screen.getByRole('link', { name: label })
+      expect(link.getAttribute('href')).toBe(href)
+      // ?new=1 reopens this same page: replace, so dismissing leaves no dead Back step (Razor N2)
+      expect(link.getAttribute('data-replace')).toBe(href.includes('?new=1') ? 'true' : 'false')
+      // never smaller than the message: 14px, a 24px hit area, 44px on coarse pointers (Jen C6);
+      // the harness geometry test measures the boxes
+      const classes = link.className.split(/\s+/)
+      expect(classes).toEqual(expect.arrayContaining(['text-sm', 'inline-flex', 'items-center', 'min-h-6', 'pointer-coarse:min-h-11']))
+      expect(classes).not.toContain('text-xs')
+      expect(link.parentElement!.className).not.toMatch(/text-xs/)
+      const route = href.split('?')[0]
+      expect(fs.existsSync(path.join(REPO, ROUTE_FILES[route]))).toBe(true)
+    })
+  }
+
+  it('Oracle says where to start, plainly, without repeating the upload instruction above it (Jen C7)', async () => {
+    const { container } = await renderArm('oracle')
+    const message = screen.getByText('No documents yet.')
+    const card = message.parentElement!
+    expect(card.textContent).toBe('No documents yet.Find a document with Scout')
+    // Scout is named once in the card, and only the intro says "Upload a government document"
+    expect(card.textContent!.match(/Scout/g)).toHaveLength(1)
+    expect(container.textContent!.match(/Upload a government document/g)).toHaveLength(1)
+  })
+
+  it('Scout promises nothing it cannot produce: no "Recently found" list (Jen C4)', async () => {
+    const { container } = await renderArm('scout')
+    expect(container.querySelector('form, textarea, input')).not.toBeNull()
+    expect(container.textContent).not.toMatch(/Recently found|appear here/)
+    expect(container.textContent).toContain('Name a topic or place.')
+  })
+
+  it('Mirror shows one example, the question field\'s own, and says "places" (Jen C3)', async () => {
+    const { container } = await renderArm('mirror')
+    const intro = container.querySelector('[data-arm-intro]')!
+    expect(intro.textContent).not.toMatch(/Try|jurisdiction|rent/i)
+    expect(intro.textContent).toContain('other places')
+    expect(container.textContent).not.toMatch(/Try:|rent-increase/)
+    expect(document.getElementById('compare-description')!.getAttribute('placeholder')).toContain('short-term rental bylaws')
+  })
+
+  it('Gadfly: ?new=1 opens the Begin Inquiry dialog; without it the dialog is closed', async () => {
+    await renderArm('gadfly')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    cleanup()
+    await renderArm('gadfly', { new: '1' })
+    const dialog = await screen.findByRole('dialog')
+    expect(screen.getByRole('heading', { name: 'Begin Inquiry' })).toBeTruthy()
+    expect(dialog.contains(screen.getByRole('heading', { name: 'Begin Inquiry' }))).toBe(true)
+  })
+
+  it('Lever: ?new=1 opens the New Action dialog; without it the dialog is closed', async () => {
+    await renderArm('lever')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    cleanup()
+    await renderArm('lever', { new: '1' })
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog.contains(screen.getByRole('heading', { name: 'New Civic Action' }))).toBe(true)
+  })
+
+  // The production path: the empty state's link is a client navigation to the
+  // same page, so React keeps the page's tree and only the props change. The
+  // dialog must still open (Ted's browser check caught it staying shut).
+  for (const arm of ['gadfly', 'lever'] as const) {
+    it(`${arm}: a client navigation from the list to ?new=1 opens the dialog in the kept tree`, async () => {
+      const Page = arm === 'gadfly' ? GadflyPage : LeverPage
+      at(`/${arm}`)
+      const view = render(await Page({ searchParams: Promise.resolve({}) }))
+      expect(screen.queryByRole('dialog')).toBeNull()
+      at(`/${arm}?new=1`)
+      view.rerender(await Page({ searchParams: Promise.resolve({ new: '1' }) }))
+      expect(await screen.findByRole('dialog')).toBeTruthy()
+    })
+
+    it(`${arm}: closing a ?new=1 dialog takes the flag off the address and keeps the rest`, async () => {
+      window.history.replaceState(null, '', `/${arm}?new=1&documentId=d1`)
+      await renderArm(arm, { new: '1' })
+      await screen.findByRole('dialog')
+      fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+      expect(replace).toHaveBeenCalledWith(`/${arm}?documentId=d1`, { scroll: false })
+      window.history.replaceState(null, '', '/')
+    })
+
+    it(`${arm}: closing a ?new=1 dialog hands focus back to the trigger, which survives the flag going away (Razor W1)`, async () => {
+      const Page = arm === 'gadfly' ? GadflyPage : LeverPage
+      const triggerName = arm === 'gadfly' ? 'New Inquiry' : 'New Action'
+      at(`/${arm}`)
+      const view = render(await Page({ searchParams: Promise.resolve({}) }))
+      const trigger = screen.getByRole('button', { name: triggerName })
+      at(`/${arm}?new=1`)
+      view.rerender(await Page({ searchParams: Promise.resolve({ new: '1' }) }))
+      await screen.findByRole('dialog')
+      fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+      // the replace lands: the page renders again without the flag
+      expect(replace).toHaveBeenCalledWith(`/${arm}`, { scroll: false })
+      at(`/${arm}`)
+      view.rerender(await Page({ searchParams: Promise.resolve({}) }))
+      await waitFor(() => expect(document.activeElement).toBe(trigger))
+      expect(trigger.isConnected).toBe(true)
+      expect(screen.getByRole('button', { name: triggerName })).toBe(trigger)
+      // and the flag coming back opens it again in the same tree
+      at(`/${arm}?new=1`)
+      view.rerender(await Page({ searchParams: Promise.resolve({ new: '1' }) }))
+      expect(await screen.findByRole('dialog')).toBeTruthy()
+    })
+
+    it(`${arm}: a create from a ?new=1 dialog takes the flag off with replace before it navigates (Razor W2)`, async () => {
+      window.history.replaceState(null, '', `/${arm}?new=1`)
+      await renderArm(arm, { new: '1' })
+      await screen.findByRole('dialog')
+      // where the address stands at the moment the new page is pushed
+      let addressAtPush: string | null = null
+      push.mockImplementation(() => {
+        addressAtPush = window.location.pathname + window.location.search
+      })
+      await submitCreate(arm)
+      await waitFor(() => expect(push).toHaveBeenCalledWith(arm === 'gadfly' ? '/gadfly/s-new' : '/lever/a-new'))
+      // stripped synchronously, so the push can't supersede it
+      expect(addressAtPush).toBe(`/${arm}`)
+      window.history.replaceState(null, '', '/')
+    })
+
+    it(`${arm}: a create from the button-opened dialog leaves the address alone`, async () => {
+      await renderArm(arm)
+      fireEvent.click(screen.getByRole('button', { name: arm === 'gadfly' ? 'New Inquiry' : 'New Action' }))
+      await screen.findByRole('dialog')
+      window.history.replaceState(null, '', `/${arm}?documentId=d1`)
+      await submitCreate(arm)
+      await waitFor(() => expect(push).toHaveBeenCalled())
+      expect(replace).not.toHaveBeenCalled()
+      expect(window.location.pathname + window.location.search).toBe(`/${arm}?documentId=d1`)
+      window.history.replaceState(null, '', '/')
+    })
+
+    it(`${arm}: closing a dialog the button opened leaves the address alone`, async () => {
+      await renderArm(arm)
+      fireEvent.click(screen.getByRole('button', { name: arm === 'gadfly' ? 'New Inquiry' : 'New Action' }))
+      await screen.findByRole('dialog')
+      fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+      expect(replace).not.toHaveBeenCalled()
+    })
+  }
+
+  for (const arm of ['gadfly', 'lever'] as const) {
+    it(`${arm}: Back to an entry without the flag, restoring a render whose props still carry it, stays closed (Razor W2)`, async () => {
+      const Page = arm === 'gadfly' ? GadflyPage : LeverPage
+      at(`/${arm}`)
+      render(await Page({ searchParams: Promise.resolve({ new: '1' }) }))
+      // the trigger is there, the dialog is not
+      expect(screen.getByRole('button', { name: arm === 'gadfly' ? 'New Inquiry' : 'New Action' })).toBeTruthy()
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+  }
+
+  it('any other value of new leaves the dialogs closed', async () => {
+    await renderArm('gadfly', { new: '0' })
+    await renderArm('lever', { new: 'yes' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+})
+
+describe('the arm room is the page, not a column slab (app-arms P2-1)', () => {
+  let compiled: Root
+
+  beforeAll(async () => {
+    const file = path.join(REPO, 'src/app/globals.css')
+    const result = await postcss([tailwind()]).process(fs.readFileSync(file, 'utf8'), { from: file })
+    compiled = postcss.parse(result.css)
+  }, 60_000)
+
+  it('the compiled [data-arm] rule fills its box with min-height: 100%, not 100vh', () => {
+    const minHeights: string[] = []
+    compiled.walkRules('[data-arm]', (rule: Rule) => {
+      rule.walkDecls('min-height', (d) => {
+        minHeights.push(d.value)
+      })
+    })
+    expect(minHeights).toEqual(['100%'])
+  })
+
+  it('nothing else sizes the room: no height, width or overflow on [data-arm] (Razor N4)', () => {
+    const sizing: string[] = []
+    compiled.walkRules('[data-arm]', (rule: Rule) => {
+      rule.walkDecls(/^(height|max-height|width|max-width|min-width|overflow.*)$/, (d) => {
+        sizing.push(`${d.prop}: ${d.value}`)
+      })
+    })
+    expect(sizing).toEqual([])
+    // and the walk sees declarations at all (the background recipe is there)
+    let backgrounds = 0
+    compiled.walkRules('[data-arm]', (rule: Rule) => rule.walkDecls('background', () => void backgrounds++))
+    expect(backgrounds).toBeGreaterThan(1)
+  })
+
+  for (const arm of ARMS) {
+    it(`${arm}: data-arm is on a full-width outer wrapper; the column is inside it`, async () => {
+      const { container } = await renderArm(arm)
+      const rooms = container.querySelectorAll('[data-arm]')
+      expect(rooms).toHaveLength(1)
+      const room = rooms[0] as HTMLElement
+      expect(room.getAttribute('data-arm')).toBe(arm)
+      // the outermost element of the page
+      expect(room).toBe(container.firstElementChild)
+      // no width constraint on the room itself: no max-width, no centring, no padding
+      expect(room.getAttribute('class') ?? '').toBe('')
+      expect(room.getAttribute('style')).toBeNull()
+      // its one child is the readable column, which carries the width
+      expect(room.children).toHaveLength(1)
+      const column = room.firstElementChild as HTMLElement
+      expect(column.className.split(/\s+/)).toEqual(expect.arrayContaining(['mx-auto', 'max-w-2xl', 'px-6', 'py-10']))
+      expect(column.querySelector('h1')).not.toBeNull()
+    })
+  }
+})
+
+describe('the room holds one click in: every arm route wraps its column the same way (Jen C5)', () => {
+  // Source-level, because the subpages need their own data to render; the
+  // harness geometry test measures the rooms these wrappers paint.
+  const ROUTES = [
+    'scout', 'oracle', 'gadfly', 'lever', 'mirror', 'votes',
+    'lever/[id]', 'oracle/[id]', 'votes/mp', 'votes/recent', 'votes/mp/[mpId]', 'votes/bill/[billId]', 'votes/vote/[voteId]',
+  ]
+  for (const route of ROUTES) {
+    it(`${route}: data-arm sits alone on the outer wrapper, the column inside it`, () => {
+      const src = fs.readFileSync(path.join(REPO, 'src/app/(app)', route, 'page.tsx'), 'utf8')
+      const rooms = [...src.matchAll(/<div data-arm="(\w+)"([^>]*)>/g)]
+      expect(rooms).toHaveLength(1)
+      const [whole, arm, rest] = rooms[0]
+      expect(arm).toBe(route.split('/')[0])
+      expect(rest).toBe('')
+      const after = src.slice(src.indexOf(whole) + whole.length)
+      expect(after).toMatch(/^\s*<div className="mx-auto max-w-[^"]*px-6 py-10[^"]*">/)
+    })
+  }
+})
+
+describe("Mirror asks its question first", () => {
+  it('the question field comes before both optional selects', async () => {
+    await renderArm('mirror')
+    // the document select replaces its loading skeleton once the list arrives
+    const docSelect = await waitFor(() => {
+      const el = document.getElementById('compare-document')
+      if (!el) throw new Error('document select not rendered yet')
+      return el
+    })
+    const question = document.getElementById('compare-description')!
+    const area = document.getElementById('compare-policy-area')!
+    expect(question.tagName).toBe('TEXTAREA')
+    expect(question.compareDocumentPosition(docSelect) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(question.compareDocumentPosition(area) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // and it is the first form control in the form
+    const controls = Array.from(document.querySelectorAll('textarea, select, input'))
+    expect(controls[0]).toBe(question)
+  })
+})

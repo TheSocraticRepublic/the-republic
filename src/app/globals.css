@@ -612,10 +612,15 @@ body {
  * is warm. The guard is explicit because Tailwind's own generated fallback for
  * a color-mix() is the first argument, here the relative colour itself, which
  * those engines would drop too, leaving the room transparent.
+ *
+ * The room is the page, not the column (app-arms P2-1): `data-arm` sits on a
+ * full-width wrapper around the `max-w-2xl` column, and `min-height: 100%`
+ * fills the shell's scroll box. 100vh overshot it by the mobile header, so
+ * even an empty room scrolled.
  */
 [data-arm] {
   background: var(--surface-0);
-  min-height: 100vh;
+  min-height: 100%;
 }
 
 @supports (color: oklch(from red l c h)) {
