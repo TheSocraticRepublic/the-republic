@@ -125,6 +125,30 @@ const PILL_STYLE_UNAVAILABLE: CSSProperties = {
   border: '1px solid var(--border)',
 }
 
+/** Passed-through handlers that can activate a button: a wrapper (a Radix
+ *  DropdownMenu or Select trigger) may open on pointerdown or keydown rather
+ *  than click. While disabled or busy they are not called, the same as
+ *  onClick (Razor C2b N1). Focus, blur and hover handlers pass untouched. */
+const ACTIVATION_HANDLER = /^on(Pointer|Mouse|Key|Touch|Click|Context|Aux)/
+
+function guardActivation(
+  props: Record<string, unknown>,
+  refuse: boolean
+): Record<string, unknown> {
+  if (!refuse) return props
+  const out: Record<string, unknown> = {}
+  for (const [name, value] of Object.entries(props)) {
+    if (typeof value === 'function' && ACTIVATION_HANDLER.test(name)) {
+      // Swallowed, never preventDefault'd: Tab must still move focus off
+      // the button, and a press must still focus it.
+      out[name] = () => {}
+    } else {
+      out[name] = value
+    }
+  }
+  return out
+}
+
 export function CTAButton({
   children,
   className,
@@ -171,7 +195,7 @@ export function CTAButton({
 
   return (
     <button
-      {...passThrough}
+      {...guardActivation(passThrough, Boolean(disabled || busy))}
       ref={ref}
       type="button"
       onClick={handleClick}

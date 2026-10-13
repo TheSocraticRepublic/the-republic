@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react'
 import { clsx } from 'clsx'
+import { CircleAlert } from 'lucide-react'
 
 /*
  * Not a 'use client' module, on purpose: the server pages (Investigate) read
@@ -19,11 +20,20 @@ import { clsx } from 'clsx'
  * - **Field label**: 12px, 500, `text-text-secondary`, with an optional
  *   `(optional)` parenthetical in `text-text-faint`.
  * - **Control**: `border-border-strong`, `bg-surface-1`, `text-text-primary`,
- *   faint placeholder, and the arm's accent at 40% on the focused border.
+ *   faint placeholder. Focus strengthens the border to a neutral faint ink on
+ *   every arm: the arm's colour belongs to its action, and on Lever a red
+ *   border must only ever mean wrong (Jen C2b C1). An `aria-invalid` control
+ *   keeps a danger border, focused or not. Disabled is drawn in colour
+ *   (recessed fill, muted ink), never opacity (Jen C2b C4).
  * - **Description**: 12px muted, under the control, always referenced by the
  *   control's `aria-describedby`.
- * - **Error**: 12px danger, under the control; while it shows, the control is
- *   `aria-invalid` and described by it as well.
+ * - **Error**: 12px danger with an alert icon, so it never says "error" by
+ *   colour alone; while it shows, the control is `aria-invalid` and described
+ *   by it as well.
+ * - **Toggle**: one recipe for a pressed/unpressed choice (Gadfly's mode,
+ *   Lever's document type), neutral in both states, so the arm's tint sits
+ *   on the form's action only (Jen C2b C2).
+ * - **Reason line**: why the action is unavailable, 8px above its row.
  *
  * The control's font size is `text-sm`, which the unlayered phone rule in
  * globals.css raises to 16px below 768px (B1); this recipe never sets an
@@ -36,33 +46,42 @@ export const FIELD_LABEL_CLASS = 'mb-1.5 block text-xs font-medium text-text-sec
 
 export const FIELD_DESCRIPTION_CLASS = 'mt-1.5 text-xs text-text-muted'
 
-export const FIELD_ERROR_CLASS = 'mt-1.5 text-xs text-status-danger'
+export const FIELD_ERROR_CLASS = 'mt-1.5 flex items-start gap-1.5 text-xs text-status-danger'
 
-/** The arm whose accent marks the focused field; `neutral` strengthens the
- *  border instead. */
-export type FieldArm = 'scout' | 'oracle' | 'gadfly' | 'lever' | 'mirror' | 'votes' | 'neutral'
+/** Why an action is unavailable: one muted line, right-aligned, 8px above
+ *  the action's row (Jen C2b C5). */
+export const FIELD_REASON_CLASS = 'mb-2 text-right text-xs text-text-muted'
 
-// Literal strings, one per arm, so Tailwind's scanner sees every class.
-const FOCUS_BORDER: Record<FieldArm, string> = {
-  scout: 'focus:border-[var(--accent-scout)]/40',
-  oracle: 'focus:border-[var(--accent-oracle)]/40',
-  gadfly: 'focus:border-[var(--accent-gadfly)]/40',
-  lever: 'focus:border-[var(--accent-lever)]/40',
-  mirror: 'focus:border-[var(--accent-mirror)]/40',
-  votes: 'focus:border-[var(--accent-votes)]/40',
-  neutral: 'focus:border-text-faint',
+/** The non-colour cue on every error line: a 13px alert icon, hidden from
+ *  the accessibility tree (the words carry the meaning). Put it first in a
+ *  `flex items-start gap-1.5` line, as FIELD_ERROR_CLASS does. */
+export function ErrorMark() {
+  return <CircleAlert size={13} strokeWidth={2} aria-hidden="true" className="mt-px shrink-0" />
 }
 
 /** The control recipe. `select` adds room for the chevron and drops the UA
  *  arrow; `textarea` stops the resize handle. */
-export function fieldControlClass(arm: FieldArm, kind: 'input' | 'select' | 'textarea' = 'input'): string {
+export function fieldControlClass(kind: 'input' | 'select' | 'textarea' = 'input'): string {
   return clsx(
     'w-full rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:ring-0',
-    'disabled:cursor-not-allowed disabled:opacity-50',
+    'focus:not-aria-invalid:border-text-faint aria-invalid:border-status-danger',
+    'disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-2 disabled:text-text-muted',
     kind === 'select' && 'appearance-none pr-8',
-    kind === 'textarea' && 'resize-none',
-    FOCUS_BORDER[arm]
+    kind === 'textarea' && 'resize-none'
   )
+}
+
+/** A pressed/unpressed choice button: neutral in both states, pressed told
+ *  apart by lightness (a muted-ink border on surface-3), not hue. */
+export function fieldToggleClasses(pressed: boolean): { button: string; label: string; description: string } {
+  return {
+    button: clsx(
+      'rounded-lg border px-3 py-2.5 text-left transition-colors duration-150',
+      pressed ? 'border-text-muted bg-surface-3' : 'border-border-strong bg-surface-1 hover:bg-surface-2'
+    ),
+    label: clsx('block text-sm font-medium', pressed ? 'text-text-primary' : 'text-text-secondary'),
+    description: clsx('mt-0.5 block text-xs', pressed ? 'text-text-secondary' : 'text-text-muted'),
+  }
 }
 
 /** The props a field hands its control. Spread them onto the input, select
@@ -73,28 +92,39 @@ export interface FieldControlProps {
   'aria-invalid'?: true
 }
 
-/** The label, alone: for a group of buttons (named by its own `aria-label`)
- *  or a control the caller wires itself. */
+/** The label, alone. With `htmlFor` it is the `<label>` of a control the
+ *  caller wires itself. Without it, it names a group: it renders a `<p>` with
+ *  `id`, and the group takes `aria-labelledby` that id, so its accessible
+ *  name is the visible words (Jen C2b C6). */
 export function FieldLabel({
   htmlFor,
+  id,
   optional,
   children,
   className,
 }: {
   htmlFor?: string
+  id?: string
   optional?: boolean
   children: ReactNode
   className?: string
 }) {
+  // The space lives inside the span's own text: a separate `{' '}` node is
+  // isolated by React's server-render separators, and Chromium drops it from
+  // the accessible name ("Policy area(optional)", Jen C2b C7).
+  const parenthetical = optional && <span className="text-text-faint">{' (optional)'}</span>
+  if (htmlFor === undefined) {
+    return (
+      <p id={id} className={clsx(FIELD_LABEL_CLASS, className)}>
+        {children}
+        {parenthetical}
+      </p>
+    )
+  }
   return (
-    <label htmlFor={htmlFor} className={clsx(FIELD_LABEL_CLASS, className)}>
+    <label htmlFor={htmlFor} id={id} className={clsx(FIELD_LABEL_CLASS, className)}>
       {children}
-      {optional && (
-        <>
-          {' '}
-          <span className="text-text-faint">(optional)</span>
-        </>
-      )}
+      {parenthetical}
     </label>
   )
 }
@@ -149,7 +179,8 @@ export function Field({ label, optional, id, description, error, describedBy, cl
       )}
       {hasError && (
         <p id={errorId} className={FIELD_ERROR_CLASS}>
-          {error}
+          <ErrorMark />
+          <span>{error}</span>
         </p>
       )}
     </div>
