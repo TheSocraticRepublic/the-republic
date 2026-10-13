@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import fs from 'fs'
 import path from 'path'
 import postcss, { type Root, type Rule } from 'postcss'
@@ -26,8 +26,9 @@ import tailwind from '@tailwindcss/postcss'
  * component that is not C2a's) are stubbed.
  */
 
+const replace = vi.fn()
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: () => {}, replace: () => {}, refresh: () => {}, back: () => {}, prefetch: () => {} }),
+  useRouter: () => ({ push: () => {}, replace, refresh: () => {}, back: () => {}, prefetch: () => {} }),
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
 }))
@@ -107,6 +108,7 @@ const normalise = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' 
 
 beforeEach(() => {
   rows.length = 0
+  replace.mockClear()
   // Mirror's form, the dialogs and the Votes badge read these on mount.
   vi.stubGlobal(
     'fetch',
@@ -220,6 +222,38 @@ describe('empty-state actions go somewhere real', () => {
     const dialog = await screen.findByRole('dialog')
     expect(dialog.contains(screen.getByRole('heading', { name: 'New Civic Action' }))).toBe(true)
   })
+
+  // The production path: the empty state's link is a client navigation to the
+  // same page, so React keeps the page's tree and only the props change. The
+  // dialog must still open (Ted's browser check caught it staying shut).
+  for (const arm of ['gadfly', 'lever'] as const) {
+    it(`${arm}: a client navigation from the list to ?new=1 opens the dialog in the kept tree`, async () => {
+      const Page = arm === 'gadfly' ? GadflyPage : LeverPage
+      const view = render(await Page({ searchParams: Promise.resolve({}) }))
+      expect(screen.queryByRole('dialog')).toBeNull()
+      view.rerender(await Page({ searchParams: Promise.resolve({ new: '1' }) }))
+      expect(await screen.findByRole('dialog')).toBeTruthy()
+    })
+
+    it(`${arm}: closing a ?new=1 dialog takes the flag off the address and keeps the rest`, async () => {
+      window.history.replaceState(null, '', `/${arm}?new=1&documentId=d1`)
+      await renderArm(arm, { new: '1' })
+      await screen.findByRole('dialog')
+      fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+      expect(replace).toHaveBeenCalledWith(`/${arm}?documentId=d1`, { scroll: false })
+      window.history.replaceState(null, '', '/')
+    })
+
+    it(`${arm}: closing a dialog the button opened leaves the address alone`, async () => {
+      await renderArm(arm)
+      fireEvent.click(screen.getByRole('button', { name: arm === 'gadfly' ? 'New Inquiry' : 'New Action' }))
+      await screen.findByRole('dialog')
+      fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+      expect(replace).not.toHaveBeenCalled()
+    })
+  }
 
   it('any other value of new leaves the dialogs closed', async () => {
     await renderArm('gadfly', { new: '0' })

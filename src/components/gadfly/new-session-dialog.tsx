@@ -73,6 +73,14 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
 
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v)
+    if (!v && initialOpen) {
+      // Opened by ?new=1: take the flag off the address on close, so a reload
+      // doesn't reopen it and the empty state's link opens it again next time
+      // (the page keys this dialog on the flag, so the flag's return remounts it open).
+      const url = new URL(window.location.href)
+      url.searchParams.delete('new')
+      router.replace(url.pathname + url.search, { scroll: false })
+    }
     if (!v) {
       // Reset to empty (not initial values) after dialog is closed
       setSelectedDocId('')
@@ -80,7 +88,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
       setMode('socratic')
       setCreateError(null)
     }
-  }, [])
+  }, [initialOpen, router])
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>

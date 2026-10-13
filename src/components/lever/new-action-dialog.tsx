@@ -264,6 +264,14 @@ export function NewActionDialog({
 
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v)
+    if (!v && initialOpen) {
+      // Opened by ?new=1: take the flag off the address on close, so a reload
+      // doesn't reopen it and the empty state's link opens it again next time
+      // (the page keys this dialog on the flag, so the flag's return remounts it open).
+      const url = new URL(window.location.href)
+      url.searchParams.delete('new')
+      router.replace(url.pathname + url.search, { scroll: false })
+    }
     if (!v) {
       setActionType((initialActionType as ActionType) || 'fippa_request')
       setPublicBodyChoice('')
@@ -278,7 +286,7 @@ export function NewActionDialog({
       setDupWarning(false)
       setCreateError(null)
     }
-  }, [initialActionType])
+  }, [initialActionType, initialOpen, router])
 
   // When pre-filled from cross-arm nav, trigger document/session fetch on mount
   // The existing useEffect already handles this when open=true

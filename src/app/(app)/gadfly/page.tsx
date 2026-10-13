@@ -54,6 +54,9 @@ export default async function GadflyPage({ searchParams }: GadflyPageProps) {
               initialDocumentId={initialDocumentId}
               initialTitle={initialTitle ? decodeURIComponent(initialTitle) : undefined}
               initialOpen={openNew === '1'}
+              // Remount on the flag: a client navigation from the empty state
+              // to ?new=1 keeps this component, and useState reads its prop once.
+              key={openNew === '1' ? 'new' : 'list'}
             />
           }
         />

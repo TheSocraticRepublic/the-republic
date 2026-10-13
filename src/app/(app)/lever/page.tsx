@@ -68,6 +68,9 @@ export default async function LeverPage({ searchParams }: LeverPageProps) {
               initialInvestigationId={initialInvestigationId}
               initialActionType={initialActionType}
               initialOpen={openNew === '1'}
+              // Remount on the flag: a client navigation from the empty state
+              // to ?new=1 keeps this component, and useState reads its prop once.
+              key={openNew === '1' ? 'new' : 'list'}
             />
           }
         />
