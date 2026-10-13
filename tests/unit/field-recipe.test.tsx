@@ -587,6 +587,14 @@ describe('Gadfly’s create dialog', () => {
     expect(screen.queryByText('Loading your document…')).toBeNull()
   })
 
+  it('once the list arrives without the chosen document, nothing still says it is loading', async () => {
+    installFetch({ 'GET /api/oracle/documents': () => ({ ok: true, status: 200, json: async () => ({ documents: [] }) }) })
+    render(<NewSessionDialog initialDocumentId="doc-gone" />)
+    const select = (await screen.findByLabelText('Document (optional)')) as HTMLSelectElement
+    await waitFor(() => expect(select.hasAttribute('aria-busy')).toBe(false))
+    expect([...select.options].map((o) => o.textContent)).toEqual(['No document — open inquiry'])
+  })
+
   it('opened with no document, the loading select offers only "No document"', async () => {
     installFetch({ 'GET /api/oracle/documents': () => new Promise(() => {}) })
     render(<NewSessionDialog initialOpen />)
