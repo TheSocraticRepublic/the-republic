@@ -119,7 +119,7 @@ const normalise = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' 
 beforeEach(() => {
   rows.length = 0
   replace.mockClear()
-  push.mockClear()
+  push.mockReset()
   // Mirror's form, the dialogs and the Votes badge read these on mount.
   vi.stubGlobal(
     'fetch',
@@ -299,10 +299,15 @@ describe('empty-state actions go somewhere real', () => {
       window.history.replaceState(null, '', `/${arm}?new=1`)
       await renderArm(arm, { new: '1' })
       await screen.findByRole('dialog')
+      // where the address stands at the moment the new page is pushed
+      let addressAtPush: string | null = null
+      push.mockImplementation(() => {
+        addressAtPush = window.location.pathname + window.location.search
+      })
       await submitCreate(arm)
       await waitFor(() => expect(push).toHaveBeenCalledWith(arm === 'gadfly' ? '/gadfly/s-new' : '/lever/a-new'))
-      expect(replace).toHaveBeenCalledWith(`/${arm}`, { scroll: false })
-      expect(replace.mock.invocationCallOrder[0]).toBeLessThan(push.mock.invocationCallOrder[0])
+      // stripped synchronously, so the push can't supersede it
+      expect(addressAtPush).toBe(`/${arm}`)
       window.history.replaceState(null, '', '/')
     })
 
@@ -310,9 +315,12 @@ describe('empty-state actions go somewhere real', () => {
       await renderArm(arm)
       fireEvent.click(screen.getByRole('button', { name: arm === 'gadfly' ? 'New Inquiry' : 'New Action' }))
       await screen.findByRole('dialog')
+      window.history.replaceState(null, '', `/${arm}?documentId=d1`)
       await submitCreate(arm)
       await waitFor(() => expect(push).toHaveBeenCalled())
       expect(replace).not.toHaveBeenCalled()
+      expect(window.location.pathname + window.location.search).toBe(`/${arm}?documentId=d1`)
+      window.history.replaceState(null, '', '/')
     })
 
     it(`${arm}: closing a dialog the button opened leaves the address alone`, async () => {

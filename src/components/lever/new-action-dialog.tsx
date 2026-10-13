@@ -276,7 +276,11 @@ export function NewActionDialog({
         throw new Error(`Create failed (${res.status})`)
       }
       setOpen(false)
-      if (initialOpen) clearNewFlag()
+      // Synchronously, not through router.replace: a router.replace followed
+      // at once by router.push is superseded by the push, which left the
+      // flag in history behind the new page (measured on the harness).
+      // Next syncs native replaceState with its router; the state is kept.
+      if (initialOpen) window.history.replaceState(window.history.state, '', withoutNewFlag())
       router.push(`/lever/${data.actionId}`)
     } catch (err) {
       console.error(err)
@@ -285,7 +289,7 @@ export function NewActionDialog({
       creatingRef.current = false
       setLoading(false)
     }
-  }, [actionType, publicBodyName, province, selectedDocId, selectedSessionId, investigationId, description, router, initialOpen, clearNewFlag])
+  }, [actionType, publicBodyName, province, selectedDocId, selectedSessionId, investigationId, description, router, initialOpen])
 
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v)

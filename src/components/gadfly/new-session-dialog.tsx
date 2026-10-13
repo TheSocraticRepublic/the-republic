@@ -86,7 +86,11 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to create session')
       setOpen(false)
-      if (initialOpen) clearNewFlag()
+      // Synchronously, not through router.replace: a router.replace followed
+      // at once by router.push is superseded by the push, which left the
+      // flag in history behind the new page (measured on the harness).
+      // Next syncs native replaceState with its router; the state is kept.
+      if (initialOpen) window.history.replaceState(window.history.state, '', withoutNewFlag())
       router.push(`/gadfly/${data.sessionId}`)
     } catch (err) {
       console.error(err)
@@ -94,7 +98,7 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
     } finally {
       setLoading(false)
     }
-  }, [selectedDocId, title, mode, router, initialOpen, clearNewFlag])
+  }, [selectedDocId, title, mode, router, initialOpen])
 
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v)
