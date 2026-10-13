@@ -27,6 +27,7 @@ export function ConcernForm() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const submitRef = useRef<HTMLButtonElement>(null)
 
   // Auto-focus the textarea on mount
   useEffect(() => {
@@ -47,9 +48,13 @@ export function ConcernForm() {
       .finally(() => setFetchingJurisdictions(false))
   }, [])
 
-  const handleStartInvestigation = useCallback(async () => {
-    if (!concern.trim() || loading) return
+  // The one predicate every submit path checks before dispatching: the
+  // button (CTAButton's aria-disabled click guard) and the Cmd/Ctrl+Enter
+  // shortcut below. handleStartInvestigation itself does not re-check it, so
+  // each path's own guard is what stands between it and a request.
+  const canSubmit = concern.trim().length > 0 && !loading
 
+  const handleStartInvestigation = useCallback(async () => {
     if (abortRef.current) {
       abortRef.current.abort()
     }
@@ -97,7 +102,7 @@ export function ConcernForm() {
       }
       setLoading(false)
     }
-  }, [concern, selectedJurisdictionId, postalCode, loading, router])
+  }, [concern, selectedJurisdictionId, postalCode, router])
 
   const handleCancel = useCallback(() => {
     if (abortRef.current) {
@@ -110,13 +115,16 @@ export function ConcernForm() {
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
+        if (!canSubmit) return
+        // The textarea locks while loading, which would drop focus to the
+        // body; move it to the Start button first, which scrolls the busy
+        // state into view and keeps the place after an error (Jen C3).
+        submitRef.current?.focus()
         handleStartInvestigation()
       }
     },
-    [handleStartInvestigation]
+    [canSubmit, handleStartInvestigation]
   )
-
-  const canSubmit = concern.trim().length > 0 && !loading
 
   return (
     <div className="space-y-4">
@@ -208,7 +216,12 @@ export function ConcernForm() {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-3 pt-1">
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
+        {!concern.trim() && !loading && (
+          <p id="concern-submit-reason" className="text-xs text-text-muted">
+            Describe your concern to start.
+          </p>
+        )}
         {loading && (
           <button
             onClick={handleCancel}
@@ -218,11 +231,18 @@ export function ConcernForm() {
             Cancel
           </button>
         )}
-        <CTAButton onClick={handleStartInvestigation} disabled={!canSubmit} size="md">
+        <CTAButton
+          ref={submitRef}
+          onClick={handleStartInvestigation}
+          disabled={!concern.trim()}
+          busy={loading}
+          describedBy="concern-submit-reason"
+          size="md"
+        >
           {loading ? (
             <>
               <Loader2 size={14} strokeWidth={2} className="animate-spin" />
-              Starting investigation...
+              Starting…
             </>
           ) : (
             <>

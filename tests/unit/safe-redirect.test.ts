@@ -19,21 +19,23 @@ function navigatedOrigin(result: string): string {
 }
 
 describe('safeRedirectTarget: critic r3 escapes (normaliser turns a path into //host)', () => {
-  it.each(['/.//evil.example', '/a/..//evil.example', '/%2e//evil.example'])(
-    '%s stays on the app origin and comes back absolute',
+  it.each(['/.//evil.example', '/a/..//evil.example', '/%2e//evil.example', '/./%2e//evil.example'])(
+    '%s normalises to a "//" path and falls back on the app origin',
     (raw) => {
+      // The parse itself yields pathname "//evil.example" (shown, so the
+      // refusal below is the helper's doing, not the input failing to parse).
+      expect(new URL(raw, ORIGIN).pathname).toBe('//evil.example')
       const result = safeRedirectTarget(raw, ORIGIN)
+      expect(result).toBe(FALLBACK)
       expect(navigatedOrigin(result)).toBe(ORIGIN)
-      // Absolute: a relative re-serialisation ("//evil.example") is the leak.
-      expect(result.startsWith(`${ORIGIN}/`)).toBe(true)
-      expect(new URL(result).origin).toBe(ORIGIN)
+      expect(new URL(result).pathname).toBe('/investigate')
     },
   )
 
-  it('/.//evil.example is returned as the parsed absolute URL, not its pathname', () => {
-    const result = safeRedirectTarget('/.//evil.example', ORIGIN)
-    expect(result).toBe(`${ORIGIN}//evil.example`)
-    expect(navigatedOrigin(result)).toBe(ORIGIN)
+  it('a normalised path that keeps a single leading slash is still accepted', () => {
+    // Positive sibling: dot segments alone are not refused, only a "//" result.
+    expect(safeRedirectTarget('/a/../votes', ORIGIN)).toBe(`${ORIGIN}/votes`)
+    expect(safeRedirectTarget('/./lever', ORIGIN)).toBe(`${ORIGIN}/lever`)
   })
 })
 

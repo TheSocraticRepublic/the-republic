@@ -13,9 +13,12 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
     const ip = getClientIp(request)
     const { success } = await checkRateLimit(`send-code:${ip}`)
 
+    // `scope` tells the page which window applies (per IP: 30 per sliding
+    // 60 s; global: GLOBAL_SEND_CODE_LIMIT per 5 min), so its copy can name
+    // the real wait. It carries nothing about the caller or the address.
     if (!success) {
       return NextResponse.json(
-        { error: 'Too many requests. Wait before requesting another code.' },
+        { error: 'Too many requests. Wait before requesting another code.', scope: 'ip' },
         { status: 429 }
       )
     }
@@ -26,7 +29,7 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
     const { success: globalOk } = await checkGlobalSendCodeLimit()
     if (!globalOk) {
       return NextResponse.json(
-        { error: 'Too many requests. Wait before requesting another code.' },
+        { error: 'Too many requests. Wait before requesting another code.', scope: 'global' },
         { status: 429 }
       )
     }
@@ -38,9 +41,11 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
     }
 
-    await sendMagicCode(email)
+    const result = await sendMagicCode(email)
 
-    return NextResponse.json({ ok: true })
+    // 200 either way; `sent: false` says no new code went out because one was
+    // sent moments ago and is still usable (the page tells the citizen so).
+    return NextResponse.json(result.sent ? { ok: true, sent: true } : { ok: true, sent: false, reason: result.reason })
   } catch (err) {
     console.error('[auth] send-code error:', err)
     const message = err instanceof Error ? err.message : 'Failed to send code'

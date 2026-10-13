@@ -19,7 +19,15 @@ function hashCode(code: string): string {
 
 const DEDUP_WINDOW_MS = 30_000
 
-export async function sendMagicCode(email: string): Promise<void> {
+/**
+ * `sent: false` means the dedup skipped: an unused, unexpired code that is
+ * still accepting attempts went out less than DEDUP_WINDOW_MS ago, and it is
+ * still the one to use. The result depends only on codes requested for this
+ * address, never on whether an account exists.
+ */
+export type SendResult = { sent: true } | { sent: false; reason: 'recent' }
+
+export async function sendMagicCode(email: string): Promise<SendResult> {
   const normalized = email.toLowerCase().trim()
   const db = getDb()
 
@@ -40,7 +48,11 @@ export async function sendMagicCode(email: string): Promise<void> {
           eq(magicCodes.email, normalized),
           isNull(magicCodes.usedAt),
           gt(magicCodes.createdAt, dedupCutoff),
-          gt(magicCodes.expiresAt, new Date())
+          gt(magicCodes.expiresAt, new Date()),
+          // A locked-out code (attempts exhausted) is never "the code to use":
+          // skipping the send would strand the user until the window passed.
+          // The per-hour cap below still applies to the replacement.
+          lt(magicCodes.attempts, MAX_VERIFY_ATTEMPTS)
         )
       )
       .limit(1)
@@ -99,7 +111,9 @@ export async function sendMagicCode(email: string): Promise<void> {
   // is null and we do nothing (the previous code is still valid).
   if (plainCode) {
     await sendMagicCodeEmail(normalized, plainCode)
+    return { sent: true }
   }
+  return { sent: false, reason: 'recent' }
 }
 
 export type VerifyResult =
