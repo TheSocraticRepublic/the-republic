@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { createHash } from 'node:crypto'
+import { createHash, createHmac } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { SignJWT } from 'jose'
 import type { Browser } from 'playwright'
 
 /*
@@ -672,6 +671,13 @@ describe('mobile P2-12', () => {
     expect(page).toContain('<div className="relative min-h-full">')
   })
 
+  it('field.tsx is not a client module, so a server page reads its class strings as strings', () => {
+    const source = read('src/components/ui/field.tsx')
+    expect(source).toContain('export const SECTION_LABEL_CLASS =')
+    expect(source).not.toMatch(/^\s*['"]use client['"]/m)
+    expect(typeof SECTION_LABEL_CLASS).toBe('string')
+  })
+
   it('Investigate’s Recent Activity heading is the one section label', () => {
     const page = read('src/app/(app)/investigate/page.tsx')
     expect(page).toContain('<h2 className={`mb-6 ${SECTION_LABEL_CLASS}`}>Recent Activity</h2>')
@@ -711,6 +717,15 @@ if (!APP_UP) {
   console.warn(message)
 }
 
+/** The session the app's jwt.ts verifies (HS256, sub = the user), signed with
+ *  node's own HMAC: jose's Uint8Array check fails across jsdom's realm. */
+function signSession(secret: string): string {
+  const b64 = (v: object) => Buffer.from(JSON.stringify(v)).toString('base64url')
+  const now = Math.floor(Date.now() / 1000)
+  const head = `${b64({ alg: 'HS256' })}.${b64({ email: 'qa-owner-a@example.test', sub: USER_A, iat: now, exp: now + 3600 })}`
+  return `${head}.${createHmac('sha256', secret).update(head).digest('base64url')}`
+}
+
 describe.skipIf(!APP_UP)('"New Investigation" at 320, on the harness (Chromium)', () => {
   let browser: Browser
   let token: string
@@ -718,12 +733,7 @@ describe.skipIf(!APP_UP)('"New Investigation" at 320, on the harness (Chromium)'
   beforeAll(async () => {
     const { chromium } = await import('playwright')
     browser = await chromium.launch()
-    token = await new SignJWT({ email: 'qa-owner-a@example.test' })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setSubject(USER_A)
-      .setIssuedAt()
-      .setExpirationTime('1h')
-      .sign(new TextEncoder().encode(STATE!.jwtSecret))
+    token = signSession(STATE!.jwtSecret)
   }, 60_000)
 
   afterAll(async () => {
@@ -740,7 +750,8 @@ describe.skipIf(!APP_UP)('"New Investigation" at 320, on the harness (Chromium)'
     const page = await context.newPage()
     await page.goto(`${APP_URL}/investigations`, { waitUntil: 'networkidle' })
     if (css) await page.addStyleTag({ content: css })
-    const link = page.getByRole('link', { name: 'New Investigation' })
+    // The page's own button, not the sidebar's link of the same name.
+    const link = page.locator('#main-content').getByRole('link', { name: 'New Investigation' })
     await link.waitFor()
     const result = await link.evaluate((el) => {
       const r = el.getBoundingClientRect()

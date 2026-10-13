@@ -1,7 +1,14 @@
-'use client'
-
 import { useId, type ReactNode } from 'react'
 import { clsx } from 'clsx'
+
+/*
+ * Not a 'use client' module, on purpose: the server pages (Investigate) read
+ * SECTION_LABEL_CLASS, and a client module's exports reach a server component
+ * as client references, so the class string arrived as a function's source
+ * (measured on the harness). Nothing here needs the client: `useId` runs in
+ * either environment, and the client forms that render Field bundle it as
+ * their own.
+ */
 
 /**
  * One label style and one field recipe for the app's forms (app-arms P2-12).
