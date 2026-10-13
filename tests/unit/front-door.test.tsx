@@ -439,6 +439,16 @@ describe('Scout is search-shaped', () => {
     expect(query.hasAttribute('aria-disabled')).toBe(false)
   })
 
+  it('once a search finishes, the next Enter searches again', async () => {
+    const { query } = await renderScout()
+    fireEvent.change(query, { target: { value: 'budget' } })
+    await enter(query)
+    await waitFor(() => expect(query.readOnly).toBe(false))
+    fireEvent.change(query, { target: { value: 'minutes' } })
+    await enter(query)
+    expect(scoutBodies).toEqual([{ concern: 'budget' }, { concern: 'minutes' }])
+  })
+
   it('two Enters dispatched in the same task search once (Razor N1)', async () => {
     discoverMode = 'held'
     const { query } = await renderScout()
