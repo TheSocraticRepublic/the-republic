@@ -474,6 +474,12 @@ describe('the login card is paper', () => {
     expect(classes.some((c) => c.includes('from-surface-0/80'))).toBe(true)
   })
 
+  it('sets the photograph low, so the bright crevice is below the card', async () => {
+    await renderLogin()
+    const photo = document.querySelector('[style*="cave-login.jpg"]') as HTMLElement | null
+    expect(photo?.style.backgroundPosition).toBe('center 70%')
+  })
+
   it('scrims the brand block', async () => {
     await renderLogin()
     const heading = screen.getByRole('heading', { name: 'Open Cave' })
