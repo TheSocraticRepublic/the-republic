@@ -207,7 +207,8 @@ async function submitCreate(arm: 'gadfly' | 'lever') {
   fireEvent.change(screen.getByLabelText('Province'), { target: { value: 'bc' } })
   fireEvent.change(screen.getByLabelText('What records do you want?'), { target: { value: 'Records.' } })
   const generate = screen.getByRole('button', { name: 'Generate' })
-  await waitFor(() => expect(generate.getAttribute('aria-disabled')).toBe('false'))
+  // Available: no aria-disabled at all (CTAButton, UI plan C2b).
+  await waitFor(() => expect(generate.hasAttribute('aria-disabled')).toBe(false))
   fireEvent.click(generate)
 }
 

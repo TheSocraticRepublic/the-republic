@@ -100,7 +100,8 @@ describe('NewActionDialog', () => {
     await waitFor(() => expect(provinceSelect().value).toBe('bc'))
     fireEvent.change(screen.getByLabelText('What records do you want?'), { target: { value: 'Records.' } })
     const generate = screen.getByRole('button', { name: 'Generate' }) as HTMLButtonElement
-    expect(generate.getAttribute('aria-disabled')).toBe('false')
+    // Available: no aria-disabled at all (CTAButton, UI plan C2b).
+    expect(generate.hasAttribute('aria-disabled')).toBe(false)
     // Both clicks inside one act: React has not re-rendered the button as
     // disabled between them, so only the synchronous guard can stop the second.
     act(() => {

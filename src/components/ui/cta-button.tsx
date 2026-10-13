@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { clsx } from 'clsx'
-import type { CSSProperties, MouseEvent, ReactNode, Ref } from 'react'
+import type { ButtonHTMLAttributes, CSSProperties, MouseEvent, ReactNode, Ref } from 'react'
 
 /** The six instruments, each with its `--accent-{arm}` token in globals.css. */
 export type CTAButtonArm = 'scout' | 'oracle' | 'gadfly' | 'lever' | 'mirror' | 'votes'
@@ -46,11 +46,23 @@ interface CTAButtonAsLink extends CTAButtonBaseProps {
   busy?: undefined
   describedBy?: undefined
   ref?: undefined
+  onUnavailable?: undefined
 }
 
-interface CTAButtonAsButton extends CTAButtonBaseProps {
+/** Native attributes a wrapper may add to the <button>: a Radix
+ *  `Dialog.Trigger asChild` hands its child `aria-haspopup`, `aria-expanded`,
+ *  `aria-controls` and `data-state` this way (UI plan C2b). The props this
+ *  component owns are not among them. */
+type CTAButtonPassThrough = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'children' | 'className' | 'style' | 'onClick' | 'disabled' | 'type' | 'aria-disabled' | 'aria-busy' | 'aria-describedby'
+>
+
+interface CTAButtonAsButton extends CTAButtonBaseProps, CTAButtonPassThrough {
   href?: undefined
-  onClick?: () => void
+  /** Receives the click event when a wrapper (a Radix trigger) composes its
+   *  own handler in; the component's own callers ignore it. */
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void
   /** Rendered as `aria-disabled="true"`, never the native `disabled`
    *  attribute: the button stays in the tab order (a keyboard or screen-reader
    *  user can still reach it and hear that it is unavailable), and the click
@@ -66,6 +78,12 @@ interface CTAButtonAsButton extends CTAButtonBaseProps {
   /** React 19 passes `ref` as a prop (the concern form's shortcut moves focus
    *  here before it dispatches). */
   ref?: Ref<HTMLButtonElement>
+  /** Called, in place of `onClick`, when the button is activated while
+   *  disabled (never while busy): for a form whose unavailable action takes
+   *  the citizen to what is missing instead of doing nothing (the Lever's
+   *  Generate sends focus to the province). Without it a disabled activation
+   *  does nothing. */
+  onUnavailable?: () => void
 }
 
 type CTAButtonProps = (CTAButtonAsLink | CTAButtonAsButton) & CTAButtonVariantProps
@@ -119,6 +137,8 @@ export function CTAButton({
   ref,
   variant = 'secondary',
   arm,
+  onUnavailable,
+  ...passThrough
 }: CTAButtonProps) {
   const unavailable = Boolean(disabled) && !busy
   const variantStyle =
@@ -143,13 +163,15 @@ export function CTAButton({
   function handleClick(event: MouseEvent<HTMLButtonElement>) {
     if (disabled || busy) {
       event.preventDefault()
+      if (unavailable) onUnavailable?.()
       return
     }
-    onClick?.()
+    onClick?.(event)
   }
 
   return (
     <button
+      {...passThrough}
       ref={ref}
       type="button"
       onClick={handleClick}

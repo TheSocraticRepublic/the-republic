@@ -5,6 +5,8 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, X, ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
+import { CTAButton } from '@/components/ui/cta-button'
+import { Field, FieldLabel, fieldControlClass } from '@/components/ui/field'
 
 interface Document {
   id: string
@@ -123,18 +125,12 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      {/* The arm recipe, on the Gadfly room (an allowed ground for the ink). */}
       <Dialog.Trigger asChild>
-        <button
-          className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150"
-          style={{
-            backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 15%, transparent)',
-            color: 'var(--accent-gadfly)',
-            border: '1px solid color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
-          }}
-        >
-          <Plus size={14} strokeWidth={2} />
+        <CTAButton variant="arm" arm="gadfly">
+          <Plus size={14} strokeWidth={2} aria-hidden="true" />
           New Inquiry
-        </button>
+        </CTAButton>
       </Dialog.Trigger>
 
       <Dialog.Portal>
@@ -157,58 +153,56 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
 
           <div className="space-y-4">
             {/* Document selector */}
-            <div>
-              <label htmlFor="session-document" className="mb-1.5 block text-xs font-medium text-text-secondary">
-                Document <span className="text-text-faint">(optional)</span>
-              </label>
-              {fetchingDocs ? (
-                <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
-              ) : (
-                <div className="relative">
-                  <select
-                    id="session-document"
-                    value={selectedDocId}
-                    onChange={(e) => setSelectedDocId(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-gadfly)]/40 focus:ring-0"
-                  >
-                    <option value="">No document — open inquiry</option>
-                    {documents.map((doc) => (
-                      <option key={doc.id} value={doc.id}>
-                        {doc.title}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={13}
-                    strokeWidth={2}
-                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-                  />
-                </div>
-              )}
-            </div>
+            <Field id="session-document" label="Document" optional>
+              {(control) =>
+                fetchingDocs ? (
+                  <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
+                ) : (
+                  <div className="relative">
+                    <select
+                      {...control}
+                      value={selectedDocId}
+                      onChange={(e) => setSelectedDocId(e.target.value)}
+                      className={fieldControlClass('gadfly', 'select')}
+                    >
+                      <option value="">No document — open inquiry</option>
+                      {documents.map((doc) => (
+                        <option key={doc.id} value={doc.id}>
+                          {doc.title}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={13}
+                      strokeWidth={2}
+                      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+                    />
+                  </div>
+                )
+              }
+            </Field>
 
             {/* Title */}
-            <div>
-              <label htmlFor="session-title" className="mb-1.5 block text-xs font-medium text-text-secondary">
-                Title <span className="text-text-faint">(optional)</span>
-              </label>
-              <input
-                id="session-title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder={
-                  selectedDocId
-                    ? 'Auto-generated from document title'
-                    : 'New Inquiry'
-                }
-                className="w-full rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-gadfly)]/40"
-              />
-            </div>
+            <Field id="session-title" label="Title" optional>
+              {(control) => (
+                <input
+                  {...control}
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={
+                    selectedDocId
+                      ? 'Auto-generated from document title'
+                      : 'New Inquiry'
+                  }
+                  className={fieldControlClass('gadfly')}
+                />
+              )}
+            </Field>
 
             {/* Mode selector */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-secondary">Mode</label>
+              <FieldLabel>Mode</FieldLabel>
               <div role="group" aria-label="Inquiry mode" className="grid grid-cols-2 gap-2">
                 {(['socratic', 'direct'] as const).map((m) => (
                   <button
@@ -242,23 +236,11 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
             <Dialog.Close className="rounded-lg px-4 py-2 text-sm text-text-muted transition-colors hover:text-text-secondary">
               Cancel
             </Dialog.Close>
-            <button
-              onClick={handleCreate}
-              disabled={loading}
-              className={clsx(
-                'rounded-lg px-5 py-2 text-sm font-medium transition-all duration-150',
-                loading
-                  ? 'cursor-not-allowed opacity-50'
-                  : 'hover:opacity-90',
-              )}
-              style={{
-                backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
-                color: 'var(--accent-gadfly)',
-                border: '1px solid color-mix(in srgb, var(--accent-gadfly) 30%, transparent)',
-              }}
-            >
+            {/* The arm recipe on the dialog's dark surface-1 (an allowed ground).
+                Busy, it refuses a second create and keeps focus. */}
+            <CTAButton variant="arm" arm="gadfly" onClick={handleCreate} busy={loading}>
               {loading ? 'Creating...' : 'Begin Inquiry'}
-            </button>
+            </CTAButton>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

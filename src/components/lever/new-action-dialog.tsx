@@ -5,6 +5,8 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react'
 import { clsx } from 'clsx'
+import { CTAButton } from '@/components/ui/cta-button'
+import { Field, FieldLabel, fieldControlClass } from '@/components/ui/field'
 import { leverActionTypeEnum } from '@/lib/db/schema'
 import {
   PROVINCE_OPTIONS,
@@ -86,7 +88,6 @@ export function NewActionDialog({
   const gadflyInquiryId = useId()
   const provinceSelectId = useId()
   const otherBodyId = useId()
-  const bodyErrorId = useId()
   const generateReasonId = useId()
   const provinceSelectRef = useRef<HTMLSelectElement>(null)
   const bodySelectRef = useRef<HTMLSelectElement>(null)
@@ -324,18 +325,12 @@ export function NewActionDialog({
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      {/* The arm recipe, on the Lever room (an allowed ground for the ink). */}
       <Dialog.Trigger asChild>
-        <button
-          className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150"
-          style={{
-            backgroundColor: 'color-mix(in srgb, var(--accent-lever) 15%, transparent)',
-            color: 'var(--accent-lever)',
-            border: '1px solid color-mix(in srgb, var(--accent-lever) 25%, transparent)',
-          }}
-        >
-          <Plus size={14} strokeWidth={2} />
+        <CTAButton variant="arm" arm="lever">
+          <Plus size={14} strokeWidth={2} aria-hidden="true" />
           New Action
-        </button>
+        </CTAButton>
       </Dialog.Trigger>
 
       <Dialog.Portal>
@@ -359,9 +354,7 @@ export function NewActionDialog({
           <div className="space-y-4">
             {/* Action type selector */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-secondary">
-                Document type
-              </label>
+              <FieldLabel>Document type</FieldLabel>
               <div role="group" aria-label="Action type" className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {ACTION_TYPES.map((t) => (
                   <button
@@ -384,125 +377,129 @@ export function NewActionDialog({
 
             {/* Province — FIPPA only, always shown, required */}
             {isFippa && (
-              <div>
-                <label htmlFor={provinceSelectId} className="mb-1.5 block text-xs font-medium text-text-secondary">
-                  Province
-                </label>
-                <div className="relative">
-                  <select
-                    ref={provinceSelectRef}
-                    id={provinceSelectId}
-                    value={province}
-                    required
-                    aria-describedby={`${provinceSelectId}-hint`}
-                    onChange={(e) => {
-                      const next = e.target.value
-                      provinceTouchedRef.current = true
-                      setProvince(isProvinceId(next) ? next : '')
-                      setProvinceDetected(false)
-                      // Bodies belong to one province; a new province clears the choice.
-                      setPublicBodyChoice('')
-                      // ...including a typed "Other" name.
-                      setOtherBodyName('')
-                      clearErrors()
-                    }}
-                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0"
-                  >
-                    <option value="" disabled>
-                      Choose a province...
-                    </option>
-                    {PROVINCE_OPTIONS.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.verified ? p.label : `${p.label} (not verified)`}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={13}
-                    strokeWidth={2}
-                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-                  />
-                </div>
-                <p id={`${provinceSelectId}-hint`} className="mt-1.5 text-2xs text-text-muted">
-                  {!province && 'Choose the province this request goes to.'}
-                  {provinceUnverified && (
-                    <span className="block text-xs text-text-secondary">
-                      Open Cave has not verified {provinceLabel(province as ProvinceId)}&apos;s legal citations yet. Check
-                      each one against the Act before you file.
-                    </span>
-                  )}
-                  {province && provinceDetected && (
-                    <span className={clsx('block', provinceUnverified && 'mt-0.5')}>
-                      Detected from your investigation. Change it if it is wrong.
-                    </span>
-                  )}
-                  {province && !provinceDetected && !provinceUnverified && "The request cites this province's access law."}
-                </p>
-              </div>
-            )}
-
-            {/* Public body selector — FIPPA only, from the chosen province */}
-            {isFippa && (
-              <div>
-                <label htmlFor="action-public-body" className="mb-1.5 block text-xs font-medium text-text-secondary">
-                  Public body <span className="text-text-faint">(optional)</span>
-                </label>
-                <div className="relative">
-                  <select
-                    ref={bodySelectRef}
-                    id="action-public-body"
-                    value={publicBodyChoice}
-                    disabled={!province}
-                    aria-invalid={bodyError && publicBodyChoice !== OTHER_BODY ? true : undefined}
-                    aria-describedby={bodyError && publicBodyChoice !== OTHER_BODY ? bodyErrorId : undefined}
-                    onChange={(e) => {
-                      setPublicBodyChoice(e.target.value)
-                      clearErrors()
-                    }}
-                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">{province ? 'Select a public body...' : 'Choose a province first'}</option>
-                    {publicBodies.map((pb) => (
-                      <option key={`${pb.jurisdiction}-${pb.name}`} value={pb.name}>
-                        {pb.name}
-                      </option>
-                    ))}
-                    {province && <option value={OTHER_BODY}>Other (type the name)</option>}
-                  </select>
-                  <ChevronDown
-                    size={13}
-                    strokeWidth={2}
-                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-                  />
-                </div>
-                {publicBodyChoice === OTHER_BODY && (
-                  <div className="mt-2">
-                    <label htmlFor={otherBodyId} className="sr-only">
-                      Public body name
-                    </label>
-                    <input
-                      ref={otherBodyRef}
-                      id={otherBodyId}
-                      type="text"
-                      value={otherBodyName}
-                      maxLength={200}
-                      aria-invalid={bodyError ? true : undefined}
-                      aria-describedby={bodyError ? bodyErrorId : undefined}
+              <Field
+                id={provinceSelectId}
+                label="Province"
+                description={
+                  <>
+                    {!province && 'Choose the province this request goes to.'}
+                    {provinceUnverified && (
+                      <span className="block text-xs text-text-secondary">
+                        Open Cave has not verified {provinceLabel(province as ProvinceId)}&apos;s legal citations yet. Check
+                        each one against the Act before you file.
+                      </span>
+                    )}
+                    {province && provinceDetected && (
+                      <span className={clsx('block', provinceUnverified && 'mt-0.5')}>
+                        Detected from your investigation. Change it if it is wrong.
+                      </span>
+                    )}
+                    {province && !provinceDetected && !provinceUnverified && "The request cites this province's access law."}
+                  </>
+                }
+              >
+                {(control) => (
+                  <div className="relative">
+                    <select
+                      {...control}
+                      ref={provinceSelectRef}
+                      value={province}
+                      required
                       onChange={(e) => {
-                        setOtherBodyName(e.target.value)
+                        const next = e.target.value
+                        provinceTouchedRef.current = true
+                        setProvince(isProvinceId(next) ? next : '')
+                        setProvinceDetected(false)
+                        // Bodies belong to one province; a new province clears the choice.
+                        setPublicBodyChoice('')
+                        // ...including a typed "Other" name.
+                        setOtherBodyName('')
                         clearErrors()
                       }}
-                      placeholder="Name of the public body"
-                      className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-lever)]/40"
+                      className={fieldControlClass('lever', 'select')}
+                    >
+                      <option value="" disabled>
+                        Choose a province...
+                      </option>
+                      {PROVINCE_OPTIONS.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.verified ? p.label : `${p.label} (not verified)`}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={13}
+                      strokeWidth={2}
+                      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
                     />
                   </div>
                 )}
-                {bodyError && (
-                  <p id={bodyErrorId} className="mt-1.5 text-xs text-status-danger">
-                    {bodyError}
-                  </p>
-                )}
-              </div>
+              </Field>
+            )}
+
+            {/* Public body selector — FIPPA only, from the chosen province.
+                The refusal describes whichever control holds the body: the
+                select, or the typed "Other" name under it. */}
+            {isFippa && (
+              <Field id="action-public-body" label="Public body" optional error={bodyError}>
+                {(control, { errorId }) => {
+                  const onOther = publicBodyChoice === OTHER_BODY
+                  return (
+                    <>
+                      <div className="relative">
+                        <select
+                          id={control.id}
+                          ref={bodySelectRef}
+                          value={publicBodyChoice}
+                          disabled={!province}
+                          aria-invalid={onOther ? undefined : control['aria-invalid']}
+                          aria-describedby={onOther ? undefined : control['aria-describedby']}
+                          onChange={(e) => {
+                            setPublicBodyChoice(e.target.value)
+                            clearErrors()
+                          }}
+                          className={fieldControlClass('lever', 'select')}
+                        >
+                          <option value="">{province ? 'Select a public body...' : 'Choose a province first'}</option>
+                          {publicBodies.map((pb) => (
+                            <option key={`${pb.jurisdiction}-${pb.name}`} value={pb.name}>
+                              {pb.name}
+                            </option>
+                          ))}
+                          {province && <option value={OTHER_BODY}>Other (type the name)</option>}
+                        </select>
+                        <ChevronDown
+                          size={13}
+                          strokeWidth={2}
+                          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+                        />
+                      </div>
+                      {onOther && (
+                        <div className="mt-2">
+                          <label htmlFor={otherBodyId} className="sr-only">
+                            Public body name
+                          </label>
+                          <input
+                            ref={otherBodyRef}
+                            id={otherBodyId}
+                            type="text"
+                            value={otherBodyName}
+                            maxLength={200}
+                            aria-invalid={bodyError ? true : undefined}
+                            aria-describedby={bodyError ? errorId : undefined}
+                            onChange={(e) => {
+                              setOtherBodyName(e.target.value)
+                              clearErrors()
+                            }}
+                            placeholder="Name of the public body"
+                            className={fieldControlClass('lever')}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )
+                }}
+              </Field>
             )}
 
             {/* Duplicate FIPPA warning */}
@@ -522,86 +519,88 @@ export function NewActionDialog({
             )}
 
             {/* Oracle document link */}
-            <div>
-              <label htmlFor={oracleDocId} className="mb-1.5 block text-xs font-medium text-text-secondary">
-                Oracle document <span className="text-text-faint">(optional)</span>
-              </label>
-              {fetchingContext ? (
-                <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
-              ) : (
-                <div className="relative">
-                  <select
-                    id={oracleDocId}
-                    value={selectedDocId}
-                    onChange={(e) => setSelectedDocId(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0"
-                  >
-                    <option value="">No document</option>
-                    {documents.map((doc) => (
-                      <option key={doc.id} value={doc.id}>
-                        {doc.title}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={13}
-                    strokeWidth={2}
-                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-                  />
-                </div>
-              )}
-            </div>
+            <Field id={oracleDocId} label="Oracle document" optional>
+              {(control) =>
+                fetchingContext ? (
+                  <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
+                ) : (
+                  <div className="relative">
+                    <select
+                      {...control}
+                      value={selectedDocId}
+                      onChange={(e) => setSelectedDocId(e.target.value)}
+                      className={fieldControlClass('lever', 'select')}
+                    >
+                      <option value="">No document</option>
+                      {documents.map((doc) => (
+                        <option key={doc.id} value={doc.id}>
+                          {doc.title}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={13}
+                      strokeWidth={2}
+                      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+                    />
+                  </div>
+                )
+              }
+            </Field>
 
             {/* Gadfly session link */}
-            <div>
-              <label htmlFor={gadflyInquiryId} className="mb-1.5 block text-xs font-medium text-text-secondary">
-                Gadfly inquiry <span className="text-text-faint">(optional)</span>
-              </label>
-              {fetchingContext ? (
-                <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
-              ) : (
-                <div className="relative">
-                  <select
-                    id={gadflyInquiryId}
-                    value={selectedSessionId}
-                    onChange={(e) => setSelectedSessionId(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-lever)]/40 focus:ring-0"
-                  >
-                    <option value="">No inquiry</option>
-                    {sessions.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.title}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={13}
-                    strokeWidth={2}
-                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-                  />
-                </div>
-              )}
-            </div>
+            <Field id={gadflyInquiryId} label="Gadfly inquiry" optional>
+              {(control) =>
+                fetchingContext ? (
+                  <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
+                ) : (
+                  <div className="relative">
+                    <select
+                      {...control}
+                      value={selectedSessionId}
+                      onChange={(e) => setSelectedSessionId(e.target.value)}
+                      className={fieldControlClass('lever', 'select')}
+                    >
+                      <option value="">No inquiry</option>
+                      {sessions.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.title}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={13}
+                      strokeWidth={2}
+                      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+                    />
+                  </div>
+                )
+              }
+            </Field>
 
             {/* Description */}
-            <div>
-              <label htmlFor="action-description" className="mb-1.5 block text-xs font-medium text-text-secondary">
-                {actionType === 'fippa_request'
+            <Field
+              id="action-description"
+              label={
+                actionType === 'fippa_request'
                   ? 'What records do you want?'
                   : actionType === 'public_comment'
                   ? 'What is your concern?'
-                  : 'What policy topic?'}
-              </label>
-              <textarea
-                ref={descriptionRef}
-                id="action-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={DESCRIPTION_PLACEHOLDERS[actionType]}
-                rows={4}
-                className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-lever)]/40"
-              />
-            </div>
+                  : 'What policy topic?'
+              }
+            >
+              {(control) => (
+                <textarea
+                  {...control}
+                  ref={descriptionRef}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={DESCRIPTION_PLACEHOLDERS[actionType]}
+                  rows={4}
+                  className={fieldControlClass('lever', 'textarea')}
+                />
+              )}
+            </Field>
           </div>
 
           {/* Error alert (failures not tied to a field) */}
@@ -623,31 +622,22 @@ export function NewActionDialog({
             <Dialog.Close className="rounded-lg px-4 py-2 text-sm text-text-muted transition-colors hover:text-text-secondary">
               Cancel
             </Dialog.Close>
-            <button
-              type="button"
+            {/* The arm recipe on the dialog's dark surface-1 (an allowed
+                ground). aria-disabled, never disabled: it keeps focus while
+                busy and stays reachable while incomplete, and activating it
+                then takes the citizen to what is missing (handleCreate).
+                creatingRef blocks a second send. */}
+            <CTAButton
+              variant="arm"
+              arm="lever"
               onClick={handleCreate}
-              // aria-disabled, never disabled: the button keeps focus while
-              // busy and stays reachable while incomplete. creatingRef blocks
-              // a second send; handleCreate routes an incomplete activation.
-              aria-disabled={loading || !canCreate}
-              aria-busy={loading || undefined}
-              aria-describedby={showGenerateReason ? generateReasonId : undefined}
-              className={clsx(
-                'rounded-lg px-5 py-2 text-sm font-medium transition-all duration-150',
-                loading
-                  ? 'cursor-progress'
-                  : !canCreate
-                    ? 'cursor-not-allowed opacity-40'
-                    : 'hover:opacity-90'
-              )}
-              style={{
-                backgroundColor: 'color-mix(in srgb, var(--accent-lever) 20%, transparent)',
-                color: 'var(--accent-lever)',
-                border: '1px solid color-mix(in srgb, var(--accent-lever) 30%, transparent)',
-              }}
+              onUnavailable={handleCreate}
+              disabled={!canCreate}
+              busy={loading}
+              describedBy={showGenerateReason ? generateReasonId : undefined}
             >
               {loading ? 'Creating...' : 'Generate'}
-            </button>
+            </CTAButton>
           </div>
         </Dialog.Content>
       </Dialog.Portal>
