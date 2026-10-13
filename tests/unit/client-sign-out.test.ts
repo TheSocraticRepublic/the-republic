@@ -24,9 +24,11 @@ const REPO = path.resolve(__dirname, '..', '..')
 
 // ---- next/* and the layout's lookups -----------------------------------
 
+const routerPush = vi.fn()
 vi.mock('next/navigation', () => ({
   usePathname: () => '/profile/setup',
-  useRouter: () => ({ push: () => {}, replace: () => {}, refresh: () => {} }),
+  useRouter: () => ({ push: routerPush, replace: () => {}, refresh: () => {} }),
+  useSearchParams: () => new URLSearchParams(),
   redirect: (to: string) => {
     throw Object.assign(new Error(`redirect ${to}`), { digest: `NEXT_REDIRECT;${to}` })
   },
@@ -91,8 +93,10 @@ let assign: ReturnType<typeof vi.fn>
 let reload: ReturnType<typeof vi.fn>
 const realLocation = window.location
 
-const opaqueRedirect = async () => ({ type: 'opaqueredirect' as ResponseType, ok: false, status: 0 })
-const status = (code: number) => async () => ({ type: 'basic' as ResponseType, ok: code < 400, status: code })
+const opaqueRedirect = async () => ({ type: 'opaqueredirect' as ResponseType, ok: false, status: 0, json: async () => { throw new TypeError('opaque') } })
+const status = (code: number, body: unknown = {}) => async () => ({ type: 'basic' as ResponseType, ok: code >= 200 && code < 300, status: code, json: async () => body })
+/** The route's own success answer (Razor C3 N1). */
+const signedOut = status(200, { signedOut: true })
 
 let mod: typeof import('@/lib/auth/client-sign-out')
 
@@ -101,7 +105,7 @@ beforeEach(async () => {
   FakeChannel.posted = []
   vi.stubGlobal('BroadcastChannel', FakeChannel)
   fetchCalls = []
-  signOutReply = opaqueRedirect
+  signOutReply = signedOut
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
@@ -152,17 +156,24 @@ describe('clientSignOut: the request', () => {
     expect(fetchCalls[0].init?.credentials).toBe('same-origin')
   })
 
-  it('treats the route redirect (opaqueredirect) as success and goes to /login', async () => {
+  it("treats the route's 200 {signedOut:true} as success and goes to /login", async () => {
     const result = await mod.clientSignOut()
     expect(result).toEqual({ ok: true })
     expect(assign).toHaveBeenCalledTimes(1)
     expect(assign).toHaveBeenCalledWith(`${ORIGIN}/login`)
   })
 
-  it('treats a 2xx as success too', async () => {
-    signOutReply = status(200)
-    expect(await mod.clientSignOut()).toEqual({ ok: true })
-    expect(assign).toHaveBeenCalledWith(`${ORIGIN}/login`)
+  it.each([
+    ['a redirect from anywhere (opaqueredirect)', opaqueRedirect],
+    ['a 200 without the flag', status(200, { ok: true })],
+    ['a 200 with signedOut not exactly true', status(200, { signedOut: 'yes' })],
+    ['a 200 whose body is not JSON', async () => ({ type: 'basic' as ResponseType, ok: true, status: 200, json: async () => { throw new SyntaxError('html') } })],
+  ] as const)('N1: %s is not a sign-out: nothing claimed, broadcast or navigated', async (_label, reply) => {
+    signOutReply = reply as () => Promise<Partial<Response>>
+    const tab2 = otherTab()
+    expect(await mod.clientSignOut()).toEqual({ ok: false, message: mod.SIGN_OUT_FAILED_MESSAGE })
+    expect(tab2.heard).toEqual([])
+    expect(assign).not.toHaveBeenCalled()
   })
 })
 
@@ -342,7 +353,7 @@ describe('the sidebar uses clientSignOut', () => {
     expect(button.getAttribute('aria-busy')).toBe('true')
     await click(button)
     expect(fetchCalls).toHaveLength(1)
-    await act(async () => release({ type: 'opaqueredirect' as ResponseType, ok: false, status: 0 }))
+    await act(async () => release({ type: 'basic' as ResponseType, ok: true, status: 200, json: async () => ({ signedOut: true }) }))
     expect(assign).toHaveBeenCalledTimes(1)
   })
 })
@@ -536,5 +547,138 @@ describe('the onboarding page fits under the shell header', () => {
     const src = readFileSync(path.join(REPO, 'src/app/(app)/profile/setup/page.tsx'), 'utf8')
     expect(src).not.toMatch(/className="[^"]*min-h-screen/)
     expect(src.match(/className="[^"]*min-h-full/g)?.length).toBe(3)
+  })
+})
+
+// ---- Fix pass: unsaved work survives a sign-out elsewhere (Razor C3 W2) ----
+
+describe('a sign-out in another tab, with unsaved work here', () => {
+  it('no unsaved work: the tab reloads', () => {
+    mod.onSignedOutElsewhere()
+    expect(reload).toHaveBeenCalledTimes(1)
+  })
+
+  it('registered unsaved work: no reload, and the shell shows the notice', async () => {
+    const { AppShell } = await loadShell()
+    function Draft() {
+      mod.useUnsavedWork(true)
+      return h('textarea', { defaultValue: 'my unsaved letter', 'aria-label': 'draft' })
+    }
+    render(h(AppShell, { variant: 'app', displayName: 'ada', children: h(Draft) }))
+    expect(screen.queryByText(mod.SIGNED_OUT_ELSEWHERE_MESSAGE)).toBeNull()
+    await act(async () => {
+      new FakeChannel('oc-auth').postMessage({ type: 'signed-out' })
+    })
+    expect(reload).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert').textContent).toBe(
+      "You've signed out in another tab. Copy anything you want to keep, then sign in again."
+    )
+    expect((screen.getByLabelText('draft') as HTMLTextAreaElement).value).toBe('my unsaved letter')
+  })
+
+  it('the onboarding shell shows the notice too', async () => {
+    const { AppShell } = await loadShell()
+    function Draft() {
+      mod.useUnsavedWork(true)
+      return null
+    }
+    render(h(AppShell, { variant: 'onboarding', children: h(Draft) }))
+    await act(async () => {
+      new FakeChannel('oc-auth').postMessage({ type: 'signed-out' })
+    })
+    expect(reload).not.toHaveBeenCalled()
+    expect(screen.getByText(mod.SIGNED_OUT_ELSEWHERE_MESSAGE)).toBeTruthy()
+  })
+
+  it('work that stops being dirty, or unmounts, no longer holds the reload', async () => {
+    function Draft({ dirty }: { dirty: boolean }) {
+      mod.useUnsavedWork(dirty)
+      return null
+    }
+    const view = render(h(Draft, { dirty: true }))
+    expect(mod.hasUnsavedWork()).toBe(true)
+    view.rerender(h(Draft, { dirty: false }))
+    expect(mod.hasUnsavedWork()).toBe(false)
+    view.rerender(h(Draft, { dirty: true }))
+    expect(mod.hasUnsavedWork()).toBe(true)
+    view.unmount()
+    expect(mod.hasUnsavedWork()).toBe(false)
+    mod.onSignedOutElsewhere()
+    expect(reload).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('the Lever editor registers an unsaved edit', () => {
+  it('editing text that differs from the stored letter holds the reload; Cancel releases it', async () => {
+    const realFetch = globalThis.fetch
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/auth/signout') return realFetch(url, init)
+      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })
+    }))
+    const { ActionViewer } = await import('@/components/lever/action-viewer')
+    render(h(ActionViewer, {
+      actionId: '44444444-4444-4444-8444-444444444444',
+      initialContent: 'Dear FOI Coordinator,\nI request the records.',
+      initialStatus: 'draft',
+      actionType: 'public_comment',
+    } as unknown as Parameters<typeof ActionViewer>[0]))
+    await click(screen.getByText('Edit'))
+    // Open but unchanged: nothing to lose.
+    expect(mod.hasUnsavedWork()).toBe(false)
+    const box = screen.getByRole('textbox') as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: 'Dear FOI Coordinator,\nI request the records, and more.' } })
+    expect(mod.hasUnsavedWork()).toBe(true)
+    mod.onSignedOutElsewhere()
+    expect(reload).not.toHaveBeenCalled()
+    expect(box.value).toContain('and more.')
+    await click(screen.getByText('Cancel'))
+    expect(mod.hasUnsavedWork()).toBe(false)
+  })
+})
+
+describe('the profile setup form registers typed text', () => {
+  it('typing a name holds the reload', async () => {
+    const { default: SetupPage } = await import('@/app/(app)/profile/setup/page')
+    await act(async () => {
+      render(h(SetupPage))
+    })
+    const name = await screen.findByLabelText('Display name')
+    expect(mod.hasUnsavedWork()).toBe(false)
+    fireEvent.change(name, { target: { value: 'ada' } })
+    expect(mod.hasUnsavedWork()).toBe(true)
+    mod.onSignedOutElsewhere()
+    expect(reload).not.toHaveBeenCalled()
+    fireEvent.change(name, { target: { value: '' } })
+    expect(mod.hasUnsavedWork()).toBe(false)
+  })
+})
+
+// ---- Fix pass: account deletion tells the other tabs (Razor C3 N2) ----
+
+describe('account deletion broadcasts signed-out', () => {
+  async function deleteFlow(reply: () => Promise<Response>) {
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (url === '/api/account') return reply()
+      throw new Error(`unexpected fetch ${url}`)
+    }))
+    const { DeleteAccount } = await import('@/components/profile/delete-account')
+    const tab2 = otherTab()
+    render(h(DeleteAccount))
+    await click(screen.getByRole('button', { name: 'Delete account' }))
+    fireEvent.change(screen.getByLabelText(/to confirm/), { target: { value: 'DELETE' } })
+    const buttons = screen.getAllByRole('button').filter((b) => /delete/i.test(b.textContent ?? ''))
+    await click(buttons[buttons.length - 1])
+    return tab2
+  }
+
+  it('after the server confirms', async () => {
+    const tab2 = await deleteFlow(async () => new Response('{}', { status: 200 }))
+    expect(tab2.heard).toEqual([{ type: 'signed-out' }])
+    expect(routerPush).toHaveBeenCalledWith('/')
+  })
+
+  it('never when the deletion failed', async () => {
+    const tab2 = await deleteFlow(async () => new Response('{}', { status: 500 }))
+    expect(tab2.heard).toEqual([])
   })
 })
