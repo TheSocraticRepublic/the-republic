@@ -32,13 +32,14 @@ export function DiscoveryForm() {
   const [fetchingJurisdictions, setFetchingJurisdictions] = useState(false)
   const [selectedJurisdictionId, setSelectedJurisdictionId] = useState('')
   const [policyArea, setPolicyArea] = useState('')
-  const [concern, setConcern] = useState('')
+  const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [streamedText, setStreamedText] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [hasResult, setHasResult] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const concernId = useId()
+  const queryId = useId()
+  const headingId = useId()
   const jurisdictionId = useId()
   const policyAreaId = useId()
   const abortRef = useRef<AbortController | null>(null)
@@ -60,7 +61,7 @@ export function DiscoveryForm() {
   }, [])
 
   const handleDiscover = useCallback(async () => {
-    if (!concern.trim() || loading) return
+    if (!query.trim() || loading) return
 
     // Cancel any in-progress request
     if (abortRef.current) {
@@ -78,8 +79,9 @@ export function DiscoveryForm() {
       const res = await fetch('/api/scout/discover', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // The route still names the field `concern`.
         body: JSON.stringify({
-          concern: concern.trim(),
+          concern: query.trim(),
           jurisdictionId: selectedJurisdictionId || undefined,
           policyArea: policyArea || undefined,
         }),
@@ -122,7 +124,7 @@ export function DiscoveryForm() {
       setIsStreaming(false)
       setLoading(false)
     }
-  }, [concern, selectedJurisdictionId, policyArea, loading])
+  }, [query, selectedJurisdictionId, policyArea, loading])
 
   const handleCancel = useCallback(() => {
     if (abortRef.current) {
@@ -130,54 +132,129 @@ export function DiscoveryForm() {
     }
   }, [])
 
-  const canSubmit = concern.trim().length > 0 && !loading
+  const canSubmit = query.trim().length > 0 && !loading
+
+  const handleQueryKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      // A single-line search field: Enter searches. Not a <form>, so nothing
+      // else turns Enter into a submit (the app avoids <form> submits; see the
+      // login page). handleDiscover refuses an empty query or a busy search.
+      if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+        e.preventDefault()
+        handleDiscover()
+      }
+    },
+    [handleDiscover]
+  )
 
   return (
     <div className="space-y-8">
-      {/* Form */}
-      <section>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
-          Describe your concern
+      {/* Search: one query field first, filters after */}
+      <section role="search" aria-labelledby={headingId}>
+        <h2 id={headingId} className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
+          Search public records
         </h2>
 
         <div className="space-y-4">
-          {/* Concern textarea — primary input */}
+          {/* Query — the one primary field, with its action beside it */}
           <div>
-            <label htmlFor={concernId} className="mb-1.5 block text-xs font-medium text-text-secondary">
-              What concerns you?
+            <label htmlFor={queryId} className="mb-1.5 block text-xs font-medium text-text-secondary">
+              What documents are you looking for?
             </label>
-            <textarea
-              id={concernId}
-              value={concern}
-              onChange={(e) => setConcern(e.target.value)}
-              placeholder="e.g., A gravel mine expansion near the Mamquam River was approved in 2019 but the conditions haven't been reported on."
-              rows={5}
-              className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-scout)]/40"
-              disabled={loading}
-            />
+            <div className="flex items-stretch gap-2">
+              <input
+                id={queryId}
+                type="search"
+                enterKeyHint="search"
+                autoComplete="off"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleQueryKeyDown}
+                placeholder="Council minutes on short-term rental bylaws, 2024"
+                className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-3 text-base text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-scout)]/40"
+                disabled={loading}
+              />
+              <button
+                onClick={handleDiscover}
+                disabled={!canSubmit}
+                className={clsx(
+                  'inline-flex shrink-0 items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-150',
+                  canSubmit
+                    ? 'opacity-100 hover:opacity-90'
+                    : 'cursor-not-allowed opacity-40'
+                )}
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--accent-scout) 15%, transparent)',
+                  color: 'var(--accent-scout)',
+                  border: '1px solid color-mix(in srgb, var(--accent-scout) 30%, transparent)',
+                }}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={14} strokeWidth={2} className="animate-spin" />
+                    Scouting...
+                  </>
+                ) : (
+                  <>
+                    <Compass size={14} strokeWidth={2} />
+                    Scout
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
-          {/* Jurisdiction selector */}
-          <div>
-            <label htmlFor={jurisdictionId} className="mb-1.5 block text-xs font-medium text-text-secondary">
-              Jurisdiction <span className="text-text-faint">(optional)</span>
-            </label>
-            {fetchingJurisdictions ? (
-              <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
-            ) : (
+          {/* Filters — after the query, both optional */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Jurisdiction selector */}
+            <div>
+              <label htmlFor={jurisdictionId} className="mb-1.5 block text-xs font-medium text-text-secondary">
+                Jurisdiction <span className="text-text-faint">(optional)</span>
+              </label>
+              {fetchingJurisdictions ? (
+                <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
+              ) : (
+                <div className="relative">
+                  <select
+                    id={jurisdictionId}
+                    value={selectedJurisdictionId}
+                    onChange={(e) => setSelectedJurisdictionId(e.target.value)}
+                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-scout)]/40 focus:ring-0"
+                    disabled={loading}
+                  >
+                    <option value="">Any jurisdiction</option>
+                    {jurisdictions.map((j) => (
+                      <option key={j.id} value={j.id}>
+                        {j.name}
+                        {j.province ? ` — ${j.province}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={13}
+                    strokeWidth={2}
+                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Policy area */}
+            <div>
+              <label htmlFor={policyAreaId} className="mb-1.5 block text-xs font-medium text-text-secondary">
+                Policy area <span className="text-text-faint">(optional)</span>
+              </label>
               <div className="relative">
                 <select
-                  id={jurisdictionId}
-                  value={selectedJurisdictionId}
-                  onChange={(e) => setSelectedJurisdictionId(e.target.value)}
+                  id={policyAreaId}
+                  value={policyArea}
+                  onChange={(e) => setPolicyArea(e.target.value)}
                   className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-scout)]/40 focus:ring-0"
                   disabled={loading}
                 >
-                  <option value="">Any jurisdiction</option>
-                  {jurisdictions.map((j) => (
-                    <option key={j.id} value={j.id}>
-                      {j.name}
-                      {j.province ? ` — ${j.province}` : ''}
+                  {POLICY_AREAS.map((area) => (
+                    <option key={area.value} value={area.value}>
+                      {area.label}
                     </option>
                   ))}
                 </select>
@@ -187,33 +264,6 @@ export function DiscoveryForm() {
                   className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
                 />
               </div>
-            )}
-          </div>
-
-          {/* Policy area */}
-          <div>
-            <label htmlFor={policyAreaId} className="mb-1.5 block text-xs font-medium text-text-secondary">
-              Policy area <span className="text-text-faint">(optional)</span>
-            </label>
-            <div className="relative">
-              <select
-                id={policyAreaId}
-                value={policyArea}
-                onChange={(e) => setPolicyArea(e.target.value)}
-                className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-scout)]/40 focus:ring-0"
-                disabled={loading}
-              >
-                {POLICY_AREAS.map((area) => (
-                  <option key={area.value} value={area.value}>
-                    {area.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={13}
-                strokeWidth={2}
-                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-              />
             </div>
           </div>
 
@@ -222,9 +272,9 @@ export function DiscoveryForm() {
             <p role="alert" className="text-xs text-status-danger mt-1">{errorMessage}</p>
           )}
 
-          {/* Submit / Cancel */}
-          <div className="flex items-center justify-end gap-3">
-            {isStreaming && (
+          {/* Cancel, while a search is running */}
+          {isStreaming && (
+            <div className="flex justify-end">
               <button
                 onClick={handleCancel}
                 className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-text-muted transition-colors hover:text-text-secondary"
@@ -232,35 +282,8 @@ export function DiscoveryForm() {
                 <X size={12} strokeWidth={2} />
                 Cancel
               </button>
-            )}
-            <button
-              onClick={handleDiscover}
-              disabled={!canSubmit}
-              className={clsx(
-                'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-150',
-                canSubmit
-                  ? 'opacity-100 hover:opacity-90'
-                  : 'cursor-not-allowed opacity-40'
-              )}
-              style={{
-                backgroundColor: 'color-mix(in srgb, var(--accent-scout) 15%, transparent)',
-                color: 'var(--accent-scout)',
-                border: '1px solid color-mix(in srgb, var(--accent-scout) 30%, transparent)',
-              }}
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={14} strokeWidth={2} className="animate-spin" />
-                  Scouting...
-                </>
-              ) : (
-                <>
-                  <Compass size={14} strokeWidth={2} />
-                  Scout
-                </>
-              )}
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       </section>
 
