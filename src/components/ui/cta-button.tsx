@@ -2,7 +2,26 @@
 
 import Link from 'next/link'
 import { clsx } from 'clsx'
-import type { MouseEvent, ReactNode, Ref } from 'react'
+import type { CSSProperties, MouseEvent, ReactNode, Ref } from 'react'
+
+/** The six instruments, each with its `--accent-{arm}` token in globals.css. */
+export type CTAButtonArm = 'scout' | 'oracle' | 'gadfly' | 'lever' | 'mirror' | 'votes'
+
+/**
+ * Three recipes (app-arms P2-2):
+ * - `primary`: the one action a page is for, inverted to full ink
+ *   (`--text-primary` fill, `--surface-0` label). One per page.
+ * - `secondary`: the neutral pill, the default, so existing callers keep it.
+ * - `arm`: the instrument's accent, a 15% tint fill, a 30% border and the
+ *   accent as text. Needs `arm`.
+ *
+ * Disabled is one recessed style in every variant, the B3a recipe below, so
+ * its measured contrast holds whatever the variant. Busy keeps the variant's
+ * own full-ink style.
+ */
+type CTAButtonVariantProps =
+  | { variant?: 'primary' | 'secondary'; arm?: undefined }
+  | { variant: 'arm'; arm: CTAButtonArm }
 
 interface CTAButtonBaseProps {
   /** Pass the icon pre-rendered (e.g. `<Search size={13} strokeWidth={2} />`)
@@ -46,23 +65,40 @@ interface CTAButtonAsButton extends CTAButtonBaseProps {
   ref?: Ref<HTMLButtonElement>
 }
 
-type CTAButtonProps = CTAButtonAsLink | CTAButtonAsButton
+type CTAButtonProps = (CTAButtonAsLink | CTAButtonAsButton) & CTAButtonVariantProps
 
 const SIZE_CLASSES: Record<'sm' | 'md', string> = {
   sm: 'px-4 py-2.5',
   md: 'px-6 py-3',
 }
 
-const PILL_STYLE = {
+const SECONDARY_STYLE: CSSProperties = {
   backgroundColor: 'var(--surface-3)',
   color: 'var(--text-primary)',
   border: '1px solid var(--border-strong)',
 }
 
+/** The border is the fill's own colour, not none: every variant and state
+ *  keeps a 1px border, so the button keeps its size when it changes state. */
+const PRIMARY_STYLE: CSSProperties = {
+  backgroundColor: 'var(--text-primary)',
+  color: 'var(--surface-0)',
+  border: '1px solid var(--text-primary)',
+}
+
+function armStyle(arm: CTAButtonArm): CSSProperties {
+  const accent = `var(--accent-${arm})`
+  return {
+    backgroundColor: `color-mix(in srgb, ${accent} 15%, transparent)`,
+    color: accent,
+    border: `1px solid color-mix(in srgb, ${accent} 30%, transparent)`,
+  }
+}
+
 /** Disabled: a recessed fill with faint ink, never opacity. Opacity paints the
  *  whole element, focus ring included, and dimmed the ring to 1.8:1 (Jen C1);
  *  this measures 5.45:1 for the label and 8.9:1 for the ring. */
-const PILL_STYLE_UNAVAILABLE = {
+const PILL_STYLE_UNAVAILABLE: CSSProperties = {
   backgroundColor: 'var(--surface-2)',
   color: 'var(--text-faint)',
   border: '1px solid var(--border)',
@@ -78,8 +114,12 @@ export function CTAButton({
   busy,
   describedBy,
   ref,
+  variant = 'secondary',
+  arm,
 }: CTAButtonProps) {
   const unavailable = Boolean(disabled) && !busy
+  const variantStyle =
+    variant === 'primary' ? PRIMARY_STYLE : variant === 'arm' && arm ? armStyle(arm) : SECONDARY_STYLE
   const classes = clsx(
     // whitespace-nowrap: the label never wraps, so the button keeps its height
     // between rest and busy at every width.
@@ -91,7 +131,7 @@ export function CTAButton({
 
   if (href) {
     return (
-      <Link href={href} className={classes} style={PILL_STYLE}>
+      <Link href={href} className={classes} style={variantStyle}>
         {children}
       </Link>
     )
@@ -114,7 +154,7 @@ export function CTAButton({
       aria-busy={busy ? 'true' : undefined}
       aria-describedby={unavailable ? describedBy : undefined}
       className={classes}
-      style={unavailable ? PILL_STYLE_UNAVAILABLE : PILL_STYLE}
+      style={unavailable ? PILL_STYLE_UNAVAILABLE : variantStyle}
     >
       {children}
     </button>

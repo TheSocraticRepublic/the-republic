@@ -172,7 +172,7 @@ export function ConcernForm() {
       {/* Jurisdiction selector */}
       <div>
         <label htmlFor="concern-jurisdiction" className="mb-1.5 block text-xs font-medium text-text-muted">
-          Jurisdiction <span className="text-text-faint">(optional — helps with document discovery)</span>
+          Jurisdiction <span className="text-text-faint">(optional)</span>
         </label>
         {fetchingJurisdictions ? (
           <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
@@ -183,7 +183,7 @@ export function ConcernForm() {
               value={selectedJurisdictionId}
               onChange={(e) => setSelectedJurisdictionId(e.target.value)}
               aria-describedby="concern-jurisdiction-hint"
-              className="w-full appearance-none rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-secondary outline-none focus:border-border-strong focus:ring-0"
+              className="w-full appearance-none rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-border-strong focus:ring-0"
               disabled={loading}
             >
               <option value="">Any jurisdiction</option>
@@ -202,7 +202,7 @@ export function ConcernForm() {
           </div>
         )}
         <p id="concern-jurisdiction-hint" className="mt-1.5 text-xs text-text-muted">
-          Which government&apos;s rules apply — usually your province.
+          The city, district or province your concern is about. It helps find the right documents.
         </p>
       </div>
 
@@ -220,7 +220,7 @@ export function ConcernForm() {
             setPostalCode(clean.length > 3 ? `${clean.slice(0, 3)} ${clean.slice(3)}` : clean)
           }}
           placeholder="V8B 0A1"
-          className="w-full rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 text-sm text-text-secondary font-mono tracking-wider placeholder-text-faint outline-none focus:border-border-strong"
+          className="w-full rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 text-sm text-text-primary font-mono tracking-wider placeholder-text-faint outline-none focus:border-border-strong"
           disabled={loading}
           maxLength={7}
           autoComplete="postal-code"
@@ -250,6 +250,8 @@ export function ConcernForm() {
           busy={loading}
           describedBy="concern-submit-reason"
           size="md"
+          variant="primary"
+          className="w-full justify-center md:w-auto"
         >
           {loading ? (
             <>
