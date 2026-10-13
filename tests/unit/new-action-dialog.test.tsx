@@ -197,7 +197,9 @@ describe('NewActionDialog', () => {
     const generate = screen.getByRole('button', { name: 'Generate' }) as HTMLButtonElement
     generate.focus()
     fireEvent.click(generate)
-    const busy = await screen.findByRole('button', { name: 'Creating...' })
+    // Busy keeps the label and the box; only the icon turns (Jen C2b C3).
+    await waitFor(() => expect(generate.getAttribute('aria-busy')).toBe('true'))
+    const busy = screen.getByRole('button', { name: 'Generate' })
     expect(busy).toBe(generate)
     expect(busy.getAttribute('aria-busy')).toBe('true')
     expect(busy.getAttribute('aria-disabled')).toBe('true')
@@ -226,7 +228,8 @@ describe('NewActionDialog', () => {
     fireEvent.change(other, { target: { value: 'BC Ministry of Forests' } })
     fireEvent.change(screen.getByLabelText('What records do you want?'), { target: { value: 'Records.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Generate' }))
-    const error = await screen.findByText(message)
+    // The words sit in a span after the error's icon (Jen C2b C1).
+    const error = (await screen.findByText(message)).closest('p')!
     expect(error.className).toContain('text-status-danger')
     expect(other.getAttribute('aria-invalid')).toBe('true')
     expect(other.getAttribute('aria-describedby')).toBe(error.id)

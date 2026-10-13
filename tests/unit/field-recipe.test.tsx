@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderToString } from 'react-dom/server'
 import { createHash, createHmac } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
@@ -56,11 +57,11 @@ vi.mock('next/link', async () => {
   }
 })
 
-import { Field, FieldLabel, SECTION_LABEL_CLASS, fieldControlClass } from '@/components/ui/field'
+import { FIELD_REASON_CLASS, Field, FieldLabel, SECTION_LABEL_CLASS, fieldControlClass, fieldToggleClasses } from '@/components/ui/field'
 import { CTAButton } from '@/components/ui/cta-button'
 import { NewSessionDialog } from '@/components/gadfly/new-session-dialog'
 import { NewActionDialog } from '@/components/lever/new-action-dialog'
-import { ComparisonForm } from '@/components/mirror/comparison-form'
+import { ComparisonForm, MIRROR_COPY, mirrorErrorMessage } from '@/components/mirror/comparison-form'
 import { DiscoveryForm } from '@/components/scout/discovery-form'
 import InvestigationsPage from '@/app/(app)/investigations/page'
 
@@ -110,6 +111,26 @@ function expectArmRecipe(button: HTMLElement, arm: string) {
   expect(button.className).not.toMatch(/opacity-(40|50)/)
 }
 
+/** Scout's busy recipe, on every form (Jen C2b C3): the same label, the
+ *  leading icon turned to a spinner, the working state in a status line. */
+async function expectBusyRecipe(button: HTMLElement, label: string, status: string) {
+  await waitFor(() => expect(button.getAttribute('aria-busy')).toBe('true'))
+  expect(button.textContent).toBe(label)
+  const icons = button.querySelectorAll('svg')
+  expect(icons).toHaveLength(1)
+  expect(icons[0].getAttribute('class')).toContain('animate-spin')
+  expect(screen.getByRole('status').textContent).toBe(status)
+}
+
+/** At rest: the same label beside a still icon, and an empty status line. */
+function expectRestRecipe(button: HTMLElement, label: string) {
+  expect(button.textContent).toBe(label)
+  const icons = button.querySelectorAll('svg')
+  expect(icons).toHaveLength(1)
+  expect(icons[0].getAttribute('class')).not.toContain('animate-spin')
+  expect(screen.getByRole('status').textContent).toBe('')
+}
+
 /** Unavailable, every variant shares one recessed style (B3a). */
 function expectUnavailable(button: HTMLElement) {
   expect(button.getAttribute('aria-disabled')).toBe('true')
@@ -117,12 +138,23 @@ function expectUnavailable(button: HTMLElement) {
   expect(button.style.backgroundColor).toBe('var(--surface-2)')
 }
 
-/** The control recipe, as fieldControlClass paints it. */
-function expectControlRecipe(el: Element, arm: string) {
-  for (const cls of ['border-border-strong', 'bg-surface-1', 'text-text-primary', `focus:border-[var(--accent-${arm})]/40`]) {
+/** The control recipe, as fieldControlClass paints it: a neutral focus
+ *  border on every arm, a danger border while invalid, and a disabled state
+ *  drawn in colour (Jen C2b C1, C4). */
+function expectControlRecipe(el: Element) {
+  for (const cls of [
+    'border-border-strong',
+    'bg-surface-1',
+    'text-text-primary',
+    'focus:not-aria-invalid:border-text-faint',
+    'aria-invalid:border-status-danger',
+    'disabled:bg-surface-2',
+    'disabled:text-text-muted',
+  ]) {
     expect(el.classList.contains(cls), `${el.id} has ${cls}`).toBe(true)
   }
   expect(el.classList.contains('border-border')).toBe(false)
+  expect(el.className).not.toMatch(/accent-|opacity/)
 }
 
 /** The field label recipe: secondary ink, and a faint "(optional)". */
@@ -133,7 +165,8 @@ function expectLabelRecipe(control: HTMLElement, optional: boolean) {
   expect(label.className).toContain('text-xs')
   const paren = label.querySelector('span')
   if (optional) {
-    expect(paren?.textContent).toBe('(optional)')
+    // The space inside the span: a server render keeps it (Jen C2b C7).
+    expect(paren?.textContent).toBe(' (optional)')
     expect(paren?.className).toBe('text-text-faint')
   } else {
     expect(paren).toBeNull()
@@ -204,8 +237,14 @@ describe('Field', () => {
     expect(input.getAttribute('aria-invalid')).toBe('true')
     expect(input.getAttribute('aria-describedby')).toBe('f-description f-error')
     expect(description(input)).toBe('Hint. Pick a body from the list.')
-    const error = screen.getByText('Pick a body from the list.')
+    const error = document.getElementById('f-error')!
     expect(error.className).toContain('text-status-danger')
+    // A cue that is not colour: an icon before the words, hidden from the
+    // accessibility tree (Jen C2b C1).
+    const icon = error.firstElementChild!
+    expect(icon.tagName.toLowerCase()).toBe('svg')
+    expect(icon.getAttribute('aria-hidden')).toBe('true')
+    expect(error.textContent).toBe('Pick a body from the list.')
     // Not an alert: the form decides whether to announce or focus it.
     expect(error.getAttribute('role')).toBeNull()
 
@@ -238,23 +277,61 @@ describe('Field', () => {
     expect(screen.getByLabelText('Query').getAttribute('aria-describedby')).toBe('q-error slot')
   })
 
-  it('FieldLabel is the same label, for a group named by its own aria-label', () => {
-    render(<FieldLabel optional>Mode</FieldLabel>)
-    const label = screen.getByText('Mode')
-    expect(label.tagName).toBe('LABEL')
+  it('FieldLabel without htmlFor names a group by its id: the group is named by the visible words', () => {
+    render(
+      <>
+        <FieldLabel id="g" optional>
+          Mode
+        </FieldLabel>
+        <div role="group" aria-labelledby="g" />
+      </>
+    )
+    const label = document.getElementById('g')!
+    // Not a <label> bound to nothing (Jen C2b C6).
+    expect(label.tagName).toBe('P')
     expect(label.className).toContain('text-text-secondary')
     expect(label.querySelector('span')?.className).toBe('text-text-faint')
+    const group = screen.getByRole('group')
+    expect(group.getAttribute('aria-labelledby')).toBe('g')
+    expect(label.textContent).toBe('Mode (optional)')
   })
 
-  it('the recipes: one control class per arm, one section label', () => {
-    const select = fieldControlClass('lever', 'select')
+  it('"(optional)" keeps its space in server-rendered HTML (Jen C2b C7)', () => {
+    const html = renderToString(
+      <Field id="s" label="Policy area" optional>
+        {(c) => <select {...c} />}
+      </Field>
+    )
+    // The space is inside the span's own text, not a separate text node that
+    // the server render isolates behind a comment.
+    expect(html).toContain('Policy area<span class="text-text-faint"> (optional)</span>')
+  })
+
+  it('the recipes: one control class, one toggle, one section label', () => {
+    const select = fieldControlClass('select')
     expect(select).toContain('border-border-strong')
     expect(select).toContain('bg-surface-1')
     expect(select).toContain('text-text-primary')
     expect(select).toContain('appearance-none')
-    expect(select).toContain('focus:border-[var(--accent-lever)]/40')
-    expect(fieldControlClass('mirror', 'textarea')).toContain('resize-none')
-    expect(fieldControlClass('mirror')).not.toContain('appearance-none')
+    // Neutral focus; invalid keeps a danger border; disabled in colour.
+    expect(select).toContain('focus:not-aria-invalid:border-text-faint')
+    expect(select).toContain('aria-invalid:border-status-danger')
+    expect(select).not.toMatch(/accent-|opacity/)
+    expect(fieldControlClass('textarea')).toContain('resize-none')
+    expect(fieldControlClass()).not.toContain('appearance-none')
+    // Toggles: neutral in both states, pressed told apart by lightness.
+    const on = fieldToggleClasses(true)
+    const off = fieldToggleClasses(false)
+    expect(on.button).toContain('border-text-muted')
+    expect(on.button).toContain('bg-surface-3')
+    expect(off.button).toContain('border-border-strong')
+    expect(off.button).toContain('bg-surface-1')
+    expect(on.label).toContain('text-text-primary')
+    expect(off.label).toContain('text-text-secondary')
+    for (const cls of [on, off].flatMap((t) => [t.button, t.label, t.description])) {
+      expect(cls).not.toMatch(/accent-|opacity|tracking/)
+    }
+    expect(FIELD_REASON_CLASS.split(' ')).toContain('mb-2')
     // text-sm, never a 16px-or-more size: the unlayered phone rule raises it
     // to 16px below 768px (B1), and a size class would opt out of it.
     expect(select).toContain('text-sm')
@@ -282,6 +359,77 @@ describe('CTAButton pass-through and onUnavailable', () => {
     expect(button.getAttribute('type')).toBe('button')
     fireEvent.click(button)
     expect(onClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('its own attributes win over anything forced through the pass-through (Razor C2b N2)', () => {
+    // A cast forces the props the type omits, as a careless wrapper could.
+    const forced = {
+      'aria-disabled': 'false',
+      'aria-busy': 'false',
+      'aria-describedby': 'forced',
+      type: 'submit',
+      style: { color: 'red' },
+    } as unknown as Record<string, never>
+    const onClick = vi.fn()
+    render(
+      <CTAButton variant="arm" arm="lever" onClick={onClick} disabled describedBy="own" {...forced}>
+        Go
+      </CTAButton>
+    )
+    const button = screen.getByRole('button', { name: 'Go' })
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    expect(button.hasAttribute('aria-busy')).toBe(false)
+    expect(button.getAttribute('aria-describedby')).toBe('own')
+    expect(button.getAttribute('type')).toBe('button')
+    expect(button.style.color).toBe('var(--text-faint)')
+    fireEvent.click(button)
+    expect(onClick).not.toHaveBeenCalled()
+  })
+
+  it('disabled or busy, it never calls a passed-through pointer, mouse, key or capture handler (Razor C2b N1)', () => {
+    const handlers = {
+      onPointerDown: vi.fn(),
+      onMouseDown: vi.fn(),
+      onKeyDown: vi.fn(),
+      onClickCapture: vi.fn(),
+    }
+    const onFocus = vi.fn()
+    const fire = (el: HTMLElement) => {
+      fireEvent.pointerDown(el)
+      fireEvent.mouseDown(el)
+      fireEvent.keyDown(el, { key: 'Enter' })
+      fireEvent.click(el)
+    }
+    const { rerender } = render(
+      <CTAButton disabled onFocus={onFocus} {...handlers}>
+        Go
+      </CTAButton>
+    )
+    const button = screen.getByRole('button', { name: 'Go' })
+    fire(button)
+    rerender(
+      <CTAButton busy {...handlers}>
+        Go
+      </CTAButton>
+    )
+    fire(button)
+    for (const h of Object.values(handlers)) expect(h).not.toHaveBeenCalled()
+    // Focus handlers are not activation: they still run.
+    rerender(
+      <CTAButton disabled onFocus={onFocus} {...handlers}>
+        Go
+      </CTAButton>
+    )
+    button.focus()
+    expect(onFocus).toHaveBeenCalled()
+    // Available, every one runs.
+    rerender(
+      <CTAButton {...handlers}>
+        Go
+      </CTAButton>
+    )
+    fire(button)
+    for (const h of Object.values(handlers)) expect(h).toHaveBeenCalledTimes(1)
   })
 
   it('onUnavailable runs on a disabled activation, never on an available or busy one', () => {
@@ -342,14 +490,36 @@ describe('Gadfly’s create dialog', () => {
     const doc = await screen.findByLabelText('Document (optional)')
     expect(doc.tagName).toBe('SELECT')
     expect(doc.id).toBe('session-document')
-    expectControlRecipe(doc, 'gadfly')
+    expectControlRecipe(doc)
     expectLabelRecipe(doc, true)
     const title = screen.getByLabelText('Title (optional)')
     expect(title.id).toBe('session-title')
-    expectControlRecipe(title, 'gadfly')
-    const group = screen.getByRole('group', { name: 'Inquiry mode' })
-    expect(group.querySelectorAll('button[aria-pressed]')).toHaveLength(2)
-    expect(screen.getByText('Mode').tagName).toBe('LABEL')
+    expectControlRecipe(title)
+    // Named by its visible label (Jen C2b C6), on the one toggle recipe (C2).
+    const group = screen.getByRole('group', { name: 'Mode' })
+    const toggles = [...group.querySelectorAll('button[aria-pressed]')] as HTMLButtonElement[]
+    expect(toggles).toHaveLength(2)
+    expect(toggles[0].getAttribute('aria-pressed')).toBe('true')
+    expect(toggles[0].className).toBe(fieldToggleClasses(true).button)
+    expect(toggles[1].className).toBe(fieldToggleClasses(false).button)
+    fireEvent.click(toggles[1])
+    expect(toggles[1].className).toBe(fieldToggleClasses(true).button)
+  })
+
+  it('opens on its first field, not Close; Close is 44px on touch; one arm button inside (Jen C2b C2, C9)', async () => {
+    installFetch()
+    render(<NewSessionDialog />)
+    fireEvent.click(screen.getByRole('button', { name: 'New Inquiry' }))
+    const dialog = await screen.findByRole('dialog')
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText('Document (optional)')))
+    // The list loading does not unmount it, so focus stays.
+    await waitFor(() => expect(screen.getByLabelText('Document (optional)').hasAttribute('aria-busy')).toBe(false))
+    expect(document.activeElement).toBe(screen.getByLabelText('Document (optional)'))
+    const close = screen.getByRole('button', { name: 'Close dialog' })
+    expect(close.className).toContain('[@media(pointer:coarse)]:h-11')
+    expect(close.className).toContain('[@media(pointer:coarse)]:w-11')
+    const armed = [...dialog.querySelectorAll('button')].filter((b) => b.style.color.includes('-ink)'))
+    expect(armed.map((b) => b.textContent)).toEqual(['Begin Inquiry'])
   })
 
   it('Begin Inquiry is the arm button: busy, it keeps focus and sends one create', async () => {
@@ -364,11 +534,13 @@ describe('Gadfly’s create dialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'New Inquiry' }))
     const begin = await screen.findByRole('button', { name: 'Begin Inquiry' })
     expectArmRecipe(begin, 'gadfly')
+    expectRestRecipe(begin, 'Begin Inquiry')
     begin.focus()
     act(() => {
       begin.click()
     })
-    const busy = await screen.findByRole('button', { name: 'Creating...' })
+    await expectBusyRecipe(begin, 'Begin Inquiry', 'Creating the inquiry…')
+    const busy = screen.getByRole('button', { name: 'Begin Inquiry' })
     expect(busy).toBe(begin)
     expect(busy.getAttribute('aria-busy')).toBe('true')
     expect((busy as HTMLButtonElement).disabled).toBe(false)
@@ -420,7 +592,7 @@ describe('Lever’s create dialog', () => {
     const province = (await screen.findByLabelText('Province')) as HTMLSelectElement
     await waitFor(() => expect(province.value).toBe('ab'))
     expect(province.required).toBe(true)
-    expectControlRecipe(province, 'lever')
+    expectControlRecipe(province)
     expectLabelRecipe(province, false)
     expect(description(province)).toBe(
       "Open Cave has not verified Alberta's legal citations yet. Check each one against the Act before you file." +
@@ -433,20 +605,52 @@ describe('Lever’s create dialog', () => {
     await waitFor(() => expect((screen.getByLabelText('Province') as HTMLSelectElement).value).toBe('bc'))
     const body = screen.getByLabelText('Public body (optional)') as HTMLSelectElement
     expect(body.id).toBe('action-public-body')
-    expectControlRecipe(body, 'lever')
+    expectControlRecipe(body)
     expect(body.hasAttribute('aria-describedby')).toBe(false)
     fireEvent.change(body, { target: { value: '__other__' } })
-    expectControlRecipe(screen.getByLabelText('Public body name'), 'lever')
+    expectControlRecipe(screen.getByLabelText('Public body name'))
     for (const name of ['Oracle document (optional)', 'Gadfly inquiry (optional)']) {
       const select = await screen.findByLabelText(name)
       expect(select.tagName).toBe('SELECT')
-      expectControlRecipe(select, 'lever')
+      expectControlRecipe(select)
     }
     const records = screen.getByLabelText('What records do you want?')
     expect(records.id).toBe('action-description')
-    expectControlRecipe(records, 'lever')
-    expect(screen.getByRole('group', { name: 'Action type' })).toBeTruthy()
-    expect(screen.getByText('Document type').tagName).toBe('LABEL')
+    expectControlRecipe(records)
+    // Named by its visible label (Jen C2b C6), on the one toggle recipe (C2).
+    const group = screen.getByRole('group', { name: 'Document type' })
+    const toggles = [...group.querySelectorAll('button[aria-pressed]')] as HTMLButtonElement[]
+    expect(toggles.map((t) => t.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false'])
+    expect(toggles[0].className).toBe(fieldToggleClasses(true).button)
+    expect(toggles[1].className).toBe(fieldToggleClasses(false).button)
+  })
+
+  it('opens on the pressed document type, not Close; Close is 44px on touch; one arm button inside (Jen C2b C2, C9)', async () => {
+    installFetch()
+    render(<NewActionDialog />)
+    fireEvent.click(screen.getByRole('button', { name: 'New Action' }))
+    const dialog = await screen.findByRole('dialog')
+    await waitFor(() => expect(document.activeElement?.getAttribute('aria-pressed')).toBe('true'))
+    expect(document.activeElement!.textContent).toContain('FIPPA Request')
+    const close = screen.getByRole('button', { name: 'Close dialog' })
+    expect(close.className).toContain('[@media(pointer:coarse)]:h-11')
+    expect(close.className).toContain('[@media(pointer:coarse)]:w-11')
+    const armed = [...dialog.querySelectorAll('button')].filter((b) => b.style.color.includes('-ink)') || b.style.backgroundColor === 'var(--surface-2)')
+    expect(armed.map((b) => b.textContent)).toEqual(['Generate'])
+  })
+
+  it('busy, Generate keeps its label and box: only its icon turns to a spinner', async () => {
+    installFetch({
+      'GET /api/investigate/inv-1': () => ({ ok: true, status: 200, json: async () => BC }),
+      'POST /api/lever/actions': () => new Promise(() => {}),
+    })
+    render(<NewActionDialog initialInvestigationId="inv-1" initialActionType="fippa_request" />)
+    await waitFor(() => expect((screen.getByLabelText('Province') as HTMLSelectElement).value).toBe('bc'))
+    fireEvent.change(screen.getByLabelText('What records do you want?'), { target: { value: 'Records.' } })
+    const generate = screen.getByRole('button', { name: 'Generate' })
+    expectRestRecipe(generate, 'Generate')
+    fireEvent.click(generate)
+    await expectBusyRecipe(generate, 'Generate', 'Creating the action…')
   })
 
   it('a body refusal describes the select, or the "Other" name when that holds the body, never both', async () => {
@@ -487,6 +691,10 @@ describe('Lever’s create dialog', () => {
     await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText('What records do you want?')))
     fireEvent.change(screen.getByLabelText('What records do you want?'), { target: { value: 'Records.' } })
     expect(description(generate)).toBe('Choose a province to generate this request.')
+    // The reason sits 8px above the row it explains (Jen C2b C5).
+    const reason = document.getElementById(generate.getAttribute('aria-describedby')!)!
+    expect(reason.className).toBe(FIELD_REASON_CLASS)
+    expect(reason.nextElementSibling!.contains(generate)).toBe(true)
     fireEvent.click(generate)
     await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText('Province')))
     expect(posts('/api/lever/actions')).toHaveLength(0)
@@ -506,39 +714,46 @@ describe('Mirror’s comparison form', () => {
     const question = screen.getByLabelText('What policy question do you want to compare?')
     expect(question.tagName).toBe('TEXTAREA')
     expect(question.id).toBe('compare-description')
-    expectControlRecipe(question, 'mirror')
+    expectControlRecipe(question)
     expectLabelRecipe(question, false)
     const doc = await screen.findByLabelText('Linked document (optional)')
     const area = screen.getByLabelText('Policy area (optional)')
     expect(doc.id).toBe('compare-document')
     expect(area.id).toBe('compare-policy-area')
-    expectControlRecipe(doc, 'mirror')
-    expectControlRecipe(area, 'mirror')
+    expectControlRecipe(doc)
+    expectControlRecipe(area)
     const controls = [...container.querySelectorAll('textarea, select')]
     expect(controls.map((c) => c.id)).toEqual(['compare-description', 'compare-document', 'compare-policy-area'])
     expect(container.querySelector('h2')!.className).toBe(`mb-4 ${SECTION_LABEL_CLASS}`)
   })
 
-  it('Compare is the arm button: aria-disabled and inert with no question, live with one', async () => {
-    installFetch({
-      'POST /api/mirror/compare': () => ({ ok: false, status: 400, json: async () => ({ error: 'Add a question.' }) }),
-    })
+  it('Compare is the arm button: unavailable with no question, it says why and takes the citizen to the question (Jen C2b C5)', async () => {
+    installFetch({ 'POST /api/mirror/compare': () => ({ ok: false, status: 400, json: async () => ({ error: 'description is required' }) }) })
     vi.spyOn(console, 'error').mockImplementation(() => {})
     render(<ComparisonForm />)
+    const question = screen.getByLabelText('What policy question do you want to compare?')
     const compare = screen.getByRole('button', { name: 'Compare' })
     expectUnavailable(compare)
     expect((compare as HTMLButtonElement).disabled).toBe(false)
+    expect(description(compare)).toBe('Write your question above to start comparing.')
+    const reason = document.getElementById(compare.getAttribute('aria-describedby')!)!
+    expect(reason.className).toBe(FIELD_REASON_CLASS)
+    expect(reason.nextElementSibling!.contains(compare)).toBe(true)
+    compare.focus()
     fireEvent.click(compare)
+    expect(document.activeElement).toBe(question)
     expect(posts('/api/mirror/compare')).toHaveLength(0)
-    fireEvent.change(screen.getByLabelText('What policy question do you want to compare?'), { target: { value: 'Rentals?' } })
+    fireEvent.change(question, { target: { value: 'Rentals?' } })
     expect(compare.hasAttribute('aria-disabled')).toBe(false)
+    expect(screen.queryByText('Write your question above to start comparing.')).toBeNull()
     expectArmRecipe(compare, 'mirror')
     fireEvent.click(compare)
-    expect((await screen.findByRole('alert')).textContent).toBe('Add a question.')
+    // Never the server's own words (Jen C2b C8).
+    expect((await screen.findByRole('alert')).textContent).toBe(MIRROR_COPY.unreadable)
     expect(posts('/api/mirror/compare')).toHaveLength(1)
   })
 
-  it('busy, Compare keeps focus, says so, and sends one comparison', async () => {
+  it('busy, Compare keeps its label, box and focus, the question keeps its ink, and one comparison is sent', async () => {
     let answer!: (v: unknown) => void
     installFetch({
       'POST /api/mirror/compare': () =>
@@ -548,22 +763,60 @@ describe('Mirror’s comparison form', () => {
     })
     vi.spyOn(console, 'error').mockImplementation(() => {})
     render(<ComparisonForm />)
-    fireEvent.change(screen.getByLabelText('What policy question do you want to compare?'), { target: { value: 'Rentals?' } })
+    const question = screen.getByLabelText('What policy question do you want to compare?') as HTMLTextAreaElement
+    fireEvent.change(question, { target: { value: 'Rentals?' } })
     const compare = screen.getByRole('button', { name: 'Compare' })
+    expectRestRecipe(compare, 'Compare')
     compare.focus()
     fireEvent.click(compare)
-    const busy = await screen.findByRole('button', { name: 'Comparing...' })
-    expect(busy).toBe(compare)
-    expect(busy.getAttribute('aria-busy')).toBe('true')
-    expect(busy.getAttribute('aria-disabled')).toBe('true')
-    expect(document.activeElement).toBe(busy)
-    expectArmRecipe(busy, 'mirror')
-    fireEvent.click(busy)
+    await expectBusyRecipe(compare, 'Compare', 'Comparing…')
+    expect(screen.getByRole('button', { name: 'Compare' })).toBe(compare)
+    expect(compare.getAttribute('aria-disabled')).toBe('true')
+    expect(document.activeElement).toBe(compare)
+    expectArmRecipe(compare, 'mirror')
+    // The question is locked by readOnly, never disabled (Jen C2b C4).
+    expect(question.readOnly).toBe(true)
+    expect(question.disabled).toBe(false)
+    expect(question.getAttribute('aria-disabled')).toBe('true')
+    fireEvent.click(compare)
     expect(posts('/api/mirror/compare')).toHaveLength(1)
     await act(async () => {
-      answer({ ok: false, status: 500, json: async () => ({}) })
+      answer({ ok: false, status: 500, json: async () => ({ error: 'Internal server error' }) })
     })
-    expect((await screen.findByRole('alert')).textContent).toBe('Something went wrong. Try again.')
+    expect((await screen.findByRole('alert')).textContent).toBe(MIRROR_COPY.failed)
+    expect(question.readOnly).toBe(false)
+    expect(question.hasAttribute('aria-disabled')).toBe(false)
+  })
+
+  it('every failure shows plain, status-mapped copy, never the server’s or browser’s words (Jen C2b C8)', async () => {
+    expect(mirrorErrorMessage(429)).toBe('Too many comparisons for now. Compare again later.')
+    expect(mirrorErrorMessage(400)).toBe("Mirror couldn't read that question. Compare again.")
+    expect(mirrorErrorMessage(500)).toBe("Mirror couldn't finish that comparison. Compare again.")
+    expect(mirrorErrorMessage(503)).toBe(MIRROR_COPY.failed)
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cases: Array<[string, () => unknown, string | null]> = [
+      ['429', () => ({ ok: false, status: 429, json: async () => ({ error: 'Too many requests' }) }), MIRROR_COPY.rateLimited],
+      ['non-JSON 502', () => ({ ok: false, status: 502, json: async () => { throw new SyntaxError('x') } }), MIRROR_COPY.failed],
+      ['network', () => Promise.reject(new TypeError('Failed to fetch')), MIRROR_COPY.offline],
+      ['no body', () => ({ ok: true, status: 200, json: async () => ({}), body: null }), MIRROR_COPY.failed],
+      ['401', () => ({ ok: false, status: 401, json: async () => ({ error: 'Unauthorized' }) }), null],
+    ]
+    for (const [, answer, copy] of cases) {
+      cleanup()
+      push.mockReset()
+      installFetch({ 'POST /api/mirror/compare': answer })
+      render(<ComparisonForm />)
+      fireEvent.change(screen.getByLabelText('What policy question do you want to compare?'), { target: { value: 'Rentals?' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Compare' }))
+      if (copy === null) {
+        await waitFor(() => expect(push).toHaveBeenCalledWith('/login?redirect=%2Fmirror'))
+        expect(screen.queryByRole('alert')).toBeNull()
+      } else {
+        const alert = await screen.findByRole('alert')
+        expect(alert.textContent).toBe(copy)
+        expect(alert.querySelector('svg[aria-hidden="true"]')).toBeTruthy()
+      }
+    }
   })
 
   it('a document list that fails to load is announced, and the select is not marked invalid', async () => {
@@ -593,8 +846,8 @@ describe('Scout’s discovery form', () => {
     expectArmRecipe(scout, 'scout')
     const jurisdiction = await screen.findByLabelText('Jurisdiction (optional)')
     const area = screen.getByLabelText('Policy area (optional)')
-    expectControlRecipe(jurisdiction, 'scout')
-    expectControlRecipe(area, 'scout')
+    expectControlRecipe(jurisdiction)
+    expectControlRecipe(area)
     expect(container.querySelector('h2')!.className).toBe(`mb-4 ${SECTION_LABEL_CLASS}`)
     // The query still comes first.
     expect([...container.querySelectorAll('input, select')].map((c) => c.id)).toEqual([query.id, jurisdiction.id, area.id])
