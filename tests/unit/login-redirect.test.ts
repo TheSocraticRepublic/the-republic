@@ -78,6 +78,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
   Object.defineProperty(window, 'location', { configurable: true, value: realLocation })
 })
 
@@ -349,6 +350,19 @@ describe('login: error copy (Jen C5)', () => {
     fireEvent.change(email, { target: { value: 'qa-owner-a@example.test' } })
     await enter(email)
     expectAlert("Open Cave can't be reached. Check your connection, then try again.")
+  })
+
+  it('an unexpected failure after a good verify is surfaced, not swallowed', async () => {
+    // An opaque origin makes safeRedirectTarget throw; the page must say so.
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    assign = vi.fn()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { origin: 'null', href: 'null/login', pathname: '/login', search: '', assign },
+    })
+    await signIn()
+    expectAlert("Open Cave couldn't check that code. Try again.")
+    expect(assign).not.toHaveBeenCalled()
   })
 
   it('offline on verify shows the connection copy, not "Failed to fetch"', async () => {
