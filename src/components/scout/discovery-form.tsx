@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, useId } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronDown, Compass, Loader2, X } from 'lucide-react'
-import { clsx } from 'clsx'
+import { CTAButton } from '@/components/ui/cta-button'
+import { hasCoarsePointer } from '@/lib/ui/input-modality'
 import { ScoutResultView } from './scout-result-view'
 
 const POLICY_AREAS = [
@@ -27,7 +29,63 @@ interface Jurisdiction {
   dataPortalUrl: string | null
 }
 
+
+/** A signed-out search goes to login and comes back here (the B3a path). */
+const LOGIN_FOR_SCOUT = '/login?redirect=%2Fscout'
+
+/**
+ * Every failure a citizen can see, in Scout's plain-instructional register:
+ * the fact, then the action. No server or browser string reaches the page
+ * (Jen C4). The daily limit is a fixed 24 h window in @upstash/ratelimit,
+ * bucketed on floor(now / 24 h), so it resets at 00:00 UTC; the route sends
+ * that instant as `reset` and the page names it in the reader's own time.
+ */
+export const SCOUT_COPY = {
+  rateLimited: 'Too many searches in the last minute. Wait a minute, then search again.',
+  dailyLimit: (time: string) => `You've reached the daily limit on AI requests. It resets at ${time}.`,
+  unavailable: "Scout can't search right now. Search again later.",
+  failed: "Scout couldn't finish that search. Search again.",
+  unreadable: "Scout couldn't read that search. Search again.",
+  offline: "Open Cave can't be reached. Check your connection, then search again.",
+} as const
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** The message for a non-OK, non-401 answer. `body` is the parsed JSON body,
+ *  or null when it was not JSON. */
+export function scoutErrorMessage(status: number, body: unknown, now: number = Date.now()): string {
+  const data = (body && typeof body === 'object' ? body : {}) as { code?: unknown; reset?: unknown }
+  if (status === 429 && data.code === 'daily_limit') {
+    const reset = typeof data.reset === 'number' ? data.reset : NaN
+    // A reset that is not in the next day is not a real window (the limiter
+    // fails closed with reset = now when Redis is down): name no time.
+    if (!(reset > now && reset <= now + DAY_MS)) return SCOUT_COPY.unavailable
+    const time = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(reset)
+    return SCOUT_COPY.dailyLimit(time)
+  }
+  if (status === 429) return SCOUT_COPY.rateLimited
+  if (status === 400) return SCOUT_COPY.unreadable
+  return SCOUT_COPY.failed
+}
+
+/** The nearest ancestor that scrolls (the app shell's content column), or
+ *  the document's scrolling element. */
+function scrollParent(el: HTMLElement): HTMLElement {
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const overflowY = getComputedStyle(p).overflowY
+    if ((overflowY === 'auto' || overflowY === 'scroll') && p.scrollHeight > p.clientHeight) return p
+  }
+  return (document.scrollingElement as HTMLElement | null) ?? document.documentElement
+}
+
+/** Space kept above the results heading when it is scrolled into view. */
+const RESULTS_TOP_GAP = 16
+/** How much of the results must be visible for no scroll to be needed: the
+ *  heading and its first line. */
+const RESULTS_FIRST_LINE = 64
+
 export function DiscoveryForm() {
+  const router = useRouter()
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([])
   const [fetchingJurisdictions, setFetchingJurisdictions] = useState(false)
   const [selectedJurisdictionId, setSelectedJurisdictionId] = useState('')
@@ -40,12 +98,18 @@ export function DiscoveryForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const queryId = useId()
   const headingId = useId()
+  const errorId = useId()
   const jurisdictionId = useId()
   const policyAreaId = useId()
   const abortRef = useRef<AbortController | null>(null)
   // In flight, read synchronously: two key events dispatched in one task both
   // see `loading` false (it is render state), so the guard reads this ref.
   const busyRef = useRef(false)
+  const queryRef = useRef<HTMLInputElement>(null)
+  const submitRef = useRef<HTMLButtonElement>(null)
+  const resultsRef = useRef<HTMLElement>(null)
+  // The results are brought into view once per search, on the first chunk.
+  const scrolledRef = useRef(false)
 
   // Fetch jurisdictions on mount (reuse Mirror's endpoint)
   useEffect(() => {
@@ -66,6 +130,7 @@ export function DiscoveryForm() {
   const handleDiscover = useCallback(async () => {
     if (!query.trim() || busyRef.current) return
     busyRef.current = true
+    scrolledRef.current = false
 
     // Cancel any in-progress request
     if (abortRef.current) {
@@ -92,18 +157,20 @@ export function DiscoveryForm() {
         signal: abortRef.current.signal,
       })
 
+      if (res.status === 401) {
+        router.push(LOGIN_FOR_SCOUT)
+        return
+      }
+
       if (!res.ok) {
-        const data = await res.json().catch(() => ({ error: 'Request failed' }))
-        setErrorMessage(data.error ?? 'Discovery failed. Try again.')
-        setIsStreaming(false)
-        setLoading(false)
+        // A body that is not JSON (an HTML 502 from the edge) maps by status.
+        const data: unknown = await res.json().catch(() => null)
+        setErrorMessage(scoutErrorMessage(res.status, data))
         return
       }
 
       if (!res.body) {
-        setErrorMessage('No response received. Try again.')
-        setIsStreaming(false)
-        setLoading(false)
+        setErrorMessage(SCOUT_COPY.failed)
         return
       }
 
@@ -121,23 +188,45 @@ export function DiscoveryForm() {
 
       setHasResult(true)
     } catch (err) {
-      if (err instanceof Error && err.name !== 'AbortError') {
-        setErrorMessage('An unexpected error occurred. Try again.')
+      // An abort is the citizen's own Cancel: nothing to report. Anything else
+      // thrown by fetch or the stream is the network.
+      if (!(err instanceof Error && err.name === 'AbortError')) {
+        setErrorMessage(SCOUT_COPY.offline)
       }
     } finally {
       busyRef.current = false
       setIsStreaming(false)
       setLoading(false)
     }
-  }, [query, selectedJurisdictionId, policyArea])
+  }, [query, selectedJurisdictionId, policyArea, router])
 
   const handleCancel = useCallback(() => {
     if (abortRef.current) {
       abortRef.current.abort()
     }
+    // Cancel unmounts itself; keep the place in the search row (Jen C5).
+    queryRef.current?.focus()
   }, [])
 
-  const canSubmit = query.trim().length > 0 && !loading
+  // On a phone the results start below the fold: bring the heading and its
+  // first line into view on the first chunk, once per search (Jen C9). By
+  // arithmetic on the scroll container, not scrollIntoView, which would also
+  // scroll the page behind the app shell.
+  useEffect(() => {
+    const section = resultsRef.current
+    if (!streamedText || !section || scrolledRef.current) return
+    scrolledRef.current = true
+    const container = scrollParent(section)
+    const box = container.getBoundingClientRect()
+    const top = section.getBoundingClientRect().top
+    if (top + RESULTS_FIRST_LINE <= box.bottom) return
+    const reduce =
+      typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    container.scrollTo({
+      top: container.scrollTop + (top - box.top) - RESULTS_TOP_GAP,
+      behavior: reduce ? 'auto' : 'smooth',
+    })
+  }, [streamedText])
 
   const handleQueryKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -146,11 +235,18 @@ export function DiscoveryForm() {
       // login page). handleDiscover refuses an empty query or a busy search.
       if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
         e.preventDefault()
+        // On a touch screen, move focus to Scout first: that closes the soft
+        // keyboard over the results and keeps the place in the search row
+        // (Jen C9; the concern form's shortcut pattern). With a keyboard,
+        // focus stays in the field.
+        if (query.trim() && !busyRef.current && hasCoarsePointer()) submitRef.current?.focus()
         handleDiscover()
       }
     },
-    [handleDiscover]
+    [handleDiscover, query]
   )
+
+  const showSlot = loading || errorMessage !== null
 
   return (
     <div className="space-y-8">
@@ -168,6 +264,7 @@ export function DiscoveryForm() {
             </label>
             <div className="flex items-stretch gap-2">
               <input
+                ref={queryRef}
                 id={queryId}
                 type="search"
                 enterKeyHint="search"
@@ -175,52 +272,72 @@ export function DiscoveryForm() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleQueryKeyDown}
-                // Short enough to show whole beside the button at 375 (156 of
-                // 189px); a longer example is cut mid-word on a phone.
-                placeholder="Rental bylaw minutes"
-                className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-3 text-base text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-scout)]/40"
+                // Shows whole at 320 beside the button (Jen C7).
+                placeholder="Rental bylaws"
+                // No UA clear glyph: Chromium draws a white one flush against
+                // the text, outside the tokens (Jen C6). Escape still clears.
+                className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-3 text-base text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-scout)]/40 [&::-webkit-search-cancel-button]:appearance-none"
                 // Locked while searching, but never natively disabled: a
                 // disabled field drops focus to the body, and Enter is pressed
                 // here (Jen C3's lesson on the concern form). readOnly keeps
                 // focus and the caret; aria-disabled says it is unavailable.
                 readOnly={loading}
                 aria-disabled={loading ? 'true' : undefined}
+                aria-describedby={errorMessage !== null ? errorId : undefined}
               />
-              <button
-                type="button"
-                // aria-disabled, not disabled, so a focused button keeps focus
-                // through the search and after an error (the B3a pattern).
-                onClick={() => {
-                  if (canSubmit) handleDiscover()
-                }}
-                aria-disabled={canSubmit ? undefined : 'true'}
-                aria-busy={loading ? 'true' : undefined}
-                className={clsx(
-                  'inline-flex shrink-0 items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-150',
-                  canSubmit
-                    ? 'opacity-100 hover:opacity-90'
-                    : 'cursor-not-allowed opacity-40'
-                )}
-                style={{
-                  backgroundColor: 'color-mix(in srgb, var(--accent-scout) 15%, transparent)',
-                  color: 'var(--accent-scout)',
-                  border: '1px solid color-mix(in srgb, var(--accent-scout) 30%, transparent)',
-                }}
+              {/* The arm recipe (Jen C1): no opacity in any state, the ring at
+                  full ink, and the same label busy or not, so the field keeps
+                  its width. The working state is announced in the slot below. */}
+              <CTAButton
+                ref={submitRef}
+                variant="arm"
+                arm="scout"
+                onClick={handleDiscover}
+                disabled={!query.trim()}
+                busy={loading}
+                className="shrink-0 justify-center"
               >
                 {loading ? (
-                  <>
-                    <Loader2 size={14} strokeWidth={2} className="animate-spin" />
-                    Scouting...
-                  </>
+                  <Loader2 size={14} strokeWidth={2} className="animate-spin" aria-hidden="true" />
                 ) : (
-                  <>
-                    <Compass size={14} strokeWidth={2} />
-                    Scout
-                  </>
+                  <Compass size={14} strokeWidth={2} aria-hidden="true" />
                 )}
-              </button>
+                Scout
+              </CTAButton>
             </div>
+            {/* Announces the start of a search to a screen reader; the visible
+                line below is the same words, hidden from the tree. */}
+            <p role="status" className="sr-only">
+              {loading ? 'Scouting…' : ''}
+            </p>
           </div>
+
+          {/* The one slot under the query row: the working line with Cancel,
+              or the error that the field is described by (Jen C4, C5). */}
+          {showSlot && (
+            <div className="flex min-h-6 items-center justify-between gap-3">
+              {loading && (
+                <>
+                  <p aria-hidden="true" className="text-xs text-text-muted">
+                    Scouting…
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="inline-flex min-h-6 items-center gap-1.5 rounded-lg px-3 text-xs text-text-muted transition-colors hover:text-text-secondary [@media(pointer:coarse)]:min-h-11"
+                  >
+                    <X size={12} strokeWidth={2} aria-hidden="true" />
+                    Cancel
+                  </button>
+                </>
+              )}
+              {!loading && errorMessage !== null && (
+                <p id={errorId} role="alert" className="text-xs text-status-danger">
+                  {errorMessage}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Filters — after the query, both optional */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -285,29 +402,12 @@ export function DiscoveryForm() {
             </div>
           </div>
 
-          {/* Error state */}
-          {errorMessage && (
-            <p role="alert" className="text-xs text-status-danger mt-1">{errorMessage}</p>
-          )}
-
-          {/* Cancel, while a search is running */}
-          {isStreaming && (
-            <div className="flex justify-end">
-              <button
-                onClick={handleCancel}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-text-muted transition-colors hover:text-text-secondary"
-              >
-                <X size={12} strokeWidth={2} />
-                Cancel
-              </button>
-            </div>
-          )}
         </div>
       </section>
 
       {/* Results */}
       {(isStreaming || hasResult) && streamedText && (
-        <section>
+        <section ref={resultsRef}>
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
             Discovery results
           </h2>

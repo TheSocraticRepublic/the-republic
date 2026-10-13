@@ -50,7 +50,8 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
 
   const { success } = await checkTightRateLimit(`scout-discover:${userId}`)
   if (!success) {
-    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+    // `code` tells the page which 429 this is (Jen C4); the two share a status.
+    return new Response(JSON.stringify({ error: 'Too many requests', code: 'rate_limited' }), {
       status: 429,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -58,8 +59,13 @@ export const POST = safeRoute(async function POST(request: NextRequest) {
 
   const aiDaily = await checkDailyAiGeneralLimit(userId)
   if (!aiDaily.success) {
+    // A fixedWindow('24 h') resets at 00:00 UTC (the bucket is
+    // floor(now / 24 h)), not "tomorrow" in the reader's day: send the
+    // instant and let the page name it in local time.
     return new Response(JSON.stringify({
-      error: 'Daily AI usage limit reached. Try again tomorrow.',
+      error: 'Daily AI usage limit reached.',
+      code: 'daily_limit',
+      reset: aiDaily.reset,
     }), { status: 429, headers: { 'Content-Type': 'application/json' } })
   }
 
