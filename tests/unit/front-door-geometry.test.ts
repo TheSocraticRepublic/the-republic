@@ -381,4 +381,136 @@ describe.skipIf(!APP_UP)('front door geometry on the harness (Chromium)', () => 
     expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY')
     await context.close()
   }, 60_000)
+  // ─── The C2b forms: one busy recipe (Jen C2b C3) ─────────────────────────
+  //
+  // On Gadfly, Lever, Mirror and Scout, busy never changes the action's box,
+  // no Cancel ever overlaps the box the action held at rest, and a second
+  // press 250 ms later on that box's edge never closes the dialog or sends a
+  // second request. Every request is held in the browser and never answered.
+
+  type BusyForm = {
+    name: string
+    path: string
+    api: string
+    action: string
+    /** Fill what the action needs, opening the dialog first where there is one. */
+    ready: (page: Page) => Promise<void>
+    dialog: boolean
+  }
+
+  const BUSY_FORMS: BusyForm[] = [
+    {
+      name: 'Gadfly',
+      path: '/gadfly',
+      api: '**/api/gadfly/session',
+      action: 'Begin Inquiry',
+      dialog: true,
+      ready: async (page) => {
+        await page.locator('#main-content').getByRole('button', { name: 'New Inquiry' }).click()
+        await page.getByRole('dialog').waitFor()
+      },
+    },
+    {
+      name: 'Lever',
+      path: '/lever',
+      api: '**/api/lever/actions',
+      action: 'Generate',
+      dialog: true,
+      ready: async (page) => {
+        await page.locator('#main-content').getByRole('button', { name: 'New Action' }).click()
+        const dialog = page.getByRole('dialog')
+        await dialog.waitFor()
+        await dialog.getByLabel('Province').selectOption('bc')
+        await dialog.getByLabel('What records do you want?').fill('Records of the permit.')
+      },
+    },
+    {
+      name: 'Mirror',
+      path: '/mirror',
+      api: '**/api/mirror/compare',
+      action: 'Compare',
+      dialog: false,
+      ready: async (page) => {
+        await page.getByLabel('What policy question do you want to compare?').fill('How have BC towns handled rentals?')
+      },
+    },
+    {
+      name: 'Scout',
+      path: '/scout',
+      api: '**/api/scout/discover',
+      action: 'Scout',
+      dialog: false,
+      ready: async (page) => {
+        await page.getByLabel('What documents are you looking for?').fill('rental bylaws')
+      },
+    },
+  ]
+
+  /** Holds the form's POSTs (never answered) and counts them; GETs pass. */
+  async function holdPosts(page: Page, api: string): Promise<() => number> {
+    let posts = 0
+    await page.route(api, (route) => {
+      if (route.request().method() === 'POST') {
+        posts++
+        return
+      }
+      return route.continue()
+    })
+    return () => posts
+  }
+
+  const actionSelector = (f: BusyForm) =>
+    `${f.dialog ? '[role="dialog"] ' : '#main-content '}button:has-text("${f.action}")`
+
+  for (const f of BUSY_FORMS) {
+    for (const vp of [{ name: '320 coarse', width: 320, height: 640, touch: true }, PHONE, TABLET, DESKTOP]) {
+      it(`${f.name}, ${vp.name}: busy keeps the action's box, Cancel never overlaps it, a second press never closes or resends`, async () => {
+        const { context, page } = await open(vp, f.path)
+        const posts = await holdPosts(page, f.api)
+        await f.ready(page)
+        const sel = actionSelector(f)
+        await page.locator(sel).scrollIntoViewIfNeeded()
+        const rest = await contentBox(page, sel)
+        const onScreen = (await page.locator(sel).boundingBox())!
+        await press(page, vp, onScreen.x + onScreen.width / 2, onScreen.y + onScreen.height / 2)
+        await page.locator(`${sel}[aria-busy="true"]`).waitFor()
+        const busy = await contentBox(page, sel)
+        expect(busy, `${f.name} busy box`).toEqual(rest)
+        expect(await page.locator(sel).textContent()).toContain(f.action)
+        const cancels = page.getByRole('button', { name: 'Cancel', exact: true })
+        for (let i = 0; i < (await cancels.count()); i++) {
+          const c = cancels.nth(i)
+          if (!(await c.isVisible())) continue
+          const box = await c.evaluate((el) => {
+            const r = el.getBoundingClientRect()
+            return { x: r.x, y: r.y, width: r.width, height: r.height }
+          })
+          expect(intersects(box, onScreen), `Cancel ${JSON.stringify(box)} vs ${JSON.stringify(onScreen)}`).toBe(false)
+        }
+        // A second press on the rest box's left edge, as a hurried citizen would.
+        await page.waitForTimeout(250)
+        await press(page, vp, onScreen.x + onScreen.width * 0.04, onScreen.y + onScreen.height / 2)
+        await page.waitForTimeout(300)
+        if (f.dialog) expect(await page.getByRole('dialog').count(), 'the dialog stays open').toBe(1)
+        expect(await page.locator(`${sel}[aria-busy="true"]`).count()).toBe(1)
+        expect(posts()).toBe(1)
+        await context.close()
+      }, 60_000)
+    }
+  }
+
+  it('control, Gadfly 1440: a busy label that narrows the button (pre-C3) moves its box, and is caught', async () => {
+    const f = BUSY_FORMS[0]
+    const { context, page } = await open(DESKTOP, f.path)
+    await holdPosts(page, f.api)
+    await page.addStyleTag({ content: 'button[aria-busy="true"]{padding-left:0 !important;padding-right:0 !important}' })
+    await f.ready(page)
+    const sel = actionSelector(f)
+    const rest = await contentBox(page, sel)
+    const onScreen = (await page.locator(sel).boundingBox())!
+    await press(page, DESKTOP, onScreen.x + onScreen.width / 2, onScreen.y + onScreen.height / 2)
+    await page.locator(`${sel}[aria-busy="true"]`).waitFor()
+    expect(await contentBox(page, sel)).not.toEqual(rest)
+    await context.close()
+  }, 60_000)
 })

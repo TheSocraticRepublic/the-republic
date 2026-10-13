@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { clsx } from 'clsx'
-import type { CSSProperties, MouseEvent, ReactNode, Ref } from 'react'
+import type { ButtonHTMLAttributes, CSSProperties, MouseEvent, ReactNode, Ref } from 'react'
 
 /** The six instruments, each with its `--accent-{arm}` token in globals.css. */
 export type CTAButtonArm = 'scout' | 'oracle' | 'gadfly' | 'lever' | 'mirror' | 'votes'
@@ -46,11 +46,23 @@ interface CTAButtonAsLink extends CTAButtonBaseProps {
   busy?: undefined
   describedBy?: undefined
   ref?: undefined
+  onUnavailable?: undefined
 }
 
-interface CTAButtonAsButton extends CTAButtonBaseProps {
+/** Native attributes a wrapper may add to the <button>: a Radix
+ *  `Dialog.Trigger asChild` hands its child `aria-haspopup`, `aria-expanded`,
+ *  `aria-controls` and `data-state` this way (UI plan C2b). The props this
+ *  component owns are not among them. */
+type CTAButtonPassThrough = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'children' | 'className' | 'style' | 'onClick' | 'disabled' | 'type' | 'aria-disabled' | 'aria-busy' | 'aria-describedby'
+>
+
+interface CTAButtonAsButton extends CTAButtonBaseProps, CTAButtonPassThrough {
   href?: undefined
-  onClick?: () => void
+  /** Receives the click event when a wrapper (a Radix trigger) composes its
+   *  own handler in; the component's own callers ignore it. */
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void
   /** Rendered as `aria-disabled="true"`, never the native `disabled`
    *  attribute: the button stays in the tab order (a keyboard or screen-reader
    *  user can still reach it and hear that it is unavailable), and the click
@@ -66,6 +78,12 @@ interface CTAButtonAsButton extends CTAButtonBaseProps {
   /** React 19 passes `ref` as a prop (the concern form's shortcut moves focus
    *  here before it dispatches). */
   ref?: Ref<HTMLButtonElement>
+  /** Called, in place of `onClick`, when the button is activated while
+   *  disabled (never while busy): for a form whose unavailable action takes
+   *  the citizen to what is missing instead of doing nothing (the Lever's
+   *  Generate sends focus to the province). Without it a disabled activation
+   *  does nothing. */
+  onUnavailable?: () => void
 }
 
 type CTAButtonProps = (CTAButtonAsLink | CTAButtonAsButton) & CTAButtonVariantProps
@@ -107,6 +125,34 @@ const PILL_STYLE_UNAVAILABLE: CSSProperties = {
   border: '1px solid var(--border)',
 }
 
+/** Passed-through handlers that can activate a button: a wrapper (a Radix
+ *  DropdownMenu or Select trigger) may open on pointerdown or keydown rather
+ *  than click. While disabled or busy they are not called, the same as
+ *  onClick (Razor C2b N1). Enter and leave (pointer and mouse), focus and
+ *  blur are not activation and pass untouched, so a tooltip still opens on a
+ *  disabled button and still closes when it turns busy (Razor C2b check N2).
+ *  Key handlers stay guarded: keydown is how a menu trigger opens. */
+const ACTIVATION_HANDLER = /^on(Pointer|Mouse|Key|Touch|Click|Context|Aux)/
+const NOT_ACTIVATION = /^on(Pointer|Mouse)(Enter|Leave)(Capture)?$/
+
+function guardActivation(
+  props: Record<string, unknown>,
+  refuse: boolean
+): Record<string, unknown> {
+  if (!refuse) return props
+  const out: Record<string, unknown> = {}
+  for (const [name, value] of Object.entries(props)) {
+    if (typeof value === 'function' && ACTIVATION_HANDLER.test(name) && !NOT_ACTIVATION.test(name)) {
+      // Swallowed, never preventDefault'd: Tab must still move focus off
+      // the button, and a press must still focus it.
+      out[name] = () => {}
+    } else {
+      out[name] = value
+    }
+  }
+  return out
+}
+
 export function CTAButton({
   children,
   className,
@@ -119,6 +165,8 @@ export function CTAButton({
   ref,
   variant = 'secondary',
   arm,
+  onUnavailable,
+  ...passThrough
 }: CTAButtonProps) {
   const unavailable = Boolean(disabled) && !busy
   const variantStyle =
@@ -143,13 +191,15 @@ export function CTAButton({
   function handleClick(event: MouseEvent<HTMLButtonElement>) {
     if (disabled || busy) {
       event.preventDefault()
+      if (unavailable) onUnavailable?.()
       return
     }
-    onClick?.()
+    onClick?.(event)
   }
 
   return (
     <button
+      {...guardActivation(passThrough, Boolean(disabled || busy))}
       ref={ref}
       type="button"
       onClick={handleClick}

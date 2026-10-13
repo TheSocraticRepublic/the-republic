@@ -127,8 +127,10 @@ export default async function InvestigationsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
-      {/* Header */}
-      <div className="mb-10 flex items-center justify-between">
+      {/* Header. It wraps rather than clip: at 320 the button drops under the
+          title, whole, instead of running past the edge (B3a's nowrap label;
+          Jen C1 C8). */}
+      <div className="mb-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <div>
           <h1
             className="text-xl font-bold tracking-tight text-text-primary"
@@ -144,10 +146,14 @@ export default async function InvestigationsPage() {
             Your civic inquiries
           </p>
         </div>
-        <CTAButton href="/investigate">
-          <Search size={13} strokeWidth={2} />
-          New Investigation
-        </CTAButton>
+        {/* One way in at a time (app-arms Q4): with no investigations, the
+            empty state's own action is the way in, so the header has none. */}
+        {records.length > 0 && (
+          <CTAButton href="/investigate">
+            <Search size={13} strokeWidth={2} aria-hidden="true" />
+            New Investigation
+          </CTAButton>
+        )}
       </div>
 
       {/* List */}

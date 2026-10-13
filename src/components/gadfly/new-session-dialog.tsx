@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useId, useRef } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, X, ChevronDown } from 'lucide-react'
-import { clsx } from 'clsx'
+import { Plus, X, ChevronDown, Loader2, MessageCircleQuestion } from 'lucide-react'
+import { CTAButton } from '@/components/ui/cta-button'
+import { ErrorMark, Field, FieldLabel, fieldControlClass, fieldToggleClasses } from '@/components/ui/field'
 
 interface Document {
   id: string
@@ -49,6 +50,8 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
   const [fetchingDocs, setFetchingDocs] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const router = useRouter()
+  const modeLabelId = useId()
+  const documentRef = useRef<HTMLSelectElement>(null)
   // Open on the flag's rising edge, adjusting state during render (not an
   // effect, and not a key: a remount would detach the trigger that Radix
   // hands focus back to on close, dropping focus to <body>; Razor C2a W1).
@@ -123,18 +126,12 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      {/* The arm recipe, on the Gadfly room (an allowed ground for the ink). */}
       <Dialog.Trigger asChild>
-        <button
-          className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150"
-          style={{
-            backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 15%, transparent)',
-            color: 'var(--accent-gadfly)',
-            border: '1px solid color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
-          }}
-        >
-          <Plus size={14} strokeWidth={2} />
+        <CTAButton variant="arm" arm="gadfly">
+          <Plus size={14} strokeWidth={2} aria-hidden="true" />
           New Inquiry
-        </button>
+        </CTAButton>
       </Dialog.Trigger>
 
       <Dialog.Portal>
@@ -142,6 +139,13 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
 
         <Dialog.Content
           className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-md sm:w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border-strong bg-surface-1 p-6 shadow-2xl focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          // Open on the first field, not Close (Jen C2b C9). A select opens no
+          // soft keyboard on a phone.
+          onOpenAutoFocus={(e) => {
+            if (!documentRef.current) return
+            e.preventDefault()
+            documentRef.current.focus()
+          }}
         >
           {/* Header */}
           <div className="mb-5 flex items-center justify-between">
@@ -150,91 +154,99 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
             >
               Begin Inquiry
             </Dialog.Title>
-            <Dialog.Close aria-label="Close dialog" className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary">
+            <Dialog.Close aria-label="Close dialog" className="flex h-7 w-7 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary">
               <X size={14} strokeWidth={2} />
             </Dialog.Close>
           </div>
 
           <div className="space-y-4">
             {/* Document selector */}
-            <div>
-              <label htmlFor="session-document" className="mb-1.5 block text-xs font-medium text-text-secondary">
-                Document <span className="text-text-faint">(optional)</span>
-              </label>
-              {fetchingDocs ? (
-                <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
-              ) : (
-                <div className="relative">
-                  <select
-                    id="session-document"
-                    value={selectedDocId}
-                    onChange={(e) => setSelectedDocId(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-gadfly)]/40 focus:ring-0"
-                  >
-                    <option value="">No document — open inquiry</option>
-                    {documents.map((doc) => (
-                      <option key={doc.id} value={doc.id}>
-                        {doc.title}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={13}
-                    strokeWidth={2}
-                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-                  />
-                </div>
+            {/* Mounted while the list loads (the default choice is valid at
+                once, and the documents join it when they arrive), so the
+                dialog's first focus has somewhere to land and keeps it. */}
+            <Field id="session-document" label="Document" optional>
+              {(control) => (
+                  <div className="relative">
+                    <select
+                      {...control}
+                      ref={documentRef}
+                      aria-busy={fetchingDocs ? 'true' : undefined}
+                      value={selectedDocId}
+                      onChange={(e) => setSelectedDocId(e.target.value)}
+                      className={fieldControlClass('select')}
+                    >
+                      <option value="">No document — open inquiry</option>
+                      {/* While the list loads, the chosen document (from
+                          Oracle) is its own selected option, so the select
+                          shows and announces what Begin will send (Razor C2b
+                          check W1). Its title when an earlier list knew it. */}
+                      {fetchingDocs && selectedDocId && !documents.some((d) => d.id === selectedDocId) && (
+                        <option value={selectedDocId}>Loading your document…</option>
+                      )}
+                      {documents.map((doc) => (
+                        <option key={doc.id} value={doc.id}>
+                          {doc.title}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={13}
+                      strokeWidth={2}
+                      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+                    />
+                  </div>
               )}
-            </div>
+            </Field>
 
             {/* Title */}
-            <div>
-              <label htmlFor="session-title" className="mb-1.5 block text-xs font-medium text-text-secondary">
-                Title <span className="text-text-faint">(optional)</span>
-              </label>
-              <input
-                id="session-title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder={
-                  selectedDocId
-                    ? 'Auto-generated from document title'
-                    : 'New Inquiry'
-                }
-                className="w-full rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-gadfly)]/40"
-              />
-            </div>
+            <Field id="session-title" label="Title" optional>
+              {(control) => (
+                <input
+                  {...control}
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={
+                    selectedDocId
+                      ? 'Auto-generated from document title'
+                      : 'New Inquiry'
+                  }
+                  className={fieldControlClass()}
+                />
+              )}
+            </Field>
 
             {/* Mode selector */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-secondary">Mode</label>
-              <div role="group" aria-label="Inquiry mode" className="grid grid-cols-2 gap-2">
-                {(['socratic', 'direct'] as const).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setMode(m)}
-                    aria-pressed={mode === m}
-                    className={clsx(
-                      'rounded-lg border px-3 py-2.5 text-sm font-medium transition-all duration-150',
-                      mode === m
-                        ? 'border-[var(--accent-gadfly)]/40 bg-[var(--accent-gadfly)]/10 text-[var(--accent-gadfly)]'
-                        : 'border-border bg-surface-1 text-text-muted hover:border-border-strong hover:text-text-secondary'
-                    )}
-                  >
-                    <span className="block font-medium capitalize">{m}</span>
-                    <span className="block text-2xs font-medium opacity-70">
-                      {m === 'socratic' ? 'Questions only' : 'Direct dialogue'}
-                    </span>
-                  </button>
-                ))}
+              <FieldLabel id={modeLabelId}>Mode</FieldLabel>
+              <div role="group" aria-labelledby={modeLabelId} className="grid grid-cols-2 gap-2">
+                {(['socratic', 'direct'] as const).map((m) => {
+                  const toggle = fieldToggleClasses(mode === m)
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setMode(m)}
+                      aria-pressed={mode === m}
+                      className={toggle.button}
+                    >
+                      <span className={`${toggle.label} capitalize`}>{m}</span>
+                      <span className={toggle.description}>
+                        {m === 'socratic' ? 'Questions only' : 'Direct dialogue'}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
 
           {/* Error alert */}
           {createError && (
-            <p role="alert" className="mt-4 text-xs text-status-danger">{createError}</p>
+            <p role="alert" className="mt-4 flex items-start gap-1.5 text-xs text-status-danger">
+              <ErrorMark />
+              <span>{createError}</span>
+            </p>
           )}
 
           {/* Action */}
@@ -242,24 +254,23 @@ export function NewSessionDialog({ initialDocumentId, initialTitle, initialOpen 
             <Dialog.Close className="rounded-lg px-4 py-2 text-sm text-text-muted transition-colors hover:text-text-secondary">
               Cancel
             </Dialog.Close>
-            <button
-              onClick={handleCreate}
-              disabled={loading}
-              className={clsx(
-                'rounded-lg px-5 py-2 text-sm font-medium transition-all duration-150',
-                loading
-                  ? 'cursor-not-allowed opacity-50'
-                  : 'hover:opacity-90',
+            {/* The arm recipe on the dialog's dark surface-1 (an allowed ground).
+                Busy, it refuses a second create and keeps focus, and keeps its
+                label: only the icon turns to a spinner, so the box never
+                changes and Cancel never moves into it (Jen C2b C3). */}
+            <CTAButton variant="arm" arm="gadfly" onClick={handleCreate} busy={loading}>
+              {loading ? (
+                <Loader2 size={14} strokeWidth={2} className="animate-spin" aria-hidden="true" />
+              ) : (
+                <MessageCircleQuestion size={14} strokeWidth={2} aria-hidden="true" />
               )}
-              style={{
-                backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
-                color: 'var(--accent-gadfly)',
-                border: '1px solid color-mix(in srgb, var(--accent-gadfly) 30%, transparent)',
-              }}
-            >
-              {loading ? 'Creating...' : 'Begin Inquiry'}
-            </button>
+              Begin Inquiry
+            </CTAButton>
           </div>
+          {/* The working state, for a screen reader. */}
+          <p role="status" className="sr-only">
+            {loading ? 'Creating the inquiry…' : ''}
+          </p>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
