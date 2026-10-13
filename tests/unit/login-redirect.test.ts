@@ -50,7 +50,7 @@ beforeEach(() => {
   sendCodeCalls = 0
   verifyCalls = 0
   verifyResponse = { status: 200, body: { success: true } }
-  sendResponse = { status: 200, body: { ok: true } }
+  sendResponse = { status: 200, body: { ok: true, sent: true } }
   sendBodies = []
   offline = null
   holdVerify = null
@@ -333,6 +333,8 @@ describe('login: error copy (Jen C5)', () => {
   it.each([
     [400, { error: 'Invalid email address' }, "That isn't a valid email address. Check it and try again."],
     [429, { error: 'Too many codes requested. Try again later.' }, 'Too many codes for this email in the last hour. Try again in an hour.'],
+    [429, { error: 'Too many requests. Wait before requesting another code.', scope: 'ip' }, 'Too many requests from this connection. Wait a minute, then try again.'],
+    [429, { error: 'Too many requests. Wait before requesting another code.', scope: 'global' }, 'Too many requests. Wait a few minutes, then try again.'],
     [429, { error: 'Too many requests. Wait before requesting another code.' }, 'Too many requests. Wait a few minutes, then try again.'],
     [500, { error: 'Internal server error' }, "Open Cave couldn't send a code. Try again."],
   ])('send %i %j shows the table copy and stays on the email step', async (status, body, expected) => {
@@ -438,6 +440,42 @@ describe('login: "Send a new code" (Jen C5)', () => {
     expect(screen.queryByRole('alert')).toBeNull()
     expect(screen.getByLabelText('8-digit code')).toBe(code)
     expect(document.activeElement).toBe(code)
+  })
+
+  it('a real resend says "New code sent." in a status region', async () => {
+    const code = (await toCodeStep()) as HTMLInputElement
+    fireEvent.change(code, { target: { value: '1234' } })
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send a new code' }))
+    })
+    expect(screen.getByRole('status').textContent?.trim()).toBe('New code sent.')
+    expect(code.value).toBe('')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('a skipped resend (sent: false) says so and keeps the typed code', async () => {
+    const code = (await toCodeStep()) as HTMLInputElement
+    fireEvent.change(code, { target: { value: '1234' } })
+    sendResponse = { status: 200, body: { ok: true, sent: false, reason: 'recent' } }
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send a new code' }))
+    })
+    expect(sendCodeCalls).toBe(2)
+    expect(screen.getByRole('status').textContent?.trim()).toBe('A code was sent less than a minute ago. Use that one.')
+    expect(code.value).toBe('1234')
+    expect(screen.queryByText('New code sent.')).toBeNull()
+  })
+
+  it('the notice clears when the citizen verifies or goes back', async () => {
+    const code = (await toCodeStep()) as HTMLInputElement
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send a new code' }))
+    })
+    expect(screen.getByRole('status').textContent?.trim()).toBe('New code sent.')
+    verifyResponse = { status: 401, body: { error: 'invalid' } }
+    fireEvent.change(code, { target: { value: '12345678' } })
+    await enter(code)
+    expect(screen.getByRole('status').textContent?.trim()).toBe('')
   })
 
   it('on a coarse pointer a resend focuses the instruction line', async () => {

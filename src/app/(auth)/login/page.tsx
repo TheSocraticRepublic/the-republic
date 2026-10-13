@@ -20,17 +20,20 @@ function hasCoarsePointer(): boolean {
  * Error copy (plain-instructional, Jen C5). Mapped on the client from the
  * status and the server's `error` key; a server or browser string is never
  * rendered. The windows named are the real ones: verify is limited to 30 per
- * sliding 60 s, send to 60 s per IP / 5 min global, and codes to a sliding
- * hour per email (rate-limit.ts, magic-code.ts).
+ * sliding 60 s, send to 30 per sliding 60 s per IP (`scope: 'ip'`) and a
+ * 5 min global cap (`scope: 'global'`), and codes to a sliding hour per email
+ * (rate-limit.ts, magic-code.ts).
  */
 const OFFLINE_MESSAGE = "Open Cave can't be reached. Check your connection, then try again."
 
-function sendCodeError(status: number, serverError: unknown): string {
+function sendCodeError(status: number, serverError: unknown, scope?: unknown): string {
   if (status === 400) return "That isn't a valid email address. Check it and try again."
   if (status === 429) {
     return typeof serverError === 'string' && serverError.startsWith('Too many codes requested')
       ? 'Too many codes for this email in the last hour. Try again in an hour.'
-      : 'Too many requests. Wait a few minutes, then try again.'
+      : scope === 'ip'
+        ? 'Too many requests from this connection. Wait a minute, then try again.'
+        : 'Too many requests. Wait a few minutes, then try again.'
   }
   return "Open Cave couldn't send a code. Try again."
 }
@@ -45,6 +48,11 @@ function verifyCodeError(status: number, serverError: unknown): string {
   return "Open Cave couldn't check that code. Try again."
 }
 
+/** Resend outcomes (status, not errors). The skip window is 30 s, so "less
+ *  than a minute" is true. */
+const RESENT_MESSAGE = 'New code sent.'
+const RESEND_SKIPPED_MESSAGE = 'A code was sent less than a minute ago. Use that one.'
+
 /** Digits only, at most 8: separators in a pasted code are dropped before the
  *  length is applied, so " 2468 1357" keeps all eight (Jen C8). */
 function normaliseCode(value: string): string {
@@ -56,6 +64,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
   const codeRef = useRef<HTMLInputElement>(null)
@@ -101,7 +110,7 @@ export default function LoginPage() {
     const resend = step === 'code'
     setLoading(true)
     setError(null)
-    if (resend) setCode('')
+    setNotice(null)
 
     try {
       let res: Response
@@ -118,12 +127,24 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setError(sendCodeError(res.status, data.error))
+        setError(sendCodeError(res.status, data.error, data.scope))
         return
       }
 
-      if (resend) focusStep('code')
-      else setStep('code')
+      if (!resend) {
+        setStep('code')
+        return
+      }
+      // The server skips the send when a usable code went out moments ago
+      // (`sent: false`); say so, and keep what the citizen typed.
+      const data = await res.json().catch(() => ({}))
+      if (data.sent === false) {
+        setNotice(RESEND_SKIPPED_MESSAGE)
+        return
+      }
+      setCode('')
+      setNotice(RESENT_MESSAGE)
+      focusStep('code')
     } catch (err) {
       // Not a network or HTTP failure (those return above): surfaced, never silent.
       console.error('[login] send-code:', err)
@@ -136,6 +157,7 @@ export default function LoginPage() {
   async function handleVerifyCode() {
     setLoading(true)
     setError(null)
+    setNotice(null)
 
     try {
       let res: Response
@@ -289,6 +311,11 @@ export default function LoginPage() {
                 <p role="alert" className="text-xs text-status-danger">{error}</p>
               )}
 
+              {/* Always mounted, so a live region announces the change. */}
+              <p role="status" className={notice ? 'text-xs text-white/60' : 'sr-only'}>
+                {notice}
+              </p>
+
               <button
                 type="button"
                 onClick={() => canSubmit && handleVerifyCode()}
@@ -317,6 +344,7 @@ export default function LoginPage() {
                   setStep('email')
                   setCode('')
                   setError(null)
+                  setNotice(null)
                 }}
                 className="w-full text-center text-xs text-white/30 transition-colors hover:text-white/50"
               >
