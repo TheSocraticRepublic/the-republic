@@ -227,17 +227,23 @@ export function ConcernForm() {
         />
       </div>
 
-      {/* Actions */}
+      {/* Actions. Start keeps one box at rest, typed and busy, and Cancel
+          never lands inside it, so a second press 250 ms later can only hit
+          Start, whose busy guard refuses it (Jen C2). From md, Cancel and the
+          reason sit left of Start in its row; below md, where Start is full
+          width, they come after it on their own row (order-last), so Start
+          never moves. */}
       <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
         {!concern.trim() && !loading && (
-          <p id="concern-submit-reason" className="text-xs text-text-muted">
+          <p id="concern-submit-reason" className="order-last text-xs text-text-muted md:order-none">
             Describe your concern to start.
           </p>
         )}
         {loading && (
           <button
+            type="button"
             onClick={handleCancel}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-text-muted transition-colors hover:text-text-secondary"
+            className="order-last inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-text-muted transition-colors hover:text-text-secondary md:order-none"
           >
             <X size={12} strokeWidth={2} />
             Cancel
@@ -253,17 +259,25 @@ export function ConcernForm() {
           variant="primary"
           className="w-full justify-center md:w-auto"
         >
-          {loading ? (
-            <>
-              <Loader2 size={14} strokeWidth={2} className="animate-spin" />
-              Starting…
-            </>
-          ) : (
-            <>
+          {/* Both labels share one grid cell; the one not showing is
+              invisible and out of the accessible name, so the button is as
+              wide as its wider label in every state. */}
+          <span className="grid">
+            <span
+              aria-hidden={loading ? 'true' : undefined}
+              className={clsx('col-start-1 row-start-1 inline-flex items-center justify-center gap-2', loading && 'invisible')}
+            >
               <Search size={14} strokeWidth={2} />
               Start Investigation
-            </>
-          )}
+            </span>
+            <span
+              aria-hidden={loading ? undefined : 'true'}
+              className={clsx('col-start-1 row-start-1 inline-flex items-center justify-center gap-2', !loading && 'invisible')}
+            >
+              <Loader2 size={14} strokeWidth={2} className={clsx(loading && 'animate-spin')} />
+              Starting…
+            </span>
+          </span>
         </CTAButton>
       </div>
     </div>

@@ -176,7 +176,7 @@ export default async function InvestigatePage() {
         <div
           className={
             hasActivity
-              ? 'grid grid-cols-1 gap-12 md:grid-cols-2'
+              ? 'grid grid-cols-1 gap-12 lg:grid-cols-2'
               : ''
           }
         >
