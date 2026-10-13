@@ -70,13 +70,11 @@ const LANDINGS = ['/scout', '/oracle', '/gadfly', '/lever', '/mirror', '/votes']
 
 /**
  * The arm subpages (Jen C2a C5), each reached the way a citizen reaches it:
- * the first link of its kind on the page before. `/oracle/[id]` is not here:
- * the seeded document's page errors on the harness before any room renders
- * (digest 3702761282, routed separately; see the C2a report), so its wrapper
- * is held by the structure test in arm-pages.test.tsx only.
+ * the first link of its kind on the page before.
  */
 const SUBPAGES: { from: string; link: string }[][] = [
   [{ from: '/lever', link: 'a[href^="/lever/"]' }],
+  [{ from: '/oracle', link: 'a[href^="/oracle/"]' }],
   [{ from: '/votes/mp', link: 'a[href^="/votes/mp/"]' }],
   // a division, then its bill: the bill is linked from the division's page
   [{ from: '/votes/recent', link: 'a[href^="/votes/vote/"]' }, { from: '', link: 'a[href^="/votes/bill/"]' }],

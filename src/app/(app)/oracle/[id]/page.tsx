@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { documents, analyses } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
-import { FileText, AlertTriangle, MessageCircleQuestion, GitCompare } from 'lucide-react'
+import { FileText, AlertTriangle } from 'lucide-react'
 import { OracleAnalysisPanel } from '@/components/oracle/oracle-analysis-panel'
 import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 
@@ -143,13 +143,13 @@ export default async function OracleDocumentPage({ params }: PageProps) {
                     label: 'Ask about this',
                     href: `/gadfly?documentId=${doc.id}&title=${encodeURIComponent(doc.title)}`,
                     color: 'var(--accent-gadfly)',
-                    icon: MessageCircleQuestion,
+                    icon: 'question',
                   },
                   {
                     label: 'Compare with other jurisdictions',
                     href: `/mirror?documentId=${doc.id}`,
                     color: 'var(--accent-mirror)',
-                    icon: GitCompare,
+                    icon: 'compare',
                   },
                 ]}
               />

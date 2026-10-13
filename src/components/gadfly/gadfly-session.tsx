@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
-import { MessageCircleQuestion, FileText } from 'lucide-react'
+import { MessageCircleQuestion } from 'lucide-react'
 import { ChatThread } from './chat-thread'
 import { ChatInput } from './chat-input'
 import { SessionStats } from './session-stats'
@@ -234,7 +234,7 @@ export function GadflySession({
                     label: 'Take action',
                     href: leverUrl,
                     color: 'var(--accent-lever)',
-                    icon: FileText,
+                    icon: 'document',
                   },
                 ]}
               />

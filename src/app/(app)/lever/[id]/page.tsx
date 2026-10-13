@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { leverActions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { ArrowLeft, ExternalLink, GitCompare } from 'lucide-react'
+import { ArrowLeft, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { ArmHeader } from '@/components/layout/arm-header'
 import { ActionViewer } from '@/components/lever/action-viewer'
@@ -112,7 +112,7 @@ export default async function LeverActionPage({ params }: PageProps) {
                   label: 'Compare governments',
                   href: `/mirror?documentId=${action.documentId}`,
                   color: 'var(--accent-mirror)',
-                  icon: GitCompare,
+                  icon: 'compare',
                 },
               ]}
             />
