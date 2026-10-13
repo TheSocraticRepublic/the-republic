@@ -43,15 +43,15 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **A-series LIVE since 2026-10-12 17:48:49Z; Lee's look check owed.** Main `b9d9139` (PR #7, merge commit), Netlify deploy `6acd1d516cdac21aab7e88f4`; D_prev / rollback target `6acc1bbeb27b4900083c30a8` at `fa16447`. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-12-a-series.md`. Lee's standing authority for this release: restore D_prev without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route, or his look check), then `git revert -m 1 b9d9139` on main through a PR. The look-check steps are in `~/marvin/state/relay/republic-ui-a-series-release-card.md` ("After promotion"). PR #6 closed as superseded. Still open with Lee: the privacy contact address (S1's held wording returns with it; Razor S1b N1-N3 in the Parking Lot).
 
-- **Cold start for the next batch (C2b).**
-  1. Read the plan's "### C2b", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether C2b has UI (Jen, opus xhigh, after Razor).
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-c2a-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-c2b`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-c2b --stage implement --batch 1 --step C2b`; `git worktree add -b relay/ui-c2b-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
+- **LIVE BUG, fix waiting on a release: every ready Oracle document page (`/oracle/[id]`) very likely errors on opencave.ca**, and so do Lever actions with a linked document. Since 555c402 (2026-03-30), server components passed lucide icon components to the client `CrossArmActions`. It is fixed on the session branch in C2a (`29c9c6b`, string icon keys), and Razor's app-wide sweep found no other site. Production logs keep only about 100 lines, so this is unconfirmed live; Lee can confirm by opening any analysed document. It ships with the next release Lee approves (B1-C2a, which also carries the Forum gate fix).
+
+- **Cold start for the next batch (C3).**
+  1. Read the plan's "### C3", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether C3 has UI (Jen, opus xhigh, after Razor).
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-c2b-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-c3`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-c3 --stage implement --batch 1 --step C3`; `git worktree add -b relay/ui-c3-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
   4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only.
   5. Harness runs: clear `.next/cache` first (a stale turbopack cache served old CSS in B1). Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
   6. Before merging, run the harness-only tests with `QA_REQUIRE_HARNESS=1` on a live harness (CI skips them). ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
-
-- **LIVE BUG, fix waiting on a release: every ready Oracle document page (`/oracle/[id]`) very likely errors on opencave.ca**, and so do Lever actions with a linked document. Since 555c402 (2026-03-30), server components passed lucide icon components to the client `CrossArmActions`. It is fixed on the session branch in C2a (`29c9c6b`, string icon keys), and Razor's app-wide sweep found no other site. Production logs keep only about 100 lines, so this is unconfirmed live; Lee can confirm by opening any analysed document. It ships with the next release Lee approves (B1-C2a, which also carries the Forum gate fix).
 
 ## Open questions awaiting Lee
 
@@ -86,6 +86,13 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-13 — C2b merged to the session branch (`f567dc2`)
+
+- **What it does:** one `Field` recipe across the Gadfly, Lever, Mirror and Scout forms; arm buttons; busy buttons that keep their box so Cancel never lands under a second press; honest error and invalid states; the duplicate Investigations CTA removed; no phantom scroll; and `tests/unit/rsc-boundary.test.ts`, which catches the server-to-client leak class behind the live Oracle crash.
+- **Carried:** the concern form's and Votes' fields move to C4 and E3b. Field border contrast (1.53:1) needs a ruling before the final gate.
+- **Release:** the B1-C2a release card is ready (compatibility run PASS). A release now also carries C2b. Waiting on Lee.
+- **Next:** C3.
 
 ### 2026-10-13 — C2a merged to the session branch (`29c9c6b`)
 
