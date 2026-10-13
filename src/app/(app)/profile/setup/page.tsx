@@ -99,14 +99,17 @@ function ProfileSetupForm() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-surface-0">
+      <div className="flex min-h-full flex-col items-center justify-center bg-surface-0">
         <Loader2 size={20} className="animate-spin text-text-muted" />
       </div>
     )
   }
 
+  // min-h-full, not min-h-screen: the page sits under the shell's header (the
+  // onboarding variant's wordmark and Sign out, UI plan C3), and a full
+  // screen of height below it scrolled for nothing.
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-surface-0 px-4">
+    <div className="flex min-h-full flex-col items-center justify-center bg-surface-0 px-4 py-10">
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -204,7 +207,7 @@ export default function ProfileSetupPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen flex-col items-center justify-center bg-surface-0">
+        <div className="flex min-h-full flex-col items-center justify-center bg-surface-0">
           <Loader2 size={20} className="animate-spin text-text-muted" />
         </div>
       }

@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import * as Dialog from '@radix-ui/react-dialog'
-import { Menu, X } from 'lucide-react'
+import { LogOut, Menu, X } from 'lucide-react'
+import { clsx } from 'clsx'
 import { Sidebar } from './sidebar'
+import { useSignOut, useSignOutElsewhereListener } from '@/lib/auth/client-sign-out'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -12,19 +14,95 @@ interface AppShellProps {
   // even sent to the client (app-arms P2-16, Razor N1).
   displayName?: string
   effectiveWeight?: number
+  /** `onboarding`: a signed-in citizen with no profile yet, on
+   *  /profile/setup. The instruments are not theirs to use until they have a
+   *  name, so the shell is the wordmark and Sign out only (UI plan C3). */
+  variant?: 'app' | 'onboarding'
 }
 
-export function AppShell({ children, displayName, effectiveWeight }: AppShellProps) {
+const SKIP_LINK_CLASS =
+  'sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-lg focus:bg-surface-2 focus:px-4 focus:py-2 focus:text-text-primary focus:ring-2 focus:ring-oracle'
+
+/** Wordmark (R6): Fraunces, no tagline. */
+function Wordmark() {
+  return (
+    <Link href="/" className="flex min-h-11 items-center px-2">
+      <span className="font-display text-lg font-semibold tracking-[-0.01em] text-text-primary">
+        Open Cave
+      </span>
+    </Link>
+  )
+}
+
+export function AppShell({ children, displayName, effectiveWeight, variant = 'app' }: AppShellProps) {
+  // Every signed-in page hears a sign-out made in another tab.
+  useSignOutElsewhereListener()
+  if (variant === 'onboarding') return <OnboardingShell>{children}</OnboardingShell>
+  return (
+    <FullShell displayName={displayName} effectiveWeight={effectiveWeight}>
+      {children}
+    </FullShell>
+  )
+}
+
+function OnboardingShell({ children }: { children: React.ReactNode }) {
+  const { signOut, busy, error } = useSignOut()
+
+  return (
+    <div className="flex h-dvh flex-col overflow-hidden bg-surface-0">
+      <a href="#main-content" className={SKIP_LINK_CLASS}>
+        Skip to content
+      </a>
+
+      <header className="border-b border-border bg-surface-2 px-3 py-2 md:px-5">
+        <div className="flex items-center justify-between gap-3">
+          <Wordmark />
+          {/* The one sign-out path (clientSignOut). On failure the citizen
+              stays on the form, with what they typed, and is told plainly. */}
+          <button
+            type="button"
+            onClick={signOut}
+            aria-busy={busy || undefined}
+            aria-disabled={busy || undefined}
+            className={clsx(
+              'flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary',
+              busy && 'cursor-progress',
+            )}
+          >
+            <LogOut size={14} strokeWidth={1.75} />
+            Sign out
+          </button>
+        </div>
+        {error && (
+          <p role="alert" className="px-2 pb-1 text-right text-xs text-status-danger">
+            {error}
+          </p>
+        )}
+      </header>
+
+      <main id="main-content" className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto">{children}</div>
+      </main>
+    </div>
+  )
+}
+
+function FullShell({
+  children,
+  displayName,
+  effectiveWeight,
+}: {
+  children: React.ReactNode
+  displayName?: string
+  effectiveWeight?: number
+}) {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
     // h-dvh, not h-screen: on iOS Safari 100vh is the toolbar-collapsed
     // height, which put the bottom of every page under the toolbar (mobile P2-13).
     <div className="flex h-dvh flex-col overflow-hidden bg-surface-0 md:flex-row">
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-lg focus:bg-surface-2 focus:px-4 focus:py-2 focus:text-text-primary focus:ring-2 focus:ring-oracle"
-      >
+      <a href="#main-content" className={SKIP_LINK_CLASS}>
         Skip to content
       </a>
 
@@ -41,12 +119,7 @@ export function AppShell({ children, displayName, effectiveWeight }: AppShellPro
               <Menu size={20} strokeWidth={1.75} />
             </button>
           </Dialog.Trigger>
-          {/* Wordmark (R6): Fraunces, no tagline. */}
-          <Link href="/" className="flex min-h-11 items-center px-2">
-            <span className="font-display text-lg font-semibold tracking-[-0.01em] text-text-primary">
-              Open Cave
-            </span>
-          </Link>
+          <Wordmark />
           <div className="w-11" aria-hidden="true" />
         </header>
 

@@ -16,6 +16,9 @@ export default async function AppLayout({
 
   let displayName: string | undefined = undefined
   let effectiveWeight = 0
+  // A signed-in citizen with no profile, on /profile/setup: the shell is the
+  // wordmark and Sign out only (UI plan C3). Everywhere else they are sent here.
+  let onboarding = false
 
   if (userId) {
     try {
@@ -41,6 +44,7 @@ export default async function AppLayout({
         if (!currentPath.startsWith('/profile/setup')) {
           redirect(`/profile/setup?redirect=${encodeURIComponent(currentPath)}`)
         }
+        onboarding = true
       }
     } catch (e) {
       if (e && typeof e === 'object' && 'digest' in e) throw e
@@ -53,7 +57,11 @@ export default async function AppLayout({
   }
 
   return (
-    <AppShell displayName={displayName} effectiveWeight={effectiveWeight}>
+    <AppShell
+      displayName={displayName}
+      effectiveWeight={effectiveWeight}
+      variant={onboarding ? 'onboarding' : 'app'}
+    >
       {children}
     </AppShell>
   )
