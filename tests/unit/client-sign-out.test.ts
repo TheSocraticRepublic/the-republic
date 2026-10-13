@@ -350,7 +350,7 @@ describe('the sidebar uses clientSignOut', () => {
 describe('the onboarding shell', () => {
   it('is the wordmark and Sign out, with no instruments', async () => {
     const { AppShell } = await loadShell()
-    render(h(AppShell, { variant: 'onboarding' }, h('p', null, 'setup form')))
+    render(h(AppShell, { variant: 'onboarding', children: h('p', null, 'setup form') }))
     expect(screen.getByText('Open Cave')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy()
     expect(screen.getByText('setup form')).toBeTruthy()
@@ -361,7 +361,7 @@ describe('the onboarding shell', () => {
   it('Sign out there uses clientSignOut too', async () => {
     const { AppShell } = await loadShell()
     const tab2 = otherTab()
-    render(h(AppShell, { variant: 'onboarding' }, h('p', null, 'setup form')))
+    render(h(AppShell, { variant: 'onboarding', children: h('p', null, 'setup form') }))
     await click(screen.getByRole('button', { name: 'Sign out' }))
     expect(fetchCalls.map((c) => c.url)).toEqual(['/api/auth/signout'])
     expect(tab2.heard).toEqual([{ type: 'signed-out' }])
@@ -371,7 +371,7 @@ describe('the onboarding shell', () => {
   it('a failed sign-out there shows the plain copy and keeps the form', async () => {
     signOutReply = async () => Promise.reject(new TypeError('Failed to fetch'))
     const { AppShell } = await loadShell()
-    render(h(AppShell, { variant: 'onboarding' }, h('p', null, 'setup form')))
+    render(h(AppShell, { variant: 'onboarding', children: h('p', null, 'setup form') }))
     await click(screen.getByRole('button', { name: 'Sign out' }))
     expect(screen.getByRole('alert').textContent).toBe(mod.SIGN_OUT_FAILED_MESSAGE)
     expect(screen.getByText('setup form')).toBeTruthy()
@@ -380,7 +380,7 @@ describe('the onboarding shell', () => {
 
   it.each(['onboarding', 'app'] as const)('the %s shell listens for sign-outs in other tabs', async (variant) => {
     const { AppShell } = await loadShell()
-    render(h(AppShell, { variant, displayName: 'ada' }, h('p', null, 'page')))
+    render(h(AppShell, { variant, displayName: 'ada', children: h('p', null, 'page') }))
     new FakeChannel('oc-auth').postMessage({ type: 'signed-out' })
     expect(reload).toHaveBeenCalledTimes(1)
     cleanup()
