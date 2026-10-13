@@ -159,7 +159,7 @@ export function ConcernForm() {
         />
         {showShortcutHint && (
           <p id="concern-hint" className="mt-1.5 text-xs text-text-faint">
-            Press {modifierKey}+Enter to start
+            Press {modifierKey}+Enter to start.
           </p>
         )}
       </div>

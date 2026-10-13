@@ -13,7 +13,8 @@ import { renderToString } from 'react-dom/server'
  * form's shortcut hint, worded per platform, hidden on a coarse pointer and
  * referenced by the textarea only while shown; autofocus on a fine pointer
  * only; the Oracle upload zone as the file input's 44px <label>, its copy
- * chosen by CSS pointer media, "Try again" outside the label; the server
+ * chosen by CSS pointer media, its errors mapped by status and announced,
+ * focus kept through a busy upload; the server
  * snapshots of input-modality and its unsubscribe.
  */
 
@@ -88,10 +89,14 @@ function description(el: Element): string | null {
 }
 
 let ingestCalls: number
+type FakeResponse = { ok: boolean; status: number; json: () => Promise<unknown> }
+/** How the stubbed /api/oracle/ingest answers; the default is a success. */
+let ingest: () => Promise<FakeResponse>
 
 beforeEach(() => {
   push.mockReset()
   ingestCalls = 0
+  ingest = async () => ({ ok: true, status: 200, json: async () => ({ documentId: 'doc-1' }) })
   stubMatchMedia(false)
   setPlatform('Linux x86_64')
   vi.stubGlobal(
@@ -101,7 +106,7 @@ beforeEach(() => {
       if (url === '/api/mirror/jurisdictions') return respond({ jurisdictions: [] })
       if (url === '/api/oracle/ingest') {
         ingestCalls++
-        return respond({ documentId: 'doc-1' })
+        return ingest()
       }
       throw new Error(`unexpected fetch ${url}`)
     })
@@ -119,7 +124,7 @@ describe('Votes postal code form', () => {
     render(<PostalCodeForm />)
     const input = screen.getByLabelText('Your postal code')
     expect(input.getAttribute('aria-describedby')).toBe('postal-code-helper')
-    expect(description(input)).toBe("Sent to Open North's Represent API to find your riding.")
+    expect(description(input)).toBe("Sent to Open North's Represent service to find your riding.")
   })
 })
 
@@ -130,17 +135,17 @@ describe('concern form shortcut hint', () => {
 
   it('says Ctrl+Enter on a non-Apple platform, and the textarea is described by it', async () => {
     render(<ConcernForm />)
-    await waitFor(() => expect(screen.getByText('Press Ctrl+Enter to start')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Press Ctrl+Enter to start.')).toBeTruthy())
     expect(screen.queryByText(/Cmd\+Enter/)).toBeNull()
-    expect(description(textarea())).toBe('Press Ctrl+Enter to start')
+    expect(description(textarea())).toBe('Press Ctrl+Enter to start.')
   })
 
   it('says Cmd+Enter on a Mac', async () => {
     setPlatform('MacIntel')
     render(<ConcernForm />)
-    await waitFor(() => expect(screen.getByText('Press Cmd+Enter to start')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Press Cmd+Enter to start.')).toBeTruthy())
     expect(screen.queryByText(/Ctrl\+Enter/)).toBeNull()
-    expect(description(textarea())).toBe('Press Cmd+Enter to start')
+    expect(description(textarea())).toBe('Press Cmd+Enter to start.')
   })
 
   it('reads the platform from userAgentData first when the browser has it', async () => {
@@ -148,7 +153,7 @@ describe('concern form shortcut hint', () => {
     // reduced in some browsers, so it is consulted only when the first is absent.
     setPlatform('Linux x86_64', { platform: 'macOS' })
     render(<ConcernForm />)
-    await waitFor(() => expect(screen.getByText('Press Cmd+Enter to start')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Press Cmd+Enter to start.')).toBeTruthy())
   })
 
   it('is not shown on a coarse pointer, and the textarea then has no description reference', async () => {
@@ -164,13 +169,13 @@ describe('concern form shortcut hint', () => {
 
   it('follows a pointer change: hidden when the pointer turns coarse, back when it turns fine', async () => {
     render(<ConcernForm />)
-    await waitFor(() => expect(screen.getByText('Press Ctrl+Enter to start')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Press Ctrl+Enter to start.')).toBeTruthy())
     setPointer(true)
-    expect(screen.queryByText('Press Ctrl+Enter to start')).toBeNull()
+    expect(screen.queryByText('Press Ctrl+Enter to start.')).toBeNull()
     expect(textarea().hasAttribute('aria-describedby')).toBe(false)
     setPointer(false)
-    expect(screen.getByText('Press Ctrl+Enter to start')).toBeTruthy()
-    expect(description(textarea())).toBe('Press Ctrl+Enter to start')
+    expect(screen.getByText('Press Ctrl+Enter to start.')).toBeTruthy()
+    expect(description(textarea())).toBe('Press Ctrl+Enter to start.')
   })
 })
 
@@ -191,88 +196,101 @@ describe('concern form autofocus', () => {
 })
 
 describe('Oracle upload zone', () => {
-  const NAME = 'Choose a PDF, government documents only, 10 MB maximum'
+  const LIMITS = 'Government documents only. Max 10 MB.'
 
   function fileInput() {
-    return screen.getByLabelText(NAME) as HTMLInputElement
+    return document.getElementById('oracle-file') as HTMLInputElement
   }
 
   function classes(el: Element | null) {
     return (el?.getAttribute('class') ?? '').split(/\s+/)
   }
 
-  it('is the named file input\'s <label>, at least 44px tall (min-h-11)', () => {
+  function pick(name: string, type = 'application/pdf') {
+    fireEvent.change(fileInput(), { target: { files: [new File(['%PDF'], name, { type })] } })
+  }
+
+  it('is the file input\'s <label>, at least 44px tall (min-h-11), with no other control in the zone', () => {
     render(<UploadZone />)
     const input = fileInput()
     expect(input.type).toBe('file')
-    expect(input.id).toBe('oracle-file')
     const zone = input.closest('label') as HTMLLabelElement
     expect(zone).not.toBeNull()
     expect(zone.htmlFor).toBe('oracle-file')
     expect(Array.from(input.labels ?? [])).toContain(zone)
     expect(classes(zone)).toContain('min-h-11')
-    // The old inline "browse" button is gone: the zone is the one control.
     expect(screen.queryByRole('button')).toBeNull()
   })
 
-  it('names the input with the coarse-pointer copy first (WCAG 2.5.3, label in name)', () => {
+  it('names the input exactly "Choose a PDF" and describes it with the limits (WCAG 2.5.3)', () => {
     render(<UploadZone />)
     const input = fileInput()
-    expect(input.getAttribute('aria-label')?.startsWith('Choose a PDF')).toBe(true)
+    expect(input.getAttribute('aria-label')).toBe('Choose a PDF')
+    expect(input.getAttribute('aria-describedby')).toBe('oracle-file-limits')
+    expect(description(input)).toBe(LIMITS)
   })
 
-  it('chooses its copy by CSS pointer media, so the server render is right on both pointers', () => {
+  it('every pointer\'s action line begins with the name; the copy is chosen by CSS, right in the server render', () => {
     // The pointer stub is coarse, and must not matter: the copy is not scripted.
     stubMatchMedia(true)
-    const html = renderToString(<UploadZone />)
     const host = document.createElement('div')
-    host.innerHTML = html
+    host.innerHTML = renderToString(<UploadZone />)
     const fine = host.querySelector('[data-pointer-copy="fine"]')
     const coarseCopy = host.querySelector('[data-pointer-copy="coarse"]')
-    expect(fine?.textContent).toMatch(/^Drop a PDF here or\s*browse$/)
-    expect(coarseCopy?.textContent).toBe('Choose a PDF')
-    // Fine copy hidden on a coarse pointer; coarse copy hidden unless coarse.
+    expect(fine?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Choose a PDF or drop one here')
+    expect(coarseCopy?.textContent?.trim()).toBe('Choose a PDF')
     expect(classes(fine)).toContain('pointer-coarse:hidden')
     expect(classes(fine)).not.toContain('hidden')
     expect(classes(coarseCopy)).toContain('hidden')
     expect(classes(coarseCopy)).toContain('pointer-coarse:block')
-    // Both copies sit inside the label, so a tap on either opens the picker.
     expect(fine?.closest('label')?.getAttribute('for')).toBe('oracle-file')
     expect(coarseCopy?.closest('label')?.getAttribute('for')).toBe('oracle-file')
+    expect(host.querySelector('#oracle-file-limits')?.textContent?.trim()).toBe(LIMITS)
   })
 
   it('a tap anywhere on the zone reaches the file input', () => {
     render(<UploadZone />)
     let opened = 0
     fileInput().addEventListener('click', () => opened++)
-    fireEvent.click(screen.getByText('Choose a PDF'))
+    fireEvent.click(screen.getByText('or drop one here', { exact: false }))
     expect(opened).toBe(1)
-    fireEvent.click(screen.getByText('Government documents only. Max 10MB.'))
+    fireEvent.click(screen.getByText(LIMITS))
     expect(opened).toBe(2)
   })
 
-  it('"Try again" sits beside the label, never inside it, and returns focus to the input', () => {
+  it('a refused file: the error is announced above the zone\'s own copy, describes the input, and keeps focus', () => {
     render(<UploadZone />)
     const input = fileInput()
-    let opened = 0
-    input.addEventListener('click', () => opened++)
-    fireEvent.change(input, { target: { files: [new File(['x'], 'notes.txt', { type: 'text/plain' })] } })
-    expect(screen.getByText('Only PDF files are accepted.')).toBeTruthy()
+    input.focus()
+    pick('notes.txt', 'text/plain')
 
-    const button = screen.getByRole('button', { name: 'Try again' })
-    const label = input.closest('label') as HTMLLabelElement
-    // Not a descendant of the label (an engine that checks the click target
-    // after React unmounts it would forward the click to the input) ...
-    expect(label.contains(button)).toBe(false)
-    expect(button.closest('label')).toBeNull()
-    // ... but still in the zone's box, beside the label.
-    expect(label.parentElement?.contains(button)).toBe(true)
-
-    fireEvent.click(button)
-    expect(opened).toBe(0)
-    expect(screen.getByText(/Drop a PDF here or/)).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+    const alert = screen.getByRole('alert')
+    expect(alert.textContent).toBe("That file isn't a PDF.")
+    expect(alert.id).toBe('oracle-file-error')
+    // The instructions are still there, below the error.
+    const fine = document.querySelector('[data-pointer-copy="fine"]')!
+    expect(fine.textContent?.replace(/\s+/g, ' ').trim()).toBe('Choose a PDF or drop one here')
+    expect(alert.compareDocumentPosition(fine) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(input.getAttribute('aria-describedby')).toBe('oracle-file-error oracle-file-limits')
+    expect(description(input)).toBe(`That file isn't a PDF. ${LIMITS}`)
+    // No retry button: the zone is the retry, and it is the only control.
+    expect(screen.queryByRole('button')).toBeNull()
     expect(document.activeElement).toBe(input)
+
+    // The same refusal again is a new alert, so it is announced again.
+    pick('notes.txt', 'text/plain')
+    const again = screen.getByRole('alert')
+    expect(again.textContent).toBe("That file isn't a PDF.")
+    expect(again).not.toBe(alert)
+  })
+
+  it('a PDF over 10 MB is refused before any request', () => {
+    render(<UploadZone />)
+    const big = new File(['%PDF'], 'big.pdf', { type: 'application/pdf' })
+    Object.defineProperty(big, 'size', { value: 10 * 1024 * 1024 + 1 })
+    fireEvent.change(fileInput(), { target: { files: [big] } })
+    expect(screen.getByRole('alert').textContent).toBe('That PDF is over 10 MB.')
+    expect(ingestCalls).toBe(0)
   })
 
   it('clears the input after reading a file, so the same file can be chosen again', () => {
@@ -286,14 +304,90 @@ describe('Oracle upload zone', () => {
         written.push(v)
       },
     })
-    fireEvent.change(input, { target: { files: [new File(['x'], 'notes.txt', { type: 'text/plain' })] } })
-    expect(screen.getByText('Only PDF files are accepted.')).toBeTruthy()
+    pick('notes.txt', 'text/plain')
+    expect(screen.getByRole('alert')).toBeTruthy()
     expect(written).toEqual([''])
   })
 
-  it('a file chosen through the zone uploads', async () => {
+  const SERVER_TEXT = 'SERVER-SAID-THIS'
+  const cases: Array<[string, () => Promise<FakeResponse>, string]> = [
+    ['400', async () => ({ ok: false, status: 400, json: async () => ({ error: SERVER_TEXT }) }), "Open Cave couldn't receive that file. Choose it again."],
+    ['413', async () => ({ ok: false, status: 413, json: async () => ({ error: SERVER_TEXT }) }), 'That PDF is over 10 MB.'],
+    ['429', async () => ({ ok: false, status: 429, json: async () => ({ error: SERVER_TEXT }) }), 'Too many uploads in the last minute. Wait a minute, then choose the PDF again.'],
+    ['500', async () => ({ ok: false, status: 500, json: async () => ({ error: SERVER_TEXT }) }), "Open Cave couldn't process that PDF. Choose it again, or choose another."],
+    [
+      'an HTML 502',
+      async () => ({ ok: false, status: 502, json: async () => JSON.parse('<!DOCTYPE html>') }),
+      "Open Cave couldn't upload that PDF. Choose it again.",
+    ],
+    [
+      'a 200 with no documentId',
+      async () => ({ ok: true, status: 200, json: async () => ({ error: SERVER_TEXT }) }),
+      "Open Cave couldn't upload that PDF. Choose it again.",
+    ],
+    [
+      'offline (fetch throws)',
+      async () => {
+        throw new TypeError('Failed to fetch')
+      },
+      "Open Cave can't be reached. Check your connection, then choose the PDF again.",
+    ],
+  ]
+
+  for (const [label, respond, copy] of cases) {
+    it(`${label}: shows "${copy}" and no server or browser text`, async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+      ingest = respond
+      render(<UploadZone />)
+      pick('bylaw.pdf')
+      await waitFor(() => expect(screen.getByRole('alert').textContent).toBe(copy))
+      const text = document.body.textContent ?? ''
+      expect(text).not.toContain(SERVER_TEXT)
+      expect(text).not.toMatch(/Failed to fetch|DOCTYPE|JSON|Unexpected token/)
+      expect(push).not.toHaveBeenCalled()
+      consoleError.mockRestore()
+    })
+  }
+
+  it('a 401 goes to login and back to the Oracle, with no message', async () => {
+    ingest = async () => ({ ok: false, status: 401, json: async () => ({ error: 'Unauthorized' }) })
     render(<UploadZone />)
-    fireEvent.change(fileInput(), { target: { files: [new File(['%PDF'], 'bylaw.pdf', { type: 'application/pdf' })] } })
+    pick('bylaw.pdf')
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/login?redirect=%2Foracle'))
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(document.body.textContent).not.toContain('Unauthorized')
+  })
+
+  it('while uploading: aria-disabled not disabled, focus stays, a press opens no picker and a pick starts no second upload', async () => {
+    let finish!: (r: FakeResponse) => void
+    ingest = () => new Promise<FakeResponse>((resolve) => (finish = resolve))
+    render(<UploadZone />)
+    const input = fileInput()
+    input.focus()
+    pick('bylaw.pdf')
+
+    await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Uploading…'))
+    expect(input.getAttribute('aria-disabled')).toBe('true')
+    expect(input.disabled).toBe(false)
+    expect(document.activeElement).toBe(input)
+    // fireEvent returns false when the default (opening the picker) was prevented.
+    expect(fireEvent.click(input)).toBe(false)
+    pick('second.pdf')
+    expect(ingestCalls).toBe(1)
+
+    await act(async () => {
+      finish({ ok: false, status: 500, json: async () => ({ error: SERVER_TEXT }) })
+    })
+    expect(screen.getByRole('alert').textContent).toBe("Open Cave couldn't process that PDF. Choose it again, or choose another.")
+    expect(input.hasAttribute('aria-disabled')).toBe(false)
+    expect(document.activeElement).toBe(input)
+    // Not busy any more: a press opens the picker again.
+    expect(fireEvent.click(input)).toBe(true)
+  })
+
+  it('a PDF chosen through the zone uploads and opens its page', async () => {
+    render(<UploadZone />)
+    pick('bylaw.pdf')
     await waitFor(() => expect(push).toHaveBeenCalledWith('/oracle/doc-1'))
     expect(ingestCalls).toBe(1)
   })
