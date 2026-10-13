@@ -539,6 +539,34 @@ describe('Mirror’s comparison form', () => {
     expect(posts('/api/mirror/compare')).toHaveLength(1)
   })
 
+  it('busy, Compare keeps focus, says so, and sends one comparison', async () => {
+    let answer!: (v: unknown) => void
+    installFetch({
+      'POST /api/mirror/compare': () =>
+        new Promise((r) => {
+          answer = r
+        }),
+    })
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    render(<ComparisonForm />)
+    fireEvent.change(screen.getByLabelText('What policy question do you want to compare?'), { target: { value: 'Rentals?' } })
+    const compare = screen.getByRole('button', { name: 'Compare' })
+    compare.focus()
+    fireEvent.click(compare)
+    const busy = await screen.findByRole('button', { name: 'Comparing...' })
+    expect(busy).toBe(compare)
+    expect(busy.getAttribute('aria-busy')).toBe('true')
+    expect(busy.getAttribute('aria-disabled')).toBe('true')
+    expect(document.activeElement).toBe(busy)
+    expectArmRecipe(busy, 'mirror')
+    fireEvent.click(busy)
+    expect(posts('/api/mirror/compare')).toHaveLength(1)
+    await act(async () => {
+      answer({ ok: false, status: 500, json: async () => ({}) })
+    })
+    expect((await screen.findByRole('alert')).textContent).toBe('Something went wrong. Try again.')
+  })
+
   it('a document list that fails to load is announced, and the select is not marked invalid', async () => {
     installFetch({ 'GET /api/oracle/documents': () => Promise.reject(new Error('offline')) })
     render(<ComparisonForm />)
