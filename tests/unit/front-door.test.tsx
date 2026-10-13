@@ -107,13 +107,20 @@ beforeEach(() => {
           // An empty finished stream: the search ran and returned nothing.
           return { ok: true, status: 200, body: new ReadableStream({ start: (c) => c.close() }) }
         }
-        await new Promise<void>((resolve) => {
+        // Held until released; an abort rejects, as a real fetch does.
+        await new Promise<void>((resolve, reject) => {
           releaseDiscover = resolve
+          init.signal?.addEventListener('abort', () => {
+            const err = new Error('The operation was aborted.')
+            err.name = 'AbortError'
+            reject(err)
+          })
         })
         if (discoverMode === 'held-error') {
           return { ok: false, status: 500, json: async () => ({ error: 'Internal server error' }) }
         }
-        // Two chunks, as a real stream arrives: the results render twice.
+        // Two chunks in two tasks, as a real stream arrives, so the results
+        // render twice (inside one act() React would batch them into one).
         const encode = (t: string) => new TextEncoder().encode(t)
         return {
           ok: true,
@@ -121,8 +128,10 @@ beforeEach(() => {
           body: new ReadableStream({
             start: (c) => {
               c.enqueue(encode('## Council minutes\n'))
-              c.enqueue(encode('Found one record.'))
-              c.close()
+              setTimeout(() => {
+                c.enqueue(encode('Found one record.'))
+                c.close()
+              }, 20)
             },
           }),
         }
@@ -854,6 +863,8 @@ describe('Scout on a phone (Jen C9)', () => {
       releaseDiscover?.()
     })
     await screen.findByText('Discovery results')
+    // The second chunk arrives in a later task; the search ends after it.
+    await waitFor(() => expect((query as HTMLInputElement).readOnly).toBe(false))
   }
 
   it('results below the fold: the container scrolls once, by arithmetic, to 16px above the heading', async () => {
