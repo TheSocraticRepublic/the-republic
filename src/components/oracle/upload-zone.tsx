@@ -84,7 +84,7 @@ export function UploadZone() {
     <label
       htmlFor="oracle-file"
       className={clsx(
-        'relative flex min-h-11 flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-all duration-150',
+        'group relative flex min-h-11 flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-all duration-150',
         isUploading ? 'cursor-default' : 'cursor-pointer',
         'has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-[var(--accent-oracle)]',
         state === 'dragging'
@@ -146,7 +146,7 @@ export function UploadZone() {
             ) : (
               <p className="text-sm font-medium text-text-primary">
                 Drop a PDF here or{' '}
-                <span className="underline-offset-2 hover:underline" style={{ color: 'var(--accent-oracle)' }}>
+                <span className="underline-offset-2 group-hover:underline" style={{ color: 'var(--accent-oracle)' }}>
                   browse
                 </span>
               </p>
