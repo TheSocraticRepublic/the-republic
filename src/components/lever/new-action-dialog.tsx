@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback, useId, useRef } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, X, ChevronDown, AlertTriangle } from 'lucide-react'
+import { Plus, X, ChevronDown, AlertTriangle, FileText, Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { CTAButton } from '@/components/ui/cta-button'
-import { Field, FieldLabel, fieldControlClass } from '@/components/ui/field'
+import { ErrorMark, FIELD_REASON_CLASS, Field, FieldLabel, fieldControlClass, fieldToggleClasses } from '@/components/ui/field'
 import { leverActionTypeEnum } from '@/lib/db/schema'
 import {
   PROVINCE_OPTIONS,
@@ -89,6 +89,8 @@ export function NewActionDialog({
   const provinceSelectId = useId()
   const otherBodyId = useId()
   const generateReasonId = useId()
+  const typeLabelId = useId()
+  const typeGroupRef = useRef<HTMLDivElement>(null)
   const provinceSelectRef = useRef<HTMLSelectElement>(null)
   const bodySelectRef = useRef<HTMLSelectElement>(null)
   const otherBodyRef = useRef<HTMLInputElement>(null)
@@ -338,6 +340,14 @@ export function NewActionDialog({
 
         <Dialog.Content
           className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-md sm:w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border-strong bg-surface-1 p-6 shadow-2xl focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 max-h-[90vh] overflow-y-auto"
+          // Open on the pressed document type, not Close (Jen C2b C9): the
+          // first control, and it opens no soft keyboard on a phone.
+          onOpenAutoFocus={(e) => {
+            const pressed = typeGroupRef.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')
+            if (!pressed) return
+            e.preventDefault()
+            pressed.focus()
+          }}
         >
           {/* Header */}
           <div className="mb-5 flex items-center justify-between">
@@ -346,7 +356,7 @@ export function NewActionDialog({
             >
               New Civic Action
             </Dialog.Title>
-            <Dialog.Close aria-label="Close dialog" className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary">
+            <Dialog.Close aria-label="Close dialog" className="flex h-7 w-7 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary">
               <X size={14} strokeWidth={2} />
             </Dialog.Close>
           </div>
@@ -354,24 +364,28 @@ export function NewActionDialog({
           <div className="space-y-4">
             {/* Action type selector */}
             <div>
-              <FieldLabel>Document type</FieldLabel>
-              <div role="group" aria-label="Action type" className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                {ACTION_TYPES.map((t) => (
-                  <button
-                    key={t.value}
-                    onClick={() => setActionType(t.value)}
-                    aria-pressed={actionType === t.value}
-                    className={clsx(
-                      'rounded-lg border px-2 py-2.5 text-xs font-medium transition-all duration-150 text-left',
-                      actionType === t.value
-                        ? 'border-[var(--accent-lever)]/40 bg-[var(--accent-lever)]/10 text-[var(--accent-lever)]'
-                        : 'border-border bg-surface-1 text-text-muted hover:border-border-strong hover:text-text-secondary'
-                    )}
-                  >
-                    <span className="block font-semibold">{t.label}</span>
-                    <span className="mt-0.5 block text-2xs font-medium opacity-70">{t.description}</span>
-                  </button>
-                ))}
+              <FieldLabel id={typeLabelId}>Document type</FieldLabel>
+              <div
+                ref={typeGroupRef}
+                role="group"
+                aria-labelledby={typeLabelId}
+                className="grid grid-cols-1 gap-2 sm:grid-cols-3"
+              >
+                {ACTION_TYPES.map((t) => {
+                  const toggle = fieldToggleClasses(actionType === t.value)
+                  return (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => setActionType(t.value)}
+                      aria-pressed={actionType === t.value}
+                      className={toggle.button}
+                    >
+                      <span className={toggle.label}>{t.label}</span>
+                      <span className={toggle.description}>{t.description}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
@@ -416,7 +430,7 @@ export function NewActionDialog({
                         setOtherBodyName('')
                         clearErrors()
                       }}
-                      className={fieldControlClass('lever', 'select')}
+                      className={fieldControlClass('select')}
                     >
                       <option value="" disabled>
                         Choose a province...
@@ -458,7 +472,7 @@ export function NewActionDialog({
                             setPublicBodyChoice(e.target.value)
                             clearErrors()
                           }}
-                          className={fieldControlClass('lever', 'select')}
+                          className={fieldControlClass('select')}
                         >
                           <option value="">{province ? 'Select a public body...' : 'Choose a province first'}</option>
                           {publicBodies.map((pb) => (
@@ -492,7 +506,7 @@ export function NewActionDialog({
                               clearErrors()
                             }}
                             placeholder="Name of the public body"
-                            className={fieldControlClass('lever')}
+                            className={fieldControlClass()}
                           />
                         </div>
                       )}
@@ -529,7 +543,7 @@ export function NewActionDialog({
                       {...control}
                       value={selectedDocId}
                       onChange={(e) => setSelectedDocId(e.target.value)}
-                      className={fieldControlClass('lever', 'select')}
+                      className={fieldControlClass('select')}
                     >
                       <option value="">No document</option>
                       {documents.map((doc) => (
@@ -559,7 +573,7 @@ export function NewActionDialog({
                       {...control}
                       value={selectedSessionId}
                       onChange={(e) => setSelectedSessionId(e.target.value)}
-                      className={fieldControlClass('lever', 'select')}
+                      className={fieldControlClass('select')}
                     >
                       <option value="">No inquiry</option>
                       {sessions.map((s) => (
@@ -597,7 +611,7 @@ export function NewActionDialog({
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={DESCRIPTION_PLACEHOLDERS[actionType]}
                   rows={4}
-                  className={fieldControlClass('lever', 'textarea')}
+                  className={fieldControlClass('textarea')}
                 />
               )}
             </Field>
@@ -605,20 +619,23 @@ export function NewActionDialog({
 
           {/* Error alert (failures not tied to a field) */}
           {createError && (
-            <p ref={createErrorRef} role="alert" tabIndex={-1} className="mt-4 text-xs text-status-danger outline-none">
-              {createError}
+            <p ref={createErrorRef} role="alert" tabIndex={-1} className="mt-4 flex items-start gap-1.5 text-xs text-status-danger outline-none">
+              <ErrorMark />
+              <span>{createError}</span>
             </p>
           )}
 
-          {/* Why Generate is unavailable: the province select may be off-screen */}
+          {/* Why Generate is unavailable (the province select may be
+              off-screen), 8px above the row it explains (Jen C2b C5). */}
+          <div className="mt-6">
           {showGenerateReason && (
-            <p id={generateReasonId} className="mt-4 text-right text-xs text-text-muted">
+            <p id={generateReasonId} className={FIELD_REASON_CLASS}>
               Choose a province to generate this request.
             </p>
           )}
 
           {/* Actions */}
-          <div className="mt-6 flex justify-end gap-3">
+          <div className="flex justify-end gap-3">
             <Dialog.Close className="rounded-lg px-4 py-2 text-sm text-text-muted transition-colors hover:text-text-secondary">
               Cancel
             </Dialog.Close>
@@ -636,9 +653,21 @@ export function NewActionDialog({
               busy={loading}
               describedBy={showGenerateReason ? generateReasonId : undefined}
             >
-              {loading ? 'Creating...' : 'Generate'}
+              {/* Busy keeps the label; only the icon turns to a spinner, so
+                  the box never changes (Jen C2b C3). */}
+              {loading ? (
+                <Loader2 size={14} strokeWidth={2} className="animate-spin" aria-hidden="true" />
+              ) : (
+                <FileText size={14} strokeWidth={2} aria-hidden="true" />
+              )}
+              Generate
             </CTAButton>
           </div>
+          </div>
+          {/* The working state, for a screen reader. */}
+          <p role="status" className="sr-only">
+            {loading ? 'Creating the action…' : ''}
+          </p>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

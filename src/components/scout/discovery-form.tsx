@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useId } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronDown, Compass, Loader2, X } from 'lucide-react'
 import { CTAButton } from '@/components/ui/cta-button'
-import { Field, SECTION_LABEL_CLASS, fieldControlClass } from '@/components/ui/field'
+import { ErrorMark, Field, SECTION_LABEL_CLASS, fieldControlClass } from '@/components/ui/field'
 import { hasCoarsePointer } from '@/lib/ui/input-modality'
 import { ScoutResultView } from './scout-result-view'
 
@@ -321,7 +321,7 @@ export function DiscoveryForm() {
                     placeholder="Rental bylaws"
                     // No UA clear glyph: Chromium draws a white one flush against
                     // the text, outside the tokens (Jen C6). Escape still clears.
-                    className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-3 text-base text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-scout)]/40 [&::-webkit-search-cancel-button]:appearance-none"
+                    className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-3 text-base text-text-primary placeholder-text-faint outline-none focus:border-text-faint [&::-webkit-search-cancel-button]:appearance-none"
                     // Locked while searching, but never natively disabled: a
                     // disabled field drops focus to the body, and Enter is pressed
                     // here (Jen C3's lesson on the concern form). readOnly keeps
@@ -378,8 +378,9 @@ export function DiscoveryForm() {
                 </>
               )}
               {!loading && errorMessage !== null && (
-                <p id={errorId} role="alert" className="text-xs text-status-danger">
-                  {errorMessage}
+                <p id={errorId} role="alert" className="flex items-start gap-1.5 text-xs text-status-danger">
+                  <ErrorMark />
+                  <span>{errorMessage}</span>
                 </p>
               )}
             </div>
@@ -398,7 +399,7 @@ export function DiscoveryForm() {
                       {...control}
                       value={selectedJurisdictionId}
                       onChange={(e) => setSelectedJurisdictionId(e.target.value)}
-                      className={fieldControlClass('scout', 'select')}
+                      className={fieldControlClass('select')}
                       disabled={loading}
                     >
                       <option value="">Any jurisdiction</option>
@@ -427,7 +428,7 @@ export function DiscoveryForm() {
                     {...control}
                     value={policyArea}
                     onChange={(e) => setPolicyArea(e.target.value)}
-                    className={fieldControlClass('scout', 'select')}
+                    className={fieldControlClass('select')}
                     disabled={loading}
                   >
                     {POLICY_AREAS.map((area) => (
