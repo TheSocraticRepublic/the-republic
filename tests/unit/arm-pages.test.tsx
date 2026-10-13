@@ -22,8 +22,7 @@ import tailwind from '@tailwindcss/postcss'
  *
  * The pages are the async server components called as Next calls them. Only
  * the request headers, the database (an empty list for the signed-in user),
- * the Next router, the network and ScoutHistory (a database-reading server
- * component that is not C2a's) are stubbed.
+ * the Next router and the network are stubbed.
  */
 
 const replace = vi.fn()
@@ -44,7 +43,6 @@ vi.mock('@/lib/db', () => ({
     select: () => ({ from: () => ({ where: () => ({ orderBy: async () => rows }) }) }),
   }),
 }))
-vi.mock('@/components/scout/scout-history', () => ({ ScoutHistory: () => null }))
 // next/link, reduced to the anchor it renders plus whether it replaces history
 // (jsdom has no app router for the real Link to navigate with).
 vi.mock('next/link', async () => {
@@ -102,11 +100,11 @@ const INTROS: Record<Arm, { text: string; register: 'aphoristic' | 'convivial-pl
     register: 'aphoristic',
   },
   lever: {
-    text: 'What you have learned, put on the record. Lever drafts FOI requests, public comments and policy briefs from your findings; every FOI request cites the law from fixed templates, never invented.',
+    text: 'What you have learned, put on the record. Lever drafts the FOI request, the public comment or the policy brief; you send it.',
     register: 'aphoristic',
   },
   mirror: {
-    text: "Mirror sets a document or policy next to how other jurisdictions handle the same issue, so you can see what's normal and what isn't. Try comparing a rent-increase bylaw against three nearby cities.",
+    text: "Mirror sets a document or policy next to how other places handle the same issue, so you can see what's normal and what isn't.",
     register: 'convivial-plain',
   },
   votes: {
@@ -114,7 +112,7 @@ const INTROS: Record<Arm, { text: string; register: 'aphoristic' | 'convivial-pl
     register: 'plain-instructional',
   },
   scout: {
-    text: 'Scout searches public records for documents on a topic or place — bylaws, budgets, meeting minutes — so you don’t have to know which office is holding them.',
+    text: 'Name a topic or place. Scout lists the public records likely to cover it, where to look for each, and which ones you have to request.',
     register: 'plain-instructional',
   },
 }
@@ -221,7 +219,7 @@ describe('empty-state actions go somewhere real', () => {
   }
 
   const cases: { arm: Arm; label: string; href: string }[] = [
-    { arm: 'oracle', label: 'Search public records with Scout', href: '/scout' },
+    { arm: 'oracle', label: 'Find a document with Scout', href: '/scout' },
     { arm: 'gadfly', label: 'Begin your first inquiry', href: '/gadfly?new=1' },
     { arm: 'lever', label: 'Draft your first civic action', href: '/lever?new=1' },
   ]
@@ -238,9 +236,30 @@ describe('empty-state actions go somewhere real', () => {
     })
   }
 
-  it('Oracle says where to start, plainly', async () => {
-    await renderArm('oracle')
-    expect(screen.getByText('No documents yet. Upload a government document above, or find one with Scout.')).toBeTruthy()
+  it('Oracle says where to start, plainly, without repeating the upload instruction above it (Jen C7)', async () => {
+    const { container } = await renderArm('oracle')
+    const message = screen.getByText('No documents yet.')
+    const card = message.parentElement!
+    expect(card.textContent).toBe('No documents yet.Find a document with Scout')
+    // Scout is named once in the card, and only the intro says "Upload a government document"
+    expect(card.textContent!.match(/Scout/g)).toHaveLength(1)
+    expect(container.textContent!.match(/Upload a government document/g)).toHaveLength(1)
+  })
+
+  it('Scout promises nothing it cannot produce: no "Recently found" list (Jen C4)', async () => {
+    const { container } = await renderArm('scout')
+    expect(container.querySelector('form, textarea, input')).not.toBeNull()
+    expect(container.textContent).not.toMatch(/Recently found|appear here/)
+    expect(container.textContent).toContain('Name a topic or place.')
+  })
+
+  it('Mirror shows one example, the question field\'s own, and says "places" (Jen C3)', async () => {
+    const { container } = await renderArm('mirror')
+    const intro = container.querySelector('[data-arm-intro]')!
+    expect(intro.textContent).not.toMatch(/Try|jurisdiction|rent/i)
+    expect(intro.textContent).toContain('other places')
+    expect(container.textContent).not.toMatch(/Try:|rent-increase/)
+    expect(document.getElementById('compare-description')!.getAttribute('placeholder')).toContain('short-term rental bylaws')
   })
 
   it('Gadfly: ?new=1 opens the Begin Inquiry dialog; without it the dialog is closed', async () => {

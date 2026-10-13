@@ -13,11 +13,12 @@ export const metadata = {
 
 /**
  * Aphoristic (CLAUDE.md copy register: Lever's landing only), and it still says
- * what Lever makes (app-arms P1-5). Template citations are true of FOI
- * requests only (lever-system.ts), so the sentence claims them for those alone.
+ * what Lever makes (app-arms P1-5): the aphorism, then the function and its
+ * boundary, as Gadfly's does. Open Cave sends nothing for the citizen. No
+ * citation claim here: the dialog states that per province (Jen C2a C1).
  */
 const LEVER_INTRO =
-  'What you have learned, put on the record. Lever drafts FOI requests, public comments and policy briefs from your findings; every FOI request cites the law from fixed templates, never invented.'
+  'What you have learned, put on the record. Lever drafts the FOI request, the public comment or the policy brief; you send it.'
 
 interface LeverPageProps {
   searchParams: Promise<{

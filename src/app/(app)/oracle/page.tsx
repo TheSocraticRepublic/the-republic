@@ -67,8 +67,8 @@ export default async function OraclePage() {
 
           {docs.length === 0 ? (
             <EmptyState
-              message="No documents yet. Upload a government document above, or find one with Scout."
-              action={{ label: 'Search public records with Scout', href: '/scout' }}
+              message="No documents yet."
+              action={{ label: 'Find a document with Scout', href: '/scout' }}
             />
           ) : (
             <div className="space-y-3">
