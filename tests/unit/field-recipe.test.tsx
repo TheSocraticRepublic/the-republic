@@ -559,7 +559,9 @@ describe('Gadfly’s create dialog', () => {
     render(<NewSessionDialog />)
     fireEvent.click(screen.getByRole('button', { name: 'New Inquiry' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Begin Inquiry' }))
-    expect((await screen.findByRole('alert')).textContent).toBe('Failed to create inquiry. Try again.')
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toBe('Failed to create inquiry. Try again.')
+    expect(alert.querySelector('svg[aria-hidden="true"]')).toBeTruthy()
   })
 })
 
@@ -824,6 +826,7 @@ describe('Mirror’s comparison form', () => {
     render(<ComparisonForm />)
     const alert = await screen.findByRole('alert')
     expect(alert.textContent).toBe('Couldn’t load your documents. You can still compare without a linked document.'.replace('’', "'"))
+    expect(alert.querySelector('svg[aria-hidden="true"]')).toBeTruthy()
     const doc = screen.getByLabelText('Linked document (optional)')
     expect(doc.hasAttribute('aria-invalid')).toBe(false)
     expect(doc.hasAttribute('aria-describedby')).toBe(false)
@@ -839,6 +842,9 @@ describe('Scout’s discovery form', () => {
     const query = screen.getByLabelText('What documents are you looking for?')
     expect(query.getAttribute('type')).toBe('search')
     expectLabelRecipe(query, false)
+    // Focus is neutral here too: the arm's colour is its action's (Jen C2b C1).
+    expect(query.classList.contains('focus:border-text-faint')).toBe(true)
+    expect(query.className).not.toContain('accent-')
     expect(query.hasAttribute('aria-describedby')).toBe(false)
     const scout = screen.getByRole('button', { name: 'Scout' })
     expectUnavailable(scout)
@@ -862,6 +868,9 @@ describe('Scout’s discovery form', () => {
     const alert = await screen.findByRole('alert')
     expect(alert.textContent).toBe("Scout couldn't read that search. Search again.")
     expect(description(query)).toBe(alert.textContent)
+    // A cue that is not colour (Jen C2b C1).
+    expect(alert.firstElementChild!.getAttribute('aria-hidden')).toBe('true')
+    expect(alert.firstElementChild!.tagName.toLowerCase()).toBe('svg')
     // The slot is not inside the field's block.
     expect(query.closest('div.flex')!.contains(alert)).toBe(false)
   })

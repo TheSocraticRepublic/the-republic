@@ -270,6 +270,8 @@ describe('NewActionDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Generate' }))
     const alert = await screen.findByRole('alert')
     expect(alert.textContent).toBe('Choose the province this request goes to')
+    // A cue that is not colour (Jen C2b C1).
+    expect(alert.querySelector('svg[aria-hidden="true"]')).toBeTruthy()
     await waitFor(() => expect(document.activeElement).toBe(alert))
     cleanup()
 
