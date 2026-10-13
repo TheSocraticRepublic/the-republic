@@ -6,7 +6,12 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { LogOut, Menu, X } from 'lucide-react'
 import { clsx } from 'clsx'
 import { Sidebar } from './sidebar'
-import { useSignOut, useSignOutElsewhereListener } from '@/lib/auth/client-sign-out'
+import {
+  SIGNED_OUT_ELSEWHERE_MESSAGE,
+  useSignOut,
+  useSignOutElsewhereListener,
+  useSignedOutElsewhereNotice,
+} from '@/lib/auth/client-sign-out'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -31,6 +36,19 @@ function Wordmark() {
         Open Cave
       </span>
     </Link>
+  )
+}
+
+/** Shown, instead of a reload, when another tab signed out while this one
+ *  held unsaved text (Razor C3 W2). Plain-instructional; the text stays put. */
+function SignedOutElsewhereNotice() {
+  const show = useSignedOutElsewhereNotice()
+  if (!show) return null
+  // role="alert" is announced on insertion, so it mounts only when needed.
+  return (
+    <div role="alert" className="border-b border-border bg-surface-2 px-4 py-3 text-sm text-text-primary">
+      {SIGNED_OUT_ELSEWHERE_MESSAGE}
+    </div>
   )
 }
 
@@ -81,6 +99,7 @@ function OnboardingShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <main id="main-content" className="flex flex-1 flex-col overflow-hidden">
+        <SignedOutElsewhereNotice />
         <div className="flex-1 overflow-y-auto">{children}</div>
       </main>
     </div>
@@ -157,6 +176,7 @@ function FullShell({
 
       {/* Main content */}
       <main id="main-content" className="flex flex-1 flex-col overflow-hidden">
+        <SignedOutElsewhereNotice />
         <div className="flex-1 overflow-y-auto">
           {children}
         </div>

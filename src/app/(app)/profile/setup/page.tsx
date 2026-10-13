@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { safeRedirectTarget } from '@/lib/navigation/safe-redirect'
+import { useUnsavedWork } from '@/lib/auth/client-sign-out'
 
 function ProfileSetupForm() {
   const searchParams = useSearchParams()
@@ -15,6 +16,10 @@ function ProfileSetupForm() {
   const [error, setError] = useState<string | null>(null)
   const [isEdit, setIsEdit] = useState(false)
   const [nameError, setNameError] = useState<string | null>(null)
+  // What the form opened with (empty for a new profile), so typing that has
+  // not been saved counts as unsaved work (Razor C3 W2).
+  const [saved, setSaved] = useState({ displayName: '', bio: '' })
+  useUnsavedWork(!loading && (displayName !== saved.displayName || bio !== saved.bio))
 
   // Validate display name live. Names are stored lowercase — input is auto-lowercased.
   function validateName(name: string): string | null {
@@ -38,6 +43,7 @@ function ProfileSetupForm() {
           setIsEdit(true)
           setDisplayName(data.profile.displayName ?? '')
           setBio(data.profile.bio ?? '')
+          setSaved({ displayName: data.profile.displayName ?? '', bio: data.profile.bio ?? '' })
         }
       } catch {
         // If fetch fails, proceed as new profile

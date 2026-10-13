@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 
 /*
  * The one sign-out path in the browser (UI plan C3). The sidebar and the
@@ -56,10 +56,13 @@ function authChannel(): BroadcastChannel | null {
   return channel
 }
 
-/** Test seam: forget the cached channel so the next call builds a new one. */
+/** Test seam: forget the cached channel, the unsaved-work registry and the
+ *  notice, so each test starts from a fresh tab. */
 export function resetAuthChannelForTests(): void {
   channel?.close()
   channel = undefined
+  unsavedWork.clear()
+  signedOutElsewhere = false
 }
 
 function broadcast(message: AuthMessage): void {
@@ -78,12 +81,12 @@ function broadcast(message: AuthMessage): void {
  * Sign out: POST `/api/auth/signout`, tell the other tabs, then a full
  * navigation to /login so no server-rendered page keeps the old session.
  *
- * The route answers success with a redirect. `redirect: 'manual'` keeps the
- * browser from fetching that page (it is the landing, on
- * `NEXT_PUBLIC_APP_URL`, which need not be this origin) and leaves an
- * `opaqueredirect` response: that, or any 2xx, is success. The cookie is
- * cleared by the response's Set-Cookie either way. Anything else (403 CSRF,
- * 429, 500, or no network) is a failure and nothing else happens.
+ * Success is the route's own answer and nothing else: a 2xx whose body is
+ * `{ signedOut: true }` (Razor C3 N1). `redirect: 'manual'` turns any 3xx
+ * into an unreadable `opaqueredirect`, which is NOT success: a redirect from
+ * a platform rewrite or a middleware change never claims a sign-out.
+ * Anything else (403 CSRF, 500, a 3xx, a body without the flag, or no
+ * network) is a failure and nothing else happens.
  */
 export async function clientSignOut(): Promise<SignOutResult> {
   let res: Response
@@ -94,16 +97,72 @@ export async function clientSignOut(): Promise<SignOutResult> {
     return { ok: false, message: SIGN_OUT_FAILED_MESSAGE }
   }
 
-  if (res.type !== 'opaqueredirect' && !res.ok) {
-    console.error('[sign-out] refused with status', res.status)
+  if (!res.ok) {
+    console.error('[sign-out] refused with status', res.status, res.type)
+    return { ok: false, message: SIGN_OUT_FAILED_MESSAGE }
+  }
+  const body: unknown = await res.json().catch(() => null)
+  if (!(typeof body === 'object' && body !== null && (body as { signedOut?: unknown }).signedOut === true)) {
+    console.error('[sign-out] answered without the signed-out flag')
     return { ok: false, message: SIGN_OUT_FAILED_MESSAGE }
   }
 
-  broadcast({ type: 'signed-out' })
+  broadcastSignedOut()
   // A full navigation, deliberately not router.push: no server component
   // rendered for the old session survives in the client cache.
   window.location.assign(new URL(SIGNED_OUT_DESTINATION, window.location.origin).href)
   return { ok: true }
+}
+
+/**
+ * Tell the other tabs this session has ended. Called by `clientSignOut` and
+ * by account deletion, once the server has confirmed. Never before.
+ */
+export function broadcastSignedOut(): void {
+  broadcast({ type: 'signed-out' })
+}
+
+/*
+ * Unsaved work (Razor C3 W2). A component holding text the citizen has typed
+ * and not saved registers it while it is dirty. When another tab signs out,
+ * a tab with unsaved work does NOT reload (that would discard the text): it
+ * shows SIGNED_OUT_ELSEWHERE_MESSAGE and leaves everything where it is. A tab
+ * with nothing unsaved reloads as before.
+ */
+const unsavedWork = new Set<symbol>()
+
+export function hasUnsavedWork(): boolean {
+  return unsavedWork.size > 0
+}
+
+/** Register unsaved work for as long as `dirty` is true and the component is mounted. */
+export function useUnsavedWork(dirty: boolean): void {
+  useEffect(() => {
+    if (!dirty) return
+    const token = Symbol('unsaved-work')
+    unsavedWork.add(token)
+    return () => {
+      unsavedWork.delete(token)
+    }
+  }, [dirty])
+}
+
+export const SIGNED_OUT_ELSEWHERE_MESSAGE =
+  "You've signed out in another tab. Copy anything you want to keep, then sign in again."
+
+let signedOutElsewhere = false
+const noticeListeners = new Set<() => void>()
+
+function subscribeNotice(callback: () => void) {
+  noticeListeners.add(callback)
+  return () => {
+    noticeListeners.delete(callback)
+  }
+}
+
+/** True once another tab has signed out while this one held unsaved work. */
+export function useSignedOutElsewhereNotice(): boolean {
+  return useSyncExternalStore(subscribeNotice, () => signedOutElsewhere, () => false)
 }
 
 function isAuthMessage(data: unknown): data is AuthMessage {
@@ -111,11 +170,19 @@ function isAuthMessage(data: unknown): data is AuthMessage {
 }
 
 /**
- * What a tab does when another tab signed out. A reload, not a jump to /login:
- * the server decides. With the cookie gone the middleware sends the page to
- * /login with this path as `?redirect=`, so signing back in returns here.
+ * What a tab does when another tab signed out.
+ * - Unsaved work: no reload. The notice shows, and the text stays where it is
+ *   to be copied out (a save from here would answer 401 anyway).
+ * - Nothing unsaved: a reload, not a jump to /login, so the server decides.
+ *   With the cookie gone the middleware sends the page to /login with this
+ *   path as `?redirect=`, so signing back in returns here.
  */
 export function onSignedOutElsewhere(): void {
+  if (hasUnsavedWork()) {
+    signedOutElsewhere = true
+    for (const l of noticeListeners) l()
+    return
+  }
   window.location.reload()
 }
 

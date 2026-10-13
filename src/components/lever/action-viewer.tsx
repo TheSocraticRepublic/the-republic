@@ -5,6 +5,7 @@ import { Download, Pencil, RefreshCw, Check, X, ChevronDown } from 'lucide-react
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
 import { hasLeverPdfTemplate } from '@/lib/pdf/types'
+import { useUnsavedWork } from '@/lib/auth/client-sign-out'
 import { LetterPaper, type RecipientNoticeView } from '@/components/lever/letter-paper'
 import {
   CHOOSE_PROVINCE_ERROR,
@@ -177,6 +178,10 @@ export function ActionViewer({
   const [inserting, setInserting] = useState(false)
   const [exporting, setExporting] = useState<ExportFormat | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  // An edit in progress that differs from the stored letter is unsaved work:
+  // a sign-out in another tab shows a notice here instead of reloading the
+  // page out from under it (Razor C3 W2).
+  useUnsavedWork(mode === 'editing' && editContent !== content)
   const [info, setInfo] = useState<string | null>(null)
   const [needsProvince, setNeedsProvince] = useState(false)
   // A5: the in-place confirmation for a letter with no marker line, and
