@@ -23,10 +23,12 @@ import type { ComponentProps, ReactElement } from 'react'
 
 const push = vi.fn()
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
+/** The signed-in user the request headers carry; null = signed out. */
+let headerUser: string | null = null
 vi.mock('next/headers', () => ({
-  headers: async () => new Headers(),
+  headers: async () => new Headers(headerUser ? { 'x-user-id': headerUser } : {}),
 }))
-const getDb = vi.fn(() => {
+const getDb = vi.fn((): unknown => {
   throw new Error('the database is not reached while signed out')
 })
 vi.mock('@/lib/db', () => ({ getDb: () => getDb() }))
@@ -58,6 +60,7 @@ const scrollTo = vi.fn()
 
 beforeEach(() => {
   scoutBodies = []
+  headerUser = null
   discoverMode = 'empty'
   releaseDiscover = null
   discoverStatus = 500
@@ -110,13 +113,15 @@ beforeEach(() => {
         if (discoverMode === 'held-error') {
           return { ok: false, status: 500, json: async () => ({ error: 'Internal server error' }) }
         }
-        const text = new TextEncoder().encode('## Council minutes\nFound one record.')
+        // Two chunks, as a real stream arrives: the results render twice.
+        const encode = (t: string) => new TextEncoder().encode(t)
         return {
           ok: true,
           status: 200,
           body: new ReadableStream({
             start: (c) => {
-              c.enqueue(text)
+              c.enqueue(encode('## Council minutes\n'))
+              c.enqueue(encode('Found one record.'))
               c.close()
             },
           }),
@@ -350,6 +355,9 @@ describe('Scout is search-shaped', () => {
     const classes = query.className.split(/\s+/)
     expect(classes).toContain('text-text-primary')
     expect(classes).toContain('text-base')
+    // No UA clear glyph against the text (Jen C6); measured in the browser by
+    // front-door-geometry.test.ts.
+    expect(classes).toContain('[&::-webkit-search-cancel-button]:appearance-none')
   })
 
   it('the query comes first; the filters come after it, and the Scout button sits beside it', async () => {
@@ -880,5 +888,24 @@ describe('Scout on a phone (Jen C9)', () => {
     await waitFor(() => expect(query.readOnly).toBe(false))
     await searchAndRelease(query)
     expect(scrollTo).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('Investigate with activity (Jen C3)', () => {
+  it('two columns only from lg, so at 768 the form takes the full width', async () => {
+    headerUser = 'a0000000-0000-4000-8000-00000000000a'
+    const row = { id: 'i-1', concern: 'Logging above the intake', title: 'Logging above the intake', status: 'complete', createdAt: new Date() }
+    // Each of the page's three reads: select().from().where().orderBy().limit().
+    const chain = { select: () => chain, from: () => chain, where: () => chain, orderBy: () => chain, limit: async () => [row] }
+    getDb.mockImplementation(() => chain)
+    const tree = (await InvestigatePage()) as ReactElement
+    await act(async () => {
+      render(tree)
+    })
+    expect(screen.getByRole('heading', { name: 'Recent Activity' })).toBeTruthy()
+    const grid = screen.getByRole('heading', { level: 1 }).closest('.grid') as HTMLElement
+    const classes = grid.className.split(/\s+/)
+    expect(classes).toContain('lg:grid-cols-2')
+    expect(classes).not.toContain('md:grid-cols-2')
   })
 })
