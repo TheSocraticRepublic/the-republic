@@ -31,7 +31,8 @@ let phone = false
 let assign: ReturnType<typeof vi.fn>
 const realLocation = window.location
 
-beforeEach(() => {
+beforeEach(async () => {
+  ;(await import('@/components/landing/landing-cta')).releaseLandingHandoff()
   observers = []
   phone = false
   vi.stubGlobal('IntersectionObserver', FakeObserver)
@@ -48,6 +49,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
   Object.defineProperty(window, 'location', { configurable: true, value: realLocation })
 })
@@ -154,5 +156,71 @@ describe('the closing box (Jen C4 C5)', () => {
     expect(box.className).not.toMatch(/opacity/)
     expect(document.getElementById('landing-concern-helper')?.textContent).toBe('Signing in takes an email code. No password.')
     await act(async () => release())
+  })
+})
+
+describe('one start at a time across the header and the closing box (Razor C4 DN1)', () => {
+  /** The probe is held until released; counts the record writes. */
+  function holdProbe() {
+    const releases: Array<() => void> = []
+    vi.stubGlobal('fetch', vi.fn(() => new Promise((r) => releases.push(() => r({ type: 'opaqueredirect', ok: false, status: 0 })))))
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+    setItem.mockClear()
+    const writes = () => setItem.mock.calls.filter(([k]) => k === 'oc:pending-concern').length
+    return { releaseAll: async () => act(async () => releases.splice(0).forEach((r) => r())), writes }
+  }
+
+  it('a double click on the closing box Start: one write, one navigation', async () => {
+    const probe = holdProbe()
+    await renderPage()
+    fireEvent.change(screen.getByRole('textbox', { name: 'What concerns you?' }), { target: { value: 'twice?' } })
+    const { startLandingHandoff } = await import('@/components/landing/landing-cta')
+    // The button's own busy guard aside, the shared flag alone refuses it:
+    await act(async () => {
+      fireEvent.click(document.querySelector('[data-scroll-section="cta"] button')!)
+    })
+    expect(await startLandingHandoff('twice?')).toBe(false)
+    await probe.releaseAll()
+    expect(probe.writes()).toBe(1)
+    expect(assign).toHaveBeenCalledTimes(1)
+  })
+
+  it('a header click during the closing box start: one write, one navigation', async () => {
+    const probe = holdProbe()
+    const { report, headerStart } = await renderPage()
+    await report(false, false)
+    fireEvent.change(screen.getByRole('textbox', { name: 'What concerns you?' }), { target: { value: 'during' } })
+    await act(async () => {
+      fireEvent.click(document.querySelector('[data-scroll-section="cta"] button')!)
+    })
+    await act(async () => {
+      fireEvent.click(headerStart()!)
+    })
+    await probe.releaseAll()
+    expect(probe.writes()).toBe(1)
+    expect(assign).toHaveBeenCalledTimes(1)
+  })
+
+  it('a navigation that throws releases the flag, so the next start runs', async () => {
+    const { startLandingHandoff } = await import('@/components/landing/landing-cta')
+    assign.mockImplementationOnce(() => {
+      throw new DOMException('blocked', 'SecurityError')
+    })
+    await expect(startLandingHandoff('first')).rejects.toThrow('blocked')
+    expect(await startLandingHandoff('second')).toBe(true)
+    expect(assign).toHaveBeenCalledTimes(2)
+  })
+
+  it('a page restored from the back/forward cache releases it', async () => {
+    await renderPage()
+    const { startLandingHandoff } = await import('@/components/landing/landing-cta')
+    expect(await startLandingHandoff('one')).toBe(true)
+    expect(await startLandingHandoff('two')).toBe(false)
+    const restored = new Event('pageshow') as PageTransitionEvent
+    Object.defineProperty(restored, 'persisted', { value: true })
+    await act(async () => {
+      window.dispatchEvent(restored)
+    })
+    expect(await startLandingHandoff('three')).toBe(true)
   })
 })

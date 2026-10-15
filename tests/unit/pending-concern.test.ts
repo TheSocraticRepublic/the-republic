@@ -93,6 +93,7 @@ let pc: typeof import('@/lib/pending-concern')
 let auth: typeof import('@/lib/auth/client-sign-out')
 
 beforeEach(async () => {
+  ;(await import('@/components/landing/landing-cta')).releaseLandingHandoff()
   FakeChannel.open = []
   FakeChannel.posted = []
   vi.stubGlobal('BroadcastChannel', FakeChannel)
@@ -463,6 +464,7 @@ describe('the landing writes the record only while signed out', () => {
   it('the record is written BEFORE the probe, on both paths', async () => {
     for (const reply of [status(200), opaqueRedirect]) {
       cleanup()
+      ;(await import('@/components/landing/landing-cta')).releaseLandingHandoff()
       window.sessionStorage.clear()
       fetchLog = []
       replies.set('/investigate', reply)

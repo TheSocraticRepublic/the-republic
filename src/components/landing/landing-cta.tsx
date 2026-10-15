@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Search, Compass, Eye, MessageCircleQuestion, FileText, GitCompare, Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { CTAButton } from '@/components/ui/cta-button'
@@ -51,17 +51,43 @@ export const LANDING_CONCERN_ID = 'landing-concern'
 /** The helper under the closing box: true signed in or out (Jen C4 C5). */
 export const LANDING_HELPER = 'Signing in takes an email code. No password.'
 
+/*
+ * One start at a time, across the header's Start and the closing box (Razor
+ * C4 DN1). Without it a double click, or a header click during the box's own
+ * start, wrote two records and navigated twice; with the two probes answering
+ * out of order, the second record replaced the first under the other
+ * navigation's handoff and the concern was lost. Held until the page leaves;
+ * released if the navigation throws, or if the page comes back from the
+ * back/forward cache (the navigation was left or cancelled).
+ */
+let handoffInFlight = false
+
+/** Release the in-flight flag: a page restored from the back/forward cache,
+ *  and the test seam. */
+export function releaseLandingHandoff(): void {
+  handoffInFlight = false
+}
+
 /**
  * Carry `text` from the landing: write the record, probe, navigate (steps
- * 1-4 above). The closing box and the header's Start both use it. Throws
- * only if something unexpected does; callers recover.
+ * 1-4 above). The closing box and the header's Start both use it. Returns
+ * false, doing nothing, while another start is in flight. Throws only if
+ * something unexpected does, with the flag released; callers recover.
  */
-export async function startLandingHandoff(text: string): Promise<void> {
-  const handoff = newHandoffId()
-  writePendingConcern(text, handoff)
-  const signedOut = await probeSignedOut()
-  const next = signedOut === false ? signedInHandoffUrl(handoff) : loginUrlForHandoff(handoff)
-  window.location.assign(new URL(next, window.location.origin).href)
+export async function startLandingHandoff(text: string): Promise<boolean> {
+  if (handoffInFlight) return false
+  handoffInFlight = true
+  try {
+    const handoff = newHandoffId()
+    writePendingConcern(text, handoff)
+    const signedOut = await probeSignedOut()
+    const next = signedOut === false ? signedInHandoffUrl(handoff) : loginUrlForHandoff(handoff)
+    window.location.assign(new URL(next, window.location.origin).href)
+    return true
+  } catch (err) {
+    handoffInFlight = false
+    throw err
+  }
 }
 
 export function LandingCta() {
@@ -70,6 +96,18 @@ export function LandingCta() {
   usePendingConcernListener()
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
+
+  // Back from the login page via the back/forward cache: the navigation was
+  // left, so the flag and the busy box are released.
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (!e.persisted) return
+      releaseLandingHandoff()
+      setBusy(false)
+    }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [])
   const empty = text.trim().length === 0
 
   // Not re-checked here: CTAButton's aria-disabled guard refuses the click
@@ -77,7 +115,8 @@ export function LandingCta() {
   async function start() {
     setBusy(true)
     try {
-      await startLandingHandoff(text.trim())
+      // Another start (the header's) is already carrying the box's text.
+      if (!(await startLandingHandoff(text.trim()))) setBusy(false)
     } catch (err) {
       // Nothing above is expected to throw (the probe and storage catch their
       // own failures); if something does, the box comes back rather than
