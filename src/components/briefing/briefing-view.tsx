@@ -1708,7 +1708,12 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, onOpenLens }: { onOpenCampaign
       >
         Want to go deeper?
       </p>
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+      {/* The 11px archetype ("THE PERIPATETIC", one unbreakable word, ~82px)
+          needs ~85px beside the 32px icon. One card per row below 480px, two
+          up to 1024px, three from there: two columns at 320-375 and three at
+          768 both left it short (Razor D1 W2). briefing-geometry.test.ts
+          holds it at 320 to 1440. */}
+      <div data-go-deeper className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 lg:grid-cols-3">
         {links.map((link) => {
           const Icon = link.icon
           const callback = armCallbacks[link.arm]
@@ -1731,7 +1736,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, onOpenLens }: { onOpenCampaign
               >
                 <Icon size={14} strokeWidth={1.75} style={{ color: link.color }} />
               </span>
-              <span className="flex flex-col">
+              <span className="flex min-w-0 flex-col">
                 <span
                   className="font-semibold leading-snug"
                   style={{ fontSize: '12px', color: link.color }}
