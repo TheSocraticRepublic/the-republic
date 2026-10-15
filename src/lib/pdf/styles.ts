@@ -1,16 +1,23 @@
 import { StyleSheet } from '@react-pdf/renderer'
+import { PAPER_INK } from '@/lib/design/paper-ink'
 
 // -------------------------------------------------------------------
 // Design tokens — matched to the HTML template designs
 // -------------------------------------------------------------------
 
+// The paper, its text and secondary ink and its border come from the shared
+// paper ink (the same values the screen's island tokens use; a drift test
+// holds the two together). The rest are print-only values with no screen
+// twin. `textMuted` and `muted` are NOT the screen's muted/faint (#625c56,
+// #6f6963): unifying them would change what every PDF prints, including the
+// filing footer (`primitives.tsx`, PageNumberFooter), so they stay as they are.
 export const colors = {
-  bg: '#fafaf9',
-  text: '#1c1917',
-  textSecondary: '#44403c',
+  bg: PAPER_INK.bg,
+  text: PAPER_INK.text,
+  textSecondary: PAPER_INK.secondary,
   textMuted: '#57534e',
   muted: '#78716c',
-  border: '#e7e5e4',
+  border: PAPER_INK.border,
   borderLight: '#f5f5f4',
   borderFaint: '#d6d3d1',
   accent: '#DC2626',       // Lever red (matches Tailwind red-600 light-mode token)

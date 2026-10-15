@@ -390,7 +390,7 @@ function ProseSection({
           <ul key={i} className="space-y-1.5 pl-0">
             {block.items.map((item, j) => (
               <li key={j} className="flex items-start gap-2" style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--color-island-secondary)' }}>
-                <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: 'var(--color-island-faint)' }} />
+                <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: 'var(--color-island-mark)' }} />
                 <span>{renderInline(item)}</span>
               </li>
             ))}
@@ -450,8 +450,8 @@ function ProseSection({
             <div
               key={i}
               style={{
-                borderLeft: `3px solid rgba(200,168,75,0.4)`,
-                backgroundColor: 'rgba(200,168,75,0.05)',
+                borderLeft: '3px solid color-mix(in srgb, var(--color-island-accent-gadfly) 40%, transparent)',
+                backgroundColor: 'color-mix(in srgb, var(--color-island-accent-gadfly) 5%, transparent)',
                 padding: '14px 16px',
                 borderRadius: '0 8px 8px 0',
                 margin: '4px 0',
@@ -518,15 +518,15 @@ interface PlayerData {
   trackRecord: string
 }
 
+/** A role's colour, as an island token reference (`--island-role-*` in globals.css). */
 function getRoleColor(role: string): string {
   const r = role.toLowerCase().replace(/_/g, ' ')
-  if (r.includes('regulator') || r.includes('decision maker')) return '#0891B2'
-  if (r.includes('proponent') || r.includes('applicant') || r.includes('certificate holder')) return '#B45309'
-  if (r.includes('beneficiary') || r.includes('affected')) return '#059669'
-  if (r.includes('rights holder') || r.includes('community') || r.includes('local')) return '#059669'
-  if (r.includes('indigenous') || r.includes('nation') || r.includes('first nation')) return '#7C3AED'
-  if (r.includes('federal')) return '#64748B'
-  return '#64748B'
+  if (r.includes('regulator') || r.includes('decision maker')) return 'var(--color-island-role-regulator)'
+  if (r.includes('proponent') || r.includes('applicant') || r.includes('certificate holder')) return 'var(--color-island-role-proponent)'
+  if (r.includes('beneficiary') || r.includes('affected')) return 'var(--color-island-role-affected)'
+  if (r.includes('rights holder') || r.includes('community') || r.includes('local')) return 'var(--color-island-role-affected)'
+  if (r.includes('indigenous') || r.includes('nation') || r.includes('first nation')) return 'var(--color-island-role-indigenous)'
+  return 'var(--color-island-role-other)'
 }
 
 function parsePlayers(content: string): PlayerData[] {
@@ -606,7 +606,8 @@ function PlayersSection({ content }: { content: string }) {
                     fontSize: '10px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    backgroundColor: `${roleColor}14`,
+                    // 8% of the role colour: the old `${hex}14` alpha (20/255).
+                    backgroundColor: `color-mix(in srgb, ${roleColor} 8%, transparent)`,
                     color: roleColor,
                     fontWeight: 500,
                   }}
@@ -953,7 +954,7 @@ function DocumentCard({
         style={{
           backgroundColor: 'var(--color-island-warm-lift)',
           border: `1px solid var(--color-island-card-border)`,
-          borderLeft: '3px solid rgba(176,136,200,0.5)',
+          borderLeft: '3px solid color-mix(in srgb, var(--color-island-accent-scout) 50%, transparent)',
         }}
       >
         {/* Header row — flexWrap for responsive */}
@@ -1391,7 +1392,7 @@ function QuestionsSection({ content }: { content: string }) {
 
 // ---- Limitations section renderer ----
 
-function LimitationsSection({ content, darkMode }: { content: string; darkMode?: boolean }) {
+function LimitationsSection({ content }: { content: string }) {
   return (
     <div
       style={{
@@ -1403,10 +1404,11 @@ function LimitationsSection({ content, darkMode }: { content: string; darkMode?:
       <div
         role="note"
         style={{
-          // Use cardBg on dark mode (warmLift is invisible on dark)
-          backgroundColor: darkMode ? 'var(--color-island-card)' : 'rgba(120,113,108,0.04)',
+          // The note's ground is a token with a dark value (card) in .dark-island.
+          backgroundColor: 'var(--color-island-note)',
           border: `1px solid var(--color-island-card-border)`,
-          borderLeft: `3px solid var(--color-island-faint)`,
+          // A mark, not text: its own lighter ink (Jen, B1 review C4).
+          borderLeft: `3px solid var(--color-island-mark)`,
           borderRadius: '0 8px 8px 0',
           padding: '16px 20px',
         }}
@@ -1543,7 +1545,7 @@ function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions }: { sect
               <li key={i} className="flex items-start gap-2.5" style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-body)' }}>
                 <span
                   className="flex-shrink-0 rounded-full"
-                  style={{ width: '6px', height: '6px', backgroundColor: 'var(--color-island-faint)', marginTop: '6px' }}
+                  style={{ width: '6px', height: '6px', backgroundColor: 'var(--color-island-mark)', marginTop: '6px' }}
                 />
                 {heading}
               </li>
@@ -1722,7 +1724,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, onOpenLens }: { onOpenCampaign
                 </span>
                 <span
                   style={{
-                    fontSize: '9px',
+                    fontSize: '11px',
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.1em',
                     color: 'var(--color-island-faint)',
@@ -1805,7 +1807,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               right: '16px',
               borderRadius: '9999px',
               padding: '6px',
-              backgroundColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+              backgroundColor: 'var(--color-island-toggle)',
               color: 'var(--color-island-muted)',
               border: 'none',
               cursor: 'pointer',
@@ -1854,7 +1856,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
             right: '16px',
             borderRadius: '9999px',
             padding: '6px',
-            backgroundColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+            backgroundColor: 'var(--color-island-toggle)',
             color: 'var(--color-island-muted)',
             border: 'none',
             cursor: 'pointer',
@@ -2002,7 +2004,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
-              <LimitationsSection content={section.content} darkMode={darkMode} />
+              <LimitationsSection content={section.content} />
             </div>
           )
         }

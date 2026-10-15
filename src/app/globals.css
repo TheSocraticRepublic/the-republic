@@ -6,11 +6,14 @@
  * The app chrome (nav, panels, forms, cards) is dark by default — no user
  * toggle. Long-form reading surfaces (the briefing document, legal/FOI
  * text) get a light "paper" treatment — sustained reading is more legible on
- * light backgrounds even inside a dark app — rendered from a light palette
- * applied inside the reading component (`LIGHT_PALETTE` in `briefing-view.tsx`)
- * plus the `.content-island` paper-grain, NOT via a theme class. (Do not
- * confuse this with `.dark-island` below, which is a DARK focused-attention
- * overlay used by the Gadfly sheet — not the light-reading mechanism.) The
+ * light backgrounds even inside a dark app — painted from the island tokens
+ * (`--island-*` in `:root` below, `island-*` utilities / `--color-island-*`)
+ * plus the `.content-island` paper-grain, NOT via a theme class and not from a
+ * palette object in a component. The light paper values are shared with the
+ * PDF renderer through `src/lib/design/paper-ink.ts` (duplicated, held equal
+ * by `tests/unit/paper-ink.test.ts`). (Do not confuse this with `.dark-island`
+ * below: a DARK scope, used by the Gadfly sheet and the briefing's in-component
+ * dark toggle — not the light-reading mechanism.) The
  * landing page is the one place that travels dark -> light as you scroll,
  * via `.light-scope` (see below) — it opens in the cave (dark) and ends in
  * daylight (light), matching its own narrative arc.
@@ -74,6 +77,16 @@
   --color-island-hover: var(--island-hover);
   --color-island-veil: var(--island-veil);
   --color-island-veil-border: var(--island-veil-border);
+  --color-island-mark: var(--island-mark);
+  --color-island-toggle: var(--island-toggle);
+  --color-island-note: var(--island-note);
+  --color-island-accent-gadfly: var(--island-accent-gadfly);
+  --color-island-accent-scout: var(--island-accent-scout);
+  --color-island-role-regulator: var(--island-role-regulator);
+  --color-island-role-proponent: var(--island-role-proponent);
+  --color-island-role-affected: var(--island-role-affected);
+  --color-island-role-indigenous: var(--island-role-indigenous);
+  --color-island-role-other: var(--island-role-other);
 
   /* Typography — font families injected by next/font via CSS variables */
   --font-display: var(--font-fraunces), "Palatino Linotype", Georgia, serif;
@@ -134,7 +147,9 @@
   --status-warning: #8E3F07;   /* 5.41:1 on light S2, 4.91:1 on light S3 */
   --status-neutral: #5C5650;   /* 5.34:1 on light S2, 4.84:1 on light S3 */
 
-  /* Island tokens — light (paper) defaults */
+  /* Island tokens — light (paper) defaults. The paper's grounds, text inks,
+     mark and borders are mirrored in src/lib/design/paper-ink.ts for the PDF
+     renderer; tests/unit/paper-ink.test.ts holds the two equal. */
   --island-bg: #fafaf9;
   --island-text: #1c1917;
   --island-secondary: #44403c;
@@ -149,7 +164,29 @@
   --island-hover: #eeece8;
   --island-veil: rgba(0, 0, 0, 0.05);
   --island-veil-border: rgba(0, 0, 0, 0.08);
+  /* Marks only (bullets, dots, rules), never text: no 4.5:1 owed, and lighter
+     than every text ink so a mark never outweighs the words beside it
+     (Jen, B1 review C4). */
+  --island-mark: #a8a29e;
+  /* The briefing's in-component dark toggle: the toggle button's fill, and
+     the "What This Analysis Cannot See" note's ground. .dark-island below
+     holds their dark values. */
+  --island-toggle: rgba(0, 0, 0, 0.04);
+  --island-note: rgba(120, 113, 108, 0.04);
   --island-accent-oracle: #0891B2;
+  /* The briefing's insight callout (gadfly gold) and primary-authority rule
+     (scout purple): the dark accent hues, as the paper has always drawn them. */
+  --island-accent-gadfly: #C8A84B;
+  --island-accent-scout: #B088C8;
+  /* Briefing Key Players role colours (briefing-view.tsx getRoleColor). Not
+     the Lens roles below: different vocabulary, different hues. No
+     .dark-island values yet; they render the same hue in both modes, as they
+     always have. */
+  --island-role-regulator: #0891B2;
+  --island-role-proponent: #B45309;
+  --island-role-affected: #059669;
+  --island-role-indigenous: #7C3AED;
+  --island-role-other: #64748B;
   --island-role-company: #57534e;
   --island-role-official: #2563eb;
   --island-role-agency: #0e7490;
@@ -263,7 +300,13 @@
   --island-hover: #27272a;
   --island-veil: rgba(255, 255, 255, 0.06);
   --island-veil-border: rgba(255, 255, 255, 0.1);
+  --island-mark: #71717a;
+  --island-toggle: rgba(255, 255, 255, 0.08);
+  /* warmLift is invisible on dark, so the note sits on the card. */
+  --island-note: var(--island-card);
   --island-accent-oracle: #89B4C8;
+  --island-accent-gadfly: #C8A84B;
+  --island-accent-scout: #B088C8;
   --island-role-company: #a3a3a3;
   --island-role-official: #60a5fa;
   --island-role-agency: #22d3ee;
@@ -489,10 +532,10 @@ body {
  * read as "Oracle" on every arm and fell to ~1.73:1 on light grounds.
  *
  * `.content-island` (briefing paper) is not a theme scope — its paper comes
- * from the component's palette under the app's `.dark` tokens — so it keeps
- * its own ink ring from the island text colour. `.content-island--dark` marks
- * BriefingView's in-component dark toggle (DARK_PALETTE), where the override
- * backs off to the token.
+ * from the island tokens under the app's `.dark` tokens — so it keeps its own
+ * ink ring from the island text colour. `.content-island--dark` marks
+ * BriefingView's in-component dark toggle (which adds `.dark-island`), where
+ * the override backs off to the token.
  */
 *:focus-visible {
   outline: 2px solid var(--focus-ring);
