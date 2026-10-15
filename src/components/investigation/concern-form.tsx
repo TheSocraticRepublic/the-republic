@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation'
 import { ChevronDown, Loader2, Search, X } from 'lucide-react'
 import { clsx } from 'clsx'
 import { CTAButton } from '@/components/ui/cta-button'
+import { Field, fieldControlClass } from '@/components/ui/field'
 import { hasCoarsePointer, useCoarsePointer, useModifierKeyLabel } from '@/lib/ui/input-modality'
+import { useUnsavedWork } from '@/lib/auth/client-sign-out'
+import { handoffFromSearch, onPendingConcernRevoked, takePendingConcern } from '@/lib/pending-concern'
 
 interface Jurisdiction {
   id: string
@@ -26,6 +29,9 @@ export function ConcernForm() {
   const [concern, setConcern] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // The concern carried from the landing through sign-in, held here between
+  // the offer and Use or Discard. Storage no longer has it (UI plan C4).
+  const [offered, setOffered] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
@@ -36,6 +42,34 @@ export function ConcernForm() {
   // ("Cmd" on Apple, "Ctrl" elsewhere). The textarea is described by it only
   // while it is shown (mobile P2-9).
   const showShortcutHint = modifierKey !== null && !coarsePointer
+
+  // Typed, unsent text is unsaved work: a sign-out in another tab shows the
+  // notice here instead of reloading the text away (C3's registry).
+  useUnsavedWork(concern.trim().length > 0)
+
+  // The pending concern (UI plan C4). Offered only on a render whose URL
+  // `handoff` (validated) matches the stored record, and deleted from storage
+  // in the same step: a reload or a later visit finds nothing. Under React's
+  // development double-mount the second read finds nothing and changes
+  // nothing, so the offer survives it.
+  useEffect(() => {
+    const record = takePendingConcern(handoffFromSearch(window.location.search))
+    // A one-time, destructive read of browser storage after hydration (the
+    // server render has no storage, so a lazy initial state would mismatch).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (record) setOffered(record.text)
+  }, [])
+
+  // Another tab signed out, or signed in on another handoff: the held copy
+  // goes too, not just the stored one.
+  useEffect(() => onPendingConcernRevoked(() => setOffered(null)), [])
+
+  const acceptOffered = useCallback(() => {
+    if (offered === null) return
+    setConcern(offered)
+    setOffered(null)
+    textareaRef.current?.focus()
+  }, [offered])
 
   // Focus the textarea on mount on a fine pointer only. On a touch screen it
   // would raise the keyboard over the page, and a screen-reader user would
@@ -138,6 +172,28 @@ export function ConcernForm() {
 
   return (
     <div className="space-y-4">
+      {/* The carried concern, offered, never prefilled (UI plan C4). */}
+      {offered !== null && (
+        <section
+          aria-labelledby="pending-concern-title"
+          data-pending-concern-offer
+          className="rounded-xl border border-border-strong bg-surface-1 px-4 py-3"
+        >
+          <p id="pending-concern-title" className="text-sm text-text-primary">
+            You wrote a concern before signing in.
+          </p>
+          <p className="mt-1.5 line-clamp-3 text-sm text-text-muted [overflow-wrap:anywhere]">{offered}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <CTAButton onClick={acceptOffered} variant="secondary" size="sm">
+              Use it
+            </CTAButton>
+            <CTAButton onClick={() => setOffered(null)} variant="secondary" size="sm">
+              Discard
+            </CTAButton>
+          </div>
+        </section>
+      )}
+
       {/* Primary textarea */}
       <div>
         <textarea
@@ -169,21 +225,23 @@ export function ConcernForm() {
         <p role="alert" className="text-xs text-status-danger">{submitError}</p>
       )}
 
-      {/* Jurisdiction selector */}
-      <div>
-        <label htmlFor="concern-jurisdiction" className="mb-1.5 block text-xs font-medium text-text-muted">
-          Jurisdiction <span className="text-text-faint">(optional)</span>
-        </label>
-        {fetchingJurisdictions ? (
-          <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
-        ) : (
+      {/* Jurisdiction selector, on the C2b Field recipe */}
+      <Field
+        id="concern-jurisdiction"
+        label="Jurisdiction"
+        optional
+        description="The city, district or province your concern is about. It helps find the right documents."
+      >
+        {(control) =>
+          fetchingJurisdictions ? (
+            <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
+          ) : (
           <div className="relative">
             <select
-              id="concern-jurisdiction"
+              {...control}
               value={selectedJurisdictionId}
               onChange={(e) => setSelectedJurisdictionId(e.target.value)}
-              aria-describedby="concern-jurisdiction-hint"
-              className="w-full appearance-none rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-border-strong focus:ring-0"
+              className={fieldControlClass('select')}
               disabled={loading}
             >
               <option value="">Any jurisdiction</option>
@@ -200,19 +258,20 @@ export function ConcernForm() {
               className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-faint"
             />
           </div>
-        )}
-        <p id="concern-jurisdiction-hint" className="mt-1.5 text-xs text-text-muted">
-          The city, district or province your concern is about. It helps find the right documents.
-        </p>
-      </div>
+          )
+        }
+      </Field>
 
-      {/* Postal code (optional — for vote tracker integration) */}
-      <div>
-        <label htmlFor="concern-postal-code" className="mb-1.5 block text-xs font-medium text-text-muted">
-          Postal code <span className="text-text-faint">(optional — shows how your MP voted on related issues)</span>
-        </label>
+      {/* Postal code (optional, for the vote tracker), on the C2b Field recipe */}
+      <Field
+        id="concern-postal-code"
+        label="Postal code"
+        optional
+        description="Shows how your MP voted on related issues."
+      >
+        {(control) => (
         <input
-          id="concern-postal-code"
+          {...control}
           type="text"
           value={postalCode}
           onChange={(e) => {
@@ -220,12 +279,13 @@ export function ConcernForm() {
             setPostalCode(clean.length > 3 ? `${clean.slice(0, 3)} ${clean.slice(3)}` : clean)
           }}
           placeholder="V8B 0A1"
-          className="w-full rounded-lg border border-border bg-surface-1 shadow-sm px-3 py-2 text-sm text-text-primary font-mono tracking-wider placeholder-text-faint outline-none focus:border-border-strong"
+          className={clsx(fieldControlClass('input'), 'font-mono tracking-wider')}
           disabled={loading}
           maxLength={7}
           autoComplete="postal-code"
         />
-      </div>
+        )}
+      </Field>
 
       {/* Actions. Start keeps one box at rest, typed and busy, and Cancel
           never lands inside it, so a second press 250 ms later can only hit

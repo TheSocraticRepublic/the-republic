@@ -9,6 +9,8 @@ import { safeRedirectTarget } from '@/lib/navigation/safe-redirect'
 // page before the reader has seen it (mobile P2-11). The shared check (B3b).
 import { hasCoarsePointer } from '@/lib/ui/input-modality'
 import { ErrorMark } from '@/components/ui/field'
+import { broadcastSignedIn, usePendingConcernListener } from '@/lib/auth/client-sign-out'
+import { handoffFromTarget } from '@/lib/pending-concern'
 
 type Step = 'email' | 'code'
 
@@ -72,6 +74,9 @@ export default function LoginPage() {
   const emailRef = useRef<HTMLInputElement>(null)
   const codeRef = useRef<HTMLInputElement>(null)
   const instructionRef = useRef<HTMLParagraphElement>(null)
+  // A pending concern written on the landing waits in this tab while it is
+  // here; a sign-in or sign-out in another tab deletes it (UI plan C4).
+  usePendingConcernListener()
 
   // The one predicate both submit paths of the current step check before
   // dispatching: the step's button (an aria-disabled click guard, so the
@@ -184,9 +189,12 @@ export default function LoginPage() {
       // A full navigation, so server components read the fresh session cookie.
       // `?redirect=` is untrusted: safeRedirectTarget returns an absolute URL
       // on this origin (the target, or /investigate), and it is assigned as-is.
-      window.location.assign(
-        safeRedirectTarget(new URLSearchParams(window.location.search).get('redirect'), window.location.origin)
-      )
+      const target = safeRedirectTarget(new URLSearchParams(window.location.search).get('redirect'), window.location.origin)
+      // Other tabs learn of the login, with the handoff it completes (a
+      // validated id from the checked target, or none), so only a tab holding
+      // that id keeps its pending concern (UI plan C4).
+      broadcastSignedIn(handoffFromTarget(target))
+      window.location.assign(target)
     } catch (err) {
       // Not a network or HTTP failure (those return above): surfaced, never silent.
       console.error('[login] verify-code:', err)
