@@ -10,7 +10,7 @@ import { safeRedirectTarget } from '@/lib/navigation/safe-redirect'
 import { hasCoarsePointer } from '@/lib/ui/input-modality'
 import { ErrorMark } from '@/components/ui/field'
 import { broadcastSignedIn, usePendingConcernListener } from '@/lib/auth/client-sign-out'
-import { handoffFromTarget } from '@/lib/pending-concern'
+import { handoffFromTarget, keepPendingConcernOnlyFor } from '@/lib/pending-concern'
 
 type Step = 'email' | 'code'
 
@@ -190,10 +190,13 @@ export default function LoginPage() {
       // `?redirect=` is untrusted: safeRedirectTarget returns an absolute URL
       // on this origin (the target, or /investigate), and it is assigned as-is.
       const target = safeRedirectTarget(new URLSearchParams(window.location.search).get('redirect'), window.location.origin)
-      // Other tabs learn of the login, with the handoff it completes (a
-      // validated id from the checked target, or none), so only a tab holding
-      // that id keeps its pending concern (UI plan C4).
-      broadcastSignedIn(handoffFromTarget(target))
+      // The handoff this login completes: a validated id from the checked
+      // target, or none. This tab keeps its pending concern only if it was
+      // written for that id (the broadcast never reaches this tab, Razor C4
+      // W1); other tabs learn of the login and apply the same rule (UI plan C4).
+      const handoff = handoffFromTarget(target)
+      keepPendingConcernOnlyFor(handoff)
+      broadcastSignedIn(handoff)
       window.location.assign(target)
     } catch (err) {
       // Not a network or HTTP failure (those return above): surfaced, never silent.

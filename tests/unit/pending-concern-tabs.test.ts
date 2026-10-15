@@ -180,6 +180,24 @@ describe.skipIf(!APP_UP)('the pending concern in two real tabs (Chromium, harnes
     }
   }, 120_000)
 
+  it('W1: A abandons in tab 1; B signs in on plain /login in that same tab: nothing offered, storage empty, A\'s handoff URL offers nothing', async () => {
+    const context = await newContext()
+    try {
+      const tab1 = await context.newPage()
+      await writeOnLanding(tab1, 'C4 harness: abandoned on this tab by A')
+      const handoff = JSON.parse((await stored(tab1))!).handoff as string
+      await signIn(tab1, USER_B, `${APP_URL}/login`)
+      expect(new URL(tab1.url()).search).toBe('')
+      expect(await offer(tab1).count()).toBe(0)
+      expect(await stored(tab1)).toBeNull()
+      // Razor's P3: B then reaching A's handoff URL (Back, history) gets nothing.
+      await tab1.goto(`${APP_URL}/investigate?handoff=${handoff}`, { waitUntil: 'networkidle' })
+      expect(await offer(tab1).count()).toBe(0)
+    } finally {
+      await context.close()
+    }
+  }, 120_000)
+
   it('tab 1 holds a handoff; tab 2 completes a different login: tab 1\'s record is deleted, tab 2 is offered its own', async () => {
     const context = await newContext()
     try {

@@ -27,11 +27,18 @@ export const PENDING_CONCERN_KEY = 'oc:pending-concern'
 export const PENDING_CONCERN_MAX_LENGTH = 2000
 /** A clock running slightly ahead in another tab is tolerated; more is not. */
 export const PENDING_CONCERN_FUTURE_SKEW_MS = 60_000
-/** Older than this, a record is discarded on read (lazy expiry). */
+/** Older than this, a record is discarded on read (lazy expiry). 15 minutes
+ *  (orchestrator ruling, C4 fix pass, after Razor W3): long enough for an
+ *  email-code round trip, short enough that a concern left on a shared
+ *  machine's login page is not offered to the next person for an hour. */
 export const PENDING_CONCERN_MAX_AGE_MS = 60 * 60_000
 
 /** Where a handoff ends: the Investigate page, carrying the id. */
 export const HANDOFF_PARAM = 'handoff'
+/** `from=home`: the handoff was made by a signed-in citizen straight from
+ *  the landing, with no login between; it only chooses the offer's words. */
+export const HANDOFF_FROM_PARAM = 'from'
+export const HANDOFF_FROM_HOME = 'home'
 export const HANDOFF_PATH = '/investigate'
 
 export interface PendingConcern {
@@ -58,6 +65,18 @@ export function newHandoffId(): string {
 /** `/investigate?handoff=<id>`: the target the login redirect carries. */
 export function handoffTarget(handoff: string): string {
   return `${HANDOFF_PATH}?${HANDOFF_PARAM}=${handoff}`
+}
+
+/** Where a signed-in citizen goes from the landing: the handoff target,
+ *  marked as made from the home page. */
+export function signedInHandoffUrl(handoff: string): string {
+  return `${handoffTarget(handoff)}&${HANDOFF_FROM_PARAM}=${HANDOFF_FROM_HOME}`
+}
+
+/** Whether an Investigate URL's query marks a handoff made from the home
+ *  page while signed in (chooses the offer's wording only). */
+export function handoffIsFromHome(search: string): boolean {
+  return new URLSearchParams(search).get(HANDOFF_FROM_PARAM) === HANDOFF_FROM_HOME
 }
 
 /** The login URL that completes this handoff. The target is one encoded
@@ -89,7 +108,7 @@ export function handoffFromTarget(target: string): string | null {
 /**
  * Parse a stored value. Anything that is not exactly a version-1 record with
  * a string text of at most 2,000 characters, a finite `savedAt` not more than
- * 60 s in the future and at most 60 min old, and a well-formed handoff id is
+ * 60 s in the future and at most 15 min old, and a well-formed handoff id is
  * null.
  */
 export function parsePendingConcern(raw: string | null, now: number): PendingConcern | null {
@@ -201,6 +220,20 @@ export function takePendingConcern(urlHandoff: string | null, now: number = Date
 }
 
 /**
+ * A login has just completed in THIS tab, for the handoff in its target (or
+ * none). BroadcastChannel never delivers to the tab that posts, so the
+ * `signed-in` broadcast cannot apply the rule here (Razor C4 W1): the record
+ * is kept only if it was written for this very handoff; otherwise it is
+ * deleted before the tab moves on, so whoever just signed in is never offered
+ * a concern left in this tab by someone else.
+ */
+export function keepPendingConcernOnlyFor(handoff: string | null): void {
+  const record = readPendingConcern()
+  if (record && handoff !== null && record.handoff === handoff) return
+  revokePendingConcern()
+}
+
+/**
  * What a tab does with its record when it hears an `oc-auth` message from
  * another tab:
  * - `signed-out` or `clear-pending`: delete it.
@@ -212,13 +245,13 @@ export function applyAuthMessageToPendingConcern(data: unknown): void {
   if (typeof data !== 'object' || data === null) return
   const { type, handoff } = data as { type?: unknown; handoff?: unknown }
   if (type === 'signed-out' || type === 'clear-pending') {
-    revoke()
+    revokePendingConcern()
     return
   }
   if (type === 'signed-in') {
     const record = readPendingConcern()
     if (record && isHandoffId(handoff) && record.handoff === handoff) return
-    revoke()
+    revokePendingConcern()
   }
 }
 
@@ -230,7 +263,8 @@ export function applyAuthMessageToPendingConcern(data: unknown): void {
  */
 const revokeListeners = new Set<() => void>()
 
-function revoke(): void {
+/** Delete the stored record and drop any copy an offer on this page holds. */
+export function revokePendingConcern(): void {
   clearPendingConcern()
   for (const l of revokeListeners) l()
 }

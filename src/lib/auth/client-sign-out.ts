@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { applyAuthMessageToPendingConcern, clearPendingConcern } from '@/lib/pending-concern'
+import { applyAuthMessageToPendingConcern, revokePendingConcern } from '@/lib/pending-concern'
 
 /*
  * The one sign-out path in the browser (UI plan C3). The sidebar and the
@@ -114,7 +114,9 @@ export async function clientSignOut(): Promise<SignOutResult> {
   // The pending concern goes first, whatever the request then does: this
   // tab's record, then every other tab's (C4). Never `signed-out` here, which
   // would reload tabs that may still be signed in.
-  clearPendingConcern()
+  // Revoked, not just deleted: an offer on screen in this tab goes too, even
+  // if the request then fails (Razor C4 N2).
+  revokePendingConcern()
   broadcast({ type: 'clear-pending' })
 
   let res: Response

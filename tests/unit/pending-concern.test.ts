@@ -546,7 +546,40 @@ describe('a successful login broadcasts signed-in with the handoff it completes'
     expect(assign).toHaveBeenCalledWith(`${ORIGIN}/investigate`)
   })
 
-  it('a failed verify broadcasts nothing', async () => {
+  // Razor C4 W1: the broadcast never reaches the tab that posts it, so the
+  // login applies the handoff rule to its own tab before it moves.
+  it.each([
+    ['plain /login (no redirect)', ''],
+    ['a redirect with no handoff', `?redirect=${encodeURIComponent('/votes')}`],
+    ['another handoff', `?redirect=${encodeURIComponent(`/investigate?handoff=${ID_B}`)}`],
+    ['a malformed handoff', `?redirect=${encodeURIComponent('/investigate?handoff=zz')}`],
+  ])('W1: a login completing %s deletes the record left in its own tab', async (_label, search) => {
+    store(good())
+    await loginThrough(search)
+    expect(window.sessionStorage.getItem(KEY)).toBeNull()
+    expect(assign).toHaveBeenCalledTimes(1)
+  })
+
+  it('W1: a login completing this record\'s own handoff keeps it for Investigate', async () => {
+    store(good())
+    await loginThrough(`?redirect=${encodeURIComponent(`/investigate?handoff=${ID_A}`)}`)
+    expect(pc.readPendingConcern()?.handoff).toBe(ID_A)
+  })
+
+  it('W1: keepPendingConcernOnlyFor drops a held offer too when the handoff differs', () => {
+    store(good())
+    const dropped = vi.fn()
+    const stop = pc.onPendingConcernRevoked(dropped)
+    pc.keepPendingConcernOnlyFor(ID_A)
+    expect(dropped).not.toHaveBeenCalled()
+    pc.keepPendingConcernOnlyFor(null)
+    expect(dropped).toHaveBeenCalledTimes(1)
+    expect(window.sessionStorage.getItem(KEY)).toBeNull()
+    stop()
+  })
+
+  it('a failed verify broadcasts nothing and leaves the record alone', async () => {
+    store(good({ handoff: ID_B }))
     const tab2 = otherTab()
     setLocation('/login', `?redirect=${encodeURIComponent(`/investigate?handoff=${ID_A}`)}`)
     replies.set('/api/auth/send-code', status(200, { ok: true, sent: true }))
@@ -561,6 +594,8 @@ describe('a successful login broadcasts signed-in with the handoff it completes'
     await press('Verify code')
     expect(tab2.heard).toEqual([])
     expect(assign).not.toHaveBeenCalled()
+    // Nobody signed in, so the record waits.
+    expect(pc.readPendingConcern()?.handoff).toBe(ID_B)
   })
 
   it('the login tab listens: another tab\'s sign-in on a different handoff deletes the record waiting here', async () => {
