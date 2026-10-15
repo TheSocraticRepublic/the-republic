@@ -240,6 +240,41 @@ describe('island tokens D1 adds, and the dark values the toggle needs', () => {
   })
 })
 
+describe('the theme doctrine names the mechanism that exists (LIGHT_PALETTE drift)', () => {
+  /** The doctrine paragraph: CLAUDE.md's "Theme doctrine" bullet, globals.css's header comment. */
+  const claudeDoctrine = () => {
+    const md = fs.readFileSync(path.join(REPO, 'CLAUDE.md'), 'utf8')
+    const start = md.indexOf('- Theme doctrine:')
+    expect(start).toBeGreaterThan(-1)
+    return md.slice(start, md.indexOf('\n- ', start + 1))
+  }
+  const cssHeader = () => {
+    const css = fs.readFileSync(GLOBALS, 'utf8')
+    return css.slice(0, css.indexOf('*/'))
+  }
+
+  it.each([
+    ['CLAUDE.md', claudeDoctrine],
+    ['globals.css header', cssHeader],
+  ])('%s: island tokens and paper-ink.ts, never a palette object', (_name, read) => {
+    const text = read()
+    expect(text).toContain('Theme doctrine')
+    expect(text).toContain('--island-*')
+    expect(text).toContain('src/lib/design/paper-ink.ts')
+    expect(text).toContain('tests/unit/paper-ink.test.ts')
+    expect(text).not.toContain('LIGHT_PALETTE')
+  })
+
+  it('the focus-ring comment no longer names DARK_PALETTE', () => {
+    const css = fs.readFileSync(GLOBALS, 'utf8')
+    const at = css.indexOf('`.content-island` (briefing paper) is not a theme scope')
+    expect(at).toBeGreaterThan(-1)
+    const para = css.slice(at, css.indexOf('*/', at))
+    expect(para).toContain('island tokens')
+    expect(para).not.toContain('PALETTE')
+  })
+})
+
 // ---- the briefing, rendered -------------------------------------------------
 
 const BRIEFING = [
