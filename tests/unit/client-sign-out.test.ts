@@ -171,7 +171,7 @@ describe('clientSignOut: the request', () => {
   ] as const)('N1: %s is not a sign-out: nothing claimed, broadcast or navigated', async (_label, reply) => {
     signOutReply = reply as () => Promise<Partial<Response>>
     const tab2 = otherTab()
-    expect(await mod.clientSignOut()).toEqual({ ok: false, message: mod.SIGN_OUT_FAILED_MESSAGE })
+    expect(await mod.clientSignOut()).toEqual({ ok: false, message: mod.SIGN_OUT_REFUSED_MESSAGE })
     expect(tab2.heard).toEqual([])
     expect(assign).not.toHaveBeenCalled()
   })
@@ -234,25 +234,32 @@ describe('clientSignOut: no BroadcastChannel', () => {
 
 describe('clientSignOut: a failed request', () => {
   it.each([
-    ['no network', async () => Promise.reject(new TypeError('Failed to fetch'))],
-    ['403 (origin refused)', status(403)],
-    ['429', status(429)],
-    ['500', status(500)],
-  ] as const)('%s: claims nothing, broadcasts nothing, stays put', async (_label, reply) => {
+    ['no network', async () => Promise.reject(new TypeError('Failed to fetch')), 'offline'],
+    ['403 (origin refused)', status(403), 'refused'],
+    ['429', status(429), 'refused'],
+    ['500', status(500), 'refused'],
+  ] as const)('%s: claims nothing, broadcasts nothing, stays put', async (_label, reply, kind) => {
     signOutReply = reply as () => Promise<Partial<Response>>
     const tab2 = otherTab()
     const result = await mod.clientSignOut()
-    expect(result).toEqual({ ok: false, message: mod.SIGN_OUT_FAILED_MESSAGE })
+    expect(result).toEqual({
+      ok: false,
+      message: kind === 'offline' ? mod.SIGN_OUT_OFFLINE_MESSAGE : mod.SIGN_OUT_REFUSED_MESSAGE,
+    })
     expect(FakeChannel.posted).toHaveLength(0)
     expect(tab2.heard).toEqual([])
     expect(assign).not.toHaveBeenCalled()
     expect(reload).not.toHaveBeenCalled()
   })
 
-  it('has plain-instructional failure copy, no "Please"', () => {
-    expect(mod.SIGN_OUT_FAILED_MESSAGE).toBe(
-      "Open Cave couldn't sign you out. Check your connection, then try again."
+  it("has Jen's copy: both lines say you're still signed in; only offline gets connection advice", () => {
+    expect(mod.SIGN_OUT_OFFLINE_MESSAGE).toBe(
+      "You're still signed in. Open Cave can't be reached. Check your connection, then sign out again."
     )
+    expect(mod.SIGN_OUT_REFUSED_MESSAGE).toBe(
+      "You're still signed in. Open Cave couldn't sign you out. Sign out again."
+    )
+    expect(mod.SIGN_OUT_REFUSED_MESSAGE).not.toContain('connection')
   })
 })
 
@@ -338,7 +345,10 @@ describe('the sidebar uses clientSignOut', () => {
     render(h(Sidebar, { displayName: 'ada' }))
     const button = screen.getByRole('button', { name: 'Sign out' })
     await click(button)
-    expect(screen.getByRole('alert').textContent).toBe(mod.SIGN_OUT_FAILED_MESSAGE)
+    const alert = screen.getByRole('alert')
+    expect(alert.textContent).toBe(mod.SIGN_OUT_REFUSED_MESSAGE)
+    // The error mark (C2b recipe), not colour alone (Jen C3 C4).
+    expect(alert.querySelector('svg.lucide-circle-alert')).not.toBeNull()
     expect(assign).not.toHaveBeenCalled()
     expect(button.getAttribute('aria-busy')).toBeNull()
   })
@@ -384,7 +394,9 @@ describe('the onboarding shell', () => {
     const { AppShell } = await loadShell()
     render(h(AppShell, { variant: 'onboarding', children: h('p', null, 'setup form') }))
     await click(screen.getByRole('button', { name: 'Sign out' }))
-    expect(screen.getByRole('alert').textContent).toBe(mod.SIGN_OUT_FAILED_MESSAGE)
+    const alert = screen.getByRole('alert')
+    expect(alert.textContent).toBe(mod.SIGN_OUT_OFFLINE_MESSAGE)
+    expect(alert.querySelector('svg.lucide-circle-alert')).not.toBeNull()
     expect(screen.getByText('setup form')).toBeTruthy()
     expect(assign).not.toHaveBeenCalled()
   })
@@ -488,7 +500,7 @@ describe('the login card is paper', () => {
   it('sets the photograph low, so the bright crevice is below the card', async () => {
     await renderLogin()
     const photo = document.querySelector('[style*="cave-login.jpg"]') as HTMLElement | null
-    expect(photo?.style.backgroundPosition).toBe('center 70%')
+    expect(photo?.style.backgroundPosition).toBe('center 35%')
   })
 
   it('scrims the brand block', async () => {
@@ -529,7 +541,11 @@ describe('the login card is paper', () => {
     expect(send.getAttribute('aria-disabled')).toBe('true')
     const cls = send.getAttribute('class') ?? ''
     expect(cls).not.toContain('opacity-40')
-    expect(cls).toContain('bg-surface-1')
+    // Not the empty field's fill or border (Jen C3 C3).
+    expect(cls).toContain('bg-surface-3')
+    expect(cls).toContain('border-transparent')
+    expect(cls).toContain('text-text-secondary')
+    expect(cls).not.toContain('bg-surface-1')
     fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'a@b.test' } })
     expect(send.getAttribute('class')).toContain('bg-text-primary')
   })
@@ -565,13 +581,13 @@ describe('a sign-out in another tab, with unsaved work here', () => {
       return h('textarea', { defaultValue: 'my unsaved letter', 'aria-label': 'draft' })
     }
     render(h(AppShell, { variant: 'app', displayName: 'ada', children: h(Draft) }))
-    expect(screen.queryByText(mod.SIGNED_OUT_ELSEWHERE_MESSAGE)).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
     await act(async () => {
       new FakeChannel('oc-auth').postMessage({ type: 'signed-out' })
     })
     expect(reload).not.toHaveBeenCalled()
     expect(screen.getByRole('alert').textContent).toBe(
-      "You've signed out in another tab. Copy anything you want to keep, then sign in again."
+      "You signed out in another tab, so this tab can't save. Sign in again in a new tab, then save here."
     )
     expect((screen.getByLabelText('draft') as HTMLTextAreaElement).value).toBe('my unsaved letter')
   })
@@ -587,7 +603,7 @@ describe('a sign-out in another tab, with unsaved work here', () => {
       new FakeChannel('oc-auth').postMessage({ type: 'signed-out' })
     })
     expect(reload).not.toHaveBeenCalled()
-    expect(screen.getByText(mod.SIGNED_OUT_ELSEWHERE_MESSAGE)).toBeTruthy()
+    expect(screen.getByRole('alert').textContent).toContain(mod.NOTICE_LEAD.elsewhere)
   })
 
   it('work that stops being dirty, or unmounts, no longer holds the reload', async () => {
@@ -680,5 +696,287 @@ describe('account deletion broadcasts signed-out', () => {
   it('never when the deletion failed', async () => {
     const tab2 = await deleteFlow(async () => new Response('{}', { status: 500 }))
     expect(tab2.heard).toEqual([])
+  })
+})
+
+// ---- Design fix pass (Jen C3 C1-C9) ------------------------------------------
+
+describe('the signed-out notice: a control for every action it names (Jen C6)', () => {
+  async function shellWithDraft(variant: 'app' | 'onboarding' = 'app') {
+    const { AppShell } = await loadShell()
+    function Draft() {
+      mod.useUnsavedWork(true)
+      return h('textarea', { defaultValue: 'kept', 'aria-label': 'draft' })
+    }
+    render(h(AppShell, { variant, displayName: 'ada', children: h(Draft) }))
+  }
+
+  it('links to /login for this page, in a new tab, and carries a warning mark', async () => {
+    await shellWithDraft()
+    await act(async () => {
+      new FakeChannel('oc-auth').postMessage({ type: 'signed-out' })
+    })
+    const alert = screen.getByRole('alert')
+    const link = screen.getByRole('link', { name: 'Sign in again in a new tab' })
+    expect(alert.contains(link)).toBe(true)
+    expect(link.getAttribute('href')).toBe('/login?redirect=%2Fprofile%2Fsetup')
+    expect(link.getAttribute('target')).toBe('_blank')
+    expect(link.getAttribute('rel')).toBe('noopener')
+    expect(alert.querySelector('svg.lucide-circle-alert')?.getAttribute('class')).toContain('text-status-warning')
+  })
+
+  it('clears on a signed-in message from another tab (the hook C4 will send to)', async () => {
+    await shellWithDraft()
+    await act(async () => {
+      new FakeChannel('oc-auth').postMessage({ type: 'signed-out' })
+    })
+    expect(screen.queryByRole('alert')).not.toBeNull()
+    await act(async () => {
+      new FakeChannel('oc-auth').postMessage({ type: 'signed-in', handoff: 'abc' })
+    })
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(reload).not.toHaveBeenCalled()
+  })
+
+  it('a signed-in message never reloads a clean tab', () => {
+    const stop = mod.listenForSignOutElsewhere()
+    new FakeChannel('oc-auth').postMessage({ type: 'signed-in' })
+    expect(reload).not.toHaveBeenCalled()
+    stop()
+  })
+
+  it('clears when a write from this tab succeeds', async () => {
+    await shellWithDraft()
+    await act(async () => {
+      new FakeChannel('oc-auth').postMessage({ type: 'signed-out' })
+    })
+    await act(async () => mod.clearSignedOutNotice())
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it("a 401 here raises the notice with its own lead, and doesn't replace one already showing", async () => {
+    await shellWithDraft('onboarding')
+    await act(async () => mod.noteSignedOutByServer())
+    expect(screen.getByRole('alert').textContent).toBe(
+      "You're signed out, so this tab can't save. Sign in again in a new tab, then save here."
+    )
+    await act(async () => mod.clearSignedOutNotice())
+    await act(async () => {
+      new FakeChannel('oc-auth').postMessage({ type: 'signed-out' })
+    })
+    await act(async () => mod.noteSignedOutByServer())
+    expect(screen.getByRole('alert').textContent).toContain(mod.NOTICE_LEAD.elsewhere)
+  })
+})
+
+describe('sign-out busy is visible (Jen C5)', () => {
+  it.each(['sidebar', 'onboarding'] as const)('%s: a spinner replaces the icon and a status says "Signing out"', async (where) => {
+    signOutReply = () => new Promise(() => {})
+    const { AppShell, Sidebar } = await loadShell()
+    render(where === 'sidebar' ? h(Sidebar, { displayName: 'ada' }) : h(AppShell, { variant: 'onboarding', children: h('p', null, 'x') }))
+    const button = screen.getByRole('button', { name: /Sign out/ })
+    expect(button.querySelector('svg.lucide-log-out')).not.toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
+    await click(button)
+    expect(button.querySelector('svg.lucide-log-out')).toBeNull()
+    expect(button.querySelector('svg.animate-spin')).not.toBeNull()
+    expect(screen.getByRole('status').textContent).toBe('Signing out')
+    expect(button.textContent).toContain('Sign out')
+  })
+
+  it('the onboarding failure line starts at the gutter on phones, left-aligned', async () => {
+    signOutReply = status(500)
+    const { AppShell } = await loadShell()
+    render(h(AppShell, { variant: 'onboarding', children: h('p', null, 'x') }))
+    await click(screen.getByRole('button', { name: /Sign out/ }))
+    const cls = screen.getByRole('alert').getAttribute('class') ?? ''
+    for (const c of ['ml-auto', 'max-w-sm', 'text-left', 'flex', 'items-start']) expect(cls.split(' ')).toContain(c)
+  })
+})
+
+describe('saving while signed out never shows "Unauthorized" (Jen C7)', () => {
+  it('Lever Save: plain copy with the mark, text kept, notice raised; a later save clears it', async () => {
+    let patchStatus = 401
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      if (init?.method === 'PATCH') {
+        if (patchStatus === 401) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+        const body = JSON.parse(String(init.body))
+        return new Response(JSON.stringify({ action: { content: body.content } }), { status: 200 })
+      }
+      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })
+    }))
+    const { AppShell } = await loadShell()
+    const { ActionViewer } = await import('@/components/lever/action-viewer')
+    render(h(AppShell, { variant: 'app', displayName: 'ada', children: h(ActionViewer, {
+      actionId: '44444444-4444-4444-8444-444444444444',
+      initialContent: 'Dear FOI Coordinator,\nI request the records.',
+      initialStatus: 'draft',
+      actionType: 'public_comment',
+    } as unknown as Parameters<typeof ActionViewer>[0]) }))
+    await click(screen.getByText('Edit'))
+    const box = screen.getByRole('textbox') as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: 'my new words' } })
+    await click(screen.getByText('Save'))
+    await waitForText("You're signed out, so this wasn't saved. Your text is still here.")
+    expect(document.body.textContent).not.toContain('Unauthorized')
+    const line = screen.getByText("You're signed out, so this wasn't saved. Your text is still here.")
+    expect(line.querySelector('svg.lucide-circle-alert')).not.toBeNull()
+    expect(box.value).toBe('my new words')
+    expect(document.body.textContent).toContain(mod.NOTICE_LEAD.server)
+    expect(screen.getByRole('link', { name: 'Sign in again in a new tab' })).toBeTruthy()
+    patchStatus = 200
+    await click(screen.getByText('Save'))
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+    expect(document.body.textContent).not.toContain(mod.NOTICE_LEAD.server)
+  })
+
+  it('setup Claim: plain copy with the mark, text kept, notice raised', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/profile' && init?.method === 'POST') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+      return new Response(JSON.stringify({ profile: null }), { status: 200 })
+    }))
+    const { AppShell } = await loadShell()
+    const { default: SetupPage } = await import('@/app/(app)/profile/setup/page')
+    await act(async () => {
+      render(h(AppShell, { variant: 'onboarding', children: h(SetupPage) }))
+    })
+    const name = (await screen.findByLabelText('Display name')) as HTMLInputElement
+    fireEvent.change(name, { target: { value: 'ada_lovelace' } })
+    await click(screen.getByRole('button', { name: 'Claim your name' }))
+    await waitForText("You're signed out, so your name wasn't saved. What you typed is still here.")
+    expect(document.body.textContent).not.toContain('Unauthorized')
+    const line = screen.getByText("You're signed out, so your name wasn't saved. What you typed is still here.")
+    expect(line.querySelector('svg.lucide-circle-alert')).not.toBeNull()
+    expect(name.value).toBe('ada_lovelace')
+    expect(document.body.textContent).toContain(mod.NOTICE_LEAD.server)
+    expect(assign).not.toHaveBeenCalled()
+  })
+})
+
+async function waitForText(text: string) {
+  for (let i = 0; i < 50 && !document.body.textContent?.includes(text); i++) {
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10))
+    })
+  }
+  expect(document.body.textContent).toContain(text)
+}
+
+describe('the onboarding page says where the citizen is (Jen C8, P1-6)', () => {
+  async function renderSetup(coarse: boolean, profile: unknown = null) {
+    vi.stubGlobal('matchMedia', vi.fn((q: string) => ({ matches: coarse && q === '(pointer: coarse)', media: q })))
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ profile }), { status: 200 })))
+    const { default: SetupPage } = await import('@/app/(app)/profile/setup/page')
+    await act(async () => {
+      render(h(SetupPage))
+    })
+    return (await screen.findByLabelText('Display name')) as HTMLInputElement
+  }
+
+  it('first run: "Welcome to Open Cave" in Fraunces, and the one-step line', async () => {
+    await renderSetup(false)
+    const h1 = screen.getByRole('heading', { level: 1 })
+    expect(h1.textContent).toBe('Welcome to Open Cave')
+    for (const c of ['font-display', 'text-2xl', 'font-semibold', 'tracking-[-0.01em]']) expect(h1.className.split(' ')).toContain(c)
+    const line = screen.getByText('One step before you start: choose the name other citizens will see. Your email stays private.')
+    expect(line.className).toContain('text-pretty')
+  })
+
+  it('edit mode keeps "Edit Profile", in the same heading style', async () => {
+    await renderSetup(false, { displayName: 'ada', bio: '' })
+    const h1 = screen.getByRole('heading', { level: 1 })
+    expect(h1.textContent).toBe('Edit Profile')
+    expect(h1.className.split(' ')).toContain('font-display')
+  })
+
+  it('fine pointer: the name field is focused on load', async () => {
+    const name = await renderSetup(false)
+    expect(document.activeElement).toBe(name)
+  })
+
+  it('touch screen: nothing is focused on load', async () => {
+    const name = await renderSetup(true)
+    expect(document.activeElement).not.toBe(name)
+    expect(name.hasAttribute('autofocus')).toBe(false)
+  })
+})
+
+describe('the login card: errors, the unavailable recipe, touch sizes (Jen C1, C4, C9)', () => {
+  async function renderLoginWith(responses: { send?: [number, unknown]; verify?: [number, unknown] }) {
+    vi.stubGlobal('matchMedia', vi.fn((q: string) => ({ matches: false, media: q })))
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      const [st, body] = url.endsWith('send-code') ? (responses.send ?? [200, { ok: true, sent: true }]) : (responses.verify ?? [200, {}])
+      return { ok: st < 400, status: st, json: async () => body }
+    }))
+    const { default: LoginPage } = await import('@/app/(auth)/login/page')
+    await act(async () => {
+      render(h(LoginPage))
+    })
+    return screen.getByLabelText('Email address') as HTMLInputElement
+  }
+  async function enter(el: HTMLElement) {
+    await act(async () => {
+      fireEvent.keyDown(el, { key: 'Enter' })
+    })
+  }
+
+  it('a wrong code marks the code field invalid, described by the error, which carries the mark', async () => {
+    const email = await renderLoginWith({ verify: [401, { error: 'invalid' }] })
+    fireEvent.change(email, { target: { value: 'a@b.test' } })
+    await enter(email)
+    const code = screen.getByLabelText('8-digit code') as HTMLInputElement
+    expect(code.getAttribute('aria-invalid')).toBeNull()
+    fireEvent.change(code, { target: { value: '12345678' } })
+    await enter(code)
+    const alert = screen.getByRole('alert')
+    expect(alert.id).toBe('login-error')
+    expect(alert.querySelector('svg.lucide-circle-alert')).not.toBeNull()
+    expect(code.getAttribute('aria-invalid')).toBe('true')
+    expect(code.getAttribute('aria-describedby')).toBe('login-error')
+    expect(code.className).toContain('aria-invalid:border-status-danger')
+  })
+
+  it('a send 400 marks the email field; a 500 marks nothing', async () => {
+    const email = await renderLoginWith({ send: [400, { error: 'bad' }] })
+    fireEvent.change(email, { target: { value: 'nope' } })
+    await enter(email)
+    expect(email.getAttribute('aria-invalid')).toBe('true')
+    expect(email.className).toContain('aria-invalid:border-status-danger')
+    cleanup()
+    const email2 = await renderLoginWith({ send: [500, {}] })
+    fireEvent.change(email2, { target: { value: 'a@b.test' } })
+    await enter(email2)
+    expect(screen.getByRole('alert')).toBeTruthy()
+    expect(email2.getAttribute('aria-invalid')).toBeNull()
+  })
+
+  it('the next attempt clears the mark', async () => {
+    const email = await renderLoginWith({ send: [400, { error: 'bad' }] })
+    fireEvent.change(email, { target: { value: 'nope' } })
+    await enter(email)
+    expect(email.getAttribute('aria-invalid')).toBe('true')
+    vi.stubGlobal('fetch', vi.fn(async () => new Promise(() => {})))
+    await enter(email)
+    expect(email.getAttribute('aria-invalid')).toBeNull()
+  })
+
+  it('the code-step text buttons are 24px, and 44px on touch', async () => {
+    const email = await renderLoginWith({})
+    fireEvent.change(email, { target: { value: 'a@b.test' } })
+    await enter(email)
+    for (const name of ['Send a new code', 'Use a different email']) {
+      const cls = (screen.getByRole('button', { name }).getAttribute('class') ?? '').split(' ')
+      expect(cls).toContain('min-h-6')
+      expect(cls).toContain('pointer-coarse:min-h-11')
+    }
+  })
+
+  it('main clips the scrim, safe-centres and pads (layout measured on the harness)', async () => {
+    await renderLoginWith({})
+    const cls = (document.querySelector('main')?.getAttribute('class') ?? '').split(' ')
+    for (const c of ['overflow-x-clip', 'justify-[safe_center]', 'pt-16', 'pb-8']) expect(cls).toContain(c)
+    expect(cls).not.toContain('justify-center')
   })
 })
