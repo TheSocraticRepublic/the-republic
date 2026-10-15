@@ -87,6 +87,19 @@ describe("the header's Start yields to the hero's and the closing box", () => {
     expect(headerStart()).toBeNull()
   })
 
+  it('a viewport change before the observer answers does not show it', async () => {
+    const listeners: Array<() => void> = []
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({ matches: false, media: query, addEventListener: (_t: string, l: () => void) => listeners.push(l), removeEventListener() {} }))
+    )
+    const { headerStart } = await renderPage()
+    await act(async () => {
+      for (const l of listeners) l()
+    })
+    expect(headerStart()).toBeNull()
+  })
+
   it('never on a phone', async () => {
     phone = true
     const { report, headerStart } = await renderPage()
