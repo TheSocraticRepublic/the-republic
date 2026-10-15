@@ -45,15 +45,15 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **LIVE BUG, fix waiting on a release: every ready Oracle document page (`/oracle/[id]`) very likely errors on opencave.ca**, and so do Lever actions with a linked document. Since 555c402 (2026-03-30), server components passed lucide icon components to the client `CrossArmActions`. It is fixed on the session branch in C2a (`29c9c6b`, string icon keys), and Razor's app-wide sweep found no other site. Production logs keep only about 100 lines, so this is unconfirmed live; Lee can confirm by opening any analysed document. It ships with the next release Lee approves (B1-C2a, which also carries the Forum gate fix).
 
-- **Cold start for the next batch (C3).**
-  1. Read the plan's "### C3", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether C3 has UI (Jen, opus xhigh, after Razor).
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-c2b-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-c3`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-c3 --stage implement --batch 1 --step C3`; `git worktree add -b relay/ui-c3-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
+- **Everything waiting on Lee lives on the Open Cave Checks page: https://claude.ai/artifact/FbM2CLbQ7Pxka6BKV7m9mU** (Lee, 2026-10-15: look checks and decisions go there, not in chat). Items are in its database collection `items` (seed with `ArtifactData`), and his answers are in `responses`, one document per item id. Open now: the A-series look check, a one-minute Oracle crash confirmation, and the release decision for B1 onward. Close an item (status "closed", plus an `outcome` line) once acted on.
+
+- **Cold start for the next batch (C4).**
+  1. Read the plan's "### C4", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether C4 has UI (Jen, opus xhigh, after Razor).
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-c3-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-c4`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-c4 --stage implement --batch 1 --step C4`; `git worktree add -b relay/ui-c4-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
   4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only.
   5. Harness runs: clear `.next/cache` first (a stale turbopack cache served old CSS in B1). Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
   6. Before merging, run the harness-only tests with `QA_REQUIRE_HARNESS=1` on a live harness (CI skips them). ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
-
-- **Everything waiting on Lee lives on the Open Cave Checks page: https://claude.ai/artifact/FbM2CLbQ7Pxka6BKV7m9mU** (Lee, 2026-10-15: look checks and decisions go there, not in chat). Items are in its database collection `items` (seed with `ArtifactData`), and his answers are in `responses`, one document per item id. Open now: the A-series look check, a one-minute Oracle crash confirmation, and the release decision for B1 onward. Close an item (status "closed", plus an `outcome` line) once acted on.
 
 ## Open questions awaiting Lee
 
@@ -88,6 +88,12 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-15 — C3 merged to the session branch (`d1aa565`)
+
+- **What it does:** one sign-out path; other tabs reload, or keep unsaved text and show a notice with a "Sign in again in a new tab" link. The login is a paper card that fits phones, the onboarding shell opens with "Welcome to Open Cave", and every signed-out Lever write gets plain copy.
+- **Found and fixed:** a live denial of service. The sign-out rate limiter keyed on a header the middleware never sets, so one 30-a-minute bucket covered the whole site and anyone could block sign-out for every citizen. The limiter is removed; the Origin check stays.
+- **Next:** C4. The release decision on the Checks page now covers B1 to C3.
 
 ### 2026-10-15 — Open Cave Checks page
 
