@@ -5,16 +5,12 @@ import Link from 'next/link'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { safeRedirectTarget } from '@/lib/navigation/safe-redirect'
+// Touch screens: focusing an input on load throws up the keyboard over the
+// page before the reader has seen it (mobile P2-11). The shared check (B3b).
+import { hasCoarsePointer } from '@/lib/ui/input-modality'
+import { ErrorMark } from '@/components/ui/field'
 
 type Step = 'email' | 'code'
-
-/** Touch screens: focusing an input on load throws up the keyboard over the
- *  page before the reader has seen it (mobile P2-11). */
-const COARSE_POINTER_QUERY = '(pointer: coarse)'
-
-function hasCoarsePointer(): boolean {
-  return typeof window.matchMedia === 'function' && window.matchMedia(COARSE_POINTER_QUERY).matches
-}
 
 /*
  * Error copy (plain-instructional, Jen C5). Mapped on the client from the
@@ -63,7 +59,14 @@ export default function LoginPage() {
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setErrorText] = useState<string | null>(null)
+  // The field an error is about, if any (Jen C3 C4): the email for a send
+  // 400, the code for a verify 401. A 429, a 500 or offline marks nothing.
+  const [errorField, setErrorField] = useState<Step | null>(null)
+  function setError(message: string | null, field: Step | null = null) {
+    setErrorText(message)
+    setErrorField(message ? field : null)
+  }
   const [notice, setNotice] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
@@ -127,7 +130,7 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setError(sendCodeError(res.status, data.error, data.scope))
+        setError(sendCodeError(res.status, data.error, data.scope), res.status === 400 ? 'email' : null)
         return
       }
 
@@ -174,7 +177,7 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setError(verifyCodeError(res.status, data.error))
+        setError(verifyCodeError(res.status, data.error), res.status === 401 ? 'code' : null)
         return
       }
 
@@ -193,28 +196,70 @@ export default function LoginPage() {
     }
   }
 
-  // Disabled reads dimmed (the login's look is C3's); busy stays at full ink.
+
+  /*
+   * The card is paper (UI plan C3, landing L6): `.light-scope` flips every
+   * token inside it to ink, so the field, the button and the links read as a
+   * document in the light. The action is CTAButton's primary recipe (full-ink
+   * fill, surface-0 label). Unavailable is surface-3 with no border and
+   * text-secondary (7.76:1), never opacity, which dimmed the focus ring with
+   * it (Jen C1). On paper the old surface-1 recipe was the empty field's own
+   * fill and border, so the two read as one object (Jen C3 C3). Busy stays at
+   * full ink.
+   */
   const actionButtonClass = clsx(
-    'flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-white/20',
-    loading ? 'cursor-progress' : !canSubmit && 'cursor-not-allowed opacity-40'
+    'flex w-full items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-semibold transition-all duration-150',
+    loading
+      ? 'cursor-progress border-text-primary bg-text-primary text-surface-0'
+      : canSubmit
+        ? 'border-text-primary bg-text-primary text-surface-0 hover:opacity-90'
+        : 'cursor-not-allowed border-transparent bg-surface-3 text-text-secondary'
   )
 
+  // The secondary actions on paper: text-muted is 5.5:1 there (the old
+  // white/30 measured 2.63:1, mobile P2-17). At least 24px tall, 44px on a
+  // touch screen: they are what a citizen with a wrong code is told to use
+  // (Jen C3 C9).
+  const quietButtonClass =
+    'min-h-6 w-full text-center text-xs text-text-muted underline-offset-2 transition-colors hover:text-text-primary hover:underline pointer-coarse:min-h-11'
+
+  // While an error about this field shows, a danger border (and aria-invalid
+  // below) marks it, as the C2b field recipe does (Jen C3 C4).
+  const fieldClass =
+    'w-full rounded-lg border border-border-strong bg-surface-1 px-3.5 py-2.5 text-text-primary placeholder-text-faint outline-none transition-colors focus:not-aria-invalid:border-text-muted aria-invalid:border-status-danger'
+
+  const errorLine = error ? (
+    <p id="login-error" role="alert" className="flex items-start gap-1.5 text-xs text-status-danger">
+      <ErrorMark />
+      {error}
+    </p>
+  ) : null
+  const invalidProps = (field: Step) =>
+    errorField === field ? { 'aria-invalid': true as const, 'aria-describedby': 'login-error' } : {}
+
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center px-4">
-      {/* Cave photo background */}
+    // overflow-x-clip: the brand scrim reaches 64px past the column, which
+    // widened every phone's layout (Jen C3 C1). justify-center-safe (CSS
+    // `safe center`, after a plain `center` for Safari before 17.6) plus the top
+    // padding keeps a tall card from climbing under "Back" at 320.
+    <main className="relative flex min-h-screen flex-col items-center justify-center justify-center-safe overflow-x-clip bg-surface-0 px-4 pt-16 pb-8">
+      {/* Cave photo background. The lit opening sits under the paper and the
+          brand block on dark rock, every line on the photo at least 4.5:1
+          (Jen C3 C2). */}
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="absolute inset-0 bg-cover"
         style={{
           backgroundImage: 'url(/landing/cave-login.jpg)',
+          backgroundPosition: 'center 35%',
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/70" />
+      <div className="absolute inset-0 bg-gradient-to-t from-surface-0/80 via-surface-0/40 to-surface-0/70" />
 
       {/* Back to home */}
       <div className="absolute top-6 left-6 z-10">
         <Link
           href="/"
-          className="flex items-center gap-1.5 text-sm text-white/60 transition-colors hover:text-white/80"
+          className="flex items-center gap-1.5 text-sm text-text-secondary transition-colors hover:text-text-primary"
         >
           <ArrowLeft size={14} strokeWidth={1.75} />
           Back
@@ -222,20 +267,28 @@ export default function LoginPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-sm">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1
-            className="mb-1 text-3xl font-bold text-white font-display"
-          >
+        {/* Brand block, on its own scrim so the wordmark and tagline never
+            cross the lit rock (landing L6). */}
+        <div className="relative mb-8 text-center">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-x-16 -inset-y-12 -z-10"
+            style={{
+              background:
+                'radial-gradient(ellipse 50% 50% at 50% 50%, color-mix(in srgb, var(--surface-0) 70%, transparent), transparent 100%)',
+            }}
+          />
+          <h1 className="mb-1 font-display text-3xl font-bold text-text-primary">
             Open Cave
           </h1>
-          <p className="text-sm font-serif italic text-white/50">
-            A Republic for the examined institution
+          {/* With its period, as on the landing hero (landing L17e). */}
+          <p className="font-serif text-sm italic text-text-secondary">
+            A Republic for the examined institution.
           </p>
           <p
             ref={instructionRef}
             tabIndex={-1}
-            className="mt-4 text-sm text-white/60 [overflow-wrap:anywhere] focus:outline-none"
+            className="mt-4 text-sm text-text-secondary [overflow-wrap:anywhere] focus:outline-none"
           >
             {step === 'email'
               ? 'Enter your email to continue'
@@ -243,126 +296,134 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Card */}
-        <div className="rounded-xl border border-white/10 bg-black/60 p-6 shadow-2xl backdrop-blur-md">
-          {step === 'email' ? (
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-1.5 block text-xs font-medium text-white/50"
+        {/* Card: paper */}
+        <div
+          className="light-scope overflow-hidden rounded-xl"
+          style={{
+            background: 'var(--journey-paper)',
+            boxShadow: '0 0 80px rgba(250,250,249,0.18), 0 24px 60px rgba(20,18,14,0.35)',
+          }}
+        >
+          <div className="p-6">
+            {step === 'email' ? (
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="mb-1.5 block text-xs font-medium text-text-secondary"
+                  >
+                    Email address
+                  </label>
+                  <input
+                    id="email"
+                    ref={emailRef}
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && canSubmit && handleSendCode()}
+                    placeholder="you@example.com"
+                    {...invalidProps('email')}
+                    className={clsx(fieldClass, 'text-sm')}
+                  />
+                </div>
+
+                {errorLine}
+
+                <button
+                  type="button"
+                  onClick={() => canSubmit && handleSendCode()}
+                  aria-disabled={!canSubmit || undefined}
+                  aria-busy={loading || undefined}
+                  className={actionButtonClass}
                 >
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  ref={emailRef}
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && canSubmit && handleSendCode()}
-                  placeholder="you@example.com"
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-white/25 outline-none transition-colors focus:border-white/20 focus:bg-white/10"
-                />
+                  {loading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : null}
+                  Send code
+                </button>
               </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="code"
+                    className="mb-1.5 block text-xs font-medium text-text-secondary"
+                  >
+                    8-digit code
+                  </label>
+                  <input
+                    id="code"
+                    ref={codeRef}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={code}
+                    onChange={(e) => setCode(normaliseCode(e.target.value))}
+                    onKeyDown={(e) => e.key === 'Enter' && canSubmit && handleVerifyCode()}
+                    placeholder="00000000"
+                    {...invalidProps('code')}
+                    className="w-full rounded-lg border border-border-strong bg-surface-1 px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.25em] text-text-primary placeholder-text-faint outline-none transition-colors focus:not-aria-invalid:border-text-muted aria-invalid:border-status-danger"
+                  />
+                </div>
 
-              {error && (
-                <p role="alert" className="text-xs text-status-danger">{error}</p>
-              )}
+                {errorLine}
 
-              <button
-                type="button"
-                onClick={() => canSubmit && handleSendCode()}
-                aria-disabled={!canSubmit || undefined}
-                aria-busy={loading || undefined}
-                className={actionButtonClass}
-              >
-                {loading ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : null}
-                Send code
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="code"
-                  className="mb-1.5 block text-xs font-medium text-white/50"
+                {/* Always mounted, so a live region announces the change. */}
+                <p role="status" className={notice ? 'text-xs text-text-muted' : 'sr-only'}>
+                  {notice}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => canSubmit && handleVerifyCode()}
+                  aria-disabled={!canSubmit || undefined}
+                  aria-busy={loading || undefined}
+                  className={actionButtonClass}
                 >
-                  8-digit code
-                </label>
-                <input
-                  id="code"
-                  ref={codeRef}
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  value={code}
-                  onChange={(e) => setCode(normaliseCode(e.target.value))}
-                  onKeyDown={(e) => e.key === 'Enter' && canSubmit && handleVerifyCode()}
-                  placeholder="00000000"
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.25em] text-white placeholder-white/25 outline-none transition-colors focus:border-white/20 focus:bg-white/10"
-                />
+                  {loading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : null}
+                  Verify code
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => !loading && handleSendCode()}
+                  aria-disabled={loading || undefined}
+                  className={quietButtonClass}
+                >
+                  Send a new code
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep('email')
+                    setCode('')
+                    setError(null)
+                    setNotice(null)
+                  }}
+                  className={quietButtonClass}
+                >
+                  Use a different email
+                </button>
               </div>
+            )}
+          </div>
 
-              {error && (
-                <p role="alert" className="text-xs text-status-danger">{error}</p>
-              )}
-
-              {/* Always mounted, so a live region announces the change. */}
-              <p role="status" className={notice ? 'text-xs text-white/60' : 'sr-only'}>
-                {notice}
-              </p>
-
-              <button
-                type="button"
-                onClick={() => canSubmit && handleVerifyCode()}
-                aria-disabled={!canSubmit || undefined}
-                aria-busy={loading || undefined}
-                className={actionButtonClass}
-              >
-                {loading ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : null}
-                Verify code
-              </button>
-
-              <button
-                type="button"
-                onClick={() => !loading && handleSendCode()}
-                aria-disabled={loading || undefined}
-                className="w-full text-center text-xs text-white/30 transition-colors hover:text-white/50"
-              >
-                Send a new code
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setStep('email')
-                  setCode('')
-                  setError(null)
-                  setNotice(null)
-                }}
-                className="w-full text-center text-xs text-white/30 transition-colors hover:text-white/50"
-              >
-                Use a different email
-              </button>
-            </div>
-          )}
+          {/* The microcopy is part of the paper, not loose on the rock, where
+              it measured 1.8 to 3.2:1 (landing L6). text-muted on paper: 5.5:1. */}
+          <p className="border-t border-border px-6 py-3 text-center font-serif text-xs italic text-text-muted">
+            No password. No tracking. Just a code.{' '}
+            <a
+              href="/privacy"
+              className="text-text-secondary underline underline-offset-2 transition-colors hover:text-text-primary"
+            >
+              Privacy
+            </a>
+          </p>
         </div>
-
-        <p className="mt-4 text-center text-xs font-serif italic text-white/50">
-          No password. No tracking. Just a code.{' '}
-          <a
-            href="/privacy"
-            className="underline underline-offset-2 transition-colors hover:text-white/80"
-          >
-            Privacy
-          </a>
-        </p>
       </div>
     </main>
   )

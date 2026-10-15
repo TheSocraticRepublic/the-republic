@@ -1,12 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, MessageSquare, Shield, Vote, Heart, ScrollText } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { Loader2, LogOut, Compass, Eye, MessageCircleQuestion, FileText, GitCompare, Search, List, ChevronDown, MessageSquare, Shield, Vote, Heart, ScrollText } from 'lucide-react'
 import { FeedbackDialog } from '@/components/layout/feedback-dialog'
 import { clsx } from 'clsx'
 import { useState, useEffect, useRef } from 'react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
+import { useSignOut } from '@/lib/auth/client-sign-out'
+import { ErrorMark } from '@/components/ui/field'
 
 // Arm descriptions: one register, plain-instructional, one line each in the
 // 224px sidebar (Jen, B2 design review C4).
@@ -49,6 +51,21 @@ const arms = [
 // "New Investigation" (127px in Instrument Sans 600 14px) stays on one line.
 const ACTIVE_DOT = 'absolute right-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full'
 
+/** Busy, visibly (Jen C3 C5): the icon becomes a spinner, the label stays,
+ *  and a screen reader hears "Signing out". */
+export function SignOutIcon({ busy }: { busy: boolean }) {
+  return busy ? (
+    <>
+      <Loader2 size={14} strokeWidth={1.75} className="animate-spin" aria-hidden="true" />
+      <span role="status" className="sr-only">
+        Signing out
+      </span>
+    </>
+  ) : (
+    <LogOut size={14} strokeWidth={1.75} aria-hidden="true" />
+  )
+}
+
 interface SidebarProps {
   // No email prop: the shell shows the display name only (app-arms P2-16).
   // The email belongs on /profile, not on every screen share.
@@ -60,7 +77,7 @@ interface SidebarProps {
 
 export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar', onNavigate }: SidebarProps) {
   const pathname = usePathname()
-  const router = useRouter()
+  const { signOut, busy: signingOut, error: signOutError } = useSignOut()
   const [instrumentsOpen, setInstrumentsOpen] = useState(true)
   const navRef = useRef<HTMLElement>(null)
   const bandRef = useRef<HTMLDivElement>(null)
@@ -524,21 +541,28 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
             <span className="text-sm font-medium text-text-secondary">Your profile</span>
           )}
         </Link>
+        {/* The one sign-out path (clientSignOut, UI plan C3): it navigates
+            to /login itself on success; on failure it stays here and says so. */}
         <button
-          onClick={async () => {
-            await fetch('/api/auth/signout', { method: 'POST' })
-            // Full reload so server components clear the stale session
-            router.push('/login')
-            router.refresh()
-          }}
+          type="button"
+          onClick={signOut}
+          aria-busy={signingOut || undefined}
+          aria-disabled={signingOut || undefined}
           className={clsx(
             'flex w-full items-center gap-2.5 rounded-lg px-3 text-sm text-text-muted transition-colors hover:bg-surface-3 hover:text-text-secondary',
             isDrawer ? 'min-h-11' : 'py-2',
+            signingOut && 'cursor-progress',
           )}
         >
-          <LogOut size={14} strokeWidth={1.75} />
+          <SignOutIcon busy={signingOut} />
           Sign out
         </button>
+        {signOutError && (
+          <p role="alert" className="flex items-start gap-1.5 px-3 py-1 text-xs text-status-danger">
+            <ErrorMark />
+            {signOutError}
+          </p>
+        )}
         <Link
           href="/privacy"
           className={clsx(

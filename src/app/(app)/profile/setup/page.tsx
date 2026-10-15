@@ -1,9 +1,16 @@
 'use client'
 
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { safeRedirectTarget } from '@/lib/navigation/safe-redirect'
+import { clearSignedOutNotice, noteSignedOutByServer, useUnsavedWork } from '@/lib/auth/client-sign-out'
+import { hasCoarsePointer } from '@/lib/ui/input-modality'
+import { ErrorMark } from '@/components/ui/field'
+
+/** Claim answered 401 (Jen C3 C7): never the server's "Unauthorized". The
+ *  shell's notice carries the way back in. */
+const CLAIM_SIGNED_OUT_MESSAGE = "You're signed out, so your name wasn't saved. What you typed is still here."
 
 function ProfileSetupForm() {
   const searchParams = useSearchParams()
@@ -15,6 +22,11 @@ function ProfileSetupForm() {
   const [error, setError] = useState<string | null>(null)
   const [isEdit, setIsEdit] = useState(false)
   const [nameError, setNameError] = useState<string | null>(null)
+  const nameRef = useRef<HTMLInputElement>(null)
+  // What the form opened with (empty for a new profile), so typing that has
+  // not been saved counts as unsaved work (Razor C3 W2).
+  const [saved, setSaved] = useState({ displayName: '', bio: '' })
+  useUnsavedWork(!loading && (displayName !== saved.displayName || bio !== saved.bio))
 
   // Validate display name live. Names are stored lowercase — input is auto-lowercased.
   function validateName(name: string): string | null {
@@ -38,6 +50,7 @@ function ProfileSetupForm() {
           setIsEdit(true)
           setDisplayName(data.profile.displayName ?? '')
           setBio(data.profile.bio ?? '')
+          setSaved({ displayName: data.profile.displayName ?? '', bio: data.profile.bio ?? '' })
         }
       } catch {
         // If fetch fails, proceed as new profile
@@ -81,10 +94,16 @@ function ProfileSetupForm() {
 
       const data = await res.json().catch(() => ({}))
 
+      if (res.status === 401) {
+        noteSignedOutByServer()
+        setError(CLAIM_SIGNED_OUT_MESSAGE)
+        return
+      }
       if (!res.ok) {
         throw new Error(data.error ?? 'Something went wrong')
       }
 
+      clearSignedOutNotice()
       // An absolute URL already checked against this origin; never a relative
       // string the browser could re-read as another host.
       window.location.assign(
@@ -97,28 +116,39 @@ function ProfileSetupForm() {
     }
   }
 
+  // Fine pointers start in the name field; a touch screen focuses nothing on
+  // load, so the keyboard doesn't cover a page not yet read (Jen C3 C9,
+  // mobile P2-11). The same check as the login.
+  useEffect(() => {
+    if (!loading && !hasCoarsePointer()) nameRef.current?.focus()
+  }, [loading])
+
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-surface-0">
+      <div className="flex min-h-full flex-col items-center justify-center bg-surface-0">
         <Loader2 size={20} className="animate-spin text-text-muted" />
       </div>
     )
   }
 
+  // min-h-full, not min-h-screen: the page sits under the shell's header (the
+  // onboarding variant's wordmark and Sign out, UI plan C3), and a full
+  // screen of height below it scrolled for nothing.
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-surface-0 px-4">
+    <div className="flex min-h-full flex-col items-center justify-center bg-surface-0 px-4 py-10">
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1
-            className="mb-1 text-xl font-bold text-text-primary"
-          >
-            {isEdit ? 'Edit Profile' : 'Choose your identity'}
+          {/* One heading style for both modes, in Fraunces (app-arms P1-6,
+              Jen C3 C8). First run says where the citizen is and that this
+              is the one step left, in the threshold's convivial-plain voice. */}
+          <h1 className="mb-2 font-display text-2xl font-semibold tracking-[-0.01em] text-text-primary">
+            {isEdit ? 'Edit Profile' : 'Welcome to Open Cave'}
           </h1>
-          <p className="text-sm text-text-muted">
+          <p className="text-pretty text-sm text-text-muted">
             {isEdit
               ? 'Update your public display name and bio'
-              : 'Your display name is public. Your email stays private.'}
+              : 'One step before you start: choose the name other citizens will see. Your email stays private.'}
           </p>
         </div>
 
@@ -137,7 +167,7 @@ function ProfileSetupForm() {
                 id="displayName"
                 type="text"
                 required
-                autoFocus
+                ref={nameRef}
                 maxLength={50}
                 value={displayName}
                 onChange={(e) => handleNameChange(e.target.value)}
@@ -176,7 +206,10 @@ function ProfileSetupForm() {
             </div>
 
             {error && (
-              <p className="text-xs text-status-danger">{error}</p>
+              <p role="alert" className="flex items-start gap-1.5 text-xs text-status-danger">
+                <ErrorMark />
+                {error}
+              </p>
             )}
 
             <button
@@ -204,7 +237,7 @@ export default function ProfileSetupPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen flex-col items-center justify-center bg-surface-0">
+        <div className="flex min-h-full flex-col items-center justify-center bg-surface-0">
           <Loader2 size={20} className="animate-spin text-text-muted" />
         </div>
       }

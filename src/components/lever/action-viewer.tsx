@@ -5,6 +5,15 @@ import { Download, Pencil, RefreshCw, Check, X, ChevronDown } from 'lucide-react
 import { clsx } from 'clsx'
 import { leverActionTypeEnum } from '@/lib/db/schema'
 import { hasLeverPdfTemplate } from '@/lib/pdf/types'
+import { clearSignedOutNotice, noteSignedOutByServer, useUnsavedWork } from '@/lib/auth/client-sign-out'
+import { ErrorMark } from '@/components/ui/field'
+
+/** Save answered 401 (Jen C3 C7): never the server's "Unauthorized". The
+ *  shell's notice carries the way back in. */
+export const EDIT_SIGNED_OUT_MESSAGE = "You're signed out, so this wasn't saved. Your text is still here."
+/** Regenerate answered 401: the same mapping (Razor C3 DN1). */
+export const REGENERATE_SIGNED_OUT_MESSAGE =
+  "You're signed out, so the letter wasn't regenerated. Your text is still here."
 import { LetterPaper, type RecipientNoticeView } from '@/components/lever/letter-paper'
 import {
   CHOOSE_PROVINCE_ERROR,
@@ -177,6 +186,10 @@ export function ActionViewer({
   const [inserting, setInserting] = useState(false)
   const [exporting, setExporting] = useState<ExportFormat | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  // An edit in progress that differs from the stored letter is unsaved work:
+  // a sign-out in another tab shows a notice here instead of reloading the
+  // page out from under it (Razor C3 W2).
+  useUnsavedWork(mode === 'editing' && editContent !== content)
   const [info, setInfo] = useState<string | null>(null)
   const [needsProvince, setNeedsProvince] = useState(false)
   // A5: the in-place confirmation for a letter with no marker line, and
@@ -265,8 +278,16 @@ export function ActionViewer({
         body: JSON.stringify({ ...fields, expectedContentSha256 }),
       })
       if (res.ok) {
+        // A write landed, so the session is live: any signed-out notice goes.
+        clearSignedOutNotice()
         const body = (await res.json()) as { action?: { content?: string | null } }
         return { ok: true, content: body.action?.content ?? null }
+      }
+      if (res.status === 401) {
+        // Signed out (another tab, or expired): raise the shell's notice, and
+        // never pass the server's "Unauthorized" on to the citizen.
+        noteSignedOutByServer()
+        return { ok: false, status: 401, reason: null, error: null }
       }
       const error = await readError(res)
       return { ok: false, status: res.status, reason: res.status === 409 ? conflictReason(error) : null, error }
@@ -300,6 +321,14 @@ export function ActionViewer({
         signal: abortRef.current.signal,
       })
 
+      if (res.status === 401) {
+        // Signed out: never the middleware's "Unauthorized"; the letter on
+        // screen is untouched, and the shell's notice has the way back in.
+        noteSignedOutByServer()
+        setActionError(REGENERATE_SIGNED_OUT_MESSAGE)
+        setMode('viewing')
+        return
+      }
       if (!res.ok || !res.body) {
         const error = res.ok ? null : await readError(res)
         // A FIPPA draft with no province gets the choice, here (A2 carry).
@@ -499,7 +528,9 @@ export function ActionViewer({
         setMode('viewing')
       } else {
         // The citizen's text stays in the textarea, whatever went wrong.
-        setActionError(conflictMessage(result.reason, 'edit', result.error))
+        setActionError(
+          result.status === 401 ? EDIT_SIGNED_OUT_MESSAGE : conflictMessage(result.reason, 'edit', result.error)
+        )
       }
     } catch (err) {
       console.error('[action-viewer] Save failed:', err)
@@ -759,7 +790,8 @@ export function ActionViewer({
 
       {/* Error alert */}
       {actionError && (
-        <p ref={alertRef} role="alert" tabIndex={-1} className="text-xs text-status-danger outline-none">
+        <p ref={alertRef} role="alert" tabIndex={-1} className="flex items-start gap-1.5 text-xs text-status-danger outline-none">
+          <ErrorMark />
           {actionError}
         </p>
       )}

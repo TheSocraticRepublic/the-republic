@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { broadcastSignedOut } from '@/lib/auth/client-sign-out'
 
 export function DeleteAccount() {
   const router = useRouter()
@@ -20,7 +21,9 @@ export function DeleteAccount() {
       if (!res.ok) {
         throw new Error('Request failed')
       }
-      // Account and session are gone — leave the app.
+      // Account and session are gone: tell the other tabs, as sign-out does
+      // (Razor C3 N2), then leave the app.
+      broadcastSignedOut()
       router.push('/')
       router.refresh()
     } catch {
