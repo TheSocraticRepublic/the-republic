@@ -47,10 +47,10 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **Everything waiting on Lee lives on the Open Cave Checks page: https://claude.ai/artifact/FbM2CLbQ7Pxka6BKV7m9mU** (Lee, 2026-10-15: look checks and decisions go there, not in chat). Items are in its database collection `items` (seed with `ArtifactData`), and his answers are in `responses`, one document per item id. Open now: the A-series look check, a one-minute Oracle crash confirmation, and the release decision for B1 onward. Close an item (status "closed", plus an `outcome` line) once acted on.
 
-- **Cold start for the next batch (C4).**
-  1. Read the plan's "### C4", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether C4 has UI (Jen, opus xhigh, after Razor).
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-c3-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-c4`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-c4 --stage implement --batch 1 --step C4`; `git worktree add -b relay/ui-c4-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
+- **Cold start for the next batch (D1).**
+  1. Read the plan's "### D1", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether D1 has UI (Jen, opus xhigh, after Razor).
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-c4-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-d1`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-d1 --stage implement --batch 1 --step D1`; `git worktree add -b relay/ui-d1-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
   4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only.
   5. Harness runs: clear `.next/cache` first (a stale turbopack cache served old CSS in B1). Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
   6. Before merging, run the harness-only tests with `QA_REQUIRE_HARNESS=1` on a live harness (CI skips them). ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
@@ -88,6 +88,13 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-15 — C4 merged to the session branch (`61f7fb3`)
+
+- **What it does:** a landing hero that says what Open Cave is for, with a readable scrim and one Start on screen at a time, and a real closing concern box. A concern written before sign-in is carried once through login and onboarding to Investigate (15 minutes, one tab, never sent before submit, neutral wording). The concern form is on the field recipe.
+- **Rulings:** `clear-pending` broadcast before the sign-out fetch (reconciling C3 and C4); 15-minute expiry and neutral wording (Razor W3); a signed-in landing concern also carries over.
+- **Lee:** the hero line is on the Checks page (`landing-hero-line`); the `HERO_LINE` constant is in `src/components/landing/hero.tsx`.
+- **Next:** D1.
 
 ### 2026-10-15 — C3 merged to the session branch (`d1aa565`)
 
