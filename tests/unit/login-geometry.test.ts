@@ -153,6 +153,22 @@ describe.skipIf(!APP_UP)('login geometry and photo contrast on the harness (Chro
     }, 60_000)
   }
 
+  it('C1: main really is safe-centred (the class compiles), so the column sits mid-screen on desktop', async () => {
+    const { context, page } = await open({ width: 1440, height: 900, touch: false })
+    try {
+      const m = await page.evaluate(() => {
+        const main = document.querySelector('main')!
+        const card = document.querySelector('.light-scope')!.getBoundingClientRect()
+        const h1 = document.querySelector('h1')!.getBoundingClientRect()
+        return { jc: getComputedStyle(main).justifyContent, mid: (h1.top + card.bottom) / 2, vh: window.innerHeight }
+      })
+      expect(m.jc).toBe('safe center')
+      expect(Math.abs(m.mid - m.vh / 2)).toBeLessThanOrEqual(40)
+    } finally {
+      await context.close()
+    }
+  }, 60_000)
+
   /** p5 contrast of each photo line against its own ground, text hidden. */
   async function photoLineContrast(page: Page): Promise<Record<string, number>> {
     const sharp = (await import('sharp')).default

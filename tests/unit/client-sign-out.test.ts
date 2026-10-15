@@ -1008,7 +1008,7 @@ describe('the login card: errors, the unavailable recipe, touch sizes (Jen C1, C
   it('main clips the scrim, safe-centres and pads (layout measured on the harness)', async () => {
     await renderLoginWith({})
     const cls = (document.querySelector('main')?.getAttribute('class') ?? '').split(' ')
-    for (const c of ['overflow-x-clip', 'justify-[safe_center]', 'pt-16', 'pb-8']) expect(cls).toContain(c)
+    for (const c of ['overflow-x-clip', 'justify-center-safe', 'pt-16', 'pb-8']) expect(cls).toContain(c)
     expect(cls).not.toContain('justify-center')
   })
 })
