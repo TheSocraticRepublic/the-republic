@@ -450,8 +450,9 @@ describe('the (app) layout picks the shell', () => {
     const id = '0123456789abcdef0123456789abcdef'
     requestHeaders = { 'x-user-id': 'u1', 'x-pathname': '/investigate', 'x-search': `?handoff=${id}&from=home` }
     profileRows = []
+    // Exactly the handoff: the rest of the query (from=home) is not carried.
     await expect(layoutElement()).rejects.toThrow(
-      `redirect /profile/setup?redirect=${encodeURIComponent(`/investigate?handoff=${id}`)}`
+      new RegExp(`redirect /profile/setup\\?redirect=${encodeURIComponent(`/investigate?handoff=${id}`)}$`)
     )
     // And the setup page's own check keeps it.
     const { safeRedirectTarget } = await import('@/lib/navigation/safe-redirect')
@@ -460,6 +461,7 @@ describe('the (app) layout picks the shell', () => {
 
   it.each([
     ['a malformed handoff', '/investigate', '?handoff=<x>'],
+    ['a URL-safe but malformed handoff', '/investigate', '?handoff=abc'],
     ['a handoff on another path', '/votes', '?handoff=0123456789abcdef0123456789abcdef'],
     ['any other query', '/investigate', '?q=1'],
   ])('no profile, %s: the bare path only', async (_label, pathname, search) => {
