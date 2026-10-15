@@ -651,7 +651,7 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
   it('the matching handoff: offered (not prefilled), and gone from storage as it renders', async () => {
     store(good())
     await renderForm(`?handoff=${ID_A}`)
-    expect(screen.getByText('A concern was written in this tab before signing in.')).toBeTruthy()
+    expect(screen.getByText('Written in this tab before you signed in.')).toBeTruthy()
     expect(screen.getByText('A gravel pit by the river')).toBeTruthy()
     expect((screen.getByLabelText('Describe your concern') as HTMLTextAreaElement).value).toBe('')
     expect(window.sessionStorage.getItem(KEY)).toBeNull()
@@ -662,12 +662,12 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
     await renderForm(`?handoff=${ID_A}`)
     await press('Use it')
     expect((screen.getByLabelText('Describe your concern') as HTMLTextAreaElement).value).toBe('A gravel pit by the river')
-    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
+    expect(screen.queryByText('Written in this tab before you signed in.')).toBeNull()
     cleanup()
     store(good())
     await renderForm(`?handoff=${ID_A}`)
     await press('Discard')
-    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
+    expect(screen.queryByText('Written in this tab before you signed in.')).toBeNull()
     expect((screen.getByLabelText('Describe your concern') as HTMLTextAreaElement).value).toBe('')
   })
 
@@ -676,7 +676,7 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
     await renderForm(`?handoff=${ID_A}`)
     cleanup()
     await renderForm(`?handoff=${ID_A}`)
-    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
+    expect(screen.queryByText('Written in this tab before you signed in.')).toBeNull()
   })
 
   it.each([
@@ -686,7 +686,7 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
   ])('%s: nothing offered', async (_label, search) => {
     store(good())
     await renderForm(search)
-    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
+    expect(screen.queryByText('Written in this tab before you signed in.')).toBeNull()
   })
 
   it('a sign-out in another tab while the offer is held removes the held copy too', async () => {
@@ -699,7 +699,7 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
       new FakeChannel('oc-auth').postMessage({ type: 'signed-out' })
     })
     expect(reload).not.toHaveBeenCalled()
-    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
+    expect(screen.queryByText('Written in this tab before you signed in.')).toBeNull()
     expect(screen.queryByText('A gravel pit by the river')).toBeNull()
     stop()
   })
@@ -711,7 +711,7 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
     await act(async () => {
       new FakeChannel('oc-auth').postMessage({ type: 'clear-pending' })
     })
-    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
+    expect(screen.queryByText('Written in this tab before you signed in.')).toBeNull()
     expect(reload).not.toHaveBeenCalled()
     stop()
   })
@@ -722,7 +722,7 @@ describe('the offer after the fix pass (W3 wording, Use it appends, revocation)'
     store(good())
     await renderForm(`?handoff=${ID_A}`)
     const offer = document.querySelector('[data-pending-concern-offer]')!
-    expect(offer.textContent).toContain('A concern was written in this tab before signing in.')
+    expect(offer.textContent).toContain('Written in this tab before you signed in.')
     expect(offer.textContent).not.toMatch(/You wrote/)
   })
 
@@ -731,7 +731,7 @@ describe('the offer after the fix pass (W3 wording, Use it appends, revocation)'
     await renderForm(`?handoff=${ID_A}&from=home`)
     const offer = document.querySelector('[data-pending-concern-offer]')!
     expect(offer.textContent).toContain('Your concern from the home page.')
-    expect(offer.textContent).not.toContain('before signing in')
+    expect(offer.textContent).not.toContain('before you signed in')
   })
 
   it('W3: a record 15 min and 1 s old is not offered', async () => {
@@ -747,7 +747,7 @@ describe('the offer after the fix pass (W3 wording, Use it appends, revocation)'
     fireEvent.change(box, { target: { value: 'my own words  ' } })
     await press('Use it')
     expect(box.value).toBe('my own words\n\nA gravel pit by the river')
-    expect(document.querySelector('[data-offer-status]')?.textContent).toBe('The earlier concern was added below your text.')
+    expect(document.querySelector('[data-offer-status]')?.textContent).toBe('Added below your text.')
     expect(document.querySelector('[data-pending-concern-offer]')).toBeNull()
   })
 
@@ -768,7 +768,9 @@ describe('the offer after the fix pass (W3 wording, Use it appends, revocation)'
     await press('Use it')
     expect(box.value).toBe(mine)
     expect(document.querySelector('[data-pending-concern-offer]')).not.toBeNull()
-    expect(document.querySelector('[data-offer-status]')?.textContent).toMatch(/doesn't fit/)
+    expect(document.querySelector('[data-offer-too-long]')?.textContent).toBe(
+      'Together they come to 2,017 characters, over the 2,000 limit. Shorten your text by 17, then choose Use it.'
+    )
   })
 
   it('N1: a sign-in in another tab on a different handoff removes the offer on screen', async () => {
@@ -806,6 +808,121 @@ describe('the offer after the fix pass (W3 wording, Use it appends, revocation)'
     })
     expect(result?.ok).toBe(false)
     expect(document.querySelector('[data-pending-concern-offer]')).toBeNull()
+  })
+})
+
+describe('the offer after the design fix pass (Jen C6, C7, C8, C9)', () => {
+  it('C6: the offer title takes focus on arrival (over the box autofocus), on every pointer', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    const title = document.getElementById('pending-concern-title')!
+    expect(title.getAttribute('tabindex')).toBe('-1')
+    expect(document.activeElement).toBe(title)
+  })
+
+  it('C6: without an offer the box keeps its fine-pointer autofocus', async () => {
+    await renderForm('')
+    expect(document.activeElement).toBe(screen.getByLabelText('Describe your concern'))
+  })
+
+  it('C6: Discard puts focus in the concern box, never the page', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    await press('Discard')
+    expect(document.activeElement).toBe(screen.getByLabelText('Describe your concern'))
+  })
+
+  it('C6: Use it and Discard are 44px on touch', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    for (const name of ['Use it', 'Discard']) expect(screen.getByRole('button', { name }).className).toContain('pointer-coarse:min-h-11')
+  })
+
+  it('C7: the too-long line is in the card and clears on an edit and on Discard', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    const box = screen.getByLabelText('Describe your concern') as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: 'x'.repeat(1990) } })
+    await press('Use it')
+    const line = () => document.querySelector('[data-offer-too-long]')
+    expect(line()?.closest('[data-pending-concern-offer]')).not.toBeNull()
+    expect(line()?.getAttribute('role')).toBe('status')
+    expect(line()?.textContent).toContain('2,017 characters')
+    fireEvent.change(box, { target: { value: 'x'.repeat(1989) } })
+    expect(line()?.textContent).toBe('')
+    await press('Use it')
+    expect(line()?.textContent).toContain('2,016 characters')
+    await press('Discard')
+    expect(line()).toBeNull()
+    expect(document.body.textContent).not.toContain('choose Use it')
+  })
+
+  it('C7: "Added below your text." clears on the next edit', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    const box = screen.getByLabelText('Describe your concern') as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: 'mine' } })
+    await press('Use it')
+    expect(document.querySelector('[data-offer-status]')?.textContent).toBe('Added below your text.')
+    fireEvent.change(box, { target: { value: box.value + '!' } })
+    expect(document.querySelector('[data-offer-status]')?.textContent).toBe('')
+  })
+
+  it('C8: a handoff that matched an expired record says the concern is gone, and why', async () => {
+    store(good({ savedAt: Date.now() - 16 * 60_000 }))
+    await renderForm(`?handoff=${ID_A}`)
+    const line = document.querySelector('[data-pending-concern-expired]')
+    expect(line?.textContent).toBe(
+      'The concern written before you signed in is no longer here. Open Cave keeps it for 15 minutes, in this tab only.'
+    )
+    expect(line?.getAttribute('role')).toBe('status')
+    expect(window.sessionStorage.getItem(KEY)).toBeNull()
+  })
+
+  it.each([
+    ['an expired record for another handoff', () => store(good({ handoff: ID_B, savedAt: Date.now() - 16 * 60_000 })), `?handoff=${ID_A}`],
+    ['no record (a reload after the offer)', () => {}, `?handoff=${ID_A}`],
+    ['a fresh record for another handoff', () => store(good({ handoff: ID_B })), `?handoff=${ID_A}`],
+    ['an expired record but no handoff in the URL', () => store(good({ savedAt: Date.now() - 16 * 60_000 })), ''],
+    ['a malformed record on this handoff', () => store(good({ text: 42, savedAt: Date.now() - 16 * 60_000 })), `?handoff=${ID_A}`],
+  ])('C8: never for %s', async (_label, seed, search) => {
+    seed()
+    await renderForm(search)
+    expect(document.querySelector('[data-pending-concern-expired]')).toBeNull()
+  })
+
+  it('C8: a login keeps an expired record on its own handoff so Investigate can say so; another handoff\'s goes', () => {
+    store(good({ savedAt: Date.now() - 16 * 60_000 }))
+    pc.keepPendingConcernOnlyFor(ID_A)
+    expect(window.sessionStorage.getItem(KEY)).not.toBeNull()
+    pc.keepPendingConcernOnlyFor(ID_B)
+    expect(window.sessionStorage.getItem(KEY)).toBeNull()
+  })
+
+  it('C9: the box is on the recipe at its own scale, and busy is readOnly, not disabled or dimmed', async () => {
+    const { fieldControlClass } = await import('@/components/ui/field')
+    let release: () => void = () => {}
+    replies.set('/api/investigate', () => new Promise((r) => (release = () => r({ type: 'basic' as ResponseType, ok: false, status: 500, json: async () => ({}) }))))
+    await renderForm('')
+    const box = screen.getByLabelText('Describe your concern') as HTMLTextAreaElement
+    const recipe = fieldControlClass('textarea')
+    for (const cls of ['border-border-strong', 'focus:not-aria-invalid:border-text-faint', 'aria-invalid:border-status-danger', 'resize-none']) {
+      expect(recipe).toContain(cls)
+      expect(box.className).toContain(cls)
+    }
+    expect(box.className).toContain('rounded-xl')
+    expect(box.className).not.toContain('rounded-lg')
+    expect(box.className).toContain('px-4 py-4 text-base leading-relaxed')
+    expect(box.className).not.toContain('px-3 py-2 text-sm')
+    fireEvent.change(box, { target: { value: 'busy please' } })
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start an investigation' }))
+    })
+    expect(box.readOnly).toBe(true)
+    expect(box.disabled).toBe(false)
+    expect(box.getAttribute('aria-busy')).toBe('true')
+    expect(box.className).not.toMatch(/opacity/)
+    await act(async () => release())
   })
 })
 
@@ -851,6 +968,6 @@ describe('the concern form: C3 dirty-draft registry and the C2b Field recipe', (
   it('keeps B3a\'s reason line and the Start box', async () => {
     await renderForm('')
     expect(screen.getByText('Describe your concern to start.')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Start Investigation' }).getAttribute('aria-disabled')).toBe('true')
+    expect(screen.getByRole('button', { name: 'Start an investigation' }).getAttribute('aria-disabled')).toBe('true')
   })
 })

@@ -128,7 +128,7 @@ describe.skipIf(!APP_UP)('the pending concern in two real tabs (Chromium, harnes
       await signIn(tab1, USER_A)
       expect(tab1.url()).toBe(`${APP_URL}/investigate?handoff=${record.handoff}`)
       await expect.poll(() => offer(tab1).count()).toBe(1)
-      expect(await offer(tab1).innerText()).toContain('A concern was written in this tab before signing in.')
+      expect(await offer(tab1).innerText()).toContain('Written in this tab before you signed in.')
       expect(await offer(tab1).innerText()).toContain('C4 harness: a gravel pit by the river')
       // Not prefilled, and gone from storage the moment it is offered.
       expect(await tab1.getByLabel('Describe your concern').inputValue()).toBe('')
@@ -136,6 +136,28 @@ describe.skipIf(!APP_UP)('the pending concern in two real tabs (Chromium, harnes
 
       await tab1.reload({ waitUntil: 'networkidle' })
       expect(await offer(tab1).count()).toBe(0)
+      expect(await stored(tab1)).toBeNull()
+    } finally {
+      await context.close()
+    }
+  }, 120_000)
+
+  it('Jen C8: a carry that expired while A waited on the login page says so on Investigate', async () => {
+    const context = await newContext()
+    try {
+      const tab1 = await context.newPage()
+      await writeOnLanding(tab1, 'C4 harness: too slow')
+      // 16 minutes pass on the login page (only savedAt is moved).
+      await tab1.evaluate((k) => {
+        const r = JSON.parse(window.sessionStorage.getItem(k)!)
+        r.savedAt -= 16 * 60_000
+        window.sessionStorage.setItem(k, JSON.stringify(r))
+      }, KEY)
+      await signIn(tab1, USER_A)
+      expect(await offer(tab1).count()).toBe(0)
+      expect(await tab1.locator('[data-pending-concern-expired]').innerText()).toBe(
+        'The concern written before you signed in is no longer here. Open Cave keeps it for 15 minutes, in this tab only.'
+      )
       expect(await stored(tab1)).toBeNull()
     } finally {
       await context.close()

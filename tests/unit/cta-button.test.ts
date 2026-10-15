@@ -201,7 +201,7 @@ describe('ConcernForm submit paths', () => {
     })
     return {
       textarea: screen.getByLabelText('Describe your concern'),
-      submit: screen.getByRole('button', { name: /Start Investigation/ }),
+      submit: screen.getByRole('button', { name: /Start an investigation/ }),
     }
   }
 
@@ -317,7 +317,7 @@ describe('ConcernForm submit paths', () => {
       })
       expect(screen.getByText('Something went wrong. Try again.')).toBeTruthy()
       expect(document.activeElement).toBe(submit)
-      expect(submit.textContent).toContain('Start Investigation')
+      expect(submit.textContent).toContain('Start an investigation')
     }
   )
 

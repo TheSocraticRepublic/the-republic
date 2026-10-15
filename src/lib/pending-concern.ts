@@ -189,16 +189,34 @@ export function clearPendingConcern(): void {
 
 /** This tab's valid record, or null. An invalid one is deleted on the way:
  *  anything that fails the checks is discarded on read. */
-export function readPendingConcern(now: number = Date.now()): PendingConcern | null {
+/** The stored string, or null (none, or storage refused). */
+function readRaw(): string | null {
   const s = storage()
   if (!s) return null
-  let raw: string | null
   try {
-    raw = s.getItem(PENDING_CONCERN_KEY)
+    return s.getItem(PENDING_CONCERN_KEY)
   } catch (err) {
     warn('read failed', err)
     return null
   }
+}
+
+/** The stored record's handoff id, whether or not the record is otherwise
+ *  valid (or still fresh); null if there is none or it is malformed. */
+function storedHandoff(): string | null {
+  const raw = readRaw()
+  if (raw === null) return null
+  try {
+    const data: unknown = JSON.parse(raw)
+    const handoff = typeof data === 'object' && data !== null ? (data as { handoff?: unknown }).handoff : null
+    return isHandoffId(handoff) ? handoff : null
+  } catch {
+    return null
+  }
+}
+
+export function readPendingConcern(now: number = Date.now()): PendingConcern | null {
+  const raw = readRaw()
   const record = parsePendingConcern(raw, now)
   if (raw !== null && record === null) clearPendingConcern()
   return record
@@ -212,11 +230,45 @@ export function readPendingConcern(now: number = Date.now()): PendingConcern | n
  * it belongs to a handoff this render is not completing.
  */
 export function takePendingConcern(urlHandoff: string | null, now: number = Date.now()): PendingConcern | null {
-  if (urlHandoff === null) return null
-  const record = readPendingConcern(now)
-  if (!record || record.handoff !== urlHandoff) return null
+  const result = takePendingConcernResult(urlHandoff, now)
+  return result.kind === 'offer' ? result.record : null
+}
+
+export type TakeResult = { kind: 'offer'; record: PendingConcern } | { kind: 'expired' } | { kind: 'none' }
+
+/**
+ * `takePendingConcern`, telling one more case apart (Jen C4 C8): the URL's
+ * handoff matched a record that is valid in every way but its age. That
+ * record is deleted, and the caller says plainly that the concern is gone.
+ * A record for another handoff never yields `expired`: it says nothing about
+ * this citizen (Razor W3's rule), and it is left alone as before.
+ */
+export function takePendingConcernResult(urlHandoff: string | null, now: number = Date.now()): TakeResult {
+  if (urlHandoff === null) return { kind: 'none' }
+  const raw = readRaw()
+  if (raw === null) return { kind: 'none' }
+  const record = parsePendingConcern(raw, now)
+  if (record) {
+    if (record.handoff !== urlHandoff) return { kind: 'none' }
+    clearPendingConcern()
+    return { kind: 'offer', record }
+  }
+  // Invalid: deleted, as every read does. Expired only if it was this
+  // handoff's record and moving its savedAt to now would make it valid.
   clearPendingConcern()
-  return record
+  let data: unknown
+  try {
+    data = JSON.parse(raw)
+  } catch {
+    return { kind: 'none' }
+  }
+  if (typeof data !== 'object' || data === null) return { kind: 'none' }
+  const { handoff, savedAt } = data as { handoff?: unknown; savedAt?: unknown }
+  const stale = typeof savedAt === 'number' && Number.isFinite(savedAt) && now - savedAt > PENDING_CONCERN_MAX_AGE_MS
+  if (handoff === urlHandoff && stale && validatePendingConcern({ ...(data as object), savedAt: now }, now)) {
+    return { kind: 'expired' }
+  }
+  return { kind: 'none' }
 }
 
 /**
@@ -228,8 +280,10 @@ export function takePendingConcern(urlHandoff: string | null, now: number = Date
  * a concern left in this tab by someone else.
  */
 export function keepPendingConcernOnlyFor(handoff: string | null): void {
-  const record = readPendingConcern()
-  if (record && handoff !== null && record.handoff === handoff) return
+  // By its handoff alone, even if it has expired while the citizen waited for
+  // the email: Investigate then says it is gone (Jen C4 C8) instead of saying
+  // nothing. It is never offered there once stale.
+  if (handoff !== null && storedHandoff() === handoff) return
   revokePendingConcern()
 }
 

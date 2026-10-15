@@ -13,7 +13,7 @@ import {
   handoffFromSearch,
   handoffIsFromHome,
   onPendingConcernRevoked,
-  takePendingConcern,
+  takePendingConcernResult,
 } from '@/lib/pending-concern'
 
 /*
@@ -22,11 +22,24 @@ import {
  * offer never claims authorship. A signed-in handoff straight from the home
  * page crossed no login, so it can say whose it is.
  */
-export const OFFER_TITLE_LOGIN = 'A concern was written in this tab before signing in.'
+export const OFFER_TITLE_LOGIN = 'Written in this tab before you signed in.'
 export const OFFER_TITLE_HOME = 'Your concern from the home page.'
-/** "Use it" with text already in the box: appended, never replaced. */
-export const OFFER_APPENDED = 'The earlier concern was added below your text.'
-export const OFFER_TOO_LONG = "The earlier concern doesn't fit after your text. Shorten your text or clear the box, then choose Use it."
+/** "Use it" with text already in the box: appended, never replaced (Jen C4 C7). */
+export const OFFER_APPENDED = 'Added below your text.'
+/** "Use it" that would pass the limit: inside the offer card (Jen C4 C7). */
+export function offerTooLong(total: number): string {
+  const over = total - PENDING_CONCERN_MAX_LENGTH
+  return `Together they come to ${total.toLocaleString('en-CA')} characters, over the ${PENDING_CONCERN_MAX_LENGTH.toLocaleString('en-CA')} limit. Shorten your text by ${over.toLocaleString('en-CA')}, then choose Use it.`
+}
+/** A handoff whose record expired before Investigate (Jen C4 C8). */
+export const OFFER_EXPIRED =
+  'The concern written before you signed in is no longer here. Open Cave keeps it for 15 minutes, in this tab only.'
+
+/** The concern box on C2b's recipe (Jen C4 C9), at its own larger scale:
+ *  the recipe's radius, padding and type size swapped for the box's. */
+const CONCERN_BOX_CLASS = fieldControlClass('textarea')
+  .replace('rounded-lg ', 'rounded-xl ')
+  .replace(' px-3 py-2 text-sm ', ' px-4 py-4 text-base leading-relaxed ')
 
 interface Jurisdiction {
   id: string
@@ -50,8 +63,13 @@ export function ConcernForm() {
   // The concern carried from the landing through sign-in, held here between
   // the offer and Use or Discard. Storage no longer has it (UI plan C4).
   const [offered, setOffered] = useState<{ text: string; fromHome: boolean } | null>(null)
-  // A plain status line about what Use it did (or could not do).
+  // The page's status line: "Added below your text." after an append.
   const [offerStatus, setOfferStatus] = useState<string | null>(null)
+  // Use it refused for length: the total it would have made (in the card).
+  const [tooLong, setTooLong] = useState<number | null>(null)
+  // The URL carried this tab's handoff, but its record had expired.
+  const [expired, setExpired] = useState(false)
+  const offerTitleRef = useRef<HTMLParagraphElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
@@ -73,16 +91,50 @@ export function ConcernForm() {
   // development double-mount the second read finds nothing and changes
   // nothing, so the offer survives it.
   useEffect(() => {
-    const record = takePendingConcern(handoffFromSearch(window.location.search))
+    const result = takePendingConcernResult(handoffFromSearch(window.location.search))
     // A one-time, destructive read of browser storage after hydration (the
     // server render has no storage, so a lazy initial state would mismatch).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (record) setOffered({ text: record.text, fromHome: handoffIsFromHome(window.location.search) })
+    if (result.kind === 'offer') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOffered({ text: result.record.text, fromHome: handoffIsFromHome(window.location.search) })
+    } else if (result.kind === 'expired') {
+      setExpired(true)
+    }
   }, [])
 
-  // Another tab signed out, or signed in on another handoff: the held copy
-  // goes too, not just the stored one.
-  useEffect(() => onPendingConcernRevoked(() => setOffered(null)), [])
+  // When an offer arrives, it is the first thing a keyboard or screen-reader
+  // user meets: focus its title, on every pointer (Jen C4 C6). This runs
+  // after the box's own autofocus, so it wins.
+  const hasOffer = offered !== null
+  useEffect(() => {
+    if (hasOffer) offerTitleRef.current?.focus()
+  }, [hasOffer])
+
+  // Another tab signed out, or signed in on another handoff, or a sign-out
+  // here: the held copy goes too, with its lines.
+  useEffect(
+    () =>
+      onPendingConcernRevoked(() => {
+        setOffered(null)
+        setTooLong(null)
+        setOfferStatus(null)
+      }),
+    []
+  )
+
+  const discardOffered = useCallback(() => {
+    setOffered(null)
+    setTooLong(null)
+    // Never to the page: the button just unmounted (Jen C4 C6).
+    textareaRef.current?.focus()
+  }, [])
+
+  // Any edit makes a count or an "Added" line stale (Jen C4 C7).
+  const onConcernChange = useCallback((value: string) => {
+    setConcern(value)
+    setTooLong(null)
+    setOfferStatus(null)
+  }, [])
 
   // Use it never replaces what is already typed: with text in the box, the
   // carried concern goes after a blank line and the status line says so. If
@@ -96,12 +148,13 @@ export function ConcernForm() {
     } else {
       const combined = `${concern.replace(/\s+$/, '')}\n\n${offered.text}`
       if (combined.length > PENDING_CONCERN_MAX_LENGTH) {
-        setOfferStatus(OFFER_TOO_LONG)
+        setTooLong(combined.length)
         return
       }
       setConcern(combined)
       setOfferStatus(OFFER_APPENDED)
     }
+    setTooLong(null)
     setOffered(null)
     textareaRef.current?.focus()
   }, [offered, concern])
@@ -214,19 +267,38 @@ export function ConcernForm() {
           data-pending-concern-offer
           className="rounded-xl border border-border-strong bg-surface-1 px-4 py-3"
         >
-          <p id="pending-concern-title" className="text-sm text-text-primary">
+          <p
+            id="pending-concern-title"
+            ref={offerTitleRef}
+            tabIndex={-1}
+            className="text-sm text-text-primary focus:outline-none"
+          >
             {offered.fromHome ? OFFER_TITLE_HOME : OFFER_TITLE_LOGIN}
           </p>
           <p className="mt-1.5 line-clamp-3 text-sm text-text-muted [overflow-wrap:anywhere]">{offered.text}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <CTAButton onClick={acceptOffered} variant="secondary" size="sm">
+            <CTAButton onClick={acceptOffered} variant="secondary" size="sm" className="pointer-coarse:min-h-11">
               Use it
             </CTAButton>
-            <CTAButton onClick={() => setOffered(null)} variant="secondary" size="sm">
+            <CTAButton onClick={discardOffered} variant="secondary" size="sm" className="pointer-coarse:min-h-11">
               Discard
             </CTAButton>
           </div>
+          {/* In the card, so it leaves with Use it (Jen C4 C7, Razor RN1). */}
+          <p role="status" data-offer-too-long className={tooLong !== null ? 'mt-2 text-xs text-text-secondary' : 'sr-only'}>
+            {tooLong !== null ? offerTooLong(tooLong) : null}
+          </p>
         </section>
+      )}
+      {/* The carry was lost to the 15-minute limit: say so, in the card's frame. */}
+      {expired && offered === null && (
+        <p
+          role="status"
+          data-pending-concern-expired
+          className="rounded-xl border border-border-strong bg-surface-1 px-4 py-3 text-sm text-text-secondary"
+        >
+          {OFFER_EXPIRED}
+        </p>
       )}
       {/* Always mounted, so a live region announces the change. */}
       <p role="status" data-offer-status className={offerStatus ? 'text-xs text-text-muted' : 'sr-only'}>
@@ -238,19 +310,18 @@ export function ConcernForm() {
         <textarea
           ref={textareaRef}
           value={concern}
-          onChange={(e) => setConcern(e.target.value)}
+          onChange={(e) => onConcernChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="e.g., A gravel mine expansion near the Mamquam River was approved in 2019 but the conditions of approval haven't been publicly reported on."
           rows={6}
           maxLength={2000}
           aria-label="Describe your concern"
           aria-describedby={showShortcutHint ? 'concern-hint' : undefined}
-          className={clsx(
-            'w-full resize-none rounded-xl border bg-surface-1 shadow-sm px-4 py-4 text-base leading-relaxed text-text-primary placeholder-text-faint outline-none transition-all duration-200',
-            'focus:border-border-strong',
-            loading ? 'opacity-50' : 'border-border'
-          )}
-          disabled={loading}
+          className={CONCERN_BOX_CLASS}
+          // Busy is readOnly with aria-busy, never disabled or dimmed: the
+          // typed concern keeps its rest contrast (Jen C4 C9, C2b's rule).
+          readOnly={loading}
+          aria-busy={loading || undefined}
         />
         {showShortcutHint && (
           <p id="concern-hint" className="mt-1.5 text-xs text-text-faint">
@@ -369,7 +440,7 @@ export function ConcernForm() {
               className={clsx('col-start-1 row-start-1 inline-flex items-center justify-center gap-2', loading && 'invisible')}
             >
               <Search size={14} strokeWidth={2} />
-              Start Investigation
+              Start an investigation
             </span>
             <span
               aria-hidden={loading ? undefined : 'true'}
