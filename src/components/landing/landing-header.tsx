@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { clsx } from 'clsx'
 import { CTAButton } from '@/components/ui/cta-button'
 
 export function LandingHeader() {
@@ -44,7 +45,7 @@ export function LandingHeader() {
       }`}
     >
       <span
-        className={`text-sm font-semibold tracking-tight ${
+        className={`whitespace-nowrap text-sm font-semibold tracking-tight ${
           overLight ? 'text-stone-900' : 'text-text-muted'
         }`}
         style={{ fontFamily: 'var(--font-display)' }}
@@ -54,9 +55,12 @@ export function LandingHeader() {
       {/* The filled primary, "Start an investigation", to the left of the
           ghost "Sign in" (UI plan C4, landing L3). Over the light movements
           the primary's tokens resolve under .light-scope, so it turns to
-          full ink on paper instead of a pale fill on daylight. */}
+          full ink on paper instead of a pale fill on daylight. Below sm it
+          is hidden: with the wordmark and Sign in it needs about 340px, wider
+          than a 320 or 375 phone's header, and the hero carries the same
+          action at the same words on those screens. */}
       <div className="flex items-center gap-2 sm:gap-3">
-        <span className={overLight ? 'light-scope' : undefined}>
+        <span data-header-start className={clsx('hidden sm:inline', overLight && 'light-scope')}>
           <CTAButton href="/investigate" variant="primary" size="sm" className="min-h-10 justify-center">
             Start an investigation
           </CTAButton>

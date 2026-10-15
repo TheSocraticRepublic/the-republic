@@ -78,7 +78,7 @@ export function Hero() {
 
       {/* What it does, in one plain sentence (L3). */}
       <p
-        className="relative z-10 mt-6 max-w-[36ch] text-text-secondary"
+        className="relative z-10 mt-6 max-w-[36ch] text-balance text-text-secondary"
         style={{ fontFamily: 'var(--font-body)', fontSize: '17px', lineHeight: 1.5 }}
       >
         Bring a government document. Leave with plain language, the right
