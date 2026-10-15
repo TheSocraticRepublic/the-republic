@@ -53,6 +53,8 @@ in this project has already been ruled on, usually for a reason that is not obvi
   5. Harness runs: clear `.next/cache` first (a stale turbopack cache served old CSS in B1). Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
   6. Before merging, run the harness-only tests with `QA_REQUIRE_HARNESS=1` on a live harness (CI skips them). ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
 
+- **Everything waiting on Lee lives on the Open Cave Checks page: https://claude.ai/artifact/FbM2CLbQ7Pxka6BKV7m9mU** (Lee, 2026-10-15: look checks and decisions go there, not in chat). Items are in its database collection `items` (seed with `ArtifactData`), and his answers are in `responses`, one document per item id. Open now: the A-series look check, a one-minute Oracle crash confirmation, and the release decision for B1 onward. Close an item (status "closed", plus an `outcome` line) once acted on.
+
 ## Open questions awaiting Lee
 
 | Question | Why it matters | Raised |
@@ -86,6 +88,10 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-15 — Open Cave Checks page
+
+- Published https://claude.ai/artifact/FbM2CLbQ7Pxka6BKV7m9mU (private; db and user capabilities). Seeded the A-series look check, the Oracle crash confirmation and the B1-onward release decision. Lee's rule: every check or decision for him goes there.
 
 ### 2026-10-15 — Lee on the Forum
 
