@@ -137,7 +137,7 @@ describe.skipIf(!APP_UP)('front door geometry on the harness (Chromium)', () => 
     return round(box)
   }
 
-  const START = 'button:has-text("Start Investigation")'
+  const START = 'button:has-text("Start an investigation")'
 
   /** Start's box in the viewport, after scrolling it into view (at 375x667 it
    *  sits below the fold). */

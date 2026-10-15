@@ -38,6 +38,10 @@ export async function withAuth(
   headers.set('x-user-id', payload.sub)
   headers.set('x-user-email', payload.email)
   headers.set('x-pathname', request.nextUrl.pathname)
+  // The query too, always overwritten (a client cannot supply its own): the
+  // (app) layout carries an Investigate handoff through onboarding with it
+  // (UI plan C4, Razor W2). Readers validate what they take from it.
+  headers.set('x-search', request.nextUrl.search)
 
   // An authenticated request may be served from another route (the gated
   // Forum, src/middleware.ts) with the same identity headers.

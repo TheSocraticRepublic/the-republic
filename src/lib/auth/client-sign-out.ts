@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { applyAuthMessageToPendingConcern, revokePendingConcern } from '@/lib/pending-concern'
 
 /*
  * The one sign-out path in the browser (UI plan C3). The sidebar and the
@@ -13,8 +14,17 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
  *
  * Other tabs hear `{type: 'signed-out'}` on `BroadcastChannel('oc-auth')`
  * (`listenForSignOutElsewhere`, mounted by the app shell). The message carries
- * no user data: no id, no email, no name. C4 adds its pending-concern cleanup
- * to `clientSignOut` and to `onSignedOutElsewhere` below.
+ * no user data: no id, no email, no name.
+ *
+ * The pending concern (C4, `@/lib/pending-concern`) rides the same channel
+ * with two more messages, neither carrying user data:
+ * - `{type: 'clear-pending'}`: sent by `clientSignOut` BEFORE its request,
+ *   after deleting this tab's own record. Every other tab deletes its pending
+ *   concern and does nothing else, so a sign-out that then fails has still
+ *   cleared every tab, and reloads none.
+ * - `{type: 'signed-in', handoff}`: sent by the login page once the server
+ *   has set the cookie, naming the handoff id it completed (or none). Every
+ *   other tab deletes its pending concern unless it holds that same id.
  */
 
 export const AUTH_CHANNEL = 'oc-auth'
@@ -35,8 +45,11 @@ export const SIGN_OUT_OFFLINE_MESSAGE =
 export const SIGN_OUT_REFUSED_MESSAGE =
   "You're still signed in. Open Cave couldn't sign you out. Sign out again."
 
-/** What this tab sends. C4 adds `signed-in` (with its handoff id). */
-export type AuthMessage = { type: 'signed-out' }
+/** What this tab sends. */
+export type AuthMessage =
+  | { type: 'signed-out' }
+  | { type: 'clear-pending' }
+  | { type: 'signed-in'; handoff?: string }
 
 export type SignOutResult = { ok: true } | { ok: false; message: string }
 
@@ -98,6 +111,14 @@ function broadcast(message: AuthMessage): void {
  * network) is a failure and nothing else happens.
  */
 export async function clientSignOut(): Promise<SignOutResult> {
+  // The pending concern goes first, whatever the request then does: this
+  // tab's record, then every other tab's (C4). Never `signed-out` here, which
+  // would reload tabs that may still be signed in.
+  // Revoked, not just deleted: an offer on screen in this tab goes too, even
+  // if the request then fails (Razor C4 N2).
+  revokePendingConcern()
+  broadcast({ type: 'clear-pending' })
+
   let res: Response
   try {
     res = await fetch(SIGN_OUT_URL, { method: 'POST', redirect: 'manual', credentials: 'same-origin' })
@@ -129,6 +150,15 @@ export async function clientSignOut(): Promise<SignOutResult> {
  */
 export function broadcastSignedOut(): void {
   broadcast({ type: 'signed-out' })
+}
+
+/**
+ * Tell the other tabs a login just succeeded here (C4). Called by the login
+ * page after verify-code has set the cookie, with the handoff id the login is
+ * completing (null when it completes none). The id is the only thing sent.
+ */
+export function broadcastSignedIn(handoff: string | null): void {
+  broadcast(handoff === null ? { type: 'signed-in' } : { type: 'signed-in', handoff })
 }
 
 /*
@@ -205,8 +235,9 @@ export function useSignedOutNotice(): SignedOutNotice | null {
   return useSyncExternalStore(subscribeNotice, () => notice, () => null)
 }
 
-/** The type of an `oc-auth` message this tab acts on, or null. Only the type
- *  is read: C4's `signed-in` also carries its handoff id. */
+/** The type of an `oc-auth` message the session state acts on, or null.
+ *  Only the type is read here; `signed-in`'s handoff id is read by the
+ *  pending concern. `clear-pending` is not a session change and is null. */
 function messageType(data: unknown): 'signed-out' | 'signed-in' | null {
   if (typeof data !== 'object' || data === null) return null
   const type = (data as { type?: unknown }).type
@@ -214,7 +245,7 @@ function messageType(data: unknown): 'signed-out' | 'signed-in' | null {
 }
 
 /** Another tab signed in: this tab's session is back, so the notice goes.
- *  C4 adds its pending-concern handling here. */
+ *  (The pending concern is handled by the listener, which sees the id.) */
 export function onSignedInElsewhere(): void {
   clearSignedOutNotice()
 }
@@ -237,13 +268,16 @@ export function onSignedOutElsewhere(): void {
 
 /**
  * Listen for sign-outs (and sign-ins) in other tabs. Returns the unsubscribe
- * function (a `useEffect` cleanup). Anything on the channel that is not a
- * `signed-out` or `signed-in` message is ignored.
+ * function (a `useEffect` cleanup). Every message first goes to the pending
+ * concern (deleted on `signed-out`, `clear-pending`, and a `signed-in` for
+ * another handoff); then `signed-out` and `signed-in` act on the session.
+ * Anything else is ignored: `clear-pending` never reloads or notices.
  */
 export function listenForSignOutElsewhere(): () => void {
   const ch = authChannel()
   if (!ch) return () => {}
   const onMessage = (event: MessageEvent) => {
+    applyAuthMessageToPendingConcern(event.data)
     const type = messageType(event.data)
     if (type === 'signed-out') onSignedOutElsewhere()
     else if (type === 'signed-in') onSignedInElsewhere()
@@ -255,6 +289,23 @@ export function listenForSignOutElsewhere(): () => void {
 /** Mount the cross-tab listener for the life of a component. */
 export function useSignOutElsewhereListener(): void {
   useEffect(() => listenForSignOutElsewhere(), [])
+}
+
+/**
+ * The pending concern's listener alone, for the signed-out pages a record can
+ * sit on (the landing and the login page), which have no session to reload or
+ * notice to show: another tab's messages only delete this tab's record.
+ */
+export function listenForPendingConcernClears(): () => void {
+  const ch = authChannel()
+  if (!ch) return () => {}
+  const onMessage = (event: MessageEvent) => applyAuthMessageToPendingConcern(event.data)
+  ch.addEventListener('message', onMessage)
+  return () => ch.removeEventListener('message', onMessage)
+}
+
+export function usePendingConcernListener(): void {
+  useEffect(() => listenForPendingConcernClears(), [])
 }
 
 /**

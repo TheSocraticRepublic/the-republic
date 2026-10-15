@@ -168,11 +168,12 @@ describe('clientSignOut: the request', () => {
     ['a 200 without the flag', status(200, { ok: true })],
     ['a 200 with signedOut not exactly true', status(200, { signedOut: 'yes' })],
     ['a 200 whose body is not JSON', async () => ({ type: 'basic' as ResponseType, ok: true, status: 200, json: async () => { throw new SyntaxError('html') } })],
-  ] as const)('N1: %s is not a sign-out: nothing claimed, broadcast or navigated', async (_label, reply) => {
+  ] as const)('N1: %s is not a sign-out: nothing claimed, no sign-out broadcast, nothing navigated', async (_label, reply) => {
     signOutReply = reply as () => Promise<Partial<Response>>
     const tab2 = otherTab()
     expect(await mod.clientSignOut()).toEqual({ ok: false, message: mod.SIGN_OUT_REFUSED_MESSAGE })
-    expect(tab2.heard).toEqual([])
+    // Only C4's clear-pending, sent before the request; never signed-out.
+    expect(tab2.heard).toEqual([{ type: 'clear-pending' }])
     expect(assign).not.toHaveBeenCalled()
   })
 })
@@ -181,19 +182,22 @@ describe('clientSignOut: the broadcast', () => {
   it("posts exactly {type:'signed-out'} on 'oc-auth', and another tab hears it", async () => {
     const tab2 = otherTab()
     await mod.clientSignOut()
-    const fromHelper = FakeChannel.posted.filter((p) => p.name === 'oc-auth')
+    const fromHelper = FakeChannel.posted.filter(
+      (p) => p.name === 'oc-auth' && (p.data as { type?: unknown }).type === 'signed-out'
+    )
     expect(fromHelper).toHaveLength(1)
     // Exactly this object: no id, no email, no name, nothing else.
     expect(fromHelper[0].data).toStrictEqual({ type: 'signed-out' })
     expect(Object.keys(fromHelper[0].data as object)).toEqual(['type'])
-    expect(tab2.heard).toEqual([{ type: 'signed-out' }])
+    // C4's clear-pending first (before the request), then the sign-out.
+    expect(tab2.heard).toEqual([{ type: 'clear-pending' }, { type: 'signed-out' }])
   })
 
-  it('broadcasts only after the request has answered', async () => {
+  it('broadcasts signed-out only after the request has answered (clear-pending alone goes before it)', async () => {
     otherTab()
     await mod.clientSignOut()
-    expect(fetchCalls[0].postedBefore).toBe(0)
-    expect(FakeChannel.posted).toHaveLength(1)
+    expect(fetchCalls[0].postedBefore).toBe(1)
+    expect(FakeChannel.posted.map((p) => p.data)).toEqual([{ type: 'clear-pending' }, { type: 'signed-out' }])
   })
 })
 
@@ -238,7 +242,7 @@ describe('clientSignOut: a failed request', () => {
     ['403 (origin refused)', status(403), 'refused'],
     ['429', status(429), 'refused'],
     ['500', status(500), 'refused'],
-  ] as const)('%s: claims nothing, broadcasts nothing, stays put', async (_label, reply, kind) => {
+  ] as const)('%s: claims nothing, broadcasts no sign-out, stays put', async (_label, reply, kind) => {
     signOutReply = reply as () => Promise<Partial<Response>>
     const tab2 = otherTab()
     const result = await mod.clientSignOut()
@@ -246,8 +250,10 @@ describe('clientSignOut: a failed request', () => {
       ok: false,
       message: kind === 'offline' ? mod.SIGN_OUT_OFFLINE_MESSAGE : mod.SIGN_OUT_REFUSED_MESSAGE,
     })
-    expect(FakeChannel.posted).toHaveLength(0)
-    expect(tab2.heard).toEqual([])
+    // C4: the pending concern is still cleared everywhere (clear-pending,
+    // before the request), and nothing else is sent.
+    expect(FakeChannel.posted.map((p) => p.data)).toEqual([{ type: 'clear-pending' }])
+    expect(tab2.heard).toEqual([{ type: 'clear-pending' }])
     expect(assign).not.toHaveBeenCalled()
     expect(reload).not.toHaveBeenCalled()
   })
@@ -299,7 +305,7 @@ describe('listenForSignOutElsewhere', () => {
   it('does not hear its own tab sign out (the helper and the listener share one channel)', async () => {
     const stop = mod.listenForSignOutElsewhere()
     await mod.clientSignOut()
-    expect(FakeChannel.posted).toHaveLength(1)
+    expect(FakeChannel.posted).toHaveLength(2)
     expect(reload).not.toHaveBeenCalled()
     expect(assign).toHaveBeenCalledWith(`${ORIGIN}/login`)
     stop()
@@ -335,7 +341,7 @@ describe('the sidebar uses clientSignOut', () => {
     render(h(Sidebar, { displayName: 'ada' }))
     await click(screen.getByRole('button', { name: 'Sign out' }))
     expect(fetchCalls.map((c) => c.url)).toEqual(['/api/auth/signout'])
-    expect(tab2.heard).toEqual([{ type: 'signed-out' }])
+    expect(tab2.heard).toEqual([{ type: 'clear-pending' }, { type: 'signed-out' }])
     expect(assign).toHaveBeenCalledWith(`${ORIGIN}/login`)
   })
 
@@ -385,7 +391,7 @@ describe('the onboarding shell', () => {
     render(h(AppShell, { variant: 'onboarding', children: h('p', null, 'setup form') }))
     await click(screen.getByRole('button', { name: 'Sign out' }))
     expect(fetchCalls.map((c) => c.url)).toEqual(['/api/auth/signout'])
-    expect(tab2.heard).toEqual([{ type: 'signed-out' }])
+    expect(tab2.heard).toEqual([{ type: 'clear-pending' }, { type: 'signed-out' }])
     expect(assign).toHaveBeenCalledWith(`${ORIGIN}/login`)
   })
 
@@ -437,6 +443,31 @@ describe('the (app) layout picks the shell', () => {
     requestHeaders = { 'x-user-id': 'u1', 'x-pathname': '/votes' }
     profileRows = []
     await expect(layoutElement()).rejects.toThrow('redirect /profile/setup?redirect=%2Fvotes')
+  })
+
+  // UI plan C4, Razor W2: a first-time citizen keeps the handoff through onboarding.
+  it('no profile, on /investigate?handoff=<id>: the handoff rides the onboarding redirect', async () => {
+    const id = '0123456789abcdef0123456789abcdef'
+    requestHeaders = { 'x-user-id': 'u1', 'x-pathname': '/investigate', 'x-search': `?handoff=${id}&from=home` }
+    profileRows = []
+    // Exactly the handoff: the rest of the query (from=home) is not carried.
+    await expect(layoutElement()).rejects.toThrow(
+      new RegExp(`redirect /profile/setup\\?redirect=${encodeURIComponent(`/investigate?handoff=${id}`)}$`)
+    )
+    // And the setup page's own check keeps it.
+    const { safeRedirectTarget } = await import('@/lib/navigation/safe-redirect')
+    expect(safeRedirectTarget(`/investigate?handoff=${id}`, ORIGIN)).toBe(`${ORIGIN}/investigate?handoff=${id}`)
+  })
+
+  it.each([
+    ['a malformed handoff', '/investigate', '?handoff=<x>'],
+    ['a URL-safe but malformed handoff', '/investigate', '?handoff=abc'],
+    ['a handoff on another path', '/votes', '?handoff=0123456789abcdef0123456789abcdef'],
+    ['any other query', '/investigate', '?q=1'],
+  ])('no profile, %s: the bare path only', async (_label, pathname, search) => {
+    requestHeaders = { 'x-user-id': 'u1', 'x-pathname': pathname, 'x-search': search }
+    profileRows = []
+    await expect(layoutElement()).rejects.toThrow(new RegExp(`redirect /profile/setup\\?redirect=${encodeURIComponent(pathname)}$`))
   })
 })
 

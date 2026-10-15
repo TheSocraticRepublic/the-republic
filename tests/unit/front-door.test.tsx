@@ -263,7 +263,7 @@ async function renderInvestigate() {
     textarea: screen.getByLabelText('Describe your concern') as HTMLTextAreaElement,
     select: document.getElementById('concern-jurisdiction') as HTMLSelectElement,
     postal: screen.getByLabelText(/^Postal code/) as HTMLInputElement,
-    start: screen.getByRole('button', { name: /Start Investigation/ }),
+    start: screen.getByRole('button', { name: /Start an investigation/ }),
   }
 }
 
