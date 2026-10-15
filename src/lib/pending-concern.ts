@@ -100,6 +100,18 @@ export function parsePendingConcern(raw: string | null, now: number): PendingCon
   } catch {
     return null
   }
+  return validatePendingConcern(data, now)
+}
+
+/**
+ * The checks themselves, on a parsed value. Separate from the JSON step
+ * because JSON cannot carry NaN (it has no literal for it, and `1e999` parses
+ * to Infinity, which the window checks already refuse), so the finite-number
+ * check can only be shown to hold on a value that did not come through JSON.
+ * It is not redundant: NaN fails both window comparisons (every comparison
+ * with NaN is false) and would pass them without it.
+ */
+export function validatePendingConcern(data: unknown, now: number): PendingConcern | null {
   if (typeof data !== 'object' || data === null || Array.isArray(data)) return null
   const { v, text, savedAt, handoff } = data as Record<string, unknown>
   if (v !== 1) return null

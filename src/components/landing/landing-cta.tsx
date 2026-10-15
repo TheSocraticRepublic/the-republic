@@ -65,8 +65,7 @@ export function LandingCta() {
       <div className="mx-auto flex max-w-[560px] flex-col items-center text-center" data-scroll-fade>
         <h2
           id="landing-concern-heading"
-          className="font-bold tracking-tight text-text-primary"
-          style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 3vw, 36px)', lineHeight: 1.15 }}
+          className="font-display text-[length:clamp(28px,3vw,36px)] leading-[1.15] font-bold tracking-tight text-text-primary"
         >
           What concerns you?
         </h2>
