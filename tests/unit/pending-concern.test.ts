@@ -450,13 +450,39 @@ describe('the landing writes the record only while signed out', () => {
     expect(to.searchParams.get('redirect')).toBe(`/investigate?handoff=${record.handoff}`)
   })
 
-  it('signed in (the probe answers 200): no record, straight to Investigate', async () => {
+  it('signed in (the probe answers 200): the record is kept and the tab goes to /investigate?handoff=<id>&from=home', async () => {
     replies.set('/investigate', status(200))
     const box = await renderLanding()
     fireEvent.change(box, { target: { value: 'A cutting permit' } })
     await press('Start an investigation')
+    const record = pc.readPendingConcern()!
+    expect(record.text).toBe('A cutting permit')
+    expect(assign).toHaveBeenCalledWith(`${ORIGIN}/investigate?handoff=${record.handoff}&from=home`)
+  })
+
+  it('the record is written BEFORE the probe, on both paths', async () => {
+    for (const reply of [status(200), opaqueRedirect]) {
+      cleanup()
+      window.sessionStorage.clear()
+      fetchLog = []
+      replies.set('/investigate', reply)
+      const box = await renderLanding()
+      fireEvent.change(box, { target: { value: 'early' } })
+      await press('Start an investigation')
+      expect(fetchLog[0].url).toBe('/investigate')
+      expect(JSON.parse(fetchLog[0].storedAtCall!).text).toBe('early')
+    }
+  })
+
+  it('a sign-out heard while the probe is in flight is not undone by a later write', async () => {
+    let release: () => void = () => {}
+    replies.set('/investigate', () => new Promise((resolve) => (release = () => resolve({ type: 'opaqueredirect' as ResponseType, ok: false, status: 0 }))))
+    const box = await renderLanding()
+    fireEvent.change(box, { target: { value: 'raced' } })
+    await press('Start an investigation')
+    new FakeChannel('oc-auth').postMessage({ type: 'clear-pending' })
+    await act(async () => release())
     expect(window.sessionStorage.getItem(KEY)).toBeNull()
-    expect(assign).toHaveBeenCalledWith(`${ORIGIN}/investigate`)
   })
 
   it('a probe that cannot answer is treated as signed out: the login is safe either way', async () => {

@@ -259,7 +259,7 @@ describe.skipIf(!APP_UP)('the pending concern in two real tabs (Chromium, harnes
     }
   }, 120_000)
 
-  it('signed in, the landing box writes nothing and goes straight to Investigate', async () => {
+  it('signed in, the landing box carries the concern straight to Investigate, offered as from the home page', async () => {
     const context = await newContext()
     try {
       const tab1 = await context.newPage()
@@ -267,7 +267,10 @@ describe.skipIf(!APP_UP)('the pending concern in two real tabs (Chromium, harnes
       await tab1.goto(`${APP_URL}/`)
       await tab1.getByRole('textbox', { name: 'What concerns you?' }).fill('C4 harness: signed in')
       await tab1.locator('[data-scroll-section="cta"]').getByRole('button', { name: 'Start an investigation' }).click()
-      await tab1.waitForURL(`${APP_URL}/investigate`, { timeout: 30_000 })
+      await tab1.waitForURL((u) => u.pathname === '/investigate' && u.searchParams.get('from') === 'home', { timeout: 30_000 })
+      await expect.poll(() => offer(tab1).count()).toBe(1)
+      expect(await offer(tab1).innerText()).toContain('Your concern from the home page.')
+      expect(await offer(tab1).innerText()).toContain('C4 harness: signed in')
       expect(await stored(tab1)).toBeNull()
     } finally {
       await context.close()

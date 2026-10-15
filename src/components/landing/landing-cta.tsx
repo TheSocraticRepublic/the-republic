@@ -11,6 +11,7 @@ import {
   loginUrlForHandoff,
   newHandoffId,
   probeSignedOut,
+  signedInHandoffUrl,
   writePendingConcern,
 } from '@/lib/pending-concern'
 
@@ -28,14 +29,18 @@ const armLinks = [
  * concern, carried through sign-in.
  *
  * Start an investigation, with text:
- *   1. ask whether this browser is signed out (probeSignedOut; the page is
+ *   1. write the pending concern to this tab's sessionStorage under a fresh
+ *      handoff id, FIRST: a sign-out heard while the probe below is in flight
+ *      then deletes it, rather than being undone by a write after it (Razor
+ *      C4 judge d2);
+ *   2. ask whether this browser is signed out (probeSignedOut; the page is
  *      static and cannot know);
- *   2. signed out (or unknown): write the pending concern to this tab's
- *      sessionStorage under a fresh handoff id, and go to the login with
- *      `/investigate?handoff=<id>` as its redirect. Investigate offers the
- *      text once, on that handoff only;
- *   3. signed in: no record is written (the carry is for the anonymous-to-
- *      login handoff only), and the tab goes straight to Investigate.
+ *   3. signed out (or unknown): go to the login with
+ *      `/investigate?handoff=<id>` as its redirect;
+ *   4. signed in: go straight to `/investigate?handoff=<id>&from=home`
+ *      (orchestrator ruling, C4 fix pass). No login is crossed, so the offer
+ *      there says "Your concern from the home page."
+ * Investigate offers the text once, on that handoff only.
  * Nothing leaves the browser with the text until the citizen submits it on
  * Investigate. A storage failure loses the carry, never the navigation.
  */
@@ -51,14 +56,19 @@ export function LandingCta() {
   // while the box is empty or a start is in flight, and it is the only caller.
   async function start() {
     setBusy(true)
-    const signedOut = await probeSignedOut()
-    if (signedOut === false) {
-      window.location.assign(new URL('/investigate', window.location.origin).href)
-      return
+    try {
+      const handoff = newHandoffId()
+      writePendingConcern(text.trim(), handoff)
+      const signedOut = await probeSignedOut()
+      const next = signedOut === false ? signedInHandoffUrl(handoff) : loginUrlForHandoff(handoff)
+      window.location.assign(new URL(next, window.location.origin).href)
+    } catch (err) {
+      // Nothing above is expected to throw (the probe and storage catch their
+      // own failures); if something does, the box comes back rather than
+      // staying locked (Razor C4 N5), and the failure is logged by name.
+      console.error('[landing] start failed:', err instanceof Error ? err.name : 'unknown error')
+      setBusy(false)
     }
-    const handoff = newHandoffId()
-    writePendingConcern(text.trim(), handoff)
-    window.location.assign(new URL(loginUrlForHandoff(handoff), window.location.origin).href)
   }
 
   return (
