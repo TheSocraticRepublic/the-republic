@@ -8,6 +8,7 @@ import { safeRedirectTarget } from '@/lib/navigation/safe-redirect'
 // Touch screens: focusing an input on load throws up the keyboard over the
 // page before the reader has seen it (mobile P2-11). The shared check (B3b).
 import { hasCoarsePointer } from '@/lib/ui/input-modality'
+import { ErrorMark } from '@/components/ui/field'
 
 type Step = 'email' | 'code'
 
@@ -58,7 +59,14 @@ export default function LoginPage() {
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setErrorText] = useState<string | null>(null)
+  // The field an error is about, if any (Jen C3 C4): the email for a send
+  // 400, the code for a verify 401. A 429, a 500 or offline marks nothing.
+  const [errorField, setErrorField] = useState<Step | null>(null)
+  function setError(message: string | null, field: Step | null = null) {
+    setErrorText(message)
+    setErrorField(message ? field : null)
+  }
   const [notice, setNotice] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
@@ -122,7 +130,7 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setError(sendCodeError(res.status, data.error, data.scope))
+        setError(sendCodeError(res.status, data.error, data.scope), res.status === 400 ? 'email' : null)
         return
       }
 
@@ -169,7 +177,7 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setError(verifyCodeError(res.status, data.error))
+        setError(verifyCodeError(res.status, data.error), res.status === 401 ? 'code' : null)
         return
       }
 
@@ -193,9 +201,11 @@ export default function LoginPage() {
    * The card is paper (UI plan C3, landing L6): `.light-scope` flips every
    * token inside it to ink, so the field, the button and the links read as a
    * document in the light. The action is CTAButton's primary recipe (full-ink
-   * fill, surface-0 label). Unavailable is the recessed recipe, never
-   * opacity, which dimmed the focus ring with it (Jen C1): text-muted on
-   * surface-1, 4.91:1. Busy stays at full ink.
+   * fill, surface-0 label). Unavailable is surface-3 with no border and
+   * text-secondary (7.76:1), never opacity, which dimmed the focus ring with
+   * it (Jen C1). On paper the old surface-1 recipe was the empty field's own
+   * fill and border, so the two read as one object (Jen C3 C3). Busy stays at
+   * full ink.
    */
   const actionButtonClass = clsx(
     'flex w-full items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-semibold transition-all duration-150',
@@ -203,26 +213,43 @@ export default function LoginPage() {
       ? 'cursor-progress border-text-primary bg-text-primary text-surface-0'
       : canSubmit
         ? 'border-text-primary bg-text-primary text-surface-0 hover:opacity-90'
-        : 'cursor-not-allowed border-border-strong bg-surface-1 text-text-muted'
+        : 'cursor-not-allowed border-transparent bg-surface-3 text-text-secondary'
   )
 
   // The secondary actions on paper: text-muted is 5.5:1 there (the old
-  // white/30 measured 2.63:1, mobile P2-17).
+  // white/30 measured 2.63:1, mobile P2-17). At least 24px tall, 44px on a
+  // touch screen: they are what a citizen with a wrong code is told to use
+  // (Jen C3 C9).
   const quietButtonClass =
-    'w-full text-center text-xs text-text-muted underline-offset-2 transition-colors hover:text-text-primary hover:underline'
+    'min-h-6 w-full text-center text-xs text-text-muted underline-offset-2 transition-colors hover:text-text-primary hover:underline pointer-coarse:min-h-11'
 
+  // While an error about this field shows, a danger border (and aria-invalid
+  // below) marks it, as the C2b field recipe does (Jen C3 C4).
   const fieldClass =
-    'w-full rounded-lg border border-border-strong bg-surface-1 px-3.5 py-2.5 text-text-primary placeholder-text-faint outline-none transition-colors focus:border-text-muted'
+    'w-full rounded-lg border border-border-strong bg-surface-1 px-3.5 py-2.5 text-text-primary placeholder-text-faint outline-none transition-colors focus:not-aria-invalid:border-text-muted aria-invalid:border-status-danger'
+
+  const errorLine = error ? (
+    <p id="login-error" role="alert" className="flex items-start gap-1.5 text-xs text-status-danger">
+      <ErrorMark />
+      {error}
+    </p>
+  ) : null
+  const invalidProps = (field: Step) =>
+    errorField === field ? { 'aria-invalid': true as const, 'aria-describedby': 'login-error' } : {}
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center bg-surface-0 px-4">
-      {/* Cave photo background. Positioned low so the bright crevice sits
-          below the card, not behind it (landing L6). */}
+    // overflow-x-clip: the brand scrim reaches 64px past the column, which
+    // widened every phone's layout (Jen C3 C1). safe_center plus the top
+    // padding keeps a tall card from climbing under "Back" at 320.
+    <main className="relative flex min-h-screen flex-col items-center justify-[safe_center] overflow-x-clip bg-surface-0 px-4 pt-16 pb-8">
+      {/* Cave photo background. The lit opening sits under the paper and the
+          brand block on dark rock, every line on the photo at least 4.5:1
+          (Jen C3 C2). */}
       <div
         className="absolute inset-0 bg-cover"
         style={{
           backgroundImage: 'url(/landing/cave-login.jpg)',
-          backgroundPosition: 'center 70%',
+          backgroundPosition: 'center 35%',
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-surface-0/80 via-surface-0/40 to-surface-0/70" />
@@ -295,13 +322,12 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && canSubmit && handleSendCode()}
                     placeholder="you@example.com"
+                    {...invalidProps('email')}
                     className={clsx(fieldClass, 'text-sm')}
                   />
                 </div>
 
-                {error && (
-                  <p role="alert" className="text-xs text-status-danger">{error}</p>
-                )}
+                {errorLine}
 
                 <button
                   type="button"
@@ -335,13 +361,12 @@ export default function LoginPage() {
                     onChange={(e) => setCode(normaliseCode(e.target.value))}
                     onKeyDown={(e) => e.key === 'Enter' && canSubmit && handleVerifyCode()}
                     placeholder="00000000"
-                    className="w-full rounded-lg border border-border-strong bg-surface-1 px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.25em] text-text-primary placeholder-text-faint outline-none transition-colors focus:border-text-muted"
+                    {...invalidProps('code')}
+                    className="w-full rounded-lg border border-border-strong bg-surface-1 px-3.5 py-2.5 text-center text-lg font-mono tracking-[0.25em] text-text-primary placeholder-text-faint outline-none transition-colors focus:not-aria-invalid:border-text-muted aria-invalid:border-status-danger"
                   />
                 </div>
 
-                {error && (
-                  <p role="alert" className="text-xs text-status-danger">{error}</p>
-                )}
+                {errorLine}
 
                 {/* Always mounted, so a live region announces the change. */}
                 <p role="status" className={notice ? 'text-xs text-text-muted' : 'sr-only'}>

@@ -22,11 +22,20 @@ export const SIGN_OUT_URL = '/api/auth/signout'
 /** Where a signed-out tab goes. */
 export const SIGNED_OUT_DESTINATION = '/login'
 
-/** Plain-instructional, like every error app-wide. Shown where the citizen
- *  pressed Sign out; the page stays where it is. */
-export const SIGN_OUT_FAILED_MESSAGE =
-  "Open Cave couldn't sign you out. Check your connection, then try again."
+/*
+ * Failure copy, plain-instructional like every error app-wide, shown where the
+ * citizen pressed Sign out; the page stays where it is. Both lines lead with
+ * the one fact a citizen at a shared computer needs (Jen C3 C5), and only the
+ * request that never reached the server gets connection advice.
+ */
+/** The request never reached the server (fetch threw). */
+export const SIGN_OUT_OFFLINE_MESSAGE =
+  "You're still signed in. Open Cave can't be reached. Check your connection, then sign out again."
+/** The server answered, but not with a confirmed sign-out. */
+export const SIGN_OUT_REFUSED_MESSAGE =
+  "You're still signed in. Open Cave couldn't sign you out. Sign out again."
 
+/** What this tab sends. C4 adds `signed-in` (with its handoff id). */
 export type AuthMessage = { type: 'signed-out' }
 
 export type SignOutResult = { ok: true } | { ok: false; message: string }
@@ -62,7 +71,7 @@ export function resetAuthChannelForTests(): void {
   channel?.close()
   channel = undefined
   unsavedWork.clear()
-  signedOutElsewhere = false
+  notice = null
 }
 
 function broadcast(message: AuthMessage): void {
@@ -94,17 +103,17 @@ export async function clientSignOut(): Promise<SignOutResult> {
     res = await fetch(SIGN_OUT_URL, { method: 'POST', redirect: 'manual', credentials: 'same-origin' })
   } catch (err) {
     console.error('[sign-out] request failed:', err instanceof Error ? err.name : 'unknown error')
-    return { ok: false, message: SIGN_OUT_FAILED_MESSAGE }
+    return { ok: false, message: SIGN_OUT_OFFLINE_MESSAGE }
   }
 
   if (!res.ok) {
     console.error('[sign-out] refused with status', res.status, res.type)
-    return { ok: false, message: SIGN_OUT_FAILED_MESSAGE }
+    return { ok: false, message: SIGN_OUT_REFUSED_MESSAGE }
   }
   const body: unknown = await res.json().catch(() => null)
   if (!(typeof body === 'object' && body !== null && (body as { signedOut?: unknown }).signedOut === true)) {
     console.error('[sign-out] answered without the signed-out flag')
-    return { ok: false, message: SIGN_OUT_FAILED_MESSAGE }
+    return { ok: false, message: SIGN_OUT_REFUSED_MESSAGE }
   }
 
   broadcastSignedOut()
@@ -126,8 +135,9 @@ export function broadcastSignedOut(): void {
  * Unsaved work (Razor C3 W2). A component holding text the citizen has typed
  * and not saved registers it while it is dirty. When another tab signs out,
  * a tab with unsaved work does NOT reload (that would discard the text): it
- * shows SIGNED_OUT_ELSEWHERE_MESSAGE and leaves everything where it is. A tab
- * with nothing unsaved reloads as before.
+ * shows the signed-out notice (the app shell renders it, with a link that
+ * signs in again in a NEW tab, so this one keeps its text) and leaves
+ * everything where it is. A tab with nothing unsaved reloads as before.
  */
 const unsavedWork = new Set<symbol>()
 
@@ -147,11 +157,41 @@ export function useUnsavedWork(dirty: boolean): void {
   }, [dirty])
 }
 
-export const SIGNED_OUT_ELSEWHERE_MESSAGE =
-  "You've signed out in another tab. Copy anything you want to keep, then sign in again."
+/*
+ * The signed-out notice (Jen C3 C6, C7). `elsewhere`: another tab signed out.
+ * `server`: a save from this tab was answered 401. Its words, in order: the
+ * lead, then a link reading NOTICE_LINK (to /login in a new tab), then
+ * NOTICE_TAIL. It clears when this tab learns the session is back: a
+ * successful write from this tab (`clearSignedOutNotice`) or a `signed-in`
+ * message from another tab.
+ */
+export type SignedOutNotice = 'elsewhere' | 'server'
+export const NOTICE_LEAD: Record<SignedOutNotice, string> = {
+  elsewhere: "You signed out in another tab, so this tab can't save.",
+  server: "You're signed out, so this tab can't save.",
+}
+export const NOTICE_LINK = 'Sign in again in a new tab'
+export const NOTICE_TAIL = ', then save here.'
 
-let signedOutElsewhere = false
+let notice: SignedOutNotice | null = null
 const noticeListeners = new Set<() => void>()
+
+function setNotice(next: SignedOutNotice | null) {
+  if (notice === next) return
+  notice = next
+  for (const l of noticeListeners) l()
+}
+
+/** A write from this tab was answered 401: show the notice, if it isn't
+ *  already showing, so the way back in is on the page. */
+export function noteSignedOutByServer(): void {
+  if (notice === null) setNotice('server')
+}
+
+/** A write from this tab succeeded: the session is back, the notice goes. */
+export function clearSignedOutNotice(): void {
+  setNotice(null)
+}
 
 function subscribeNotice(callback: () => void) {
   noticeListeners.add(callback)
@@ -160,13 +200,23 @@ function subscribeNotice(callback: () => void) {
   }
 }
 
-/** True once another tab has signed out while this one held unsaved work. */
-export function useSignedOutElsewhereNotice(): boolean {
-  return useSyncExternalStore(subscribeNotice, () => signedOutElsewhere, () => false)
+/** Which notice to show, or null. */
+export function useSignedOutNotice(): SignedOutNotice | null {
+  return useSyncExternalStore(subscribeNotice, () => notice, () => null)
 }
 
-function isAuthMessage(data: unknown): data is AuthMessage {
-  return typeof data === 'object' && data !== null && (data as { type?: unknown }).type === 'signed-out'
+/** The type of an `oc-auth` message this tab acts on, or null. Only the type
+ *  is read: C4's `signed-in` also carries its handoff id. */
+function messageType(data: unknown): 'signed-out' | 'signed-in' | null {
+  if (typeof data !== 'object' || data === null) return null
+  const type = (data as { type?: unknown }).type
+  return type === 'signed-out' || type === 'signed-in' ? type : null
+}
+
+/** Another tab signed in: this tab's session is back, so the notice goes.
+ *  C4 adds its pending-concern handling here. */
+export function onSignedInElsewhere(): void {
+  clearSignedOutNotice()
 }
 
 /**
@@ -179,23 +229,24 @@ function isAuthMessage(data: unknown): data is AuthMessage {
  */
 export function onSignedOutElsewhere(): void {
   if (hasUnsavedWork()) {
-    signedOutElsewhere = true
-    for (const l of noticeListeners) l()
+    setNotice('elsewhere')
     return
   }
   window.location.reload()
 }
 
 /**
- * Listen for sign-outs in other tabs. Returns the unsubscribe function (a
- * `useEffect` cleanup). Anything on the channel that is not exactly a
- * `signed-out` message is ignored.
+ * Listen for sign-outs (and sign-ins) in other tabs. Returns the unsubscribe
+ * function (a `useEffect` cleanup). Anything on the channel that is not a
+ * `signed-out` or `signed-in` message is ignored.
  */
 export function listenForSignOutElsewhere(): () => void {
   const ch = authChannel()
   if (!ch) return () => {}
   const onMessage = (event: MessageEvent) => {
-    if (isAuthMessage(event.data)) onSignedOutElsewhere()
+    const type = messageType(event.data)
+    if (type === 'signed-out') onSignedOutElsewhere()
+    else if (type === 'signed-in') onSignedInElsewhere()
   }
   ch.addEventListener('message', onMessage)
   return () => ch.removeEventListener('message', onMessage)

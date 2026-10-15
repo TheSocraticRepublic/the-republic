@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Compass, Eye, MessageCircleQuestion, FileText, GitCompare, LogOut, Search, List, ChevronDown, MessageSquare, Shield, Vote, Heart, ScrollText } from 'lucide-react'
+import { Loader2, LogOut, Compass, Eye, MessageCircleQuestion, FileText, GitCompare, Search, List, ChevronDown, MessageSquare, Shield, Vote, Heart, ScrollText } from 'lucide-react'
 import { FeedbackDialog } from '@/components/layout/feedback-dialog'
 import { clsx } from 'clsx'
 import { useState, useEffect, useRef } from 'react'
 import { ProfileBadge } from '@/components/profile/profile-badge'
 import { useSignOut } from '@/lib/auth/client-sign-out'
+import { ErrorMark } from '@/components/ui/field'
 
 // Arm descriptions: one register, plain-instructional, one line each in the
 // 224px sidebar (Jen, B2 design review C4).
@@ -49,6 +50,21 @@ const arms = [
 // pr-5 with gap-2.5 keeps the text column at 130px, wide enough that
 // "New Investigation" (127px in Instrument Sans 600 14px) stays on one line.
 const ACTIVE_DOT = 'absolute right-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full'
+
+/** Busy, visibly (Jen C3 C5): the icon becomes a spinner, the label stays,
+ *  and a screen reader hears "Signing out". */
+export function SignOutIcon({ busy }: { busy: boolean }) {
+  return busy ? (
+    <>
+      <Loader2 size={14} strokeWidth={1.75} className="animate-spin" aria-hidden="true" />
+      <span role="status" className="sr-only">
+        Signing out
+      </span>
+    </>
+  ) : (
+    <LogOut size={14} strokeWidth={1.75} aria-hidden="true" />
+  )
+}
 
 interface SidebarProps {
   // No email prop: the shell shows the display name only (app-arms P2-16).
@@ -538,11 +554,12 @@ export function Sidebar({ displayName, effectiveWeight = 0, variant = 'sidebar',
             signingOut && 'cursor-progress',
           )}
         >
-          <LogOut size={14} strokeWidth={1.75} />
+          <SignOutIcon busy={signingOut} />
           Sign out
         </button>
         {signOutError && (
-          <p role="alert" className="px-3 py-1 text-xs text-status-danger">
+          <p role="alert" className="flex items-start gap-1.5 px-3 py-1 text-xs text-status-danger">
+            <ErrorMark />
             {signOutError}
           </p>
         )}

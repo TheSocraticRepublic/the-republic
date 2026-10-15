@@ -2,15 +2,19 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import * as Dialog from '@radix-ui/react-dialog'
-import { LogOut, Menu, X } from 'lucide-react'
+import { CircleAlert, Menu, X } from 'lucide-react'
 import { clsx } from 'clsx'
-import { Sidebar } from './sidebar'
+import { Sidebar, SignOutIcon } from './sidebar'
+import { ErrorMark } from '@/components/ui/field'
 import {
-  SIGNED_OUT_ELSEWHERE_MESSAGE,
+  NOTICE_LEAD,
+  NOTICE_LINK,
+  NOTICE_TAIL,
   useSignOut,
   useSignOutElsewhereListener,
-  useSignedOutElsewhereNotice,
+  useSignedOutNotice,
 } from '@/lib/auth/client-sign-out'
 
 interface AppShellProps {
@@ -39,15 +43,36 @@ function Wordmark() {
   )
 }
 
-/** Shown, instead of a reload, when another tab signed out while this one
- *  held unsaved text (Razor C3 W2). Plain-instructional; the text stays put. */
-function SignedOutElsewhereNotice() {
-  const show = useSignedOutElsewhereNotice()
-  if (!show) return null
+/**
+ * Shown, instead of a reload, when this tab holds unsaved text and the
+ * session has ended: another tab signed out, or a save here was answered 401
+ * (Razor C3 W2; Jen C3 C6, C7). Every action it names is a control on the
+ * page: the link signs in again in a NEW tab, so this one keeps its text, and
+ * the save then works here. It clears when the session is back.
+ */
+function SignedOutNotice() {
+  const notice = useSignedOutNotice()
+  const pathname = usePathname()
+  if (!notice) return null
   // role="alert" is announced on insertion, so it mounts only when needed.
   return (
-    <div role="alert" className="border-b border-border bg-surface-2 px-4 py-3 text-sm text-text-primary">
-      {SIGNED_OUT_ELSEWHERE_MESSAGE}
+    <div
+      role="alert"
+      className="flex items-start gap-2 border-b border-border bg-surface-2 px-4 py-3 text-sm text-text-primary"
+    >
+      <CircleAlert size={14} strokeWidth={2} aria-hidden="true" className="mt-[3px] shrink-0 text-status-warning" />
+      <p>
+        {NOTICE_LEAD[notice]}{' '}
+        <a
+          href={`/login?redirect=${encodeURIComponent(pathname || '/investigate')}`}
+          target="_blank"
+          rel="noopener"
+          className="font-medium text-text-primary underline underline-offset-2"
+        >
+          {NOTICE_LINK}
+        </a>
+        {NOTICE_TAIL}
+      </p>
     </div>
   )
 }
@@ -87,19 +112,23 @@ function OnboardingShell({ children }: { children: React.ReactNode }) {
               busy && 'cursor-progress',
             )}
           >
-            <LogOut size={14} strokeWidth={1.75} />
+            <SignOutIcon busy={busy} />
             Sign out
           </button>
         </div>
         {error && (
-          <p role="alert" className="px-2 pb-1 text-right text-xs text-status-danger">
+          <p
+            role="alert"
+            className="ml-auto flex max-w-sm items-start gap-1.5 px-2 pb-1 text-left text-xs text-status-danger"
+          >
+            <ErrorMark />
             {error}
           </p>
         )}
       </header>
 
       <main id="main-content" className="flex flex-1 flex-col overflow-hidden">
-        <SignedOutElsewhereNotice />
+        <SignedOutNotice />
         <div className="flex-1 overflow-y-auto">{children}</div>
       </main>
     </div>
@@ -176,7 +205,7 @@ function FullShell({
 
       {/* Main content */}
       <main id="main-content" className="flex flex-1 flex-col overflow-hidden">
-        <SignedOutElsewhereNotice />
+        <SignedOutNotice />
         <div className="flex-1 overflow-y-auto">
           {children}
         </div>
