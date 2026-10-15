@@ -19,13 +19,15 @@ describe('the hero', () => {
     const { Hero } = await import('@/components/landing/hero')
     const html = renderToStaticMarkup(h(Hero))
     expect(html).toContain('min-h-[88svh]')
+    // Clears the fixed header (Jen C1).
+    expect(html).toMatch(/class="[^"]*\bpt-24\b[^"]*\bpb-12\b/)
     expect(html).not.toContain('min-h-screen')
   })
 
   it('says what Open Cave does, and offers "Start an investigation" to /investigate', async () => {
     const { Hero } = await import('@/components/landing/hero')
     const html = renderToStaticMarkup(h(Hero))
-    expect(html).toContain('Bring a government document. Leave with plain language, the right questions, and a filing you can send.')
+    expect(html).toContain('Bring a civic concern. Leave with the documents behind it, the questions to ask, and a filing you can send.')
     expect(html).toMatch(/<a [^>]*href="\/investigate"[^>]*>Start an investigation<\/a>/)
     expect(html).toContain('min-h-11')
   })
@@ -44,22 +46,26 @@ describe('the hero', () => {
     const { Hero } = await import('@/components/landing/hero')
     const html = renderToStaticMarkup(h(Hero))
     const scrim = html.match(/data-hero-scrim="[^"]*"[^>]*style="([^"]*)"/)?.[1] ?? html.match(/style="([^"]*)"[^>]*data-hero-scrim/)?.[1]
-    expect(scrim).toContain('radial-gradient(ellipse 60% 45% at 50% 48%, color-mix(in srgb, var(--journey-cave) 55%, transparent), transparent 70%)')
+    expect(scrim).toContain('radial-gradient(ellipse 70% 55% at 50% 46%, color-mix(in srgb, var(--journey-cave) 80%, transparent), transparent 70%)')
     expect(html).toContain('light-shaft')
   })
 })
 
-describe('the landing header', () => {
-  it('has the filled "Start an investigation" to the left of "Sign in"', async () => {
+describe('the hero type (Jen C2)', () => {
+  it('the tagline is white/90 and the line is text-primary', async () => {
+    const { Hero, HERO_LINE } = await import('@/components/landing/hero')
+    const html = renderToStaticMarkup(h(Hero))
+    expect(html).toMatch(/<p class="[^"]*\btext-white\/90\b[^"]*"[^>]*>A Republic for the examined institution\.<\/p>/)
+    expect(html).toMatch(new RegExp(`<p [^>]*class="[^"]*\\btext-text-primary\\b[^"]*"[^>]*>${HERO_LINE}</p>`))
+  })
+})
+
+describe('the landing header, as the server renders it', () => {
+  it('renders Sign in, and no Start until an IntersectionObserver has answered (Jen C4 C4)', async () => {
     const { LandingHeader } = await import('@/components/landing/landing-header')
     const html = renderToStaticMarkup(h(LandingHeader))
-    const start = html.indexOf('>Start an investigation</a>')
-    const signIn = html.indexOf('>Sign in</a>')
-    expect(start).toBeGreaterThan(-1)
-    expect(signIn).toBeGreaterThan(start)
-    const tag = html.match(/<a [^>]*>Start an investigation<\/a>/)?.[0] ?? ''
-    expect(tag).toContain('href="/investigate"')
-    // The primary recipe: full-ink fill.
-    expect(tag).toContain('background-color:var(--text-primary)')
+    expect(html).toContain('>Sign in</a>')
+    expect(html).not.toContain('Start an investigation')
+    expect(html).toMatch(/<a [^>]*class="[^"]*pointer-coarse:min-h-11[^"]*"[^>]*>Sign in<\/a>/)
   })
 })

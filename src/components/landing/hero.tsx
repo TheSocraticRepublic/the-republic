@@ -1,6 +1,10 @@
 import Image from 'next/image'
 import { CTAButton } from '@/components/ui/cta-button'
 
+/** The hero's one plain line (Jen C4 C3; Lee to review). Change it here. */
+export const HERO_LINE =
+  'Bring a civic concern. Leave with the documents behind it, the questions to ask, and a filing you can send.'
+
 /*
  * M1, the cave (UI plan C4; landing L3, L14).
  *
@@ -17,7 +21,10 @@ import { CTAButton } from '@/components/ui/cta-button'
 export function Hero() {
   return (
     <section
-      className="relative z-0 flex min-h-[88svh] flex-col items-center justify-center px-6 text-center"
+      // pt-24 pb-12: the type block always clears the fixed header (80px),
+      // on a 320 phone and on landscape phones where the content outgrows
+      // 88svh (Jen C4 C1).
+      className="relative z-0 flex min-h-[88svh] flex-col items-center justify-center px-6 pt-24 pb-12 text-center"
       data-scroll-section="hero"
     >
       {/* Background image with parallax target */}
@@ -42,14 +49,16 @@ export function Hero() {
         />
       </div>
 
-      {/* Radial scrim behind the type block (L3, L14). */}
+      {/* Radial scrim behind the type block (L3, L14), 80% cave at the
+          centre so the H1, tagline and line hold their contrast over the lit
+          cave mouth at every size (Jen C4 C2). */}
       <div
         aria-hidden="true"
         data-hero-scrim
         className="pointer-events-none absolute inset-0 z-0"
         style={{
           background:
-            'radial-gradient(ellipse 60% 45% at 50% 48%, color-mix(in srgb, var(--journey-cave) 55%, transparent), transparent 70%)',
+            'radial-gradient(ellipse 70% 55% at 50% 46%, color-mix(in srgb, var(--journey-cave) 80%, transparent), transparent 70%)',
         }}
       />
 
@@ -66,7 +75,7 @@ export function Hero() {
       </h1>
 
       <p
-        className="relative z-10 mt-4 italic text-white/80"
+        className="relative z-10 mt-4 italic text-white/90"
         style={{
           fontFamily: 'var(--font-serif)',
           fontSize: 'clamp(18px, 2.5vw, 22px)',
@@ -78,16 +87,16 @@ export function Hero() {
 
       {/* What it does, in one plain sentence (L3). */}
       <p
-        className="relative z-10 mt-6 max-w-[36ch] text-balance text-text-secondary"
+        data-hero-line
+        className="relative z-10 mt-6 max-w-[36ch] text-balance text-text-primary"
         style={{ fontFamily: 'var(--font-body)', fontSize: '17px', lineHeight: 1.5 }}
       >
-        Bring a government document. Leave with plain language, the right
-        questions, and a filing you can send.
+        {HERO_LINE}
       </p>
 
       {/* The app's one primary recipe (full ink: the near-white fill and
           warm-black label of the dark scope), 44px tall. */}
-      <div className="relative z-10 mt-8">
+      <div className="relative z-10 mt-8" data-hero-start>
         <CTAButton href="/investigate" variant="primary" size="md" className="min-h-11 justify-center">
           Start an investigation
         </CTAButton>

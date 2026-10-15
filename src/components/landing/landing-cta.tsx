@@ -44,6 +44,26 @@ const armLinks = [
  * Nothing leaves the browser with the text until the citizen submits it on
  * Investigate. A storage failure loses the carry, never the navigation.
  */
+/** The closing box's id: the header's Start reads it, so it never leaves
+ *  the page with text sitting there (Jen C4 C4). */
+export const LANDING_CONCERN_ID = 'landing-concern'
+
+/** The helper under the closing box: true signed in or out (Jen C4 C5). */
+export const LANDING_HELPER = 'Signing in takes an email code. No password.'
+
+/**
+ * Carry `text` from the landing: write the record, probe, navigate (steps
+ * 1-4 above). The closing box and the header's Start both use it. Throws
+ * only if something unexpected does; callers recover.
+ */
+export async function startLandingHandoff(text: string): Promise<void> {
+  const handoff = newHandoffId()
+  writePendingConcern(text, handoff)
+  const signedOut = await probeSignedOut()
+  const next = signedOut === false ? signedInHandoffUrl(handoff) : loginUrlForHandoff(handoff)
+  window.location.assign(new URL(next, window.location.origin).href)
+}
+
 export function LandingCta() {
   // A record written here waits in this tab; another tab's sign-in or
   // sign-out deletes it.
@@ -57,11 +77,7 @@ export function LandingCta() {
   async function start() {
     setBusy(true)
     try {
-      const handoff = newHandoffId()
-      writePendingConcern(text.trim(), handoff)
-      const signedOut = await probeSignedOut()
-      const next = signedOut === false ? signedInHandoffUrl(handoff) : loginUrlForHandoff(handoff)
-      window.location.assign(new URL(next, window.location.origin).href)
+      await startLandingHandoff(text.trim())
     } catch (err) {
       // Nothing above is expected to throw (the probe and storage catch their
       // own failures); if something does, the box comes back rather than
@@ -89,7 +105,7 @@ export function LandingCta() {
         </p>
 
         <textarea
-          id="landing-concern"
+          id={LANDING_CONCERN_ID}
           value={text}
           onChange={(e) => setText(e.target.value)}
           aria-labelledby="landing-concern-heading"
@@ -97,10 +113,13 @@ export function LandingCta() {
           placeholder="A cutting permit on your trail. A rezoning across from the daycare."
           rows={3}
           maxLength={PENDING_CONCERN_MAX_LENGTH}
-          disabled={busy}
+          // Busy is readOnly, never disabled: the typed concern keeps its
+          // rest contrast while the probe and navigation run (Jen C4 C5).
+          readOnly={busy}
+          aria-busy={busy || undefined}
           className={clsx(
             'mt-8 w-full resize-none rounded-xl border border-border-strong bg-surface-1 px-4 py-3 text-left text-text-primary shadow-sm placeholder-text-faint outline-none focus:ring-0',
-            'focus:border-text-faint disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-2 disabled:text-text-muted'
+            'focus:border-text-faint read-only:cursor-progress'
           )}
           style={{ fontFamily: 'var(--font-serif)', fontSize: '17px', lineHeight: 1.6, minHeight: '112px' }}
         />
@@ -124,7 +143,7 @@ export function LandingCta() {
             </p>
           )}
           <p id="landing-concern-helper" className="mt-3 text-[13px] text-text-muted">
-            You&apos;ll sign in with an email code. No password.
+            {LANDING_HELPER}
           </p>
         </div>
 

@@ -516,7 +516,7 @@ describe('the landing writes the record only while signed out', () => {
     const box = await renderLanding()
     expect(box.maxLength).toBe(2000)
     expect(box.getAttribute('aria-describedby')).toBe('landing-concern-helper')
-    expect(document.getElementById('landing-concern-helper')?.textContent).toBe("You'll sign in with an email code. No password.")
+    expect(document.getElementById('landing-concern-helper')?.textContent).toBe('Signing in takes an email code. No password.')
     const heading = screen.getByRole('heading', { level: 2, name: 'What concerns you?' })
     // Fraunces (the display face) at clamp(28px,3vw,36px).
     expect(heading.className).toContain('font-display')
