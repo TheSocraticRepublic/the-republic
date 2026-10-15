@@ -113,7 +113,8 @@ describe.skipIf(!APP_UP)('login geometry and photo contrast on the harness (Chro
   async function wrongCode(page: Page) {
     await page.locator('#code').fill('12345678')
     await page.getByRole('button', { name: 'Verify code' }).click()
-    await page.getByRole('alert').waitFor()
+    // By id: Next's route announcer is also role="alert".
+    await page.locator('#login-error').waitFor()
   }
 
   async function layout(page: Page) {
