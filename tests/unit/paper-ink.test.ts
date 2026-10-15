@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * D1: paper ink shared with the PDF renderer.
  *
@@ -35,7 +36,6 @@ import postcss, { type Root, type Rule } from 'postcss'
 import tailwind from '@tailwindcss/postcss'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { JSDOM } from 'jsdom'
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
 import {
   PAPER_INK,
@@ -293,7 +293,7 @@ function renderBriefing(darkMode: boolean): Document {
       onOpenGadfly: () => {},
     })
   )
-  return new JSDOM(html).window.document
+  return new DOMParser().parseFromString(html, 'text/html')
 }
 
 /** The raw inline style attribute, as React serialised it. */
