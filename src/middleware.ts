@@ -76,6 +76,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     sanitized.delete('x-user-id')
     sanitized.delete('x-user-email')
     sanitized.delete('x-pathname')
+    sanitized.delete('x-search')
     return applySecurityHeaders(NextResponse.next({ request: { headers: sanitized } }))
   }
 
@@ -85,6 +86,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     sanitized.delete('x-user-id')
     sanitized.delete('x-user-email')
     sanitized.delete('x-pathname')
+    sanitized.delete('x-search')
     return applySecurityHeaders(NextResponse.next({ request: { headers: sanitized } }))
   }
 
@@ -124,6 +126,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     headers.set('x-user-id', '00000000-0000-0000-0000-000000000001')
     headers.set('x-user-email', 'dev@republic.local')
     headers.set('x-pathname', pathname)
+    headers.set('x-search', request.nextUrl.search)
     return applySecurityHeaders(
       forumRewrite
         ? NextResponse.rewrite(forumRewrite, { request: { headers } })

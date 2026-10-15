@@ -5,6 +5,26 @@ import { getDb } from '@/lib/db'
 import { userProfiles } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { checkModeratorAccess } from '@/lib/credentials/check-moderator'
+import { safeRedirectTarget } from '@/lib/navigation/safe-redirect'
+import { HANDOFF_PATH, handoffFromSearch, handoffTarget } from '@/lib/pending-concern'
+
+/** Any serialised origin will do: it only anchors the check below. */
+const CHECK_ORIGIN = 'http://onboarding.invalid'
+
+/**
+ * Where onboarding returns to: the path, plus an Investigate handoff when the
+ * request carried a valid one (UI plan C4, Razor W2), so a first-time citizen
+ * who wrote a concern on the landing is still offered it after setup. Only the
+ * handoff is carried, validated (32 hex). The result goes through
+ * safeRedirectTarget here, and again on the setup page when it is used; if
+ * the check would change it, the bare path is used instead.
+ */
+function onboardingReturnTarget(path: string, search: string): string {
+  const handoff = path === HANDOFF_PATH ? handoffFromSearch(search) : null
+  if (handoff === null) return path
+  const target = handoffTarget(handoff)
+  return safeRedirectTarget(target, CHECK_ORIGIN) === `${CHECK_ORIGIN}${target}` ? target : path
+}
 
 export default async function AppLayout({
   children,
@@ -42,7 +62,8 @@ export default async function AppLayout({
           headersList.get('x-pathname') ?? '/investigate'
 
         if (!currentPath.startsWith('/profile/setup')) {
-          redirect(`/profile/setup?redirect=${encodeURIComponent(currentPath)}`)
+          const target = onboardingReturnTarget(currentPath, headersList.get('x-search') ?? '')
+          redirect(`/profile/setup?redirect=${encodeURIComponent(target)}`)
         }
         onboarding = true
       }

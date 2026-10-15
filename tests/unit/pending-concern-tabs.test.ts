@@ -198,6 +198,40 @@ describe.skipIf(!APP_UP)('the pending concern in two real tabs (Chromium, harnes
     }
   }, 120_000)
 
+  it('W2: a first-time citizen (no profile) keeps the carry through onboarding and is offered it after setup', async () => {
+    const run = Date.now().toString(36)
+    const email = `qa-c4-new-${run}@example.test`
+    const context = await newContext()
+    try {
+      const tab1 = await context.newPage()
+      await writeOnLanding(tab1, 'C4 harness: first-time concern')
+      const handoff = JSON.parse((await stored(tab1))!).handoff as string
+      await issueCode(email)
+      await tab1.locator('#email').fill(email)
+      await tab1.getByRole('button', { name: 'Send code' }).click()
+      await tab1.locator('#code').fill(CODE)
+      await tab1.getByRole('button', { name: 'Verify code' }).click()
+      await tab1.waitForURL((u) => u.pathname === '/profile/setup', { timeout: 30_000 })
+      expect(new URL(tab1.url()).searchParams.get('redirect')).toBe(`/investigate?handoff=${handoff}`)
+      // The record waits through onboarding.
+      expect(JSON.parse((await stored(tab1))!).handoff).toBe(handoff)
+      await tab1.locator('#displayName').fill(`c4new${run}`)
+      await tab1.getByRole('button', { name: 'Claim your name' }).click()
+      await tab1.waitForURL(`${APP_URL}/investigate?handoff=${handoff}`, { timeout: 30_000 })
+      await expect.poll(() => offer(tab1).count()).toBe(1)
+      expect(await offer(tab1).innerText()).toContain('C4 harness: first-time concern')
+      expect(await stored(tab1)).toBeNull()
+    } finally {
+      await context.close()
+      const [u] = await db`select id from users where email = ${email}`
+      if (u) {
+        await db`delete from user_profiles where user_id = ${u.id}`
+        await db`delete from users where id = ${u.id}`
+      }
+      await db`delete from magic_codes where email = ${email}`
+    }
+  }, 120_000)
+
   it('tab 1 holds a handoff; tab 2 completes a different login: tab 1\'s record is deleted, tab 2 is offered its own', async () => {
     const context = await newContext()
     try {

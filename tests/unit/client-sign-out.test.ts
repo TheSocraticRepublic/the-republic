@@ -444,6 +444,29 @@ describe('the (app) layout picks the shell', () => {
     profileRows = []
     await expect(layoutElement()).rejects.toThrow('redirect /profile/setup?redirect=%2Fvotes')
   })
+
+  // UI plan C4, Razor W2: a first-time citizen keeps the handoff through onboarding.
+  it('no profile, on /investigate?handoff=<id>: the handoff rides the onboarding redirect', async () => {
+    const id = '0123456789abcdef0123456789abcdef'
+    requestHeaders = { 'x-user-id': 'u1', 'x-pathname': '/investigate', 'x-search': `?handoff=${id}&from=home` }
+    profileRows = []
+    await expect(layoutElement()).rejects.toThrow(
+      `redirect /profile/setup?redirect=${encodeURIComponent(`/investigate?handoff=${id}`)}`
+    )
+    // And the setup page's own check keeps it.
+    const { safeRedirectTarget } = await import('@/lib/navigation/safe-redirect')
+    expect(safeRedirectTarget(`/investigate?handoff=${id}`, ORIGIN)).toBe(`${ORIGIN}/investigate?handoff=${id}`)
+  })
+
+  it.each([
+    ['a malformed handoff', '/investigate', '?handoff=<x>'],
+    ['a handoff on another path', '/votes', '?handoff=0123456789abcdef0123456789abcdef'],
+    ['any other query', '/investigate', '?q=1'],
+  ])('no profile, %s: the bare path only', async (_label, pathname, search) => {
+    requestHeaders = { 'x-user-id': 'u1', 'x-pathname': pathname, 'x-search': search }
+    profileRows = []
+    await expect(layoutElement()).rejects.toThrow(new RegExp(`redirect /profile/setup\\?redirect=${encodeURIComponent(pathname)}$`))
+  })
 })
 
 describe('one sign-out path', () => {
