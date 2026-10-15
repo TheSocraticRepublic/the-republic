@@ -8,7 +8,25 @@ import { CTAButton } from '@/components/ui/cta-button'
 import { Field, fieldControlClass } from '@/components/ui/field'
 import { hasCoarsePointer, useCoarsePointer, useModifierKeyLabel } from '@/lib/ui/input-modality'
 import { useUnsavedWork } from '@/lib/auth/client-sign-out'
-import { handoffFromSearch, onPendingConcernRevoked, takePendingConcern } from '@/lib/pending-concern'
+import {
+  PENDING_CONCERN_MAX_LENGTH,
+  handoffFromSearch,
+  handoffIsFromHome,
+  onPendingConcernRevoked,
+  takePendingConcern,
+} from '@/lib/pending-concern'
+
+/*
+ * The offer's words (orchestrator ruling, C4 fix pass, after Razor W3). Code
+ * cannot tell who typed a concern left in a tab before a sign-in, so that
+ * offer never claims authorship. A signed-in handoff straight from the home
+ * page crossed no login, so it can say whose it is.
+ */
+export const OFFER_TITLE_LOGIN = 'A concern was written in this tab before signing in.'
+export const OFFER_TITLE_HOME = 'Your concern from the home page.'
+/** "Use it" with text already in the box: appended, never replaced. */
+export const OFFER_APPENDED = 'The earlier concern was added below your text.'
+export const OFFER_TOO_LONG = "The earlier concern doesn't fit after your text. Shorten your text or clear the box, then choose Use it."
 
 interface Jurisdiction {
   id: string
@@ -31,7 +49,9 @@ export function ConcernForm() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   // The concern carried from the landing through sign-in, held here between
   // the offer and Use or Discard. Storage no longer has it (UI plan C4).
-  const [offered, setOffered] = useState<string | null>(null)
+  const [offered, setOffered] = useState<{ text: string; fromHome: boolean } | null>(null)
+  // A plain status line about what Use it did (or could not do).
+  const [offerStatus, setOfferStatus] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
@@ -57,19 +77,34 @@ export function ConcernForm() {
     // A one-time, destructive read of browser storage after hydration (the
     // server render has no storage, so a lazy initial state would mismatch).
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (record) setOffered(record.text)
+    if (record) setOffered({ text: record.text, fromHome: handoffIsFromHome(window.location.search) })
   }, [])
 
   // Another tab signed out, or signed in on another handoff: the held copy
   // goes too, not just the stored one.
   useEffect(() => onPendingConcernRevoked(() => setOffered(null)), [])
 
+  // Use it never replaces what is already typed: with text in the box, the
+  // carried concern goes after a blank line and the status line says so. If
+  // both together would pass the 2,000-character limit, nothing changes and
+  // the offer stays, with the reason.
   const acceptOffered = useCallback(() => {
     if (offered === null) return
-    setConcern(offered)
+    if (concern.trim().length === 0) {
+      setConcern(offered.text)
+      setOfferStatus(null)
+    } else {
+      const combined = `${concern.replace(/\s+$/, '')}\n\n${offered.text}`
+      if (combined.length > PENDING_CONCERN_MAX_LENGTH) {
+        setOfferStatus(OFFER_TOO_LONG)
+        return
+      }
+      setConcern(combined)
+      setOfferStatus(OFFER_APPENDED)
+    }
     setOffered(null)
     textareaRef.current?.focus()
-  }, [offered])
+  }, [offered, concern])
 
   // Focus the textarea on mount on a fine pointer only. On a touch screen it
   // would raise the keyboard over the page, and a screen-reader user would
@@ -180,9 +215,9 @@ export function ConcernForm() {
           className="rounded-xl border border-border-strong bg-surface-1 px-4 py-3"
         >
           <p id="pending-concern-title" className="text-sm text-text-primary">
-            You wrote a concern before signing in.
+            {offered.fromHome ? OFFER_TITLE_HOME : OFFER_TITLE_LOGIN}
           </p>
-          <p className="mt-1.5 line-clamp-3 text-sm text-text-muted [overflow-wrap:anywhere]">{offered}</p>
+          <p className="mt-1.5 line-clamp-3 text-sm text-text-muted [overflow-wrap:anywhere]">{offered.text}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <CTAButton onClick={acceptOffered} variant="secondary" size="sm">
               Use it
@@ -193,6 +228,10 @@ export function ConcernForm() {
           </div>
         </section>
       )}
+      {/* Always mounted, so a live region announces the change. */}
+      <p role="status" data-offer-status className={offerStatus ? 'text-xs text-text-muted' : 'sr-only'}>
+        {offerStatus}
+      </p>
 
       {/* Primary textarea */}
       <div>

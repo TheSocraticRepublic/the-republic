@@ -128,7 +128,7 @@ describe.skipIf(!APP_UP)('the pending concern in two real tabs (Chromium, harnes
       await signIn(tab1, USER_A)
       expect(tab1.url()).toBe(`${APP_URL}/investigate?handoff=${record.handoff}`)
       await expect.poll(() => offer(tab1).count()).toBe(1)
-      expect(await offer(tab1).innerText()).toContain('You wrote a concern before signing in.')
+      expect(await offer(tab1).innerText()).toContain('A concern was written in this tab before signing in.')
       expect(await offer(tab1).innerText()).toContain('C4 harness: a gravel pit by the river')
       // Not prefilled, and gone from storage the moment it is offered.
       expect(await tab1.getByLabel('Describe your concern').inputValue()).toBe('')

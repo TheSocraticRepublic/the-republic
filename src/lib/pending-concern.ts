@@ -31,7 +31,7 @@ export const PENDING_CONCERN_FUTURE_SKEW_MS = 60_000
  *  (orchestrator ruling, C4 fix pass, after Razor W3): long enough for an
  *  email-code round trip, short enough that a concern left on a shared
  *  machine's login page is not offered to the next person for an hour. */
-export const PENDING_CONCERN_MAX_AGE_MS = 60 * 60_000
+export const PENDING_CONCERN_MAX_AGE_MS = 15 * 60_000
 
 /** Where a handoff ends: the Investigate page, carrying the id. */
 export const HANDOFF_PARAM = 'handoff'

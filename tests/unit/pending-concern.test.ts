@@ -162,7 +162,7 @@ describe('a stored record: what is kept and what is discarded', () => {
     ['savedAt Infinity (1e999)', `{"v":1,"text":"t","savedAt":1e999,"handoff":"${ID_A}"}`],
     ['savedAt -Infinity (-1e999)', `{"v":1,"text":"t","savedAt":-1e999,"handoff":"${ID_A}"}`],
     ['savedAt 61 s in the future', JSON.stringify(good({ savedAt: NOW + 61_000 }))],
-    ['savedAt 60 min and 1 ms old', JSON.stringify(good({ savedAt: NOW - 3_600_001 }))],
+    ['savedAt 15 min and 1 ms old', JSON.stringify(good({ savedAt: NOW - 900_001 }))],
     ['no handoff', JSON.stringify({ v: 1, text: 't', savedAt: NOW })],
     ['a malformed handoff', JSON.stringify(good({ savedAt: NOW, handoff: 'not-an-id' }))],
   ])('%s is discarded', (_label, raw) => {
@@ -175,10 +175,10 @@ describe('a stored record: what is kept and what is discarded', () => {
     expect(pc.validatePendingConcern({ v: 1, text: 't', savedAt: NOW, handoff: ID_A }, NOW)).not.toBeNull()
   })
 
-  it('the edges are kept: 2,000 characters, 60 s ahead, exactly 60 min old', () => {
+  it('the edges are kept: 2,000 characters, 60 s ahead, exactly 15 min old', () => {
     expect(pc.parsePendingConcern(JSON.stringify(good({ text: 'x'.repeat(2000), savedAt: NOW })), NOW)).not.toBeNull()
     expect(pc.parsePendingConcern(JSON.stringify(good({ savedAt: NOW + 60_000 })), NOW)).not.toBeNull()
-    expect(pc.parsePendingConcern(JSON.stringify(good({ savedAt: NOW - 3_600_000 })), NOW)).not.toBeNull()
+    expect(pc.parsePendingConcern(JSON.stringify(good({ savedAt: NOW - 900_000 })), NOW)).not.toBeNull()
   })
 
   it('reading a bad record deletes it from storage', () => {
@@ -301,7 +301,7 @@ describe('takePendingConcern: offered only on the matching handoff, deleted as i
   })
 
   it('a stale record is not offered, even on its own handoff', () => {
-    store(good({ savedAt: Date.now() - 3_600_001 }))
+    store(good({ savedAt: Date.now() - 900_001 }))
     expect(pc.takePendingConcern(ID_A)).toBeNull()
     expect(window.sessionStorage.getItem(KEY)).toBeNull()
   })
@@ -625,7 +625,7 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
   it('the matching handoff: offered (not prefilled), and gone from storage as it renders', async () => {
     store(good())
     await renderForm(`?handoff=${ID_A}`)
-    expect(screen.getByText('You wrote a concern before signing in.')).toBeTruthy()
+    expect(screen.getByText('A concern was written in this tab before signing in.')).toBeTruthy()
     expect(screen.getByText('A gravel pit by the river')).toBeTruthy()
     expect((screen.getByLabelText('Describe your concern') as HTMLTextAreaElement).value).toBe('')
     expect(window.sessionStorage.getItem(KEY)).toBeNull()
@@ -636,12 +636,12 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
     await renderForm(`?handoff=${ID_A}`)
     await press('Use it')
     expect((screen.getByLabelText('Describe your concern') as HTMLTextAreaElement).value).toBe('A gravel pit by the river')
-    expect(screen.queryByText('You wrote a concern before signing in.')).toBeNull()
+    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
     cleanup()
     store(good())
     await renderForm(`?handoff=${ID_A}`)
     await press('Discard')
-    expect(screen.queryByText('You wrote a concern before signing in.')).toBeNull()
+    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
     expect((screen.getByLabelText('Describe your concern') as HTMLTextAreaElement).value).toBe('')
   })
 
@@ -650,7 +650,7 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
     await renderForm(`?handoff=${ID_A}`)
     cleanup()
     await renderForm(`?handoff=${ID_A}`)
-    expect(screen.queryByText('You wrote a concern before signing in.')).toBeNull()
+    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
   })
 
   it.each([
@@ -660,7 +660,7 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
   ])('%s: nothing offered', async (_label, search) => {
     store(good())
     await renderForm(search)
-    expect(screen.queryByText('You wrote a concern before signing in.')).toBeNull()
+    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
   })
 
   it('a sign-out in another tab while the offer is held removes the held copy too', async () => {
@@ -673,7 +673,7 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
       new FakeChannel('oc-auth').postMessage({ type: 'signed-out' })
     })
     expect(reload).not.toHaveBeenCalled()
-    expect(screen.queryByText('You wrote a concern before signing in.')).toBeNull()
+    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
     expect(screen.queryByText('A gravel pit by the river')).toBeNull()
     stop()
   })
@@ -685,9 +685,101 @@ describe('Investigate offers the carried concern once, on its handoff', () => {
     await act(async () => {
       new FakeChannel('oc-auth').postMessage({ type: 'clear-pending' })
     })
-    expect(screen.queryByText('You wrote a concern before signing in.')).toBeNull()
+    expect(screen.queryByText('A concern was written in this tab before signing in.')).toBeNull()
     expect(reload).not.toHaveBeenCalled()
     stop()
+  })
+})
+
+describe('the offer after the fix pass (W3 wording, Use it appends, revocation)', () => {
+  it('W3: the login offer never claims authorship', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    const offer = document.querySelector('[data-pending-concern-offer]')!
+    expect(offer.textContent).toContain('A concern was written in this tab before signing in.')
+    expect(offer.textContent).not.toMatch(/You wrote/)
+  })
+
+  it('the signed-in path from the home page has its own wording', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}&from=home`)
+    const offer = document.querySelector('[data-pending-concern-offer]')!
+    expect(offer.textContent).toContain('Your concern from the home page.')
+    expect(offer.textContent).not.toContain('before signing in')
+  })
+
+  it('W3: a record 15 min and 1 s old is not offered', async () => {
+    store(good({ savedAt: Date.now() - 901_000 }))
+    await renderForm(`?handoff=${ID_A}`)
+    expect(document.querySelector('[data-pending-concern-offer]')).toBeNull()
+  })
+
+  it('Use it with text already typed appends after a blank line and says so', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    const box = screen.getByLabelText('Describe your concern') as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: 'my own words  ' } })
+    await press('Use it')
+    expect(box.value).toBe('my own words\n\nA gravel pit by the river')
+    expect(document.querySelector('[data-offer-status]')?.textContent).toBe('The earlier concern was added below your text.')
+    expect(document.querySelector('[data-pending-concern-offer]')).toBeNull()
+  })
+
+  it('Use it into an empty box fills it with no status line', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    await press('Use it')
+    expect((screen.getByLabelText('Describe your concern') as HTMLTextAreaElement).value).toBe('A gravel pit by the river')
+    expect(document.querySelector('[data-offer-status]')?.textContent).toBe('')
+  })
+
+  it('Use it that would pass 2,000 characters changes nothing, keeps the offer, and says why', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    const box = screen.getByLabelText('Describe your concern') as HTMLTextAreaElement
+    const mine = 'x'.repeat(1990)
+    fireEvent.change(box, { target: { value: mine } })
+    await press('Use it')
+    expect(box.value).toBe(mine)
+    expect(document.querySelector('[data-pending-concern-offer]')).not.toBeNull()
+    expect(document.querySelector('[data-offer-status]')?.textContent).toMatch(/doesn't fit/)
+  })
+
+  it('N1: a sign-in in another tab on a different handoff removes the offer on screen', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    const stop = auth.listenForSignOutElsewhere()
+    await act(async () => {
+      new FakeChannel('oc-auth').postMessage({ type: 'signed-in', handoff: ID_B })
+    })
+    expect(document.querySelector('[data-pending-concern-offer]')).toBeNull()
+    stop()
+  })
+
+  it('N1: a sign-in elsewhere naming this handoff also drops the offer, since this tab already took the record (a duplicated tab)', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    const stop = auth.listenForSignOutElsewhere()
+    // Storage is already empty (taken on render), so the rule finds no record
+    // with this id and revokes: the offer goes. Signing in elsewhere is a
+    // sign-in this tab did not make.
+    await act(async () => {
+      new FakeChannel('oc-auth').postMessage({ type: 'signed-in', handoff: ID_A })
+    })
+    expect(document.querySelector('[data-pending-concern-offer]')).toBeNull()
+    stop()
+  })
+
+  it('N2: a failed sign-out in this tab removes the offer on screen here too', async () => {
+    store(good())
+    await renderForm(`?handoff=${ID_A}`)
+    replies.set('/api/auth/signout', status(500))
+    let result: Awaited<ReturnType<typeof auth.clientSignOut>> | undefined
+    await act(async () => {
+      result = await auth.clientSignOut()
+    })
+    expect(result?.ok).toBe(false)
+    expect(document.querySelector('[data-pending-concern-offer]')).toBeNull()
   })
 })
 
