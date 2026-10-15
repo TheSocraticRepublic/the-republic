@@ -518,15 +518,30 @@ interface PlayerData {
   trackRecord: string
 }
 
-/** A role's colour, as an island token reference (`--island-role-*` in globals.css). */
-function getRoleColor(role: string): string {
+/**
+ * Each role's colour (the card rule and the badge tint) and its -ink twin (the
+ * badge text, 4.5:1 on that tint). Written out whole, never built from a key:
+ * Tailwind emits a theme variable only when it finds its full name in source.
+ */
+const ROLE_TOKENS = {
+  regulator: { color: 'var(--color-island-role-regulator)', ink: 'var(--color-island-role-regulator-ink)' },
+  proponent: { color: 'var(--color-island-role-proponent)', ink: 'var(--color-island-role-proponent-ink)' },
+  affected: { color: 'var(--color-island-role-affected)', ink: 'var(--color-island-role-affected-ink)' },
+  indigenous: { color: 'var(--color-island-role-indigenous)', ink: 'var(--color-island-role-indigenous-ink)' },
+  other: { color: 'var(--color-island-role-other)', ink: 'var(--color-island-role-other-ink)' },
+} as const
+
+type RoleKey = keyof typeof ROLE_TOKENS
+
+/** A role's island token stem (`--island-role-*` in globals.css). */
+function getRoleKey(role: string): RoleKey {
   const r = role.toLowerCase().replace(/_/g, ' ')
-  if (r.includes('regulator') || r.includes('decision maker')) return 'var(--color-island-role-regulator)'
-  if (r.includes('proponent') || r.includes('applicant') || r.includes('certificate holder')) return 'var(--color-island-role-proponent)'
-  if (r.includes('beneficiary') || r.includes('affected')) return 'var(--color-island-role-affected)'
-  if (r.includes('rights holder') || r.includes('community') || r.includes('local')) return 'var(--color-island-role-affected)'
-  if (r.includes('indigenous') || r.includes('nation') || r.includes('first nation')) return 'var(--color-island-role-indigenous)'
-  return 'var(--color-island-role-other)'
+  if (r.includes('regulator') || r.includes('decision maker')) return 'regulator'
+  if (r.includes('proponent') || r.includes('applicant') || r.includes('certificate holder')) return 'proponent'
+  if (r.includes('beneficiary') || r.includes('affected')) return 'affected'
+  if (r.includes('rights holder') || r.includes('community') || r.includes('local')) return 'affected'
+  if (r.includes('indigenous') || r.includes('nation') || r.includes('first nation')) return 'indigenous'
+  return 'other'
 }
 
 function parsePlayers(content: string): PlayerData[] {
@@ -574,7 +589,8 @@ function PlayersSection({ content }: { content: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {players.map((player, i) => {
-        const roleColor = getRoleColor(player.role)
+        // The role colour draws the rule and the tint; badge text is its darker -ink twin (4.5:1 on the tint).
+        const { color: roleColor, ink: roleInk } = ROLE_TOKENS[getRoleKey(player.role)]
         return (
           <div
             key={i}
@@ -608,7 +624,7 @@ function PlayersSection({ content }: { content: string }) {
                     letterSpacing: '0.05em',
                     // 8% of the role colour: the old `${hex}14` alpha (20/255).
                     backgroundColor: `color-mix(in srgb, ${roleColor} 8%, transparent)`,
-                    color: roleColor,
+                    color: roleInk,
                     fontWeight: 500,
                   }}
                 >

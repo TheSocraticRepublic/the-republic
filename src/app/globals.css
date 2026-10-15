@@ -80,6 +80,7 @@
   --color-island-mark: var(--island-mark);
   --color-island-toggle: var(--island-toggle);
   --color-island-note: var(--island-note);
+  --color-island-accent-oracle: var(--island-accent-oracle);
   --color-island-accent-gadfly: var(--island-accent-gadfly);
   --color-island-accent-scout: var(--island-accent-scout);
   --color-island-role-regulator: var(--island-role-regulator);
@@ -87,6 +88,11 @@
   --color-island-role-affected: var(--island-role-affected);
   --color-island-role-indigenous: var(--island-role-indigenous);
   --color-island-role-other: var(--island-role-other);
+  --color-island-role-regulator-ink: var(--island-role-regulator-ink);
+  --color-island-role-proponent-ink: var(--island-role-proponent-ink);
+  --color-island-role-affected-ink: var(--island-role-affected-ink);
+  --color-island-role-indigenous-ink: var(--island-role-indigenous-ink);
+  --color-island-role-other-ink: var(--island-role-other-ink);
 
   /* Typography — font families injected by next/font via CSS variables */
   --font-display: var(--font-fraunces), "Palatino Linotype", Georgia, serif;
@@ -181,12 +187,21 @@
   /* Briefing Key Players role colours (briefing-view.tsx getRoleColor). Not
      the Lens roles below: different vocabulary, different hues. No
      .dark-island values yet; they render the same hue in both modes, as they
-     always have. */
+     always have. The role colour draws the card's left rule and the badge's
+     8% tint; the badge TEXT is the -ink twin: the same OKLCH hue (within
+     1.5 deg), lightness lowered until it clears 4.5:1 on its own tint over
+     the paper and over the card (paper-ink.test.ts measures it composited).
+     The role colours themselves fall to 3.06-4.12:1 there. */
   --island-role-regulator: #0891B2;
   --island-role-proponent: #B45309;
   --island-role-affected: #059669;
   --island-role-indigenous: #7C3AED;
   --island-role-other: #64748B;
+  --island-role-regulator-ink: #01728d;   /* 4.61:1 on its tint over card */
+  --island-role-proponent-ink: #aa4c01;   /* 4.60:1 */
+  --island-role-affected-ink: #017753;    /* 4.65:1 */
+  --island-role-indigenous-ink: #7C3AED;  /* 4.63:1, the role colour already passes */
+  --island-role-other-ink: #5a6980;       /* 4.64:1 */
   --island-role-company: #57534e;
   --island-role-official: #2563eb;
   --island-role-agency: #0e7490;

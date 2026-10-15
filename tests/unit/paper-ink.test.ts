@@ -49,7 +49,7 @@ import { colors } from '@/lib/pdf/styles'
 import { PDF_PAPER } from '@/lib/pdf/templates/fippa-request'
 import { renderLeverPdf } from '@/lib/pdf/render'
 import { BriefingView } from '@/components/briefing/briefing-view'
-import { PLACEHOLDER_LETTER } from '../fixtures/letters'
+import { PLACEHOLDER_LETTER, BLOCK_CONSTRUCTS } from '../fixtures/letters'
 import { drain } from './pdf-text'
 
 const REPO = path.resolve(__dirname, '../..')
@@ -201,6 +201,12 @@ describe('island tokens D1 adds, and the dark values the toggle needs', () => {
     'role-affected',
     'role-indigenous',
     'role-other',
+    'role-regulator-ink',
+    'role-proponent-ink',
+    'role-affected-ink',
+    'role-indigenous-ink',
+    'role-other-ink',
+    'accent-oracle',
   ] as const
 
   it('every new token is exposed as --color-island-* through @theme inline', () => {
@@ -229,14 +235,48 @@ describe('island tokens D1 adds, and the dark values the toggle needs', () => {
     expect(dark.get('--island-mark')).toBe('#71717a')
   })
 
-  it('every --color-island-* the briefing references is emitted, except the one known-missing oracle accent', () => {
+  it('every --color-island-* the briefing references is emitted (the Oracle accent included)', () => {
     const theme = themeVars()
-    const used = [...new Set([...fs.readFileSync(BRIEFING_SRC, 'utf8').matchAll(/var\((--color-island-[a-z-]+)\)/g)].map((m) => m[1]))]
+    const src = fs.readFileSync(BRIEFING_SRC, 'utf8')
+    const used = [...new Set([...src.matchAll(/var\((--color-island-[a-z-]+)\)/g)].map((m) => m[1]))]
+    for (const k of ROLES) {
+      expect(used).toContain(`--color-island-role-${k}`)
+      expect(used).toContain(`--color-island-role-${k}-ink`)
+    }
     expect(used).toContain('--color-island-mark')
-    // Pre-existing, outside D1's scope: --color-island-accent-oracle was never
-    // added to @theme inline, so the Oracle pull-quote rule and callout paint
-    // nothing. Reported as deferred; this pin fails if it changes either way.
-    expect(used.filter((v) => !theme.has(v))).toEqual(['--color-island-accent-oracle'])
+    expect(used).toContain('--color-island-accent-oracle')
+    expect(used.filter((v) => !theme.has(v))).toEqual([])
+  })
+})
+
+const ROLES = ['regulator', 'proponent', 'affected', 'indigenous', 'other'] as const
+
+describe('role badges: text ink clears 4.5:1 on its own tint (W1)', () => {
+  /** The badge ground: the role colour at 8% (color-mix with transparent) over a paper ground. */
+  function tint(role: string, ground: string): string {
+    const [r, g, b] = parseHex(role)
+    const [R, G, B] = parseHex(ground)
+    const mix = (f: number, k: number) => Math.round(f * 0.08 + k * 0.92)
+    return '#' + [mix(r, R), mix(g, G), mix(b, B)].map((n) => n.toString(16).padStart(2, '0')).join('')
+  }
+
+  it.each(ROLES)('%s: the -ink twin clears 4.5:1 on its tint over the paper and over the card', (k) => {
+    const root = scopeVars(':root')
+    const fill = root.get(`--island-role-${k}`)!
+    const ink = root.get(`--island-role-${k}-ink`)!
+    for (const ground of [PAPER_INK.bg, PAPER_INK.card]) {
+      const r = contrast(ink, tint(fill, ground))
+      expect(r, `${k} ink ${ink} on ${fill} 8% over ${ground}`).toBeGreaterThanOrEqual(BODY_MIN)
+    }
+  })
+
+  it('the checker sees the old failure: the role colours as text fail on their own tint (3.06 to 4.12)', () => {
+    const root = scopeVars(':root')
+    const low = ROLES.filter((k) => {
+      const fill = root.get(`--island-role-${k}`)!
+      return contrast(fill, tint(fill, PAPER_INK.card)) < BODY_MIN
+    })
+    expect(low).toEqual(['regulator', 'proponent', 'affected', 'other'])
   })
 })
 
@@ -406,7 +446,7 @@ describe('the briefing paints marks, accents, roles and the toggle from island t
   ])('the %s badge and card rule use --color-island-role-%s', (role, token) => {
     const badge = byText(light, 'span', role)
     const s = styleOf(badge)
-    expect(s).toContain(`color:var(--color-island-role-${token})`)
+    expect(s).toMatch(new RegExp(`(^|;)color:var\\(--color-island-role-${token}-ink\\)`))
     expect(s).toContain(`background-color:color-mix(in srgb, var(--color-island-role-${token}) 8%, transparent)`)
     expect(s).not.toMatch(/#[0-9a-f]{6}/i)
     const card = badge.parentElement!.parentElement!
@@ -463,11 +503,37 @@ describe('the PDF draws its shared colours from the paper ink, and the filing pr
     expect(colors.footerText).toBe('#a8a29e')
   })
 
-  it('the filing keeps its own pure white page, and its rule is the paper mark', () => {
+  it('the filing keeps its own pure white page and its own rule ink, a literal, not the screen mark', () => {
     expect(PDF_PAPER.ground).toBe('#FFFFFF')
     expect(PDF_PAPER.placeholderInk).toBe('#92400E')
-    expect(PDF_PAPER.rule.toLowerCase()).toBe(PAPER_INK.mark)
+    // The filing's rule is its own constant: a screen-only change to --island-mark must never move a live filing.
+    expect(PDF_PAPER.rule).toBe('#A8A29E')
   })
+
+  it('a rendered filing strokes its rule #A8A29E (read from the PDF\'s own stroke operators)', async () => {
+    const buf = await drain(
+      await renderLeverPdf({
+        title: 'QA letter',
+        content: BLOCK_CONSTRUCTS.content,
+        actionType: 'fippa_request',
+        metadata: BLOCK_CONSTRUCTS.format ? { letterFormat: BLOCK_CONSTRUCTS.format } : {},
+      })
+    )
+    const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise
+    const strokes: string[] = []
+    for (let n = 1; n <= doc.numPages; n++) {
+      const ops = await (await doc.getPage(n)).getOperatorList()
+      ops.fnArray.forEach((fn, i) => {
+        if (fn === pdfjs.OPS.setStrokeRGBColor) {
+          const arg = ops.argsArray[i] as unknown
+          strokes.push(typeof arg === 'string' ? arg.toLowerCase() : String((arg as unknown[])[0]).toLowerCase())
+        }
+      })
+    }
+    await doc.destroy()
+    expect(strokes.length).toBeGreaterThan(0)
+    expect([...new Set(strokes)]).toEqual(['#a8a29e'])
+  }, 60_000)
 
   it('the FIPPA PDF fills exactly the colours it filled before D1', async () => {
     const buf = await drain(
