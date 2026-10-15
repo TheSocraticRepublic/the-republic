@@ -832,6 +832,24 @@ describe('saving while signed out never shows "Unauthorized" (Jen C7)', () => {
     expect(document.body.textContent).not.toContain(mod.NOTICE_LEAD.server)
   })
 
+  it('any other Lever write answered 401 (Mark as Final) shows no server string and raises the notice', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method === 'PATCH') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })
+    }))
+    const { AppShell } = await loadShell()
+    const { ActionViewer } = await import('@/components/lever/action-viewer')
+    render(h(AppShell, { variant: 'app', displayName: 'ada', children: h(ActionViewer, {
+      actionId: '44444444-4444-4444-8444-444444444444',
+      initialContent: 'Dear Council,\nI object.',
+      initialStatus: 'draft',
+      actionType: 'public_comment',
+    } as unknown as Parameters<typeof ActionViewer>[0]) }))
+    await click(screen.getByText('Mark as Final'))
+    await waitForText(mod.NOTICE_LEAD.server)
+    expect(document.body.textContent).not.toContain('Unauthorized')
+  })
+
   it('setup Claim: plain copy with the mark, text kept, notice raised', async () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
       if (url === '/api/profile' && init?.method === 'POST') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
@@ -950,6 +968,20 @@ describe('the login card: errors, the unavailable recipe, touch sizes (Jen C1, C
     await enter(email2)
     expect(screen.getByRole('alert')).toBeTruthy()
     expect(email2.getAttribute('aria-invalid')).toBeNull()
+  })
+
+  it('a verify 429 or 500 marks nothing: it is not about the code', async () => {
+    for (const verify of [[429, {}], [500, {}]] as Array<[number, unknown]>) {
+      const email = await renderLoginWith({ verify })
+      fireEvent.change(email, { target: { value: 'a@b.test' } })
+      await enter(email)
+      const code = screen.getByLabelText('8-digit code') as HTMLInputElement
+      fireEvent.change(code, { target: { value: '12345678' } })
+      await enter(code)
+      expect(screen.getByRole('alert')).toBeTruthy()
+      expect(code.getAttribute('aria-invalid')).toBeNull()
+      cleanup()
+    }
   })
 
   it('the next attempt clears the mark', async () => {
