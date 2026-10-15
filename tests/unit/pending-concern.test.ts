@@ -245,6 +245,8 @@ describe('storage that throws is a no-op', () => {
 describe('the handoff id survives safeRedirectTarget, and a malformed one is refused on read', () => {
   it('the login URL carries /investigate?handoff=<id> as one redirect value, and the checked target keeps it', async () => {
     const { safeRedirectTarget } = await import('@/lib/navigation/safe-redirect')
+    // One encoded value, so no consumer can split the target's own ? and =.
+    expect(pc.loginUrlForHandoff(ID_A)).toBe(`/login?redirect=%2Finvestigate%3Fhandoff%3D${ID_A}`)
     const login = new URL(pc.loginUrlForHandoff(ID_A), ORIGIN)
     expect(login.pathname).toBe('/login')
     const raw = login.searchParams.get('redirect')

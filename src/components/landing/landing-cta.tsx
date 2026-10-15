@@ -47,8 +47,9 @@ export function LandingCta() {
   const [busy, setBusy] = useState(false)
   const empty = text.trim().length === 0
 
+  // Not re-checked here: CTAButton's aria-disabled guard refuses the click
+  // while the box is empty or a start is in flight, and it is the only caller.
   async function start() {
-    if (empty || busy) return
     setBusy(true)
     const signedOut = await probeSignedOut()
     if (signedOut === false) {
