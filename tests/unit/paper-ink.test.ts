@@ -432,6 +432,19 @@ describe('the briefing paints marks, accents, roles and the toggle from island t
     expect(dark.querySelector('article')!.className).toContain('dark-island')
     expect(light.querySelector('article')!.className).not.toContain('dark-island')
   })
+
+  it('the toggle on the raw streaming paper (before the first section) paints the same token', () => {
+    for (const darkMode of [false, true]) {
+      const html = renderToStaticMarkup(
+        createElement(BriefingView, { text: 'Reading the minutes', isStreaming: true, darkMode, onToggleDarkMode: () => {} })
+      )
+      const doc = new DOMParser().parseFromString(html, 'text/html')
+      expect(doc.body.textContent).toContain('Reading the minutes')
+      const s = styleOf(doc.querySelector('article > button'))
+      expect(s).toContain('background-color:var(--color-island-toggle)')
+      expect(s).not.toContain('rgba(')
+    }
+  })
 })
 
 // ---- the PDF ----------------------------------------------------------------
