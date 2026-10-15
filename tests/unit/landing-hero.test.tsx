@@ -20,7 +20,7 @@ describe('the hero', () => {
     const html = renderToStaticMarkup(h(Hero))
     expect(html).toContain('min-h-[88svh]')
     // Clears the fixed header (Jen C1).
-    expect(html).toMatch(/class="[^"]*\bpt-24\b[^"]*\bpb-12\b/)
+    expect(html).toMatch(/class="[^"]*\bpt-28\b[^"]*\bpb-12\b/)
     expect(html).not.toContain('min-h-screen')
   })
 

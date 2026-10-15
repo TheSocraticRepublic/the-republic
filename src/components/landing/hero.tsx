@@ -21,10 +21,11 @@ export const HERO_LINE =
 export function Hero() {
   return (
     <section
-      // pt-24 pb-12: the type block always clears the fixed header (80px),
-      // on a 320 phone and on landscape phones where the content outgrows
-      // 88svh (Jen C4 C1).
-      className="relative z-0 flex min-h-[88svh] flex-col items-center justify-center px-6 pt-24 pb-12 text-center"
+      // pt-28 pb-12: the type block always clears the fixed header by 16px or
+      // more, on a 320 phone and on landscape phones where the content
+      // outgrows 88svh (Jen C4 C1). Jen proposed pt-24 against an 80px
+      // header; with Sign in at 44px on touch (her C4) the header is 84px.
+      className="relative z-0 flex min-h-[88svh] flex-col items-center justify-center px-6 pt-28 pb-12 text-center"
       data-scroll-section="hero"
     >
       {/* Background image with parallax target */}

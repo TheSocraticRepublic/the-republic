@@ -80,12 +80,24 @@ async function heroContrast(page: Page): Promise<Record<string, number>> {
       tagline: Array.from(hero.querySelectorAll('p')).find((p) => p.textContent?.startsWith('A Republic'))!,
       line: hero.querySelector('[data-hero-line]')!,
     }
-    const out: Record<string, { color: string; box: { x: number; y: number; width: number; height: number } }> = {}
+    // Computed colours can be oklab() (Tailwind's white/90); a 1x1 canvas
+    // turns any of them into sRGB bytes plus alpha.
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 1
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+    const rgba = (css: string) => {
+      ctx.clearRect(0, 0, 1, 1)
+      ctx.fillStyle = css
+      ctx.fillRect(0, 0, 1, 1)
+      const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data
+      return [r, g, b, a / 255]
+    }
+    const out: Record<string, { color: number[]; box: { x: number; y: number; width: number; height: number } }> = {}
     for (const [name, el] of Object.entries(pick)) {
       const range = document.createRange()
       range.selectNodeContents(el)
       const r = range.getBoundingClientRect()
-      out[name] = { color: getComputedStyle(el).color, box: { x: r.x, y: r.y, width: r.width, height: r.height } }
+      out[name] = { color: rgba(getComputedStyle(el).color), box: { x: r.x, y: r.y, width: r.width, height: r.height } }
       ;(el as HTMLElement).dataset.geomHide = '1'
     }
     return out
@@ -98,9 +110,7 @@ async function heroContrast(page: Page): Promise<Record<string, number>> {
     const clip = { x: Math.max(0, Math.floor(box.x)), y: Math.max(0, Math.floor(box.y)), width: Math.ceil(box.width), height: Math.ceil(box.height) }
     const png = await page.screenshot({ clip })
     const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true })
-    const parts = (color.match(/\d+(\.\d+)?/g) ?? []).map(Number)
-    const [r, g, b] = parts
-    const a = parts.length >= 4 ? parts[3] : 1
+    const [r, g, b, a] = color
     const ratios: number[] = []
     for (let i = 0; i < info.width * info.height; i++) {
       const bg = [data[i * 3], data[i * 3 + 1], data[i * 3 + 2]]
