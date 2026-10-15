@@ -240,9 +240,9 @@ export default function LoginPage() {
   return (
     // overflow-x-clip: the brand scrim reaches 64px past the column, which
     // widened every phone's layout (Jen C3 C1). justify-center-safe (CSS
-    // `safe center`) plus the top
+    // `safe center`, after a plain `center` for Safari before 17.6) plus the top
     // padding keeps a tall card from climbing under "Back" at 320.
-    <main className="relative flex min-h-screen flex-col items-center justify-center-safe overflow-x-clip bg-surface-0 px-4 pt-16 pb-8">
+    <main className="relative flex min-h-screen flex-col items-center justify-center justify-center-safe overflow-x-clip bg-surface-0 px-4 pt-16 pb-8">
       {/* Cave photo background. The lit opening sits under the paper and the
           brand block on dark rock, every line on the photo at least 4.5:1
           (Jen C3 C2). */}

@@ -163,6 +163,26 @@ describe.skipIf(!APP_UP)('login geometry and photo contrast on the harness (Chro
         return { jc: getComputedStyle(main).justifyContent, mid: (h1.top + card.bottom) / 2, vh: window.innerHeight }
       })
       expect(m.jc).toBe('safe center')
+      // Older Safari drops `safe center`; the plain `center` must come first in
+      // the stylesheet so it is what remains (Razor DN2).
+      const order = await page.evaluate(() => {
+        const found: string[] = []
+        const walk = (rules: CSSRuleList) => {
+          for (const r of Array.from(rules)) {
+            if (r instanceof CSSStyleRule && (r.selectorText === '.justify-center' || r.selectorText === '.justify-center-safe')) found.push(r.selectorText)
+            if ('cssRules' in r && (r as CSSGroupingRule).cssRules) walk((r as CSSGroupingRule).cssRules)
+          }
+        }
+        for (const sheet of Array.from(document.styleSheets)) {
+          try {
+            walk(sheet.cssRules)
+          } catch {
+            // A cross-origin sheet (fonts): not ours.
+          }
+        }
+        return found
+      })
+      expect(order).toEqual(['.justify-center', '.justify-center-safe'])
       expect(Math.abs(m.mid - m.vh / 2)).toBeLessThanOrEqual(40)
     } finally {
       await context.close()

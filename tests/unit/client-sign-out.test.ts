@@ -850,6 +850,26 @@ describe('saving while signed out never shows "Unauthorized" (Jen C7)', () => {
     expect(document.body.textContent).not.toContain('Unauthorized')
   })
 
+  it('Lever Re-generate answered 401: plain copy, the letter kept, notice raised (Razor DN1)', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (url === '/api/lever/generate') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })
+    }))
+    const { AppShell } = await loadShell()
+    const { ActionViewer } = await import('@/components/lever/action-viewer')
+    render(h(AppShell, { variant: 'app', displayName: 'ada', children: h(ActionViewer, {
+      actionId: '44444444-4444-4444-8444-444444444444',
+      initialContent: 'Dear Council,\nI object to the rezoning.',
+      initialStatus: 'draft',
+      actionType: 'public_comment',
+    } as unknown as Parameters<typeof ActionViewer>[0]) }))
+    await click(screen.getByText('Re-generate'))
+    await waitForText("You're signed out, so the letter wasn't regenerated. Your text is still here.")
+    expect(document.body.textContent).not.toContain('Unauthorized')
+    expect(document.body.textContent).toContain('I object to the rezoning.')
+    expect(document.body.textContent).toContain(mod.NOTICE_LEAD.server)
+  })
+
   it('setup Claim: plain copy with the mark, text kept, notice raised', async () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
       if (url === '/api/profile' && init?.method === 'POST') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
@@ -1009,6 +1029,8 @@ describe('the login card: errors, the unavailable recipe, touch sizes (Jen C1, C
     await renderLoginWith({})
     const cls = (document.querySelector('main')?.getAttribute('class') ?? '').split(' ')
     for (const c of ['overflow-x-clip', 'justify-center-safe', 'pt-16', 'pb-8']) expect(cls).toContain(c)
-    expect(cls).not.toContain('justify-center')
+    // The plain centre is there too, for Safari before 17.6, where `safe
+    // center` is dropped (Razor DN2); the compiled order is checked on the harness.
+    expect(cls).toContain('justify-center')
   })
 })

@@ -8,6 +8,11 @@ import { clsx } from 'clsx'
 import { CTAButton } from '@/components/ui/cta-button'
 import { ErrorMark, FIELD_REASON_CLASS, Field, FieldLabel, fieldControlClass, fieldToggleClasses } from '@/components/ui/field'
 import { leverActionTypeEnum } from '@/lib/db/schema'
+import { noteSignedOutByServer } from '@/lib/auth/client-sign-out'
+
+/** Create answered 401: the same mapping as Save and Claim (Razor C3 DN1). */
+export const CREATE_SIGNED_OUT_MESSAGE =
+  "You're signed out, so the action wasn't created. What you typed is still here."
 import {
   PROVINCE_OPTIONS,
   PUBLIC_BODY_DIRECTORY,
@@ -273,6 +278,13 @@ export function NewActionDialog({
         }),
       })
       const data = await res.json().catch(() => null)
+      if (res.status === 401) {
+        // Signed out: never the middleware's "Unauthorized". The dialog stays
+        // open with everything typed, and the shell's notice has the way back in.
+        noteSignedOutByServer()
+        setCreateError(CREATE_SIGNED_OUT_MESSAGE)
+        return
+      }
       if (!res.ok) {
         // A 4xx carries the server's own plain-instructional reason; show it.
         // Network failures and 5xx keep the generic line below.

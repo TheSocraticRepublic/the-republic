@@ -295,3 +295,29 @@ describe('NewActionDialog', () => {
     expect((screen.getByLabelText('Public body name') as HTMLInputElement).value).toBe('')
   })
 })
+
+describe('NewActionDialog: Create while signed out (Razor C3 DN1)', () => {
+  it('a 401 shows plain copy, never "Unauthorized", keeps the text, and raises the signed-out notice', async () => {
+    const auth = await import('@/lib/auth/client-sign-out')
+    auth.resetAuthChannelForTests()
+    let seen: string | null = null
+    function NoticeProbe() {
+      seen = auth.useSignedOutNotice()
+      return null
+    }
+    installFetch({ investigation: BC_INVESTIGATION, create: Promise.resolve({ status: 401, body: { error: 'Unauthorized' } }) })
+    render(<><NoticeProbe /><NewActionDialog initialInvestigationId="inv-1" initialActionType="fippa_request" /></>)
+    await waitFor(() => expect(provinceSelect().value).toBe('bc'))
+    const description = screen.getByLabelText('What records do you want?') as HTMLTextAreaElement
+    fireEvent.change(description, { target: { value: 'All 2025 inspection reports.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Generate' }))
+    await waitFor(() =>
+      expect(screen.getByText("You're signed out, so the action wasn't created. What you typed is still here.")).toBeTruthy()
+    )
+    expect(document.body.textContent).not.toContain('Unauthorized')
+    expect(description.value).toBe('All 2025 inspection reports.')
+    expect(seen).toBe('server')
+    expect(push).not.toHaveBeenCalled()
+    auth.resetAuthChannelForTests()
+  })
+})

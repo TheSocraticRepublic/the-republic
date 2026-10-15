@@ -11,6 +11,9 @@ import { ErrorMark } from '@/components/ui/field'
 /** Save answered 401 (Jen C3 C7): never the server's "Unauthorized". The
  *  shell's notice carries the way back in. */
 export const EDIT_SIGNED_OUT_MESSAGE = "You're signed out, so this wasn't saved. Your text is still here."
+/** Regenerate answered 401: the same mapping (Razor C3 DN1). */
+export const REGENERATE_SIGNED_OUT_MESSAGE =
+  "You're signed out, so the letter wasn't regenerated. Your text is still here."
 import { LetterPaper, type RecipientNoticeView } from '@/components/lever/letter-paper'
 import {
   CHOOSE_PROVINCE_ERROR,
@@ -318,6 +321,14 @@ export function ActionViewer({
         signal: abortRef.current.signal,
       })
 
+      if (res.status === 401) {
+        // Signed out: never the middleware's "Unauthorized"; the letter on
+        // screen is untouched, and the shell's notice has the way back in.
+        noteSignedOutByServer()
+        setActionError(REGENERATE_SIGNED_OUT_MESSAGE)
+        setMode('viewing')
+        return
+      }
       if (!res.ok || !res.body) {
         const error = res.ok ? null : await readError(res)
         // A FIPPA draft with no province gets the choice, here (A2 carry).
