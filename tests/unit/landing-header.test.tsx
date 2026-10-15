@@ -216,6 +216,11 @@ describe('one start at a time across the header and the closing box (Razor C4 DN
     const { startLandingHandoff } = await import('@/components/landing/landing-cta')
     expect(await startLandingHandoff('one')).toBe(true)
     expect(await startLandingHandoff('two')).toBe(false)
+    // An ordinary (non-restored) pageshow is not a return: still held.
+    await act(async () => {
+      window.dispatchEvent(new Event('pageshow'))
+    })
+    expect(await startLandingHandoff('two again')).toBe(false)
     const restored = new Event('pageshow') as PageTransitionEvent
     Object.defineProperty(restored, 'persisted', { value: true })
     await act(async () => {
