@@ -193,14 +193,17 @@
      the paper and over the card (paper-ink.test.ts measures it composited).
      The role colours themselves fall to 3.06-4.12:1 there. */
   --island-role-regulator: #0891B2;
-  --island-role-proponent: #B45309;
+  /* Proponent violet, rights holder / Indigenous amber (Jen D1 C4): amber
+     means rights holder here and in the Lens (--island-role-rights-holder),
+     never a proponent. */
+  --island-role-proponent: #7C3AED;
   --island-role-affected: #059669;
-  --island-role-indigenous: #7C3AED;
+  --island-role-indigenous: #B45309;
   --island-role-other: #64748B;
   --island-role-regulator-ink: #01728d;   /* 4.61:1 on its tint over card */
-  --island-role-proponent-ink: #aa4c01;   /* 4.60:1 */
+  --island-role-proponent-ink: #7C3AED;   /* 4.63:1, the role colour already passes */
   --island-role-affected-ink: #017753;    /* 4.65:1 */
-  --island-role-indigenous-ink: #7C3AED;  /* 4.63:1, the role colour already passes */
+  --island-role-indigenous-ink: #aa4c01;  /* 4.60:1 */
   --island-role-other-ink: #5a6980;       /* 4.64:1 */
   --island-role-company: #57534e;
   --island-role-official: #2563eb;

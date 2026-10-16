@@ -542,14 +542,20 @@ const ROLE_TOKENS = {
 
 type RoleKey = keyof typeof ROLE_TOKENS
 
-/** A role's island token stem (`--island-role-*` in globals.css). */
-function getRoleKey(role: string): RoleKey {
+/**
+ * A role's island token stem (`--island-role-*` in globals.css). Rights holders
+ * and Indigenous nations are tested before "community" and "local", so a Nation
+ * described as a rights holder or a local First Nation wears the rights-holder
+ * amber here, as it does in the Lens (Jen D1 C4).
+ */
+export function getRoleKey(role: string): RoleKey {
   const r = role.toLowerCase().replace(/_/g, ' ')
   if (r.includes('regulator') || r.includes('decision maker')) return 'regulator'
   if (r.includes('proponent') || r.includes('applicant') || r.includes('certificate holder')) return 'proponent'
   if (r.includes('beneficiary') || r.includes('affected')) return 'affected'
-  if (r.includes('rights holder') || r.includes('community') || r.includes('local')) return 'affected'
-  if (r.includes('indigenous') || r.includes('nation') || r.includes('first nation')) return 'indigenous'
+  if (r.includes('rights holder') || r.includes('indigenous') || r.includes('first nation')) return 'indigenous'
+  if (r.includes('community') || r.includes('local')) return 'affected'
+  if (r.includes('nation')) return 'indigenous'
   return 'other'
 }
 

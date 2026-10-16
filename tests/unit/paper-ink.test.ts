@@ -48,7 +48,7 @@ import {
 import { colors } from '@/lib/pdf/styles'
 import { PDF_PAPER } from '@/lib/pdf/templates/fippa-request'
 import { renderLeverPdf } from '@/lib/pdf/render'
-import { BriefingView } from '@/components/briefing/briefing-view'
+import { BriefingView, getRoleKey } from '@/components/briefing/briefing-view'
 import { PLACEHOLDER_LETTER, BLOCK_CONSTRUCTS } from '../fixtures/letters'
 import { drain } from './pdf-text'
 
@@ -222,16 +222,14 @@ describe('island tokens D1 adds, and the dark values the toggle needs', () => {
     expect(missing).toEqual([])
   })
 
-  it(':root keeps the values the briefing painted before D1', () => {
+  it(':root keeps the values the briefing painted before D1 (roles: Jen C4 swap)', () => {
     const root = scopeVars(':root')
     expect(root.get('--island-toggle')).toBe('rgba(0, 0, 0, 0.04)')
     expect(root.get('--island-note')).toBe('rgba(120, 113, 108, 0.04)')
     expect(root.get('--island-accent-gadfly')).toBe('#C8A84B')
     expect(root.get('--island-accent-scout')).toBe('#B088C8')
     expect(root.get('--island-role-regulator')).toBe('#0891B2')
-    expect(root.get('--island-role-proponent')).toBe('#B45309')
     expect(root.get('--island-role-affected')).toBe('#059669')
-    expect(root.get('--island-role-indigenous')).toBe('#7C3AED')
     expect(root.get('--island-role-other')).toBe('#64748B')
   })
 
@@ -283,7 +281,40 @@ describe('role badges: text ink clears 4.5:1 on its own tint (W1)', () => {
       const fill = root.get(`--island-role-${k}`)!
       return contrast(fill, tint(fill, PAPER_INK.card)) < BODY_MIN
     })
-    expect(low).toEqual(['regulator', 'proponent', 'affected', 'other'])
+    // After the C4 swap: violet (proponent) passes as its own ink; amber (rights holder) does not.
+    expect(low).toEqual(['regulator', 'affected', 'indigenous', 'other'])
+  })
+
+  it('Jen C4: proponent is violet (rule and ink), rights holder / Indigenous is the Lens rights-holder amber', () => {
+    const root = scopeVars(':root')
+    expect(root.get('--island-role-proponent')).toBe('#7C3AED')
+    expect(root.get('--island-role-proponent-ink')).toBe('#7C3AED')
+    expect(root.get('--island-role-indigenous')).toBe('#B45309')
+    expect(root.get('--island-role-indigenous-ink')).toBe('#aa4c01')
+    expect(root.get('--island-role-indigenous')!.toLowerCase()).toBe(root.get('--island-role-rights-holder')!.toLowerCase())
+    expect(root.get('--island-role-proponent')!.toLowerCase()).not.toBe(root.get('--island-role-rights-holder')!.toLowerCase())
+  })
+})
+
+describe('getRoleKey: rights holders and Indigenous nations before community and local (Jen C4)', () => {
+  it.each([
+    ['Regulator', 'regulator'],
+    ['DECISION_MAKER', 'regulator'],
+    ['Proponent', 'proponent'],
+    ['Applicant', 'proponent'],
+    ['Affected community', 'affected'],
+    ['Beneficiary', 'affected'],
+    ['Rights holder', 'indigenous'],
+    ['Rights holder community', 'indigenous'],
+    ['Indigenous community', 'indigenous'],
+    ['Local First Nation', 'indigenous'],
+    ['First Nation (local)', 'indigenous'],
+    ['Local community', 'affected'],
+    ['Community group', 'affected'],
+    ['Sinixt Nation', 'indigenous'],
+    ['Federal department', 'other'],
+  ])('%s -> %s', (role, key) => {
+    expect(getRoleKey(role)).toBe(key)
   })
 })
 
