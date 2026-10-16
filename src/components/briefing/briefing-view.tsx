@@ -38,34 +38,43 @@ interface ParsedSection {
   content: string
 }
 
-// ---- Arm color config (light surface values) ----
+// ---- Arm color config ----
+// `color` (the arm accent) draws shapes: tints, borders, icons, rules. Text on
+// the paper uses `ink`, the arm's light-ground ink, which .content-island
+// re-points to the light values (globals.css): the accent resolves to the dark
+// chrome's hue under <html class="dark"> and falls to ~2:1 on paper (Jen D1 C1).
 
 const ARM_COLORS: Record<
   string,
-  { color: string; bg: string; border: string }
+  { color: string; ink: string; bg: string; border: string }
 > = {
   scout: {
     color: 'var(--accent-scout)',
+    ink: 'var(--accent-scout-ink)',
     bg: 'color-mix(in srgb, var(--accent-scout) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-scout) 18%, transparent)',
   },
   oracle: {
     color: 'var(--accent-oracle)',
+    ink: 'var(--accent-oracle-ink)',
     bg: 'color-mix(in srgb, var(--accent-oracle) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
   },
   lever: {
     color: 'var(--accent-lever)',
+    ink: 'var(--accent-lever-ink)',
     bg: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
   },
   mirror: {
     color: 'var(--accent-mirror)',
+    ink: 'var(--accent-mirror-ink)',
     bg: 'color-mix(in srgb, var(--accent-mirror) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
   },
   gadfly: {
     color: 'var(--accent-gadfly)',
+    ink: 'var(--accent-gadfly-ink)',
     bg: 'color-mix(in srgb, var(--accent-gadfly) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
   },
@@ -157,7 +166,7 @@ function SectionHeader({
         />
       )}
       <h3
-        className="text-3xs font-semibold uppercase"
+        className="text-2xs font-semibold uppercase"
         style={{ color: color ?? 'var(--color-island-muted)' }}
       >
         {heading}
@@ -390,7 +399,7 @@ function ProseSection({
           <ul key={i} className="space-y-1.5 pl-0">
             {block.items.map((item, j) => (
               <li key={j} className="flex items-start gap-2" style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--color-island-secondary)' }}>
-                <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: 'var(--color-island-faint)' }} />
+                <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: 'var(--color-island-mark)' }} />
                 <span>{renderInline(item)}</span>
               </li>
             ))}
@@ -450,8 +459,8 @@ function ProseSection({
             <div
               key={i}
               style={{
-                borderLeft: `3px solid rgba(200,168,75,0.4)`,
-                backgroundColor: 'rgba(200,168,75,0.05)',
+                borderLeft: '3px solid color-mix(in srgb, var(--color-island-accent-gadfly) 40%, transparent)',
+                backgroundColor: 'color-mix(in srgb, var(--color-island-accent-gadfly) 5%, transparent)',
                 padding: '14px 16px',
                 borderRadius: '0 8px 8px 0',
                 margin: '4px 0',
@@ -518,15 +527,36 @@ interface PlayerData {
   trackRecord: string
 }
 
-function getRoleColor(role: string): string {
+/**
+ * Each role's colour (the card rule and the badge tint) and its -ink twin (the
+ * badge text, 4.5:1 on that tint). Written out whole, never built from a key:
+ * Tailwind emits a theme variable only when it finds its full name in source.
+ */
+const ROLE_TOKENS = {
+  regulator: { color: 'var(--color-island-role-regulator)', ink: 'var(--color-island-role-regulator-ink)' },
+  proponent: { color: 'var(--color-island-role-proponent)', ink: 'var(--color-island-role-proponent-ink)' },
+  affected: { color: 'var(--color-island-role-affected)', ink: 'var(--color-island-role-affected-ink)' },
+  indigenous: { color: 'var(--color-island-role-indigenous)', ink: 'var(--color-island-role-indigenous-ink)' },
+  other: { color: 'var(--color-island-role-other)', ink: 'var(--color-island-role-other-ink)' },
+} as const
+
+type RoleKey = keyof typeof ROLE_TOKENS
+
+/**
+ * A role's island token stem (`--island-role-*` in globals.css). Rights holders
+ * and Indigenous nations are tested before "community" and "local", so a Nation
+ * described as a rights holder or a local First Nation wears the rights-holder
+ * amber here, as it does in the Lens (Jen D1 C4).
+ */
+export function getRoleKey(role: string): RoleKey {
   const r = role.toLowerCase().replace(/_/g, ' ')
-  if (r.includes('regulator') || r.includes('decision maker')) return '#0891B2'
-  if (r.includes('proponent') || r.includes('applicant') || r.includes('certificate holder')) return '#B45309'
-  if (r.includes('beneficiary') || r.includes('affected')) return '#059669'
-  if (r.includes('rights holder') || r.includes('community') || r.includes('local')) return '#059669'
-  if (r.includes('indigenous') || r.includes('nation') || r.includes('first nation')) return '#7C3AED'
-  if (r.includes('federal')) return '#64748B'
-  return '#64748B'
+  if (r.includes('regulator') || r.includes('decision maker')) return 'regulator'
+  if (r.includes('proponent') || r.includes('applicant') || r.includes('certificate holder')) return 'proponent'
+  if (r.includes('beneficiary') || r.includes('affected')) return 'affected'
+  if (r.includes('rights holder') || r.includes('indigenous') || r.includes('first nation')) return 'indigenous'
+  if (r.includes('community') || r.includes('local')) return 'affected'
+  if (r.includes('nation')) return 'indigenous'
+  return 'other'
 }
 
 function parsePlayers(content: string): PlayerData[] {
@@ -574,7 +604,8 @@ function PlayersSection({ content }: { content: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {players.map((player, i) => {
-        const roleColor = getRoleColor(player.role)
+        // The role colour draws the rule and the tint; badge text is its darker -ink twin (4.5:1 on the tint).
+        const { color: roleColor, ink: roleInk } = ROLE_TOKENS[getRoleKey(player.role)]
         return (
           <div
             key={i}
@@ -603,11 +634,12 @@ function PlayersSection({ content }: { content: string }) {
                     display: 'inline-block',
                     borderRadius: '9999px',
                     padding: '2px 10px',
-                    fontSize: '10px',
+                    fontSize: '11px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    backgroundColor: `${roleColor}14`,
-                    color: roleColor,
+                    // 8% of the role colour: the old `${hex}14` alpha (20/255).
+                    backgroundColor: `color-mix(in srgb, ${roleColor} 8%, transparent)`,
+                    color: roleInk,
                     fontWeight: 500,
                   }}
                 >
@@ -755,7 +787,7 @@ function ComparisonSection({ content }: { content: string }) {
                   style={{
                     display: 'block',
                     fontFamily: 'var(--font-body)',
-                    fontSize: '10px',
+                    fontSize: '11px',
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.08em',
@@ -777,7 +809,7 @@ function ComparisonSection({ content }: { content: string }) {
                   style={{
                     display: 'block',
                     fontFamily: 'var(--font-body)',
-                    fontSize: '10px',
+                    fontSize: '11px',
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.08em',
@@ -799,7 +831,7 @@ function ComparisonSection({ content }: { content: string }) {
                   style={{
                     display: 'block',
                     fontFamily: 'var(--font-body)',
-                    fontSize: '10px',
+                    fontSize: '11px',
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.08em',
@@ -862,19 +894,19 @@ const ACCESS_STYLES: Record<AccessLevel, { bg: string; border: string; color: st
   public: {
     bg: 'color-mix(in srgb, var(--accent-mirror) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
-    color: 'var(--accent-mirror)',
+    color: 'var(--accent-mirror-ink)',
     label: 'Public',
   },
   fippa: {
     bg: 'color-mix(in srgb, var(--accent-gadfly) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
-    color: 'var(--accent-gadfly)',
+    color: 'var(--accent-gadfly-ink)',
     label: 'FIPPA Required',
   },
   council: {
     bg: 'color-mix(in srgb, var(--accent-oracle) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
-    color: 'var(--accent-oracle)',
+    color: 'var(--accent-oracle-ink)',
     label: 'Council Record',
   },
 }
@@ -953,7 +985,7 @@ function DocumentCard({
         style={{
           backgroundColor: 'var(--color-island-warm-lift)',
           border: `1px solid var(--color-island-card-border)`,
-          borderLeft: '3px solid rgba(176,136,200,0.5)',
+          borderLeft: '3px solid color-mix(in srgb, var(--color-island-accent-scout) 50%, transparent)',
         }}
       >
         {/* Header row — flexWrap for responsive */}
@@ -990,11 +1022,11 @@ function DocumentCard({
                 display: 'inline-block',
                 borderRadius: '9999px',
                 padding: '2px 8px',
-                fontSize: '10px',
+                fontSize: '11px',
                 textTransform: 'uppercase' as const,
                 letterSpacing: '0.06em',
                 backgroundColor: 'color-mix(in srgb, var(--accent-scout) 10%, transparent)',
-                color: 'var(--accent-scout)',
+                color: 'var(--accent-scout-ink)',
                 fontWeight: 600,
               }}
             >
@@ -1010,7 +1042,7 @@ function DocumentCard({
               <div key={i}>
                 <span
                   className="block font-semibold uppercase tracking-[0.08em]"
-                  style={{ fontSize: '10px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
+                  style={{ fontSize: '11px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
                 >
                   {field.label}
                 </span>
@@ -1032,7 +1064,7 @@ function DocumentCard({
           >
             <span
               className="block font-semibold uppercase tracking-[0.08em]"
-              style={{ fontSize: '10px', color: 'var(--color-island-faint)' }}
+              style={{ fontSize: '11px', color: 'var(--color-island-faint)' }}
             >
               How to find it
             </span>
@@ -1089,7 +1121,7 @@ function DocumentCard({
             <div key={i}>
               <span
                 className="block font-semibold uppercase tracking-[0.08em]"
-                style={{ fontSize: '10px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
+                style={{ fontSize: '11px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
               >
                 {field.label}
               </span>
@@ -1105,7 +1137,7 @@ function DocumentCard({
         <div style={{ borderTop: `1px solid var(--color-island-border)`, marginTop: '16px', paddingTop: '12px' }}>
           <span
             className="block font-semibold uppercase tracking-[0.08em]"
-            style={{ fontSize: '10px', color: 'var(--color-island-faint)' }}
+            style={{ fontSize: '11px', color: 'var(--color-island-faint)' }}
           >
             How to find it
           </span>
@@ -1224,7 +1256,7 @@ function FippaLetterCard({ letter }: { letter: string }) {
       >
         <span
           className="font-bold uppercase tracking-[0.1em]"
-          style={{ fontSize: '11px', lineHeight: '1', color: 'var(--accent-lever)' }}
+          style={{ fontSize: '11px', lineHeight: '1', color: 'var(--accent-lever-ink)' }}
         >
           FIPPA Request — Ready to File
         </span>
@@ -1255,7 +1287,7 @@ function FippaLetterCard({ letter }: { letter: string }) {
               border: copied
                 ? '1px solid color-mix(in srgb, var(--accent-mirror) 25%, transparent)'
                 : '1px solid color-mix(in srgb, var(--accent-lever) 15%, transparent)',
-              color: copied ? 'var(--accent-mirror)' : 'var(--color-island-muted)',
+              color: copied ? 'var(--accent-mirror-ink)' : 'var(--color-island-muted)',
             }}
           >
             {copied ? (
@@ -1370,7 +1402,7 @@ function QuestionsSection({ content }: { content: string }) {
                 lineHeight: '1',
                 backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',
                 border: '1px solid color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
-                color: 'var(--accent-gadfly)',
+                color: 'var(--accent-gadfly-ink)',
                 marginTop: '1px',
               }}
             >
@@ -1391,7 +1423,7 @@ function QuestionsSection({ content }: { content: string }) {
 
 // ---- Limitations section renderer ----
 
-function LimitationsSection({ content, darkMode }: { content: string; darkMode?: boolean }) {
+function LimitationsSection({ content }: { content: string }) {
   return (
     <div
       style={{
@@ -1403,17 +1435,18 @@ function LimitationsSection({ content, darkMode }: { content: string; darkMode?:
       <div
         role="note"
         style={{
-          // Use cardBg on dark mode (warmLift is invisible on dark)
-          backgroundColor: darkMode ? 'var(--color-island-card)' : 'rgba(120,113,108,0.04)',
+          // The note's ground is a token with a dark value (card) in .dark-island.
+          backgroundColor: 'var(--color-island-note)',
           border: `1px solid var(--color-island-card-border)`,
-          borderLeft: `3px solid var(--color-island-faint)`,
+          // A mark, not text: its own lighter ink (Jen, B1 review C4).
+          borderLeft: `3px solid var(--color-island-mark)`,
           borderRadius: '0 8px 8px 0',
           padding: '16px 20px',
         }}
       >
         <div
           className="font-semibold uppercase tracking-[0.1em]"
-          style={{ fontSize: '10px', color: 'var(--color-island-faint)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          style={{ fontSize: '11px', color: 'var(--color-island-faint)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}
         >
           <EyeOff size={14} strokeWidth={1.75} style={{ color: 'var(--color-island-faint)' }} />
           What This Analysis Cannot See
@@ -1436,7 +1469,7 @@ function InlineGadflyAction({ onOpenGadfly }: { onOpenGadfly?: () => void }) {
     lineHeight: '1' as const,
     backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 8%, transparent)',
     border: '1px solid color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
-    color: 'var(--accent-gadfly)',
+    color: 'var(--accent-gadfly-ink)',
   }
 
   return (
@@ -1543,7 +1576,7 @@ function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions }: { sect
               <li key={i} className="flex items-start gap-2.5" style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-body)' }}>
                 <span
                   className="flex-shrink-0 rounded-full"
-                  style={{ width: '6px', height: '6px', backgroundColor: 'var(--color-island-faint)', marginTop: '6px' }}
+                  style={{ width: '6px', height: '6px', backgroundColor: 'var(--color-island-mark)', marginTop: '6px' }}
                 />
                 {heading}
               </li>
@@ -1566,7 +1599,7 @@ function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions }: { sect
               lineHeight: '1' as const,
               backgroundColor: arm.bg,
               border: `1px solid ${arm.border}`,
-              color: arm.color,
+              color: arm.ink,
             }
             const chipClassName = "inline-flex items-center rounded-full font-semibold transition-opacity duration-150 hover:opacity-80"
 
@@ -1624,6 +1657,7 @@ const EXPERT_LINKS = [
     href: '/scout',
     icon: Compass,
     color: 'var(--accent-scout)',
+    ink: 'var(--accent-scout-ink)',
     border: 'color-mix(in srgb, var(--accent-scout) 18%, transparent)',
   },
   {
@@ -1633,6 +1667,7 @@ const EXPERT_LINKS = [
     href: '/oracle',
     icon: Eye,
     color: 'var(--accent-oracle)',
+    ink: 'var(--accent-oracle-ink)',
     border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
   },
   {
@@ -1642,6 +1677,7 @@ const EXPERT_LINKS = [
     href: '/gadfly',
     icon: MessageCircleQuestion,
     color: 'var(--accent-gadfly)',
+    ink: 'var(--accent-gadfly-ink)',
     border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
   },
   {
@@ -1651,6 +1687,7 @@ const EXPERT_LINKS = [
     href: '/lever',
     icon: FileText,
     color: 'var(--accent-lever)',
+    ink: 'var(--accent-lever-ink)',
     border: 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
   },
   {
@@ -1660,6 +1697,7 @@ const EXPERT_LINKS = [
     href: '/mirror',
     icon: GitCompareArrows,
     color: 'var(--accent-mirror)',
+    ink: 'var(--accent-mirror-ink)',
     border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
   },
 ]
@@ -1671,6 +1709,7 @@ const LENS_LINK = {
   href: '',
   icon: Search,
   color: 'var(--accent-oracle)',
+  ink: 'var(--accent-oracle-ink)',
   border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
 }
 
@@ -1690,11 +1729,17 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, onOpenLens }: { onOpenCampaign
       >
         Want to go deeper?
       </p>
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+      {/* The 11px archetype ("THE PERIPATETIC", one unbreakable word, ~82px)
+          needs ~85px beside the 32px icon. One card per row below 480px, two
+          up to 1024px, three from there: two columns at 320-375 and three at
+          768 both left it short (Razor D1 W2). briefing-geometry.test.ts
+          holds it at 320 to 1440. */}
+      <div data-go-deeper className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 lg:grid-cols-3">
         {links.map((link) => {
           const Icon = link.icon
           const callback = armCallbacks[link.arm]
-          const cardClassName = "link-card flex items-center gap-3 rounded-[10px] transition-opacity duration-150 hover:opacity-85"
+          // text-left: Gadfly, Lever and Lens are <button>s, which centre by default (Jen D1 C2).
+          const cardClassName = "link-card flex items-center gap-3 rounded-[10px] text-left transition-opacity duration-150 hover:opacity-85"
           const cardStyle = {
             padding: '12px 14px',
             minHeight: '44px',
@@ -1713,18 +1758,18 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, onOpenLens }: { onOpenCampaign
               >
                 <Icon size={14} strokeWidth={1.75} style={{ color: link.color }} />
               </span>
-              <span className="flex flex-col">
+              <span className="flex min-w-0 flex-col">
                 <span
                   className="font-semibold leading-snug"
-                  style={{ fontSize: '12px', color: link.color }}
+                  style={{ fontSize: '12px', color: link.ink }}
                 >
                   {link.arm}
                 </span>
                 <span
                   style={{
-                    fontSize: '9px',
+                    fontSize: '11px',
                     textTransform: 'uppercase' as const,
-                    letterSpacing: '0.1em',
+                    letterSpacing: '0.06em',
                     color: 'var(--color-island-faint)',
                     marginTop: '1px',
                   }}
@@ -1805,7 +1850,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               right: '16px',
               borderRadius: '9999px',
               padding: '6px',
-              backgroundColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+              backgroundColor: 'var(--color-island-toggle)',
               color: 'var(--color-island-muted)',
               border: 'none',
               cursor: 'pointer',
@@ -1854,7 +1899,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
             right: '16px',
             borderRadius: '9999px',
             padding: '6px',
-            backgroundColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+            backgroundColor: 'var(--color-island-toggle)',
             color: 'var(--color-island-muted)',
             border: 'none',
             cursor: 'pointer',
@@ -1959,7 +2004,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
-              <SectionHeader heading="What You Can Do" color="var(--accent-lever)" />
+              <SectionHeader heading="What You Can Do" color="var(--accent-lever-ink)" />
               <CivicActionsSection content={section.content} />
             </div>
           )
@@ -1991,7 +2036,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               }}
             >
               {showDivider && <SectionDivider />}
-              <SectionHeader heading="Questions Worth Asking" color="var(--accent-gadfly)" />
+              <SectionHeader heading="Questions Worth Asking" color="var(--accent-gadfly-ink)" />
               <QuestionsSection content={section.content} />
             </div>
           )
@@ -2002,7 +2047,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
-              <LimitationsSection content={section.content} darkMode={darkMode} />
+              <LimitationsSection content={section.content} />
             </div>
           )
         }
