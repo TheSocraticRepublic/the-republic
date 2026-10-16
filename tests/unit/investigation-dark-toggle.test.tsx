@@ -50,4 +50,29 @@ describe('the briefing dark toggle is withheld until D4', () => {
     expect(article!.className).not.toContain('dark-island')
     expect(article!.className).not.toContain('content-island--dark')
   })
+
+  it('Razor DW1: a stored dark choice changes nothing on the page, Lens, Campaign and civic strip included', () => {
+    const page = () => (
+      <InvestigationPage
+        id="c0000000-0000-4000-8000-0000000000c1"
+        concern="A variance"
+        jurisdictionName="Nelson, BC"
+        briefingText={BRIEFING}
+        initialLensOpen
+        initialCampaignOpen
+        isAuthor
+        archiveStatus={null}
+      />
+    )
+    const stored = render(page()).container.innerHTML
+    cleanup()
+    localStorage.clear()
+    const fresh = render(page()).container.innerHTML
+    // The panels are really on the page (the comparison would be vacuous otherwise).
+    expect(fresh).toContain('content-island')
+    expect(fresh).toMatch(/lens/i)
+    expect(fresh).toMatch(/campaign/i)
+    expect(stored).toBe(fresh)
+    expect(stored).not.toContain('dark-island')
+  })
 })
