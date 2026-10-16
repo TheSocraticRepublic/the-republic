@@ -41,10 +41,6 @@ in this project has already been ruled on, usually for a reason that is not obvi
   - **The harness:** `npx tsx scripts/qa/harness.ts run` (or `up` / `check` / `down`; see `scripts/qa/README.md`). Browser tests use `scripts/qa/browser.ts`, and signed-in evidence runs in Chromium on 127.0.0.1. Every non-GET request sends `Origin: http://127.0.0.1:3177`. Named limits: no network isolation; its ports sit in the ephemeral range, so `up` can be refused on a TIME_WAIT (retry). A fresh relay worktree needs `npm ci` (the session checkout's `node_modules` lacks the Q0a dev tools).
   - **Machine:** keep the memory guard on (no build or harness under 4 GB available; never both at once). **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only).
 
-- **A-series LIVE since 2026-10-12 17:48:49Z; Lee's look check owed.** Main `b9d9139` (PR #7, merge commit), Netlify deploy `6acd1d516cdac21aab7e88f4`; D_prev / rollback target `6acc1bbeb27b4900083c30a8` at `fa16447`. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-12-a-series.md`. Lee's standing authority for this release: restore D_prev without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route, or his look check), then `git revert -m 1 b9d9139` on main through a PR. The look-check steps are in `~/marvin/state/relay/republic-ui-a-series-release-card.md` ("After promotion"). PR #6 closed as superseded. Still open with Lee: the privacy contact address (S1's held wording returns with it; Razor S1b N1-N3 in the Parking Lot).
-
-- **LIVE BUG, fix waiting on a release: every ready Oracle document page (`/oracle/[id]`) very likely errors on opencave.ca**, and so do Lever actions with a linked document. Since 555c402 (2026-03-30), server components passed lucide icon components to the client `CrossArmActions`. It is fixed on the session branch in C2a (`29c9c6b`, string icon keys), and Razor's app-wide sweep found no other site. Production logs keep only about 100 lines, so this is unconfirmed live; Lee can confirm by opening any analysed document. It ships with the next release Lee approves (B1-C2a, which also carries the Forum gate fix).
-
 - **Everything waiting on Lee lives on the Open Cave Checks page: https://claude.ai/artifact/FbM2CLbQ7Pxka6BKV7m9mU** (Lee, 2026-10-15: look checks and decisions go there, not in chat). Items are in its database collection `items` (seed with `ArtifactData`), and his answers are in `responses`, one document per item id. Open now: the A-series look check, a one-minute Oracle crash confirmation, and the release decision for B1 onward. Close an item (status "closed", plus an `outcome` line) once acted on.
 
 - **Cold start for the next batch (D1).**
@@ -54,6 +50,8 @@ in this project has already been ruled on, usually for a reason that is not obvi
   4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only.
   5. Harness runs: clear `.next/cache` first (a stale turbopack cache served old CSS in B1). Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
   6. Before merging, run the harness-only tests with `QA_REQUIRE_HARNESS=1` on a live harness (CI skips them). ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
+
+- **B1-C4 LIVE since 2026-10-16 19:48Z; Lee's look check owed** (Checks page item `look-check-oct16`, which replaces the A-series look check). Main `e6317d6` (PR #8), deploy `6ad27f3b87cbdefbbdc0e78a`; D_prev / rollback target `6acd1d516cdac21aab7e88f4` at `b9d9139`. Lee's authority for this release: restore D_prev without asking if a named check fails, then revert the merge on main through a PR. Record: `~/.local/share/marvin/private/republic-releases/2026-10-16-b1-c4.md`.
 
 ## Open questions awaiting Lee
 
@@ -88,6 +86,9 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-16 — B1-C4 release live
+Main `e6317d6` (PR #8, merge commit), Netlify deploy `6ad27f3b87cbdefbbdc0e78a`, published 19:48:08Z. D_prev / rollback target is `6acd1d516cdac21aab7e88f4` at `b9d9139`. Compatibility r2 PASS at the head. Signed-out probes match the baseline except the intended changes (hero line; sign-out 200). The 30-minute function-log watch to 20:20Z shows only nf-trace boot lines, with no application errors and no 5xx. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-16-b1-c4.md`. The session branch is fast-forwarded to main. Lee's single combined look check (also covering the A-series) is item `look-check-oct16` on the Checks page; a failed step restores D_prev under his standing authority for this release.
 
 ### 2026-10-16 — Lee approves the release through C4; Jen's hero line
 In a chat grill (Lee found the Checks page slower than answering in chat), Lee chose: release now with one combined look check afterwards, which also covers the A-series look check, and Jen's landing hero line as built. The Oracle crash confirmation was dropped. S = 9435a47 (B1 through C4). D1 joins the next release. The D_prev compatibility run is repeated at S once Jen's D1 harness frees the ports, then the release process runs with restore-without-asking authority as before. Checks page items closed with outcomes.
