@@ -166,7 +166,7 @@ function SectionHeader({
         />
       )}
       <h3
-        className="text-3xs font-semibold uppercase"
+        className="text-2xs font-semibold uppercase"
         style={{ color: color ?? 'var(--color-island-muted)' }}
       >
         {heading}
@@ -634,7 +634,7 @@ function PlayersSection({ content }: { content: string }) {
                     display: 'inline-block',
                     borderRadius: '9999px',
                     padding: '2px 10px',
-                    fontSize: '10px',
+                    fontSize: '11px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                     // 8% of the role colour: the old `${hex}14` alpha (20/255).
@@ -787,7 +787,7 @@ function ComparisonSection({ content }: { content: string }) {
                   style={{
                     display: 'block',
                     fontFamily: 'var(--font-body)',
-                    fontSize: '10px',
+                    fontSize: '11px',
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.08em',
@@ -809,7 +809,7 @@ function ComparisonSection({ content }: { content: string }) {
                   style={{
                     display: 'block',
                     fontFamily: 'var(--font-body)',
-                    fontSize: '10px',
+                    fontSize: '11px',
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.08em',
@@ -831,7 +831,7 @@ function ComparisonSection({ content }: { content: string }) {
                   style={{
                     display: 'block',
                     fontFamily: 'var(--font-body)',
-                    fontSize: '10px',
+                    fontSize: '11px',
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.08em',
@@ -1022,7 +1022,7 @@ function DocumentCard({
                 display: 'inline-block',
                 borderRadius: '9999px',
                 padding: '2px 8px',
-                fontSize: '10px',
+                fontSize: '11px',
                 textTransform: 'uppercase' as const,
                 letterSpacing: '0.06em',
                 backgroundColor: 'color-mix(in srgb, var(--accent-scout) 10%, transparent)',
@@ -1042,7 +1042,7 @@ function DocumentCard({
               <div key={i}>
                 <span
                   className="block font-semibold uppercase tracking-[0.08em]"
-                  style={{ fontSize: '10px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
+                  style={{ fontSize: '11px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
                 >
                   {field.label}
                 </span>
@@ -1064,7 +1064,7 @@ function DocumentCard({
           >
             <span
               className="block font-semibold uppercase tracking-[0.08em]"
-              style={{ fontSize: '10px', color: 'var(--color-island-faint)' }}
+              style={{ fontSize: '11px', color: 'var(--color-island-faint)' }}
             >
               How to find it
             </span>
@@ -1121,7 +1121,7 @@ function DocumentCard({
             <div key={i}>
               <span
                 className="block font-semibold uppercase tracking-[0.08em]"
-                style={{ fontSize: '10px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
+                style={{ fontSize: '11px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
               >
                 {field.label}
               </span>
@@ -1137,7 +1137,7 @@ function DocumentCard({
         <div style={{ borderTop: `1px solid var(--color-island-border)`, marginTop: '16px', paddingTop: '12px' }}>
           <span
             className="block font-semibold uppercase tracking-[0.08em]"
-            style={{ fontSize: '10px', color: 'var(--color-island-faint)' }}
+            style={{ fontSize: '11px', color: 'var(--color-island-faint)' }}
           >
             How to find it
           </span>
@@ -1446,7 +1446,7 @@ function LimitationsSection({ content }: { content: string }) {
       >
         <div
           className="font-semibold uppercase tracking-[0.1em]"
-          style={{ fontSize: '10px', color: 'var(--color-island-faint)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          style={{ fontSize: '11px', color: 'var(--color-island-faint)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}
         >
           <EyeOff size={14} strokeWidth={1.75} style={{ color: 'var(--color-island-faint)' }} />
           What This Analysis Cannot See

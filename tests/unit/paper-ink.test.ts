@@ -399,6 +399,12 @@ const BRIEFING = [
   '',
   'Then attend the next meeting.',
   '',
+  '## How Other Places Handle This',
+  '### Revelstoke, BC',
+  'What they did: Required written reasons for every variance.',
+  'Why it matters: Reasons can be appealed.',
+  'Outcome: Variances dropped 40%.',
+  '',
   '## Questions Worth Asking',
   '1. Who wrote the staff report?',
   '2. Why was it not posted?',
@@ -435,6 +441,27 @@ function byText(doc: Document, selector: string, text: string): Element {
 }
 
 const ARMS = ['scout', 'oracle', 'gadfly', 'lever', 'mirror'] as const
+
+describe('one label size on the paper: 11px (Jen D1 C5)', () => {
+  it('no text on the paper is set below 11px, by inline size or by the 10px utility', () => {
+    const doc = renderBriefing(false)
+    const article = doc.querySelector('article')!
+    const small = [...article.querySelectorAll('*')]
+      .filter((el) => /(?:^|;)font-size:(?:[0-9]|10)(?:\.\d+)?px/.test(el.getAttribute('style') ?? '') || el.classList.contains('text-3xs'))
+      .map((el) => `${el.tagName} "${el.textContent?.trim().slice(0, 24)}" ${el.getAttribute('style') ?? el.className}`)
+    expect(small).toEqual([])
+  })
+
+  it('the labels Jen counted are 11px: section headers, field labels, the note label, role badges, Mirror labels', () => {
+    const doc = renderBriefing(false)
+    expect(byText(doc, 'h3', 'Key Players').className.split(/\s+/)).toContain('text-2xs')
+    expect(styleOf(byText(doc, 'span', 'What it is'))).toContain('font-size:11px')
+    expect(styleOf(byText(doc, 'span', 'Regulator'))).toContain('font-size:11px')
+    expect(styleOf(byText(doc, 'span', 'WHAT THEY DID'))).toContain('font-size:11px')
+    const noteLabel = [...doc.querySelectorAll('[role="note"] div')].find((d) => d.textContent?.trim() === 'What This Analysis Cannot See')
+    expect(styleOf(noteLabel)).toContain('font-size:11px')
+  })
+})
 
 describe('Go Deeper cards align their text left, links and buttons alike (Jen D1 C2)', () => {
   it('all six cards, three of them buttons, carry text-left', () => {
