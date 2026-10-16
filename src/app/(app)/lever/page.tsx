@@ -11,12 +11,22 @@ export const metadata = {
   title: 'Lever',
 }
 
+/**
+ * Aphoristic (CLAUDE.md copy register: Lever's landing only), and it still says
+ * what Lever makes (app-arms P1-5): the aphorism, then the function and its
+ * boundary, as Gadfly's does. Open Cave sends nothing for the citizen. No
+ * citation claim here: the dialog states that per province (Jen C2a C1).
+ */
+const LEVER_INTRO =
+  'What you have learned, put on the record. Lever drafts the FOI request, the public comment or the policy brief; you send it.'
+
 interface LeverPageProps {
   searchParams: Promise<{
     documentId?: string
     sessionId?: string
     investigationId?: string
     actionType?: string
+    new?: string
   }>
 }
 
@@ -26,6 +36,7 @@ export default async function LeverPage({ searchParams }: LeverPageProps) {
     sessionId: initialSessionId,
     investigationId: initialInvestigationId,
     actionType: initialActionType,
+    new: openNew,
   } = await searchParams
   const headersList = await headers()
   const userId = headersList.get('x-user-id')!
@@ -44,52 +55,57 @@ export default async function LeverPage({ searchParams }: LeverPageProps) {
     .orderBy(desc(leverActions.createdAt))
 
   return (
-    <div data-arm="lever" className="mx-auto max-w-2xl px-6 py-10">
-      <ArmHeader
-        arm="lever"
-        title="Lever"
-        subtitle="Civic action documents"
-        action={
-          <NewActionDialog
-            initialDocumentId={initialDocumentId}
-            initialSessionId={initialSessionId}
-            initialInvestigationId={initialInvestigationId}
-            initialActionType={initialActionType}
-          />
-        }
-      />
+    <div data-arm="lever">
+      <div className="mx-auto max-w-2xl px-6 py-10">
+        <ArmHeader
+          arm="lever"
+          title="Lever"
+          subtitle="Civic action documents"
+          intro={LEVER_INTRO}
+          action={
+            <NewActionDialog
+              initialDocumentId={initialDocumentId}
+              initialSessionId={initialSessionId}
+              initialInvestigationId={initialInvestigationId}
+              initialActionType={initialActionType}
+              initialOpen={openNew === '1'}
+            />
+          }
+        />
 
-      {/* Action list */}
-      <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
-          Your actions
-          {actions.length > 0 && (
-            <span className="ml-2 font-normal normal-case tracking-normal text-text-faint">
-              {actions.length} {actions.length === 1 ? 'document' : 'documents'}
-            </span>
+        {/* Action list */}
+        <section>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
+            Your actions
+            {actions.length > 0 && (
+              <span className="ml-2 font-normal normal-case tracking-normal text-text-faint">
+                {actions.length} {actions.length === 1 ? 'document' : 'documents'}
+              </span>
+            )}
+          </h2>
+
+          {actions.length === 0 ? (
+            <EmptyState
+              serif
+              message="No civic actions yet. Knowledge without action is incomplete."
+              action={{ label: 'Draft your first civic action', href: '/lever?new=1', replace: true }}
+            />
+          ) : (
+            <div className="space-y-3">
+              {actions.map((action) => (
+                <ActionCard
+                  key={action.id}
+                  id={action.id}
+                  title={action.title}
+                  actionType={action.actionType}
+                  status={action.status}
+                  createdAt={action.createdAt}
+                />
+              ))}
+            </div>
           )}
-        </h2>
-
-        {actions.length === 0 ? (
-          <EmptyState
-            serif
-            message="No civic actions yet. Knowledge without action is incomplete."
-          />
-        ) : (
-          <div className="space-y-3">
-            {actions.map((action) => (
-              <ActionCard
-                key={action.id}
-                id={action.id}
-                title={action.title}
-                actionType={action.actionType}
-                status={action.status}
-                createdAt={action.createdAt}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+        </section>
+      </div>
     </div>
   )
 }

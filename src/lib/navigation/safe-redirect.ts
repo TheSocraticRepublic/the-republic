@@ -10,7 +10,8 @@
  * the browser as a protocol-relative URL: an open redirect.
  *
  * So the helper checks the raw string, checks it again once percent-decoded,
- * parses it against the app's origin, and returns the parsed ABSOLUTE URL
+ * parses it against the app's origin, refuses a normalised path that begins
+ * with `//`, and returns the parsed ABSOLUTE URL
  * (`url.href`). An absolute URL whose origin was checked cannot be re-read as
  * another host. The final origin is asserted once more before returning.
  */
@@ -90,6 +91,14 @@ export function safeRedirectTarget(raw: string | null | undefined, origin: strin
     return fallback
   }
   if (url.origin !== origin) return fallback
+
+  // 3b. The NORMALISED path must not begin with "//". Dot segments collapse
+  //    during parsing (`/.//evil.example`, `/a/..//evil.example`,
+  //    `/%2e//evil.example` all parse to pathname `//evil.example`). The
+  //    absolute href is still same-origin, but its path is a protocol-relative
+  //    URL waiting for one consumer that re-serialises `pathname`, so it is
+  //    refused here rather than trusted to every caller.
+  if (url.pathname.startsWith('//')) return fallback
 
   // 4 and 5. Return the absolute, already-checked URL, and assert its origin
   //    once more on the exact string being returned.

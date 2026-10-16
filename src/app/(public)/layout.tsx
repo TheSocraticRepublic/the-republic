@@ -10,9 +10,10 @@ export default function PublicLayout({
       {/* Header */}
       <header className="border-b border-border bg-surface-1 shadow-sm">
         <div className="mx-auto max-w-4xl px-6 py-4 flex items-center justify-between">
+          {/* Wordmark (R6): Fraunces, no tagline, as in the app shell. */}
           <Link
             href="/"
-            className="text-sm font-semibold tracking-tight text-text-primary hover:text-text-secondary transition-colors"
+            className="font-display text-lg font-semibold tracking-[-0.01em] text-text-primary hover:text-text-secondary transition-colors"
           >
             Open Cave
           </Link>

@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useId, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronDown, GitCompare, Loader2 } from 'lucide-react'
-import { clsx } from 'clsx'
+import { CTAButton } from '@/components/ui/cta-button'
+import { ErrorMark, FIELD_REASON_CLASS, Field, SECTION_LABEL_CLASS, fieldControlClass } from '@/components/ui/field'
 import { ComparisonView } from './comparison-view'
 
 interface Document {
@@ -23,6 +25,31 @@ const POLICY_AREAS = [
   { value: 'other', label: 'Other' },
 ]
 
+/** A signed-out comparison goes to login and comes back here, as Scout's does. */
+const LOGIN_FOR_MIRROR = '/login?redirect=%2Fmirror'
+
+/**
+ * Every failure a citizen can see, plain-instructional like every error in the
+ * app: the fact, then the action. No server or browser string reaches the
+ * page (Jen C2b C8, on Scout's C1 pattern). The 429 line covers the daily
+ * limit too and promises no wait.
+ */
+export const MIRROR_COPY = {
+  rateLimited: 'Too many comparisons for now. Compare again later.',
+  unreadable: "Mirror couldn't read that question. Compare again.",
+  failed: "Mirror couldn't finish that comparison. Compare again.",
+  offline: "Open Cave can't be reached. Check your connection, then compare again.",
+  /** Why Compare is unavailable (Jen C2b C5). */
+  needsQuestion: 'Write your question above to start comparing.',
+} as const
+
+/** The message for a non-OK, non-401 answer, by status alone. */
+export function mirrorErrorMessage(status: number): string {
+  if (status === 429) return MIRROR_COPY.rateLimited
+  if (status === 400) return MIRROR_COPY.unreadable
+  return MIRROR_COPY.failed
+}
+
 interface ComparisonFormProps {
   initialDocumentId?: string
 }
@@ -40,6 +67,9 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [docsError, setDocsError] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+  const questionRef = useRef<HTMLTextAreaElement>(null)
+  const reasonId = useId()
+  const router = useRouter()
 
   // Fetch user documents on mount
   useEffect(() => {
@@ -86,17 +116,23 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
         signal: abortRef.current.signal,
       })
 
+      if (res.status === 401) {
+        router.push(LOGIN_FOR_MIRROR)
+        return
+      }
+
       if (!res.ok) {
-        const data = await res.json().catch(() => ({ error: 'Request failed' }))
-        console.error('[mirror] compare failed:', data.error)
-        setSubmitError(typeof data.error === 'string' ? data.error : 'Something went wrong. Try again.')
+        // Logged for the developer; the citizen gets the status's own copy.
+        const data: unknown = await res.json().catch(() => null)
+        console.error('[mirror] compare failed:', res.status, data)
+        setSubmitError(mirrorErrorMessage(res.status))
         setIsStreaming(false)
         setLoading(false)
         return
       }
 
       if (!res.body) {
-        setSubmitError('Something went wrong. Try again.')
+        setSubmitError(MIRROR_COPY.failed)
         setIsStreaming(false)
         setLoading(false)
         return
@@ -116,47 +152,103 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
 
       setHasResult(true)
     } catch (err) {
-      if (err instanceof Error && err.name !== 'AbortError') {
+      // An abort is a newer comparison replacing this one: nothing to report.
+      // Anything else thrown by fetch or the stream is the network.
+      if (!(err instanceof Error && err.name === 'AbortError')) {
         console.error('[mirror] stream error:', err)
-        setSubmitError('Something went wrong. Try again.')
+        setSubmitError(MIRROR_COPY.offline)
       }
     } finally {
       setIsStreaming(false)
       setLoading(false)
     }
-  }, [description, selectedDocId, policyArea, loading])
+  }, [description, selectedDocId, policyArea, loading, router])
 
-  const canSubmit = description.trim().length > 0 && !loading
+  const hasQuestion = description.trim().length > 0
 
   return (
     <div className="space-y-8">
       {/* Form */}
       <section>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
+        <h2 className={`mb-4 ${SECTION_LABEL_CLASS}`}>
           Comparison parameters
         </h2>
 
         <div className="space-y-4">
-          {/* Document selector */}
-          <div>
-            <label htmlFor="compare-document" className="mb-1.5 block text-xs font-medium text-text-secondary">
-              Linked document <span className="text-text-faint">(optional)</span>
-            </label>
-            {fetchingDocs ? (
-              <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
-            ) : (
+          {/* The question first, as Scout and Investigate do (app-arms P2-12, C2a) */}
+          <Field id="compare-description" label="What policy question do you want to compare?">
+            {(control) => (
+              <textarea
+                {...control}
+                ref={questionRef}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. How have other BC municipalities handled short-term rental bylaws? What did they actually do, and what happened?"
+                rows={4}
+                className={fieldControlClass('textarea')}
+                // Locked while comparing, but never natively disabled: the
+                // citizen's own words keep full ink and the caret (Jen C2b C4,
+                // Scout's C1 pattern). aria-disabled says it is unavailable.
+                readOnly={loading}
+                aria-disabled={loading ? 'true' : undefined}
+              />
+            )}
+          </Field>
+
+          {/* Document selector. A failed list is announced, but the select
+              is not invalid: the comparison runs without a document. */}
+          <Field id="compare-document" label="Linked document" optional>
+            {(control) => (
+              <>
+                {fetchingDocs ? (
+                  <div className="h-9 animate-pulse rounded-lg bg-surface-1" />
+                ) : (
+                  <div className="relative">
+                    <select
+                      {...control}
+                      value={selectedDocId}
+                      onChange={(e) => setSelectedDocId(e.target.value)}
+                      className={fieldControlClass('select')}
+                      disabled={loading}
+                    >
+                      <option value="">No linked document</option>
+                      {documents.map((doc) => (
+                        <option key={doc.id} value={doc.id}>
+                          {doc.title}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={13}
+                      strokeWidth={2}
+                      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+                    />
+                  </div>
+                )}
+                {docsError && (
+                  <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-xs text-status-danger">
+                    <ErrorMark />
+                    <span>Couldn&apos;t load your documents. You can still compare without a linked document.</span>
+                  </p>
+                )}
+              </>
+            )}
+          </Field>
+
+          {/* Policy area */}
+          <Field id="compare-policy-area" label="Policy area" optional>
+            {(control) => (
               <div className="relative">
                 <select
-                  id="compare-document"
-                  value={selectedDocId}
-                  onChange={(e) => setSelectedDocId(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-mirror)]/40 focus:ring-0"
+                  {...control}
+                  value={policyArea}
+                  onChange={(e) => setPolicyArea(e.target.value)}
+                  className={fieldControlClass('select')}
                   disabled={loading}
                 >
-                  <option value="">No linked document</option>
-                  {documents.map((doc) => (
-                    <option key={doc.id} value={doc.id}>
-                      {doc.title}
+                  {POLICY_AREAS.map((area) => (
+                    <option key={area.value} value={area.value}>
+                      {area.label}
                     </option>
                   ))}
                 </select>
@@ -167,90 +259,51 @@ export function ComparisonForm({ initialDocumentId }: ComparisonFormProps = {}) 
                 />
               </div>
             )}
-            {docsError && (
-              <p role="alert" className="mt-1.5 text-xs text-status-danger">
-                Couldn&apos;t load your documents. You can still compare without a linked document.
-              </p>
-            )}
-          </div>
-
-          {/* Policy area */}
-          <div>
-            <label htmlFor="compare-policy-area" className="mb-1.5 block text-xs font-medium text-text-secondary">
-              Policy area <span className="text-text-faint">(optional)</span>
-            </label>
-            <div className="relative">
-              <select
-                id="compare-policy-area"
-                value={policyArea}
-                onChange={(e) => setPolicyArea(e.target.value)}
-                className="w-full appearance-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2 pr-8 text-sm text-text-primary outline-none focus:border-[var(--accent-mirror)]/40 focus:ring-0"
-                disabled={loading}
-              >
-                {POLICY_AREAS.map((area) => (
-                  <option key={area.value} value={area.value}>
-                    {area.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={13}
-                strokeWidth={2}
-                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-              />
-            </div>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label htmlFor="compare-description" className="mb-1.5 block text-xs font-medium text-text-secondary">
-              What policy question do you want to compare?
-            </label>
-            <textarea
-              id="compare-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. How have other BC municipalities handled short-term rental bylaws? What did they actually do, and what happened?"
-              rows={4}
-              className="w-full resize-none rounded-lg border border-border-strong bg-surface-1 shadow-sm px-3 py-2.5 text-sm text-text-primary placeholder-text-faint outline-none focus:border-[var(--accent-mirror)]/40"
-              disabled={loading}
-            />
-          </div>
+          </Field>
 
           {submitError && (
-            <p role="alert" className="text-xs text-status-danger">{submitError}</p>
+            <p role="alert" className="flex items-start gap-1.5 text-xs text-status-danger">
+              <ErrorMark />
+              <span>{submitError}</span>
+            </p>
           )}
 
-          {/* Submit */}
+          {/* Submit, with why it is unavailable 8px above it (Jen C2b C5) */}
+          <div>
+          {!hasQuestion && (
+            <p id={reasonId} className={FIELD_REASON_CLASS}>
+              {MIRROR_COPY.needsQuestion}
+            </p>
+          )}
           <div className="flex justify-end">
-            <button
+            {/* The arm recipe on the Mirror room (an allowed ground). Empty,
+                it is aria-disabled and refuses; busy, it refuses a second
+                comparison and keeps focus. */}
+            <CTAButton
+              variant="arm"
+              arm="mirror"
               onClick={handleCompare}
-              disabled={!canSubmit}
-              className={clsx(
-                'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-150',
-                canSubmit
-                  ? 'opacity-100 hover:opacity-90'
-                  : 'cursor-not-allowed opacity-40'
-              )}
-              style={{
-                backgroundColor: 'color-mix(in srgb, var(--accent-mirror) 15%, transparent)',
-                color: 'var(--accent-mirror)',
-                border: '1px solid color-mix(in srgb, var(--accent-mirror) 30%, transparent)',
-              }}
+              // Unavailable, pressing it takes the citizen to the question.
+              onUnavailable={() => questionRef.current?.focus()}
+              disabled={!hasQuestion}
+              busy={loading}
+              describedBy={!hasQuestion ? reasonId : undefined}
             >
+              {/* Busy keeps the label; only the icon turns to a spinner, so
+                  the box never changes (Jen C2b C3). */}
               {loading ? (
-                <>
-                  <Loader2 size={14} strokeWidth={2} className="animate-spin" />
-                  Comparing...
-                </>
+                <Loader2 size={14} strokeWidth={2} className="animate-spin" aria-hidden="true" />
               ) : (
-                <>
-                  <GitCompare size={14} strokeWidth={2} />
-                  Compare
-                </>
+                <GitCompare size={14} strokeWidth={2} aria-hidden="true" />
               )}
-            </button>
+              Compare
+            </CTAButton>
           </div>
+          </div>
+          {/* The working state, for a screen reader. */}
+          <p role="status" className="sr-only">
+            {loading ? 'Comparing…' : ''}
+          </p>
         </div>
       </section>
 

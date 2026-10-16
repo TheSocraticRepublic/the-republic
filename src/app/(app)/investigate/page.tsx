@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { ConcernForm } from '@/components/investigation/concern-form'
 import { formatRelativeTime } from '@/lib/format-relative-time'
 import { StatusPill } from '@/components/ui/status-pill'
+import { SECTION_LABEL_CLASS } from '@/components/ui/field'
 import {
   mergeRecentActivity,
   type ActivityItem,
@@ -147,7 +148,10 @@ export default async function InvestigatePage() {
   const hasActivity = activityItems.length > 0
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)]">
+    // min-h-full, not a viewport sum: the app shell's scroller is already the
+    // viewport less its header, so 100vh less a guessed 4rem scrolled a
+    // phantom strip with nothing below (mobile P2-12).
+    <div className="relative min-h-full">
       {/* Faint landscape backdrop */}
       <div
         className="pointer-events-none absolute inset-0 overflow-hidden"
@@ -176,7 +180,7 @@ export default async function InvestigatePage() {
         <div
           className={
             hasActivity
-              ? 'grid grid-cols-1 gap-12 md:grid-cols-2'
+              ? 'grid grid-cols-1 gap-12 lg:grid-cols-2'
               : ''
           }
         >
@@ -191,18 +195,11 @@ export default async function InvestigatePage() {
                 What concerns you?
               </h1>
               <p className="text-base leading-relaxed text-text-secondary">
-                Describe a civic issue and we will investigate it for you —
-                documents, analysis, actions, and context in one briefing.
+                Describe a civic issue in your own words. You get one briefing:
+                the documents that govern it, who is involved, and what you
+                can do next.
               </p>
             </div>
-
-            {/* Epigraph — above the form */}
-            <p
-              className="mb-8 text-lg italic text-text-faint"
-              style={{ fontFamily: 'var(--font-serif)' }}
-            >
-              Every investigation begins with a question you didn&apos;t know how to ask.
-            </p>
 
             <ConcernForm />
           </div>
@@ -212,12 +209,7 @@ export default async function InvestigatePage() {
               dashboard. Title / type / status / relative-time only. */}
           {hasActivity && (
             <div>
-              <h2
-                className="mb-6 text-sm font-semibold uppercase tracking-wider text-text-muted"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                Recent Activity
-              </h2>
+              <h2 className={`mb-6 ${SECTION_LABEL_CLASS}`}>Recent Activity</h2>
               <div className="space-y-3">
                 {activityItems.map((item) => {
                   const statusStyle = getActivityStatusStyle(item)

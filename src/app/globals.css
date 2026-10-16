@@ -80,6 +80,9 @@
   --font-body: var(--font-instrument-sans), "Trebuchet MS", system-ui, sans-serif;
   --font-mono: var(--font-geist-mono, var(--font-jetbrains-mono)), "SF Mono", "JetBrains Mono", ui-monospace, monospace;
   --font-serif: var(--font-source-serif, "Source Serif 4"), "Georgia", serif;
+  /* Tailwind's own default sans (preflight's html font, the `font-sans`
+     utility) points at the app body face, not ui-sans-serif. */
+  --font-sans: var(--font-body);
 
   /* Type floor (Beatrice) — 9px abolished, 10px reserved for uppercase micro-labels */
   --text-2xs: 0.6875rem;              /* 11px */
@@ -118,6 +121,14 @@
   --accent-mirror: #059669;
   --accent-votes: #D4764E;
 
+  /* Arm label ink (see .dark): the light-ground values. */
+  --accent-scout-ink: #6B02B3;
+  --accent-oracle-ink: #014C5F;
+  --accent-gadfly-ink: #713000;
+  --accent-lever-ink: #95020C;
+  --accent-mirror-ink: #014F36;
+  --accent-votes-ink: #7E2E00;
+
   --status-success: #066048;   /* 5.59:1 on light S2, 5.07:1 on light S3 */
   --status-danger:  #AC1717;   /* 5.37:1 on light S2, 4.87:1 on light S3 */
   --status-warning: #8E3F07;   /* 5.41:1 on light S2, 4.91:1 on light S3 */
@@ -128,8 +139,8 @@
   --island-text: #1c1917;
   --island-secondary: #44403c;
   --island-body: #292524;
-  --island-muted: #78716c;
-  --island-faint: #a8a29e;
+  --island-muted: #625c56;   /* was #78716c (4.07:1 on hover); 5.59:1 on island-hover, the darkest */
+  --island-faint: #6f6963;   /* was #a8a29e (2.14:1 on hover); 4.59:1 on island-hover, the darkest */
   --island-border: #e7e5e4;
   --island-card: #f5f4f3;
   --island-card-border: #e0ddd9;
@@ -145,20 +156,27 @@
   --island-role-organization: #047857;
   --island-role-rights-holder: #b45309;
 
+  /* Neutral focus ring: ink at 70%, never an arm accent. Redeclared in every
+     scope below because a var() inside a custom property resolves where the
+     property is declared, not where the ring is drawn. */
+  --focus-ring: color-mix(in srgb, var(--text-primary) 70%, transparent);
+
   color-scheme: light;
 }
 
 /* Dark mode tokens */
 .dark {
-  --surface-0: #090909;
-  --surface-1: #111113;
-  --surface-2: #18181b;
-  --surface-3: #27272a;
+  /* R4 (Lee, ruled 2026-10-02): warm, matched to the landing's umber
+     (--journey-cave #0B0A09), not neutral black. */
+  --surface-0: #0B0A09;
+  --surface-1: #121110;
+  --surface-2: #1A1816;
+  --surface-3: #292623;
 
   --text-primary: #f4f4f5;
   --text-secondary: #d4d4d8;
   --text-muted: #a1a1aa;
-  --text-faint: #83838c;
+  --text-faint: #8e8e97;   /* 4.63:1 on S3, the darkest pair */
 
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.15);
@@ -169,26 +187,43 @@
   --accent-lever: #DA6E6E;
   --accent-mirror: #5BC88A;
   --accent-votes: #D4764E;
+
+  /* Arm label ink for CTAButton variant="arm" (UI plan C1, Razor b). The
+     accent at 15% is the fill; the label is this ink, the accent's own OKLCH
+     hue moved in lightness only (chroma cut where sRGB runs out) until it
+     clears 4.5:1 at rest and at hover on every ground an arm button can sit
+     on: S0-S3 and the arm rooms here, S0-S3 and the daylight and paper
+     journey grounds in the light scopes. tokens-contrast.test.ts holds it. */
+  --accent-scout-ink: #C69EDF;
+  --accent-oracle-ink: #8DB8CC;
+  --accent-gadfly-ink: #CEAE51;
+  --accent-lever-ink: #FA8B89;
+  --accent-mirror-ink: #5BC88A;
+  --accent-votes-ink: #F39269;
 
   --status-success: #4ade80;   /* keep — 10.17:1 S2, 8.55:1 S3 */
   --status-danger:  #f87171;   /* lift from #ef4444 — 6.40:1 S2, 5.38:1 S3 */
   --status-warning: #f59e0b;   /* keep — 8.25:1 S2 */
   --status-neutral: #a1a1aa;   /* lift from #737373 — 6.91:1 S2, 5.81:1 S3 */
 
+  --focus-ring: color-mix(in srgb, var(--text-primary) 70%, transparent);
+
   color-scheme: dark;
 }
 
 /* Dark island — focused-attention overlay (Gadfly, etc.) + dark island tokens */
 .dark-island {
-  --surface-0: #090909;
-  --surface-1: #111113;
-  --surface-2: #18181b;
-  --surface-3: #27272a;
+  /* R4 (Lee, ruled 2026-10-02): warm, matched to the landing's umber
+     (--journey-cave #0B0A09), not neutral black. */
+  --surface-0: #0B0A09;
+  --surface-1: #121110;
+  --surface-2: #1A1816;
+  --surface-3: #292623;
 
   --text-primary: #f4f4f5;
   --text-secondary: #d4d4d8;
   --text-muted: #a1a1aa;
-  --text-faint: #83838c;
+  --text-faint: #8e8e97;   /* mirrors .dark */
 
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.15);
@@ -199,6 +234,14 @@
   --accent-lever: #DA6E6E;
   --accent-mirror: #5BC88A;
   --accent-votes: #D4764E;
+
+  /* Arm label ink: mirrors .dark. */
+  --accent-scout-ink: #C69EDF;
+  --accent-oracle-ink: #8DB8CC;
+  --accent-gadfly-ink: #CEAE51;
+  --accent-lever-ink: #FA8B89;
+  --accent-mirror-ink: #5BC88A;
+  --accent-votes-ink: #F39269;
 
   --status-success: #4ade80;   /* keep — 10.17:1 S2, 8.55:1 S3 */
   --status-danger:  #f87171;   /* lift from #ef4444 — 6.40:1 S2, 5.38:1 S3 */
@@ -211,7 +254,7 @@
   --island-secondary: #d4d4d8;
   --island-body: #d4d4d8;
   --island-muted: #a1a1aa;
-  --island-faint: #71717a;
+  --island-faint: #8e8e97;   /* was #71717a (3.1:1 on hover); 4.59:1 on island-hover, the darkest */
   --island-border: rgba(255, 255, 255, 0.08);
   --island-card: #18181b;
   --island-card-border: rgba(255, 255, 255, 0.1);
@@ -226,6 +269,8 @@
   --island-role-agency: #22d3ee;
   --island-role-organization: #4ade80;
   --island-role-rights-holder: #f59e0b;
+
+  --focus-ring: color-mix(in srgb, var(--text-primary) 70%, transparent);
 
   color-scheme: dark;
 }
@@ -251,7 +296,7 @@
   --text-primary: #1C1917;
   --text-secondary: #3D3833;
   --text-muted: #6B6560;
-  --text-faint: #9A948E;
+  --text-faint: #6f6963;   /* 4.59:1 on the daylight ground, 5.19:1 on paper */
 
   --border: rgba(28, 25, 23, 0.10);
   --border-strong: rgba(28, 25, 23, 0.18);
@@ -263,10 +308,20 @@
   --accent-mirror: #059669;
   --accent-votes: #D4764E;
 
+  /* Arm label ink (see .dark): the light-ground values. */
+  --accent-scout-ink: #6B02B3;
+  --accent-oracle-ink: #014C5F;
+  --accent-gadfly-ink: #713000;
+  --accent-lever-ink: #95020C;
+  --accent-mirror-ink: #014F36;
+  --accent-votes-ink: #7E2E00;
+
   --status-success: #066048;   /* 5.59:1 on light S2, 5.07:1 on light S3 */
   --status-danger:  #AC1717;   /* 5.37:1 on light S2, 4.87:1 on light S3 */
   --status-warning: #8E3F07;   /* 5.41:1 on light S2, 4.91:1 on light S3 */
   --status-neutral: #5C5650;   /* 5.34:1 on light S2, 4.84:1 on light S3 */
+
+  --focus-ring: color-mix(in srgb, var(--text-primary) 70%, transparent);
 
   color-scheme: light;
 }
@@ -427,30 +482,63 @@ body {
   background: var(--text-faint);
 }
 
-/* Focus rings */
-*:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent-oracle) 75%, transparent);
-  outline-offset: 2px;
-}
-
 /*
- * Light-surface focus ring override (A11Y-1). The oracle-blue ring above
- * computes to ~1.73:1 against light reading surfaces (#fafaf9 / #EFECE6) —
- * under the WCAG 2.4.11 3:1 floor and effectively invisible to keyboard
- * users. `.light-scope` (landing page daylight movements) and
- * `.content-island` (briefing paper) get a dark-ink ring instead, computing
- * to ~6:1 against both surfaces. The dark-chrome ring above is untouched
- * (already 5.34:1) and still applies everywhere else, including inside
- * `.content-island` when BriefingView's in-component dark toggle is on
- * (DARK_PALETTE) — `.content-island--dark` marks that state so this
- * override backs off and the ring falls back to the oracle-blue default.
+ * Focus rings. One neutral token, `--focus-ring` (ink at 70% of the scope's
+ * `--text-primary`), declared in every theme scope above: light on the dark
+ * chrome, dark ink inside `.light-scope`. The old ring was oracle blue, which
+ * read as "Oracle" on every arm and fell to ~1.73:1 on light grounds.
+ *
+ * `.content-island` (briefing paper) is not a theme scope — its paper comes
+ * from the component's palette under the app's `.dark` tokens — so it keeps
+ * its own ink ring from the island text colour. `.content-island--dark` marks
+ * BriefingView's in-component dark toggle (DARK_PALETTE), where the override
+ * backs off to the token.
  */
-.light-scope *:focus-visible {
-  outline-color: color-mix(in srgb, var(--text-primary) 70%, transparent);
+*:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .content-island:not(.content-island--dark) *:focus-visible {
   outline-color: color-mix(in srgb, var(--color-island-text) 70%, transparent);
+}
+
+/*
+ * Island paper outside the briefing: the Campaign panel and reasoning card,
+ * the Lens panel, the civic strip, the Votes letter, bill and explanation
+ * views. These paint an island ground inline, `var(--color-island-*)`, without
+ * being a theme scope, so the chrome's light ring would be ~1.04:1 on them.
+ * Everything INSIDE an element that paints an island ground re-points
+ * `--focus-ring` at the island text through the SAME chain as its ground,
+ * `--color-island-text`, so ring and paper always resolve together.
+ *
+ * Descendants only, never the paper element itself: an outline is drawn
+ * outside its own box, so a focusable paper (the civic strip cards) draws its
+ * ring on whatever is around it, the dark page, and must keep the chrome
+ * ring there (an ink ring measured 1.09:1).
+ *
+ * That chain matters: Tailwind emits `--color-island-*: var(--island-*)` once,
+ * at the theme root, where it resolves to the light `:root` island set and is
+ * inherited as that value. A `.dark-island` ancestor's `--island-*` overrides
+ * therefore do NOT reach inline `var(--color-island-*)` grounds (measured in
+ * Chromium: a `.dark-island` paper still paints #fafaf9). Pointing the ring at
+ * `--island-text` instead would put a light ring on that light paper.
+ *
+ * Both spellings of the inline style are matched: React's server render
+ * writes `background-color:var(...)`, the browser's CSSOM (React on the
+ * client, hover handlers) writes `background-color: var(...)`. This rule sits
+ * after every theme scope so it wins on an element that is both `.dark-island`
+ * and paper.
+ */
+:is(
+    [style*="background-color:var(--color-island-"],
+    [style*="background-color: var(--color-island-"],
+    [style*="background:var(--color-island-"],
+    [style*="background: var(--color-island-"],
+    [class*="bg-island-"]
+  )
+  * {
+  --focus-ring: color-mix(in srgb, var(--color-island-text) 70%, transparent);
 }
 
 /* Content island entrance animation */
@@ -511,9 +599,34 @@ body {
 [data-arm="mirror"] { --arm-tint: var(--accent-mirror); }
 [data-arm="votes"] { --arm-tint: var(--accent-votes); }
 
+/*
+ * Arm rooms stay warm (R4, Lee). Mixed in sRGB, a cool accent cancelled the
+ * umber: the Oracle room rendered neutral #101111 and Mirror green-grey.
+ * Mixed in OKLCH the hue moves only 4% of the way to the accent, so every room
+ * keeps S0's umber hue (64-75 degrees), but only if S0's hue survives: S0 is so
+ * near neutral (C 0.003) that Chromium treats its converted hue as powerless and
+ * takes the accent's hue whole (measured: Oracle h 228, Scout 312). Writing S0
+ * through `oklch(from ... l c h)` makes its hue explicit, so it is interpolated.
+ * Fallback: engines without relative colour syntax (Chrome 111-118, Firefox
+ * 113-127, Safari 16.2-17.x) skip the @supports block and paint plain S0, which
+ * is warm. The guard is explicit because Tailwind's own generated fallback for
+ * a color-mix() is the first argument, here the relative colour itself, which
+ * those engines would drop too, leaving the room transparent.
+ *
+ * The room is the page, not the column (app-arms P2-1): `data-arm` sits on a
+ * full-width wrapper around the `max-w-2xl` column, and `min-height: 100%`
+ * fills the shell's scroll box. 100vh overshot it by the mobile header, so
+ * even an empty room scrolled.
+ */
 [data-arm] {
-  background: color-mix(in srgb, var(--surface-0) 96%, var(--arm-tint) 4%);
-  min-height: 100vh;
+  background: var(--surface-0);
+  min-height: 100%;
+}
+
+@supports (color: oklch(from red l c h)) {
+  [data-arm] {
+    background: color-mix(in oklch, oklch(from var(--surface-0) l c h) 96%, var(--arm-tint) 4%);
+  }
 }
 
 .section-heading {
@@ -593,5 +706,34 @@ body {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+}
+
+/*
+ * Phones: every form field renders at 16px or more below 768px. iOS Safari
+ * zooms the page on focus into any field set smaller than 16px; this rule is
+ * the fix, and `maximum-scale` in the viewport is never the fix (it takes
+ * pinch-zoom away from the people who need it).
+ *
+ * It is a floor, not a size: a field that already asks for 16px or more
+ * (`text-base` up to `text-4xl`, e.g. the login code and the Votes postal
+ * code at `text-lg`) is left out of the selector and keeps its own size.
+ *
+ * This rule must stay UNLAYERED. Tailwind's utilities (`text-sm` on an input)
+ * live in `@layer utilities`, and an unlayered declaration beats every layered
+ * one whatever its specificity. Moved into any `@layer`, it loses to `text-sm`
+ * and the zoom comes back. Inline `style` font sizes still win; don't set one
+ * on a field. `tests/unit/tokens-contrast.test.ts` holds both properties.
+ */
+@media (max-width: 767.98px) {
+  :is(input, select, textarea):not(
+      [class~="text-base"],
+      [class~="text-lg"],
+      [class~="text-xl"],
+      [class~="text-2xl"],
+      [class~="text-3xl"],
+      [class~="text-4xl"]
+    ) {
+    font-size: 16px;
   }
 }

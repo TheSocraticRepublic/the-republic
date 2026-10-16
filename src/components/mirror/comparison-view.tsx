@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo } from 'react'
-import { FileText, MessageCircleQuestion } from 'lucide-react'
 import { CrossArmActions } from '@/components/ui/cross-arm-actions'
 import { EmptyState } from '@/components/ui/empty-state'
 
@@ -326,13 +325,13 @@ export function ComparisonView({ text, isStreaming, documentId, documentTitle }:
                 label: 'Turn this into a public comment',
                 href: `/lever?documentId=${documentId}&actionType=public_comment`,
                 color: 'var(--accent-lever)',
-                icon: FileText,
+                icon: 'document',
               },
               {
                 label: 'Ask about this',
                 href: `/gadfly?documentId=${documentId}${documentTitle ? `&title=${encodeURIComponent(documentTitle)}` : ''}`,
                 color: 'var(--accent-gadfly)',
-                icon: MessageCircleQuestion,
+                icon: 'question',
               },
             ]}
           />

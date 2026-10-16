@@ -32,14 +32,6 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **Build-checks fix is live (2026-10-11); Lee owes one follow-up.** Main is `fa16447` (PR #5) on Netlify deploy `6acc1bbeb27b4900083c30a8`, which is now the rollback target for any next release. **Lee to sign in once on opencave.ca with the audit account**, to confirm sign-in works after the Next 16.3.1 header change (Razor N2). TEST-1 (the non-owner export) was accepted by Lee on 2026-10-12. Sentry has no project in the org, so it gives no post-deploy signal (OBS-1).
 
-- **S1 release card is with Lee: DECISION NEEDED (filed 2026-10-12).** Draft PR #6 (`release/s1-redirect-privacy`, CI green, run 38201423939) holds S1's five files alone, cherry-picked onto main `fa16447` and byte-identical to the reviewed head `44b3af4`. The rollback target is `6acc1bbeb27b4900083c30a8`. **The blocker:** the privacy contact, and `SECURITY.md` line 9, point at the email on the TheSocraticRepublic GitHub profile, and the profile shows none (`gh api users/TheSocraticRepublic`: `email: null`). The options:
-  - (a) Lee publishes a monitored public email on the profile;
-  - (b) Lee names an address for the page;
-  - (c) recommended: ship the redirect fix only, holding the privacy text;
-  - (d) hold everything.
-
-  Never merge PR #6 or anything to main without his yes. Razor RN2: whoever answers privacy requests replies only to the account's sign-in address.
-
 - **Findings inventory and audit artifacts** are private, in `~/.local/share/marvin/private/republic-ui-audit-2026-10-02/` (mode 700). It holds 120 findings with dispositions mapped to the r4 batch IDs (updated 2026-10-11). Screenshots and reports are deleted at relay close, except the inventory (owner Lee).
 
 - **UI and filings plan r4.1: Q0a, Q0b, S1, A1, A2, A3 and A4 merged to the session branch (A4 at `1bd2524`); the A-series release card goes to Lee next, then B1.**
@@ -49,15 +41,19 @@ in this project has already been ruled on, usually for a reason that is not obvi
   - **The harness:** `npx tsx scripts/qa/harness.ts run` (or `up` / `check` / `down`; see `scripts/qa/README.md`). Browser tests use `scripts/qa/browser.ts`, and signed-in evidence runs in Chromium on 127.0.0.1. Every non-GET request sends `Origin: http://127.0.0.1:3177`. Named limits: no network isolation; its ports sit in the ephemeral range, so `up` can be refused on a TIME_WAIT (retry). A fresh relay worktree needs `npm ci` (the session checkout's `node_modules` lacks the Q0a dev tools).
   - **Machine:** keep the memory guard on (no build or harness under 4 GB available; never both at once). **WebKit needs `sudo apt-get install libavif16`** (Lee; G1 only).
 
-- **Cold start for the next batch (B1).**
-  1. Read the plan's "### B1", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether B1 has UI (Jen, opus xhigh, after Razor).
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-a4-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-b1`, `parallel_batches` to `[["B1"]]`, and leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-b1 --stage implement --batch 1 --step B1`; `git worktree add -b relay/ui-b1-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
-  4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only. Carry Razor's A4 RW1 into B1's review only if B1 touches the PDF engine; otherwise it stays in the Parking Lot.
-  5. Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
-  6. ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
+- **A-series LIVE since 2026-10-12 17:48:49Z; Lee's look check owed.** Main `b9d9139` (PR #7, merge commit), Netlify deploy `6acd1d516cdac21aab7e88f4`; D_prev / rollback target `6acc1bbeb27b4900083c30a8` at `fa16447`. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-12-a-series.md`. Lee's standing authority for this release: restore D_prev without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route, or his look check), then `git revert -m 1 b9d9139` on main through a PR. The look-check steps are in `~/marvin/state/relay/republic-ui-a-series-release-card.md` ("After promotion"). PR #6 closed as superseded. Still open with Lee: the privacy contact address (S1's held wording returns with it; Razor S1b N1-N3 in the Parking Lot).
 
-- **Lee's rulings 2026-10-12 ("go ahead with all of the recommendations for these decisions"), being executed.** (1) Release the open-redirect fix and A1-A5 to opencave.ca with S1's privacy wording held out (relay `republic-ui-s1b` restores `PRIVACY.md` and the privacy page to main's bytes). (2) Legacy final and filed letters render as stored with the notice beside them; no split feature. (3) Finalise without the marker line asks for confirmation (relay `republic-ui-a5`); two markers still block. (4) For the A-series release, a restore of `D_prev` without asking if a named check fails (health or signed-out probe, a new 5xx on a touched route in 30 min, Lee's look check). Still open: the privacy contact address (S1 wording returns with it). PR #6 is superseded by the A-series release; close it when that release merges. Release record goes in `~/.local/share/marvin/private/republic-releases/` before promotion; re-run the D_prev check with an A5-confirmed record before promotion.
+- **LIVE BUG, fix waiting on a release: every ready Oracle document page (`/oracle/[id]`) very likely errors on opencave.ca**, and so do Lever actions with a linked document. Since 555c402 (2026-03-30), server components passed lucide icon components to the client `CrossArmActions`. It is fixed on the session branch in C2a (`29c9c6b`, string icon keys), and Razor's app-wide sweep found no other site. Production logs keep only about 100 lines, so this is unconfirmed live; Lee can confirm by opening any analysed document. It ships with the next release Lee approves (B1-C2a, which also carries the Forum gate fix).
+
+- **Everything waiting on Lee lives on the Open Cave Checks page: https://claude.ai/artifact/FbM2CLbQ7Pxka6BKV7m9mU** (Lee, 2026-10-15: look checks and decisions go there, not in chat). Items are in its database collection `items` (seed with `ArtifactData`), and his answers are in `responses`, one document per item id. Open now: the A-series look check, a one-minute Oracle crash confirmation, and the release decision for B1 onward. Close an item (status "closed", plus an `outcome` line) once acted on.
+
+- **Cold start for the next batch (D1).**
+  1. Read the plan's "### D1", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether D1 has UI (Jen, opus xhigh, after Razor).
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-c4-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-d1`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
+  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-d1 --stage implement --batch 1 --step D1`; `git worktree add -b relay/ui-d1-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
+  4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only.
+  5. Harness runs: clear `.next/cache` first (a stale turbopack cache served old CSS in B1). Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
+  6. Before merging, run the harness-only tests with `QA_REQUIRE_HARNESS=1` on a live harness (CI skips them). ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
 
 ## Open questions awaiting Lee
 
@@ -81,6 +77,9 @@ in this project has already been ruled on, usually for a reason that is not obvi
 | Release the A-series (login redirect fix, A1-A4 filings work) to opencave.ca, and what happens to S1's privacy wording? (a) release everything once you answer the S1 contact question; (b, recommended) back out only the privacy wording and release the rest now; (c) hold. Full card: ~/marvin/state/relay/republic-ui-a-series-release-card.md (resolved 2026-10-12) | A release is everything on the session branch since main, which includes S1's privacy line pointing at a GitHub profile with no public email; the live open redirect stays open until something ships | 2026-10-12 (A-series release card) |
 | Old letters: accept that final and filed letters written before this work keep their guidance notes inside the letter (drafts get a notice and can be edited)? (a, recommended) accept; (b) build a citizen-marked split, about one more batch (resolved 2026-10-12) | Takes effect with the A-series release; final and filed letters can't be edited and no automatic split is safe | 2026-10-12 (plan Decision 2) |
 | Rollback authority for the A-series release: may the session restore the current deploy (6acc1bbe at fa16447) without asking if a named post-release check fails (health or signed-out probe, a new server error on a touched route in the first 30 minutes, or your look check)? (resolved 2026-10-12) | Without it, a failed check leaves a broken release live while you are reached | 2026-10-12 (plan Decision 3) |
+| Which inbox should Open Cave's privacy and security contact name? (a) publish a monitored email on the TheSocraticRepublic GitHub profile; (b) name an address for the page directly. The S1 wording, reviewed and held, returns with your answer; SECURITY.md is fixed in the same change. | Live today, the privacy page sends requests to a public GitHub issue or the gated forum, with no warning against posting personal details, and SECURITY.md points at a profile email that doesn't exist | 2026-10-12 (S1, carried past the A-series release) |
+| Has anyone posted in the live Forum? Razor found that while the Forum is gated, a signed-in user who knows a thread's address can still read its title, post text and author id (live since before this work; the old 404 leaked the same in its page source). The fix is merged on the session branch. (a) If real posts exist: release the gate fix on its own as soon as it is ready, same checks and rollback as the A-series. (b) If the Forum is empty or holds only test posts: ship it with the next B-series release. (resolved 2026-10-15) | Decides whether a fix for a live content exposure waits for the B-series release; the session has no read path to production data to check | 2026-10-12 (Razor W1, relay republic-ui-b2) |
+| Release everything merged since the A-series (B1, B2, B3a, B3b, C1, C2a) to opencave.ca? It fixes two live problems: every analysed Oracle document page very likely shows an error today, and gated Forum threads are readable by URL to signed-in users. (a, recommended) release once you've done the A-series look check, with the same checks, compatibility run and standing rollback authority as the A-series; (b) release the two fixes alone first; (c) hold. | Two live faults are fixed only on the session branch; a release is everything merged since main, so it also carries the B-series and C1-C2a interface work | 2026-10-13 (C2a, Razor W1 relay republic-ui-b2) |
 
 *Recently closed:* the `:5432`→`:6543` pooler switch (shipped 2026-07-15, confirmed in the
 2026-07-16 hand-off). SEC-1, FORUM-1's cosmetic gate, Relay 1, Relay 2 and Relay 3 are all
@@ -89,6 +88,85 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-16 — Lee approves the release through C4; Jen's hero line
+In a chat grill (Lee found the Checks page slower than answering in chat), Lee chose: release now with one combined look check afterwards, which also covers the A-series look check, and Jen's landing hero line as built. The Oracle crash confirmation was dropped. S = 9435a47 (B1 through C4). D1 joins the next release. The D_prev compatibility run is repeated at S once Jen's D1 harness frees the ports, then the release process runs with restore-without-asking authority as before. Checks page items closed with outcomes.
+
+### 2026-10-15 — C4 merged to the session branch (`61f7fb3`)
+
+- **What it does:** a landing hero that says what Open Cave is for, with a readable scrim and one Start on screen at a time, and a real closing concern box. A concern written before sign-in is carried once through login and onboarding to Investigate (15 minutes, one tab, never sent before submit, neutral wording). The concern form is on the field recipe.
+- **Rulings:** `clear-pending` broadcast before the sign-out fetch (reconciling C3 and C4); 15-minute expiry and neutral wording (Razor W3); a signed-in landing concern also carries over.
+- **Lee:** the hero line is on the Checks page (`landing-hero-line`); the `HERO_LINE` constant is in `src/components/landing/hero.tsx`.
+- **Next:** D1.
+
+### 2026-10-15 — C3 merged to the session branch (`d1aa565`)
+
+- **What it does:** one sign-out path; other tabs reload, or keep unsaved text and show a notice with a "Sign in again in a new tab" link. The login is a paper card that fits phones, the onboarding shell opens with "Welcome to Open Cave", and every signed-out Lever write gets plain copy.
+- **Found and fixed:** a live denial of service. The sign-out rate limiter keyed on a header the middleware never sets, so one 30-a-minute bucket covered the whole site and anyone could block sign-out for every citizen. The limiter is removed; the Origin check stays.
+- **Next:** C4. The release decision on the Checks page now covers B1 to C3.
+
+### 2026-10-15 — Open Cave Checks page
+
+- Published https://claude.ai/artifact/FbM2CLbQ7Pxka6BKV7m9mU (private; db and user capabilities). Seeded the A-series look check, the Oracle crash confirmation and the B1-onward release decision. Lee's rule: every check or decision for him goes there.
+
+### 2026-10-15 — Lee on the Forum
+
+- Lee: "I don't think anyone has posted in there, and I'm not currently that concerned about its functionality. I want to ensure that every other aspect of the website is optimized before spending time building out that part."
+- So the Forum gate fix (B2) ships with the next ordinary release, with no separate patch. No Forum feature work until the rest of the site is done. The Forum stays gated per the standing ruling.
+- Still owed by Lee: the A-series look check, and the call on releasing B1 onward (live Oracle document crash, sign-out denial).
+
+### 2026-10-13 — C2b merged to the session branch (`f567dc2`)
+
+- **What it does:** one `Field` recipe across the Gadfly, Lever, Mirror and Scout forms; arm buttons; busy buttons that keep their box so Cancel never lands under a second press; honest error and invalid states; the duplicate Investigations CTA removed; no phantom scroll; and `tests/unit/rsc-boundary.test.ts`, which catches the server-to-client leak class behind the live Oracle crash.
+- **Carried:** the concern form's and Votes' fields move to C4 and E3b. Field border contrast (1.53:1) needs a ruling before the final gate.
+- **Release:** the B1-C2a release card is ready (compatibility run PASS). A release now also carries C2b. Waiting on Lee.
+- **Next:** C3.
+
+### 2026-10-13 — C2a merged to the session branch (`29c9c6b`)
+
+- **What it does:** an intro in each arm's register (Jen's copy), empty-state actions including `?new=1` create dialogs, the arm tint filling the whole room on landings and seven subpages, Mirror's question first, and Scout's misleading "Recently found" removed.
+- **Found and fixed:** a live crash on every ready Oracle document page since 2026-03-30 (component props passed from server to client). Razor swept all 239 server components and found no other site.
+- **Next:** a D_prev compatibility run against the A-series deploy so the next release is ready, then C2b. Lee owes the A-series look check, the Forum-posts answer and the release call.
+
+### 2026-10-12 — C1 merged to the session branch (`1de761f`)
+
+- **What it does:** CTAButton primary, secondary and arm variants (per-arm ink tokens readable on the listed grounds); Investigate's primary Start, which keeps one box so a second press never lands on Cancel; a plain subhead and one jurisdiction line naming city, district or province; Scout search-first with an arm button, focus kept through a search, plain status-mapped errors, and daily-limit copy naming the reset in the reader's local time.
+- **Review:** Razor W1/W2, then RW1-RW3, fixed; Jen's nine concerns adopted, with C8 carried to C2b; the arm variant's allowed grounds carried into C2b and E3a.
+- **Parked:** harness-only tests don't gate merges (run them by hand with `QA_REQUIRE_HARNESS=1`); "Try again tomorrow" on 13 routes.
+- **Next:** C2a. Lee owes the A-series look check, the Forum-posts answer and the B-series release call.
+
+### 2026-10-12 — B3b merged to the session branch (`207ef99`)
+
+- **What it does:** the Votes postal helper tied to its field; a platform-aware Cmd/Ctrl+Enter hint shown on fine pointers only; fine-pointer-only autofocus; the Oracle upload zone as a 44px label named "Choose a PDF", with errors announced above its instructions, `aria-disabled` while uploading, and plain status-mapped error copy.
+- **Review:** Razor W1 ("Try again" inside the label opened the picker on Safari and older Chromium) fixed, then the button removed per Jen; Jen's six concerns adopted. B-series complete on the session branch (B1, B2, B3a, B3b).
+- **Next:** C1. Lee owes the A-series look check and the Forum-posts question.
+
+### 2026-10-12 — B3a merged to the session branch (`7582fac`)
+
+- **What it does:** honest disabled controls on the four event paths (CTAButton click and Enter/Space, login Enter, concern-form Cmd/Ctrl+Enter), a readable disabled and busy CTAButton, login as `<main>` honouring `?redirect=`, plain error copy, "Send a new code", touch-aware focus, one-time-code autofill.
+- **Security:** `safeRedirectTarget` (live since the A-series) now refuses normalised `//` targets; Razor probed 70 inputs. The send-code route never deduplicates a locked-out code and reports a skipped send. No user path double-submits.
+- **Parked, live and predating B3a:** the magic-code hourly cap leaks (9 codes an hour measured, not 5), plus four smaller sign-in quirks; first in line for the next auth change.
+- **Next:** B3b. Lee owes the A-series look check and the Forum-posts question.
+
+### 2026-10-12 — B2 merged to the session branch (`111c185`)
+
+- **What it does:** instruments above the fold and first in the drawer, Fraunces wordmark with no tagline, footer identity without email, a sticky 44px drawer close, one-line arm descriptions, session-aware 404s per route group, and the honest gated Forum page with a link into the app.
+- **Found and fixed:** a live Forum gate leak (gated Forum pages ran server-side and sent thread content to signed-in users); the middleware now rewrites every `/forum` path to `/forum-opens-later` while gated. Razor probed 56 path spellings; nothing reached a Forum query.
+- **Review:** Razor W1 fixed and re-checked; Jen's six concerns adopted (two regressions); the plan's Forum sentence kept verbatim. Leftovers in the Parking Lot (Next.js dynamic-route 404s, malformed-escape 500s, no browser test runner).
+- **Next:** B3a. Lee owes the A-series look check and the Forum-posts question.
+
+### 2026-10-12 — B1 merged to the session branch (`310b100`)
+
+- **What it does:** warm dark surfaces per R4 (arm pages kept warm through an OKLCH tint with a real S0 fallback), faint and island text tokens at 4.5:1 on the grounds they paint, a neutral chrome focus ring with an ink ring inside papers, `--font-sans` on the body face, and a phones-only 16px field rule that never shrinks larger fields.
+- **Review:** Razor W1 (ring on papers) and W2 (light island faint) fixed; the fix's own regression (the civic strip ring) carried into the design fix pass and closed; Jen's six concerns adopted, with C4 carried to D1 and C6 plus the dark-island toggle to D4 in the plan. Mutation batteries all killed.
+- **Next:** B2. Lee's look check on the A-series release is still owed.
+
+### 2026-10-12 — A-series released to opencave.ca
+
+- **Shipped:** S1's open-redirect fix (privacy wording held), A1-A5. PR #7 merged as `b9d9139`; deploy `6acd1d51` published 17:48:49Z with `commit_ref` = M.
+- **Before promotion:** S1b and A5 merged after Razor PASS (and Jen on A5); release gate at S `7733800` (lint, tsc, token lint, 1413 unit tests); D_prev compatibility run r2 PASS, 128/128 on 32 records including A5-confirmed letters.
+- **After:** signed-out probes identical to the D_prev baseline; /privacy serves the held wording; function logs read for 30 minutes (see the release record).
+- **Next:** Lee's look check, then B1.
 
 ### 2026-10-12 — Lee approves the A-series release card
 

@@ -9,7 +9,7 @@ import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-libra
  */
 
 const push = vi.fn()
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }), useSearchParams: () => new URLSearchParams() }))
 
 import { NewActionDialog } from '@/components/lever/new-action-dialog'
 
@@ -100,7 +100,8 @@ describe('NewActionDialog', () => {
     await waitFor(() => expect(provinceSelect().value).toBe('bc'))
     fireEvent.change(screen.getByLabelText('What records do you want?'), { target: { value: 'Records.' } })
     const generate = screen.getByRole('button', { name: 'Generate' }) as HTMLButtonElement
-    expect(generate.getAttribute('aria-disabled')).toBe('false')
+    // Available: no aria-disabled at all (CTAButton, UI plan C2b).
+    expect(generate.hasAttribute('aria-disabled')).toBe(false)
     // Both clicks inside one act: React has not re-rendered the button as
     // disabled between them, so only the synchronous guard can stop the second.
     act(() => {
@@ -196,7 +197,9 @@ describe('NewActionDialog', () => {
     const generate = screen.getByRole('button', { name: 'Generate' }) as HTMLButtonElement
     generate.focus()
     fireEvent.click(generate)
-    const busy = await screen.findByRole('button', { name: 'Creating...' })
+    // Busy keeps the label and the box; only the icon turns (Jen C2b C3).
+    await waitFor(() => expect(generate.getAttribute('aria-busy')).toBe('true'))
+    const busy = screen.getByRole('button', { name: 'Generate' })
     expect(busy).toBe(generate)
     expect(busy.getAttribute('aria-busy')).toBe('true')
     expect(busy.getAttribute('aria-disabled')).toBe('true')
@@ -225,7 +228,8 @@ describe('NewActionDialog', () => {
     fireEvent.change(other, { target: { value: 'BC Ministry of Forests' } })
     fireEvent.change(screen.getByLabelText('What records do you want?'), { target: { value: 'Records.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Generate' }))
-    const error = await screen.findByText(message)
+    // The words sit in a span after the error's icon (Jen C2b C1).
+    const error = (await screen.findByText(message)).closest('p')!
     expect(error.className).toContain('text-status-danger')
     expect(other.getAttribute('aria-invalid')).toBe('true')
     expect(other.getAttribute('aria-describedby')).toBe(error.id)
@@ -266,6 +270,8 @@ describe('NewActionDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Generate' }))
     const alert = await screen.findByRole('alert')
     expect(alert.textContent).toBe('Choose the province this request goes to')
+    // A cue that is not colour (Jen C2b C1).
+    expect(alert.querySelector('svg[aria-hidden="true"]')).toBeTruthy()
     await waitFor(() => expect(document.activeElement).toBe(alert))
     cleanup()
 
@@ -287,5 +293,31 @@ describe('NewActionDialog', () => {
     expect(screen.queryByLabelText('Public body name')).toBeNull()
     fireEvent.change(bodySelect(), { target: { value: '__other__' } })
     expect((screen.getByLabelText('Public body name') as HTMLInputElement).value).toBe('')
+  })
+})
+
+describe('NewActionDialog: Create while signed out (Razor C3 DN1)', () => {
+  it('a 401 shows plain copy, never "Unauthorized", keeps the text, and raises the signed-out notice', async () => {
+    const auth = await import('@/lib/auth/client-sign-out')
+    auth.resetAuthChannelForTests()
+    let seen: string | null = null
+    function NoticeProbe() {
+      seen = auth.useSignedOutNotice()
+      return null
+    }
+    installFetch({ investigation: BC_INVESTIGATION, create: Promise.resolve({ status: 401, body: { error: 'Unauthorized' } }) })
+    render(<><NoticeProbe /><NewActionDialog initialInvestigationId="inv-1" initialActionType="fippa_request" /></>)
+    await waitFor(() => expect(provinceSelect().value).toBe('bc'))
+    const description = screen.getByLabelText('What records do you want?') as HTMLTextAreaElement
+    fireEvent.change(description, { target: { value: 'All 2025 inspection reports.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Generate' }))
+    await waitFor(() =>
+      expect(screen.getByText("You're signed out, so the action wasn't created. What you typed is still here.")).toBeTruthy()
+    )
+    expect(document.body.textContent).not.toContain('Unauthorized')
+    expect(description.value).toBe('All 2025 inspection reports.')
+    expect(seen).toBe('server')
+    expect(push).not.toHaveBeenCalled()
+    auth.resetAuthChannelForTests()
   })
 })

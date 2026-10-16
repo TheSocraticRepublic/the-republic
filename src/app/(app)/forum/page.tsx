@@ -73,7 +73,9 @@ export default async function ForumPage({
       .innerJoin(userProfiles, eq(forumThreads.authorId, userProfiles.userId))
       .leftJoin(jurisdictions, eq(forumThreads.jurisdictionId, jurisdictions.id))
       .where(whereClause)
-      .orderBy(desc(forumThreads.pinned), desc(sql`${forumThreads.lastPostAt} NULLS LAST`))
+      // desc(sql`x NULLS LAST`) rendered "x NULLS LAST desc", a Postgres
+      // syntax error (Razor N3). The direction goes before NULLS LAST.
+      .orderBy(desc(forumThreads.pinned), sql`${forumThreads.lastPostAt} desc nulls last`)
       .limit(limit)
       .offset(offset),
     db.select({ total: count() }).from(forumThreads).where(whereClause),

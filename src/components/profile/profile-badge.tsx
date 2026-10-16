@@ -13,16 +13,18 @@ function getColor(displayName: string): string {
 interface ProfileBadgeProps {
   displayName: string
   size?: 'sm' | 'md'
+  /** Replaces the name's classes, e.g. to truncate it in a narrow column. */
+  nameClassName?: string
 }
 
-export function ProfileBadge({ displayName, size = 'md' }: ProfileBadgeProps) {
+export function ProfileBadge({ displayName, size = 'md', nameClassName }: ProfileBadgeProps) {
   const color = getColor(displayName)
   const circleSize = size === 'sm' ? 20 : 28
   const textSizeClass = size === 'sm' ? 'text-xs' : 'text-sm'
   const initial = displayName.charAt(0).toUpperCase()
 
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="inline-flex min-w-0 items-center gap-2">
       <span
         className="flex-shrink-0 flex items-center justify-center rounded-full font-semibold text-white"
         style={{
@@ -34,7 +36,7 @@ export function ProfileBadge({ displayName, size = 'md' }: ProfileBadgeProps) {
       >
         {initial}
       </span>
-      <span className={`${textSizeClass} text-text-primary font-medium`}>
+      <span className={nameClassName ?? `${textSizeClass} text-text-primary font-medium`}>
         {displayName}
       </span>
     </span>

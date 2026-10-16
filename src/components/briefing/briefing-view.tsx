@@ -370,7 +370,7 @@ function ProseSection({
           <h4
             key={i}
             style={{
-              fontFamily: '"Inter", system-ui, sans-serif',
+              fontFamily: 'var(--font-body)',
               fontSize: '11px',
               fontWeight: 700,
               textTransform: 'uppercase' as const,
@@ -427,7 +427,7 @@ function ProseSection({
             <blockquote
               key={i}
               style={{
-                fontFamily: '"Source Serif 4", Georgia, serif',
+                fontFamily: 'var(--font-serif)',
                 fontStyle: 'italic',
                 fontSize: '18px',
                 lineHeight: '1.5',
@@ -620,7 +620,7 @@ function PlayersSection({ content }: { content: string }) {
             {player.whyTheyMatter && (
               <p
                 style={{
-                  fontFamily: '"Inter", system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: '14px',
                   lineHeight: '1.5',
                   color: 'var(--color-island-secondary)',
@@ -636,7 +636,7 @@ function PlayersSection({ content }: { content: string }) {
             {player.trackRecord && (
               <p
                 style={{
-                  fontFamily: '"Inter", system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: '13px',
                   lineHeight: '1.5',
                   color: 'var(--color-island-muted)',
@@ -754,7 +754,7 @@ function ComparisonSection({ content }: { content: string }) {
                 <span
                   style={{
                     display: 'block',
-                    fontFamily: '"Inter", system-ui, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     fontSize: '10px',
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
@@ -776,7 +776,7 @@ function ComparisonSection({ content }: { content: string }) {
                 <span
                   style={{
                     display: 'block',
-                    fontFamily: '"Inter", system-ui, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     fontSize: '10px',
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
@@ -798,7 +798,7 @@ function ComparisonSection({ content }: { content: string }) {
                 <span
                   style={{
                     display: 'block',
-                    fontFamily: '"Inter", system-ui, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     fontSize: '10px',
                     fontWeight: 600,
                     textTransform: 'uppercase' as const,
@@ -970,7 +970,6 @@ function DocumentCard({
           {docName && (
             <span
               style={{
-                fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
                 fontSize: '14px',
                 fontWeight: 700,
                 lineHeight: '1.4',
@@ -1181,7 +1180,7 @@ function extractFippaLetter(content: string): { before: string; letter: string; 
   }
 }
 
-// ---- FIPPA letter card (light surface, Inter body) ----
+// ---- FIPPA letter card (light surface, body face) ----
 
 function FippaLetterCard({ letter }: { letter: string }) {
   const [copied, setCopied] = useState(false)
@@ -1294,7 +1293,7 @@ function FippaLetterCard({ letter }: { letter: string }) {
           aria-label="FIPPA Request Letter"
           className="whitespace-pre-wrap"
           style={{
-            fontFamily: '"Inter", system-ui, sans-serif',
+            fontFamily: 'var(--font-body)',
             fontSize: '14px',
             lineHeight: '1.65',
             color: 'var(--color-island-body)',
@@ -1349,7 +1348,7 @@ function QuestionsSection({ content }: { content: string }) {
       {/* Introductory line — Source Serif 4 is appropriate here (rhetorical frame) */}
       <p
         style={{
-          fontFamily: '"Source Serif 4", Georgia, serif',
+          fontFamily: 'var(--font-serif)',
           fontStyle: 'italic',
           fontSize: '15px',
           color: 'var(--color-island-muted)',
@@ -1886,7 +1885,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
           </div>
           <h1
             style={{
-              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+              fontFamily: 'var(--font-display)',
               fontSize: '22px',
               fontWeight: 700,
               lineHeight: '1.3',

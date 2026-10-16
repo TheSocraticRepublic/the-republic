@@ -68,8 +68,8 @@ export function PostalCodeForm() {
         >
           Your postal code
         </label>
-        <p className="text-2xs text-text-faint mb-2">
-          Sent to Open North&apos;s Represent API to find your riding.
+        <p id="postal-code-helper" className="text-2xs text-text-faint mb-2 text-pretty">
+          Sent to Open North&apos;s Represent service to find your riding.
         </p>
         <input
           id="postal-code"
@@ -84,6 +84,7 @@ export function PostalCodeForm() {
           style={{ borderColor: 'var(--border-strong)' }}
           autoComplete="postal-code"
           maxLength={7}
+          aria-describedby="postal-code-helper"
         />
       </div>
 
