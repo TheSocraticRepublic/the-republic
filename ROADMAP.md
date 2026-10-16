@@ -237,6 +237,7 @@ Named elsewhere and not yet scheduled:
 - Field border contrast 1.53:1 needs a ruling; boundary-test false positives (see Deferred from republic-ui-c2b)
 - Small sign-out and onboarding edges (see Deferred from republic-ui-c3)
 - Carried-concern edges (see Deferred from republic-ui-c4)
+- Island dark mode off until D4; role "nation" substring; load-flaky front-door timing (see Deferred from republic-ui-d1)
 - Next.js 404 and malformed-URL behaviour on dynamic routes (see Deferred from republic-ui-b2)
 - D4 "The Athenians" — illustration variant selection
 - Release mechanics for dependency deploys (publish boundary, post-deploy checks, containment) — see Deferred from republic-ci-green-deps
@@ -288,6 +289,15 @@ Written verbatim from `~/marvin/state/plans/republic-ui-filings-2026-10/republic
 - **Votes on the landing** (arm station plus chip, landing-public L17).
 - **Briefing mobile sticky section bar** (reading-surfaces F-P1-5).
 - **CSP walk checklist** additions: allowlisted links, grain, new fonts.
+
+### Deferred from republic-ui-d1 (2026-10-16)
+
+Named during relay `republic-ui-d1` (Razor review, re-check and design-fix check; Jen's review).
+
+- **The island dark mode is switched off until D4 (Jen C3a, Razor DW1).** The toggle no longer renders and nothing on the investigation page reads `republic-island-dark`. D4 must: store the choice under a new key (`republic-island-dark-v2`) so dark starts only from a toggle that works (Jen C3b); give the button a 44px hit area on coarse pointers (C3c); and add `.dark-island` role twins (C3d, Razor RN1): regulator `#22d3ee`, affected `#4ade80`, rights holder `#f59e0b`, proponent `#a78bfa`, other `#94a3b8`, each measured on its 8% tint over `#18181b`.
+- **`getRoleKey` still matches a bare "nation" inside words** ("international mining company", "self-determination"), now in the rights-holder amber (Razor DN1). A whole-word match belongs with D2's parser work, along with Jen's parser-debris list (`Name:` prefixes, raw `DECISION_MAKER`, raw markdown links, a trailing `---` rule, the Primary Authority card).
+- **The C1 ink rule also reaches the Lever letter page**, which uses no arm colours, so it has no effect there (Razor DN2).
+- **Front-door geometry timing tests fail under host load** (a different test on each run at load 17 to 22; D1 changes no front-door styles). Same family as the PDF timing flakes in republic-ui-c1.
 
 ### Deferred from republic-ui-c4 (2026-10-15)
 
