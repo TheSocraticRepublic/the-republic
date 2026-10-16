@@ -89,6 +89,9 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 
 ## Log (newest first)
 
+### 2026-10-16 — Lee approves the release through C4; Jen's hero line
+In a chat grill (Lee found the Checks page slower than answering in chat), Lee chose: release now with one combined look check afterwards, which also covers the A-series look check, and Jen's landing hero line as built. The Oracle crash confirmation was dropped. S = 9435a47 (B1 through C4). D1 joins the next release. The D_prev compatibility run is repeated at S once Jen's D1 harness frees the ports, then the release process runs with restore-without-asking authority as before. Checks page items closed with outcomes.
+
 ### 2026-10-15 — C4 merged to the session branch (`61f7fb3`)
 
 - **What it does:** a landing hero that says what Open Cave is for, with a readable scrim and one Start on screen at a time, and a real closing concern box. A concern written before sign-in is carried once through login and onboarding to Investigate (15 minutes, one tab, never sent before submit, neutral wording). The concern form is on the field recipe.
