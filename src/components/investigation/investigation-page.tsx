@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useSyncExternalStore } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { BriefingView } from '@/components/briefing/briefing-view'
 import { LensPanel } from '@/components/lens/lens-panel'
 import { GadflySheet } from '@/components/lens/gadfly-sheet'
@@ -57,12 +57,6 @@ export function InvestigationPage({
     () => false
   )
 
-  const handleToggleDarkMode = useCallback(() => {
-    const next = localStorage.getItem(ISLAND_DARK_KEY) !== 'true'
-    localStorage.setItem(ISLAND_DARK_KEY, String(next))
-    window.dispatchEvent(new Event(ISLAND_DARK_EVENT))
-  }, [])
-
   function handleOpenGadfly() {
     setGadflyOpen(true)
   }
@@ -74,8 +68,10 @@ export function InvestigationPage({
         <BriefingView
           text={briefingText}
           isStreaming={false}
-          darkMode={islandDarkMode}
-          onToggleDarkMode={handleToggleDarkMode}
+          // No dark toggle and no stored dark state on the briefing until D4
+          // makes the dark paper real (Jen D1 C3a): the toggle only changed its
+          // own icon while recording a preference D4 would later act on, and a
+          // stored `true` would drop the paper's light arm inks (C1).
           onOpenLens={() => setLensOpen(true)}
           onOpenCampaign={() => setCampaignOpen(true)}
           onOpenGadfly={() => setGadflyOpen(true)}
