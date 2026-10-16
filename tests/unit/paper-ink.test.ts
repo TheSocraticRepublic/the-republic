@@ -405,6 +405,15 @@ function byText(doc: Document, selector: string, text: string): Element {
 
 const ARMS = ['scout', 'oracle', 'gadfly', 'lever', 'mirror'] as const
 
+describe('Go Deeper cards align their text left, links and buttons alike (Jen D1 C2)', () => {
+  it('all six cards, three of them buttons, carry text-left', () => {
+    const doc = renderBriefing(false)
+    const cards = ['Scout', 'Oracle', 'Gadfly', 'Lever', 'Mirror', 'Lens'].map((arm) => byText(doc, 'span', arm).closest('a, button'))
+    expect(cards.map((c) => c?.tagName.toLowerCase())).toEqual(['a', 'a', 'button', 'button', 'a', 'button'])
+    for (const c of cards) expect(c!.className.split(/\s+/)).toContain('text-left')
+  })
+})
+
 describe('arm text on the paper uses the light-ground arm inks (Jen D1 C1)', () => {
   const PAPER_SCOPE = '.content-island:not(.content-island--dark)'
 
@@ -532,6 +541,8 @@ describe('the briefing paints marks, accents, roles and the toggle from island t
     for (const archetype of ['THE PYTHIA', 'THE GADFLY', 'THE EXAMINER']) {
       const s = styleOf(byText(light, 'span', archetype))
       expect(s).toContain('font-size:11px')
+      // Jen D1 C2: the epithet sits under the name, not over it.
+      expect(s).toContain('letter-spacing:0.06em')
     }
     expect(light.body.innerHTML).not.toMatch(/font-size:9px/)
   })

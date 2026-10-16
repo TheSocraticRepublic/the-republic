@@ -1732,7 +1732,8 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, onOpenLens }: { onOpenCampaign
         {links.map((link) => {
           const Icon = link.icon
           const callback = armCallbacks[link.arm]
-          const cardClassName = "link-card flex items-center gap-3 rounded-[10px] transition-opacity duration-150 hover:opacity-85"
+          // text-left: Gadfly, Lever and Lens are <button>s, which centre by default (Jen D1 C2).
+          const cardClassName = "link-card flex items-center gap-3 rounded-[10px] text-left transition-opacity duration-150 hover:opacity-85"
           const cardStyle = {
             padding: '12px 14px',
             minHeight: '44px',
@@ -1762,7 +1763,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, onOpenLens }: { onOpenCampaign
                   style={{
                     fontSize: '11px',
                     textTransform: 'uppercase' as const,
-                    letterSpacing: '0.1em',
+                    letterSpacing: '0.06em',
                     color: 'var(--color-island-faint)',
                     marginTop: '1px',
                   }}
