@@ -116,6 +116,13 @@ function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05)
 }
 
+/** `fg` at alpha `a` over an opaque `bg` (sRGB, the browser's color-mix with transparent). */
+function composite(fg: string, a: number, bg: string): string {
+  const [r, g, b] = parseHex(fg)
+  const [R, G, B] = parseHex(bg)
+  return '#' + [[r, R], [g, G], [b, B]].map(([f, k]) => Math.round(f * a + k * (1 - a)).toString(16).padStart(2, '0')).join('')
+}
+
 // ---- the drift test ---------------------------------------------------------
 
 describe('paper ink: TypeScript and CSS are the same values', () => {
@@ -352,6 +359,19 @@ const BRIEFING = [
   '',
   'The staff report is not publicly posted, and its absence matters.',
   '',
+  '## What You Can Do',
+  'File a request for the staff report.',
+  '',
+  '---',
+  'Dear FOI officer, I request the staff report on variance 2025-114.',
+  '---',
+  '',
+  'Then attend the next meeting.',
+  '',
+  '## Questions Worth Asking',
+  '1. Who wrote the staff report?',
+  '2. Why was it not posted?',
+  '',
   '## What This Analysis Cannot See',
   'Closed-session deliberations.',
 ].join('\n')
@@ -382,6 +402,61 @@ function byText(doc: Document, selector: string, text: string): Element {
   if (!el) throw new Error(`no ${selector} with text "${text}"`)
   return el
 }
+
+const ARMS = ['scout', 'oracle', 'gadfly', 'lever', 'mirror'] as const
+
+describe('arm text on the paper uses the light-ground arm inks (Jen D1 C1)', () => {
+  const PAPER_SCOPE = '.content-island:not(.content-island--dark)'
+
+  it('the light paper re-points exactly the five arm inks to the .light-scope values, and nothing else', () => {
+    const paper = scopeVars(PAPER_SCOPE)
+    const light = scopeVars('.light-scope')
+    expect([...paper.keys()].sort()).toEqual(ARMS.map((a) => `--accent-${a}-ink`).sort())
+    for (const a of ARMS) expect(paper.get(`--accent-${a}-ink`), a).toBe(light.get(`--accent-${a}-ink`))
+  })
+
+  it('every arm ink clears 4.5:1 on paper, card, and its own 10% tint (the chrome accent) over each', () => {
+    const paper = scopeVars(PAPER_SCOPE)
+    const chrome = scopeVars('.dark')
+    const low: string[] = []
+    for (const a of ARMS) {
+      const ink = paper.get(`--accent-${a}-ink`)!
+      const accent = chrome.get(`--accent-${a}`)!
+      for (const ground of [PAPER_INK.bg, PAPER_INK.card]) {
+        for (const [name, g] of [['plain', ground], ['10% tint', composite(accent, 0.1, ground)]] as const) {
+          const r = contrast(ink, g)
+          if (r < BODY_MIN) low.push(`${a} ink ${ink} on ${name} over ${ground}: ${r.toFixed(2)}`)
+        }
+      }
+    }
+    expect(low).toEqual([])
+  })
+
+  it('the checker sees the failure it exists for: the chrome accents as text on paper', () => {
+    const chrome = scopeVars('.dark')
+    const low = ARMS.filter((a) => contrast(chrome.get(`--accent-${a}`)!, PAPER_INK.bg) < BODY_MIN)
+    expect(low).toEqual([...ARMS])
+  })
+
+  it('in the rendered briefing, every arm-coloured text run uses an -ink; only icons keep the accent', () => {
+    const doc = renderBriefing(false)
+    const runs = [...doc.querySelectorAll('[style]')]
+      .map((el) => ({ el, color: /(?:^|;)color:(var\(--accent-[a-z]+(?:-ink)?\))/.exec(el.getAttribute('style') ?? '')?.[1] }))
+      .filter((r): r is { el: Element; color: string } => r.color !== undefined)
+    const text = runs.filter((r) => r.el.tagName.toLowerCase() !== 'svg')
+    // Chips, access badge, the What You Can Do and Questions labels, the letter
+    // heading, question numbers, Explore with Gadfly, Go Deeper names.
+    expect(text.length).toBeGreaterThanOrEqual(15)
+    expect(text.filter((r) => !r.color.endsWith('-ink)')).map((r) => `${r.el.textContent?.trim().slice(0, 30)}: ${r.color}`)).toEqual([])
+    for (const label of ['What You Can Do', 'Questions Worth Asking']) {
+      expect(styleOf(byText(doc, 'h3', label))).toMatch(/color:var\(--accent-(lever|gadfly)-ink\)/)
+    }
+    expect(styleOf(byText(doc, 'span', 'Public'))).toContain('color:var(--accent-mirror-ink)')
+    expect(styleOf(byText(doc, 'span', 'Scout'))).toContain('color:var(--accent-scout-ink)')
+    // Icons keep the pale accent: shapes are unchanged.
+    expect(runs.some((r) => r.el.tagName.toLowerCase() === 'svg' && !r.color.endsWith('-ink)'))).toBe(true)
+  })
+})
 
 describe('the briefing paints marks, accents, roles and the toggle from island tokens', () => {
   let light: Document

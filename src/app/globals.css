@@ -616,6 +616,22 @@ body {
   animation: island-entrance 300ms ease-out both;
 }
 
+/*
+ * Arm text on the light paper (Jen D1 C1). Under <html class="dark"> the arm
+ * accents and their inks resolve to the dark chrome's values, ~2-3:1 on paper.
+ * The paper re-points only the INKS (text) to the light-ground values, the
+ * same as .light-scope's; the accents themselves (tints, borders, icons,
+ * rules) keep their pale chrome hues. Not on the dark toggle's paper.
+ * paper-ink.test.ts measures each on its tint over the card.
+ */
+.content-island:not(.content-island--dark) {
+  --accent-scout-ink: #6B02B3;
+  --accent-oracle-ink: #014C5F;
+  --accent-gadfly-ink: #713000;
+  --accent-lever-ink: #95020C;
+  --accent-mirror-ink: #014F36;
+}
+
 .content-island::before {
   content: '';
   position: absolute;

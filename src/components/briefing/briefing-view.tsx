@@ -38,34 +38,43 @@ interface ParsedSection {
   content: string
 }
 
-// ---- Arm color config (light surface values) ----
+// ---- Arm color config ----
+// `color` (the arm accent) draws shapes: tints, borders, icons, rules. Text on
+// the paper uses `ink`, the arm's light-ground ink, which .content-island
+// re-points to the light values (globals.css): the accent resolves to the dark
+// chrome's hue under <html class="dark"> and falls to ~2:1 on paper (Jen D1 C1).
 
 const ARM_COLORS: Record<
   string,
-  { color: string; bg: string; border: string }
+  { color: string; ink: string; bg: string; border: string }
 > = {
   scout: {
     color: 'var(--accent-scout)',
+    ink: 'var(--accent-scout-ink)',
     bg: 'color-mix(in srgb, var(--accent-scout) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-scout) 18%, transparent)',
   },
   oracle: {
     color: 'var(--accent-oracle)',
+    ink: 'var(--accent-oracle-ink)',
     bg: 'color-mix(in srgb, var(--accent-oracle) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
   },
   lever: {
     color: 'var(--accent-lever)',
+    ink: 'var(--accent-lever-ink)',
     bg: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
   },
   mirror: {
     color: 'var(--accent-mirror)',
+    ink: 'var(--accent-mirror-ink)',
     bg: 'color-mix(in srgb, var(--accent-mirror) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
   },
   gadfly: {
     color: 'var(--accent-gadfly)',
+    ink: 'var(--accent-gadfly-ink)',
     bg: 'color-mix(in srgb, var(--accent-gadfly) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
   },
@@ -879,19 +888,19 @@ const ACCESS_STYLES: Record<AccessLevel, { bg: string; border: string; color: st
   public: {
     bg: 'color-mix(in srgb, var(--accent-mirror) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
-    color: 'var(--accent-mirror)',
+    color: 'var(--accent-mirror-ink)',
     label: 'Public',
   },
   fippa: {
     bg: 'color-mix(in srgb, var(--accent-gadfly) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
-    color: 'var(--accent-gadfly)',
+    color: 'var(--accent-gadfly-ink)',
     label: 'FIPPA Required',
   },
   council: {
     bg: 'color-mix(in srgb, var(--accent-oracle) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
-    color: 'var(--accent-oracle)',
+    color: 'var(--accent-oracle-ink)',
     label: 'Council Record',
   },
 }
@@ -1011,7 +1020,7 @@ function DocumentCard({
                 textTransform: 'uppercase' as const,
                 letterSpacing: '0.06em',
                 backgroundColor: 'color-mix(in srgb, var(--accent-scout) 10%, transparent)',
-                color: 'var(--accent-scout)',
+                color: 'var(--accent-scout-ink)',
                 fontWeight: 600,
               }}
             >
@@ -1241,7 +1250,7 @@ function FippaLetterCard({ letter }: { letter: string }) {
       >
         <span
           className="font-bold uppercase tracking-[0.1em]"
-          style={{ fontSize: '11px', lineHeight: '1', color: 'var(--accent-lever)' }}
+          style={{ fontSize: '11px', lineHeight: '1', color: 'var(--accent-lever-ink)' }}
         >
           FIPPA Request — Ready to File
         </span>
@@ -1272,7 +1281,7 @@ function FippaLetterCard({ letter }: { letter: string }) {
               border: copied
                 ? '1px solid color-mix(in srgb, var(--accent-mirror) 25%, transparent)'
                 : '1px solid color-mix(in srgb, var(--accent-lever) 15%, transparent)',
-              color: copied ? 'var(--accent-mirror)' : 'var(--color-island-muted)',
+              color: copied ? 'var(--accent-mirror-ink)' : 'var(--color-island-muted)',
             }}
           >
             {copied ? (
@@ -1387,7 +1396,7 @@ function QuestionsSection({ content }: { content: string }) {
                 lineHeight: '1',
                 backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',
                 border: '1px solid color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
-                color: 'var(--accent-gadfly)',
+                color: 'var(--accent-gadfly-ink)',
                 marginTop: '1px',
               }}
             >
@@ -1454,7 +1463,7 @@ function InlineGadflyAction({ onOpenGadfly }: { onOpenGadfly?: () => void }) {
     lineHeight: '1' as const,
     backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 8%, transparent)',
     border: '1px solid color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
-    color: 'var(--accent-gadfly)',
+    color: 'var(--accent-gadfly-ink)',
   }
 
   return (
@@ -1584,7 +1593,7 @@ function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions }: { sect
               lineHeight: '1' as const,
               backgroundColor: arm.bg,
               border: `1px solid ${arm.border}`,
-              color: arm.color,
+              color: arm.ink,
             }
             const chipClassName = "inline-flex items-center rounded-full font-semibold transition-opacity duration-150 hover:opacity-80"
 
@@ -1642,6 +1651,7 @@ const EXPERT_LINKS = [
     href: '/scout',
     icon: Compass,
     color: 'var(--accent-scout)',
+    ink: 'var(--accent-scout-ink)',
     border: 'color-mix(in srgb, var(--accent-scout) 18%, transparent)',
   },
   {
@@ -1651,6 +1661,7 @@ const EXPERT_LINKS = [
     href: '/oracle',
     icon: Eye,
     color: 'var(--accent-oracle)',
+    ink: 'var(--accent-oracle-ink)',
     border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
   },
   {
@@ -1660,6 +1671,7 @@ const EXPERT_LINKS = [
     href: '/gadfly',
     icon: MessageCircleQuestion,
     color: 'var(--accent-gadfly)',
+    ink: 'var(--accent-gadfly-ink)',
     border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
   },
   {
@@ -1669,6 +1681,7 @@ const EXPERT_LINKS = [
     href: '/lever',
     icon: FileText,
     color: 'var(--accent-lever)',
+    ink: 'var(--accent-lever-ink)',
     border: 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
   },
   {
@@ -1678,6 +1691,7 @@ const EXPERT_LINKS = [
     href: '/mirror',
     icon: GitCompareArrows,
     color: 'var(--accent-mirror)',
+    ink: 'var(--accent-mirror-ink)',
     border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
   },
 ]
@@ -1689,6 +1703,7 @@ const LENS_LINK = {
   href: '',
   icon: Search,
   color: 'var(--accent-oracle)',
+  ink: 'var(--accent-oracle-ink)',
   border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
 }
 
@@ -1739,7 +1754,7 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, onOpenLens }: { onOpenCampaign
               <span className="flex min-w-0 flex-col">
                 <span
                   className="font-semibold leading-snug"
-                  style={{ fontSize: '12px', color: link.color }}
+                  style={{ fontSize: '12px', color: link.ink }}
                 >
                   {link.arm}
                 </span>
@@ -1982,7 +1997,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
-              <SectionHeader heading="What You Can Do" color="var(--accent-lever)" />
+              <SectionHeader heading="What You Can Do" color="var(--accent-lever-ink)" />
               <CivicActionsSection content={section.content} />
             </div>
           )
@@ -2014,7 +2029,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               }}
             >
               {showDivider && <SectionDivider />}
-              <SectionHeader heading="Questions Worth Asking" color="var(--accent-gadfly)" />
+              <SectionHeader heading="Questions Worth Asking" color="var(--accent-gadfly-ink)" />
               <QuestionsSection content={section.content} />
             </div>
           )
