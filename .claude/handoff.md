@@ -43,15 +43,14 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **Everything waiting on Lee lives on the Open Cave Checks page: https://claude.ai/artifact/FbM2CLbQ7Pxka6BKV7m9mU** (Lee, 2026-10-15: look checks and decisions go there, not in chat). Items are in its database collection `items` (seed with `ArtifactData`), and his answers are in `responses`, one document per item id. Open now: the A-series look check, a one-minute Oracle crash confirmation, and the release decision for B1 onward. Close an item (status "closed", plus an `outcome` line) once acted on.
 
-- **Cold start for the next batch (D1).**
-  1. Read the plan's "### D1", "### 0." to "### 4." and "Releases: promotion, rollback and evidence". Check whether D1 has UI (Jen, opus xhigh, after Razor).
-  2. Copy the closed pack `~/marvin/state/relay/republic-ui-c4-pack.json` as a template and write the new pack directly (relay-pack-write only stamps the close). Set `branch` to `relay/ui-d1`, `parallel_batches` to `[["B2"]]`, and leave `plan_section` unset.
-  3. Ledger entry via `update-relay-ledger.mjs` (`ledger_add`, project `the-republic`); `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-d1 --stage implement --batch 1 --step D1`; `git worktree add -b relay/ui-d1-B1 ../relay-republic-ui-b1-B1 HEAD`, then `npm ci` in it.
-  4. Ted (opus, medium), Razor (opus, high) from a brief file, then Jen if UI. Resume the implementer for fixes; Razor re-checks only.
-  5. Harness runs: clear `.next/cache` first (a stale turbopack cache served old CSS in B1). Batteries: scratch files outside the worktree, run in the foreground, per_mutant_timeout_ms 300000, and any test that can hang gets its own vitest per-test timeout (A4 lost an hour to a disarmed bound that hung instead of failing). Keep batches under ~200 worker turns: A4 overran and Ted suggests engine / viewer / acceptance splits.
-  6. Before merging, run the harness-only tests with `QA_REQUIRE_HARNESS=1` on a live harness (CI skips them). ROADMAP commit on the relay branch, `--no-ff` merge into `marvin/republic-r2`, close the pack and ledger, remove the worktree, update this hand-off, push.
-
 - **B1-C4 LIVE since 2026-10-16 19:48Z; Lee's look check owed** (Checks page item `look-check-oct16`, which replaces the A-series look check). Main `e6317d6` (PR #8), deploy `6ad27f3b87cbdefbbdc0e78a`; D_prev / rollback target `6acd1d516cdac21aab7e88f4` at `b9d9139`. Lee's authority for this release: restore D_prev without asking if a named check fails, then revert the merge on main through a PR. Record: `~/.local/share/marvin/private/republic-releases/2026-10-16-b1-c4.md`.
+
+- **Cold start for the next batch (D2, the briefing parser).**
+  1. Read the plan's "### D2" plus the D1 carries in ROADMAP → "Deferred from republic-ui-d1" (whole-word "nation" in `getRoleKey`; Jen's parser-debris list). D2 has UI, so Jen (opus, xhigh) reviews after Razor.
+  2. Copy the closed pack `~/marvin/state/relay/republic-ui-d1-pack.json` as the template and write the new pack directly. Ledger `ledger_add` via `update-relay-ledger.mjs`. Brief: `node ~/marvin/scripts/relay-brief.mjs --pack republic-ui-d2 --stage implement --batch 1 --step D2` (`plan_section` is the heading text without "### "). Worktree: `git worktree add -q -b relay/ui-d2-D2 ../relay-republic-ui-d2-D2 HEAD`, then `npm ci`.
+  3. Ted (opus, medium), then Razor (opus, high) from a brief file, then Jen. Fixes go to the agent that wrote the code (resume it); Razor only re-checks the fixes.
+  4. `harness.ts up` runs in the foreground, so start it in its own background job, run the tests from a second command, and finish with `harness.ts down` (if that fails, `docker compose -p <project> down -v`). Clear `.next/cache` first. Under a host load around 17-22, front-door and PDF timing tests fail at random; re-run them alone and record both runs.
+  5. Before merging: harness-only tests with `QA_REQUIRE_HARNESS=1`, then the ROADMAP parking-lot commit on the relay branch (leave the frontmatter alone, since the session branch edits it), a `--no-ff` merge, close the pack and ledger, remove the worktree, update this hand-off, push. The session checkout's `node_modules` lacks some dev types, so run `tsc` in the relay worktree.
 
 ## Open questions awaiting Lee
 
@@ -86,6 +85,9 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-10-16 — D1 merged
+Relay `republic-ui-d1` merged at `ab64659`: paper ink is shared between the CSS and the PDF with a drift test; marks have their own `--island-mark`; role hexes, rgba literals and the Oracle island accent are tokens; one 11px label size on the paper; the Go Deeper grid fits from 320px; arm-colour text on the paper uses each arm's ink (Jen C1). The island dark toggle is hidden and its stored value unread until D4 (Jen C3a, Razor DW1). Proponent is violet and rights holder is amber, matching the Lens (C4). Razor PASS after one fix pass and a design-fix check; Jen CONCERNS 5, all adopted, part of C3 carried to D4. Filings are byte-identical. Harness tests: briefing geometry and four other files pass; front-door timing tests failed at random under load 17-22, on screens D1 does not touch. D1 joins the next release.
 
 ### 2026-10-16 — B1-C4 release live
 Main `e6317d6` (PR #8, merge commit), Netlify deploy `6ad27f3b87cbdefbbdc0e78a`, published 19:48:08Z. D_prev / rollback target is `6acd1d516cdac21aab7e88f4` at `b9d9139`. Compatibility r2 PASS at the head. Signed-out probes match the baseline except the intended changes (hero line; sign-out 200). The 30-minute function-log watch to 20:20Z shows only nf-trace boot lines, with no application errors and no 5xx. Release record: `~/.local/share/marvin/private/republic-releases/2026-10-16-b1-c4.md`. The session branch is fast-forwarded to main. Lee's single combined look check (also covering the A-series) is item `look-check-oct16` on the Checks page; a failed step restores D_prev under his standing authority for this release.
