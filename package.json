@@ -21,7 +21,7 @@
     "@irys/sdk": "^0.2.11",
     "@radix-ui/react-dialog": "^1.1.15",
     "@react-pdf/renderer": "^4.3.0",
-    "@sentry/nextjs": "^10.53.1",
+    "@sentry/nextjs": "^10.76.2",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
     "ai": "^6.0.141",
@@ -32,7 +32,7 @@
     "html-to-image": "^1.11.13",
     "jose": "^6.2.2",
     "lucide-react": "^1.7.0",
-    "next": "^16.3.8",
+    "next": "^16.4.2",
     "pdf-parse": "^2.4.5",
     "pinata": "^2.5.5",
     "postgres": "^3.4.8",
@@ -43,7 +43,8 @@
     "zod": "^4.4.2"
   },
   "overrides": {
-    "ws": "^8.21.0"
+    "ws": "^8.21.0",
+    "eslint-plugin-react-hooks": "7.0.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
@@ -58,7 +59,7 @@
     "audit-ci": "7.1.0",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
-    "eslint-config-next": "^16.3.8",
+    "eslint-config-next": "^16.4.2",
     "jsdom": "29.1.1",
     "lighthouse": "13.5.0",
     "pdfjs-dist": "5.4.296",
