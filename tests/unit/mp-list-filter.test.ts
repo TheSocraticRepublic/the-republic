@@ -303,7 +303,7 @@ describe('filters (AND)', () => {
     expect(shownNames(container)).toEqual(['Élisabeth Brière'])
     fireEvent.change(search(), { target: { value: 'levis' } })
     expect(shownNames(container)).toEqual(['Zoe Briere'])
-    expect(screen.getByTestId('mp-count').textContent).toBe('1 MP')
+    expect(screen.getByTestId('mp-count').textContent).toBe('1 of 10 MPs')
   })
 
   it('search plus province', () => {
@@ -348,7 +348,11 @@ describe('filters (AND)', () => {
     fireEvent.change(province(), { target: { value: 'Ontario' } })
     expect(container.querySelector('ul')).toBeNull()
     expect(container.textContent).toContain('No MPs match these filters.')
-    expect(screen.getByTestId('mp-count').textContent).toBe('0 MPs')
+    // The count line no longer shows "0 MPs" above the message: it is announced only, with no button of its own.
+    const line = screen.getByTestId('mp-count')
+    expect(line.textContent).toBe('No MPs match these filters.')
+    expect(line.classList.contains('sr-only')).toBe(true)
+    expect(screen.getAllByRole('button', { name: 'Clear filters' })).toHaveLength(1)
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
     expect(container.textContent).not.toContain('No MPs match these filters.')
@@ -357,6 +361,46 @@ describe('filters (AND)', () => {
     expect(province().value).toBe('')
     expect(party().value).toBe('')
   })
+
+  it('the count line reads the total at rest, "N of M" with a Clear button while any filter is set', () => {
+    renderList()
+    const line = () => screen.getByTestId('mp-count')
+    expect(line().textContent).toBe('10 MPs')
+    expect(line().classList.contains('sr-only')).toBe(false)
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).toBeNull()
+
+    for (const [control, value] of [
+      [province, 'Ontario'],
+      [party, 'Liberal'],
+      [search, 'gunn'],
+    ] as const) {
+      fireEvent.change(control(), { target: { value } })
+      expect(line().textContent).toMatch(/^\d+ of 10 MPs$/)
+      const clearButton = screen.getByRole('button', { name: 'Clear filters' })
+      // Same line as the count.
+      expect(clearButton.parentElement).toBe(line().parentElement)
+      fireEvent.click(clearButton)
+      expect(line().textContent).toBe('10 MPs')
+      expect(screen.queryByRole('button', { name: 'Clear filters' })).toBeNull()
+    }
+
+    fireEvent.change(province(), { target: { value: 'Ontario' } })
+    fireEvent.change(party(), { target: { value: 'Liberal' } })
+    expect(line().textContent).toBe('2 of 10 MPs')
+  })
+
+  it('a whitespace-only search is not a filter', () => {
+    renderList()
+    fireEvent.change(search(), { target: { value: '   ' } })
+    expect(screen.getByTestId('mp-count').textContent).toBe('10 MPs')
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).toBeNull()
+  })
+
+  it('a one-MP list at rest says "1 MP"', () => {
+    renderList([GUNN])
+    expect(screen.getByTestId('mp-count').textContent).toBe('1 MP')
+  })
+
 })
 
 describe('the page', () => {

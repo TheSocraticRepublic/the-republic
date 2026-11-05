@@ -137,6 +137,9 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
   const count = groups.reduce((n, g) => n + g.mps.length, 0)
   const showLetters = count > LETTER_HEADERS_AFTER
 
+  const filtering = filters.query.trim() !== '' || filters.province !== '' || filters.party !== ''
+  const clear = () => setFilters(NO_FILTERS)
+
   const set = (key: keyof MpFilters) => (value: string) => setFilters((f) => ({ ...f, [key]: value }))
 
   return (
@@ -213,9 +216,34 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
         </div>
       </div>
 
-      <p className="mb-2 text-xs text-text-muted" aria-live="polite" data-testid="mp-count">
-        {count === 1 ? '1 MP' : `${count} MPs`}
-      </p>
+      {/* The count line (Jen C6). At rest it is the total. While a filter is
+          set it reads "N of M MPs" with a Clear filters button beside it, so a
+          narrowed list can be reset without a no-match. At zero it would only
+          repeat the EmptyState below, so it is announced, not shown. */}
+      <div className="mb-2 flex items-center gap-3">
+        <p
+          aria-live="polite"
+          data-testid="mp-count"
+          className={count === 0 ? 'sr-only' : 'text-xs text-text-muted'}
+        >
+          {count === 0
+            ? 'No MPs match these filters.'
+            : filtering
+              ? `${count} of ${mps.length} MPs`
+              : count === 1
+                ? '1 MP'
+                : `${count} MPs`}
+        </p>
+        {filtering && count > 0 && (
+          <button
+            type="button"
+            onClick={clear}
+            className="inline-flex min-h-6 items-center text-xs text-text-secondary underline underline-offset-2 transition-colors hover:text-text-primary pointer-coarse:min-h-11"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
 
       {count === 0 ? (
         <EmptyState
@@ -227,7 +255,7 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
               <span className="mt-1 block pointer-coarse:mt-0">
                 <button
                   type="button"
-                  onClick={() => setFilters(NO_FILTERS)}
+                  onClick={clear}
                   className="inline-flex min-h-6 items-center text-sm text-text-secondary underline underline-offset-2 transition-colors hover:text-text-primary pointer-coarse:min-h-11"
                 >
                   Clear filters
