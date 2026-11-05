@@ -1230,7 +1230,7 @@ export const BRIEFING_SHAPE_FIXTURES: readonly BriefingShapeFixture[] = [
   },
   {
     id: 'document-access-values',
-    shape: 'Six Access values: the badge says all of two, part of two, and none of two (Razor C2, the Access instance).',
+    shape: 'Eight Access values: two are exactly a badge label (badge alone), six are not (field alone, no badge) (Razor C2 and RW1).',
     content: lines(
       '## What Governs This',
       '',
@@ -1256,7 +1256,15 @@ export const BRIEFING_SHAPE_FIXTURES: readonly BriefingShapeFixture[] = [
       '',
       '### Synthetic Minutes F (QA)',
       '- **What it is:** Minutes.',
-      '- **Access:** Council Record'
+      '- **Access:** Council Record',
+      '',
+      '### Synthetic Letter G (QA)',
+      '- **What it is:** A letter.',
+      '- **Access:** Public: no',
+      '',
+      '### Synthetic Audit H (QA)',
+      '- **What it is:** An audit.',
+      '- **Access:** Public records request'
     ),
   },
   {

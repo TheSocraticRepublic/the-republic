@@ -433,6 +433,26 @@ const GOLDENS: Record<string, BriefingParse> = {
             ],
             isPrimary: false,
           },
+          {
+            type: 'document',
+            name: 'Synthetic Letter G (QA)',
+            intro: '',
+            fields: [
+              { label: 'What it is', value: 'A letter.' },
+              { label: 'Access', value: 'Public: no' },
+            ],
+            isPrimary: false,
+          },
+          {
+            type: 'document',
+            name: 'Synthetic Audit H (QA)',
+            intro: '',
+            fields: [
+              { label: 'What it is', value: 'An audit.' },
+              { label: 'Access', value: 'Public records request' },
+            ],
+            isPrimary: false,
+          },
         ],
       },
     ],
@@ -794,21 +814,26 @@ describe('parse rules', () => {
   it.each([
     ['Public', 'public'],
     ['public', 'public'],
-    ['Public, online', 'public'],
     ['  Public.', 'public'],
+    ['Public, online', null],
+    ['Public: no', null],
+    ['Public records request', null],
+    ['Public, but only after a FIPPA request', null],
     ['Publicly posted', null],
     ['Partly public', null],
     ['Partially public', null],
     ['Not public', null],
     ['FIPPA Required', 'fippa'],
-    ['FIPPA required (withheld as deliberative advice)', 'fippa'],
-    ['FIPPA request needed', 'fippa'],
+    ['fippa required.', 'fippa'],
+    ['FIPPA required (withheld as deliberative advice)', null],
+    ['FIPPA request needed', null],
     ['Needs a FIPPA request', null],
     ['Council Record', 'council'],
-    ['council record, 2019 minutes', 'council'],
+    ['council record', 'council'],
+    ['council record, 2019 minutes', null],
     ['In the council record', null],
     ['On request from the district', null],
-  ] as [string, AccessLevel | null][])('detectAccess(%s) -> %s (the value begins with the badge phrase)', (value, level) => {
+  ] as [string, AccessLevel | null][])('detectAccess(%s) -> %s (only an exact badge label earns a badge)', (value, level) => {
     expect(detectAccess(value)).toBe(level)
   })
 })
@@ -853,26 +878,21 @@ const isReplacedLabel = (label: string) => REPLACED_LABELS.some((re) => re.test(
 
 /**
  * The Access badge, written down here rather than imported: a value earns a
- * badge only when it BEGINS with the badge phrase, and the badge shows its own
- * label, not the value.
+ * badge only when it IS a badge label (trimmed, trailing punctuation removed,
+ * any case). Then the badge replaces the field; otherwise the field stays and
+ * there is no badge.
  */
-const ACCESS_BADGES: [RegExp, string][] = [
-  [/^fippa requ(?:ired|est)/i, 'FIPPA Required'],
-  [/^council record/i, 'Council Record'],
-  [/^public\b/i, 'Public'],
-]
 const BADGE_LABEL: Record<AccessLevel, string> = { public: 'Public', fippa: 'FIPPA Required', council: 'Council Record' }
-const accessBadgeOf = (value: string): string | null => ACCESS_BADGES.find(([re]) => re.test(value.trim()))?.[1] ?? null
-/** The Access field leaves the card only when the badge says all of it. */
-const badgeSaysAll = (value: string, label: string | null): boolean =>
-  label !== null && value.trim().replace(/[\s.,;:!?]+$/, '').toLowerCase() === label.toLowerCase()
+const accessBadgeOf = (value: string): string | null => {
+  const v = value.trim().replace(/[\s.,;:!?]+$/, '').toLowerCase()
+  return Object.values(BADGE_LABEL).find((label) => label.toLowerCase() === v) ?? null
+}
 
 /**
  * DocumentCard's layout, applied to the input so it reads in render order:
- * the Access badge goes to just after its card's start (the header). When the
- * badge says the whole value, the Access line moves there; when it says only
- * part, a line with the badge's label goes there and the Access line stays a
- * field in place; with no badge it just stays in place. A How/Where to find
+ * an Access line that is exactly a badge label moves up to just after its
+ * card's start (the badge sits in the header); any other Access line stays a
+ * field in place. A How/Where to find
  * line moves down to the end of its field run (its footer). Card starts: a ###
  * or bold-only heading, or a Document name field. Written down, not derived
  * from the parser.
@@ -908,7 +928,7 @@ function governsInRenderOrder(markdown: string): string {
     const accessAt = card.findIndex((x) => ACCESS_LINE.test(x))
     const accessValue = accessAt === -1 ? '' : card[accessAt].replace(ACCESS_LINE, '').trim()
     const badge = accessAt === -1 ? null : accessBadgeOf(accessValue)
-    const access = badgeSaysAll(accessValue, badge) ? take(ACCESS_LINE) : badge ? [badge] : []
+    const access = badge ? take(ACCESS_LINE) : []
     const howTo = take(/^[-*]\s+\*\*(?:How|Where) to find(?: it)?:\*\*/i)
     // The end of the field run: after the last field and its continuation lines.
     let end = -1
@@ -1000,8 +1020,8 @@ function outputWords(parse: BriefingParse): string[] {
             const access = b.fields.find((f) => f.label.toLowerCase() === 'access')
             const level = access ? detectAccess(access.value) : null
             const badge = level ? BADGE_LABEL[level] : null
-            // The badge shows its label; the field shows the whole value unless the badge says all of it.
-            const accessHidden = access !== undefined && badgeSaysAll(access.value, badge)
+            // A badge replaces the field; with no badge the field shows the whole value.
+            const accessHidden = badge !== null
             const howTo = b.fields.find((f) => /^(?:how|where) to find/i.test(f.label))
             out.push(inlineText(b.name))
             if (badge) out.push(badge)
@@ -1242,11 +1262,13 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
   it.each([
     // [card name, badge label or null, the Access value rendered as a field or null]
     ['Synthetic Bylaw A (QA)', 'Public', null],
-    ['Synthetic Plan B (QA)', 'Public', 'Public, online'],
-    ['Synthetic Memo C (QA)', 'FIPPA Required', 'FIPPA Required (withheld as deliberative advice)'],
+    ['Synthetic Plan B (QA)', null, 'Public, online'],
+    ['Synthetic Memo C (QA)', null, 'FIPPA Required (withheld as deliberative advice)'],
     ['Synthetic Report D (QA)', null, 'Partly public'],
     ['Synthetic Permit E (QA)', null, 'Not public'],
     ['Synthetic Minutes F (QA)', 'Council Record', null],
+    ['Synthetic Letter G (QA)', null, 'Public: no'],
+    ['Synthetic Audit H (QA)', null, 'Public records request'],
   ] as [string, string | null, string | null][])(
     'Access on %s: badge %s, field %s (the badge never says more or less than the text)',
     (name, badge, field) => {

@@ -535,15 +535,17 @@ export interface DocumentField {
 export type AccessLevel = 'public' | 'fippa' | 'council'
 
 /**
- * The badge level an Access value states, or null. Only a value that BEGINS
- * with the badge phrase gets a badge: "Partly public" and "Not public" are not
- * Public, so they get none and render as a field.
+ * The badge level an Access value states, or null. A value gets a badge only
+ * when it IS a badge label (trimmed, trailing punctuation removed, any case):
+ * "Public", "FIPPA Required", "Council Record". Anything else ("Public, online",
+ * "Public: no", "Partly public") gets no badge and renders whole as a field, so
+ * the badge never claims more or less than the text.
  */
 export function detectAccess(text: string): AccessLevel | null {
-  const lower = text.trim().toLowerCase()
-  if (/^fippa requ(?:ired|est)/.test(lower)) return 'fippa'
-  if (/^council record/.test(lower)) return 'council'
-  if (/^public\b/.test(lower)) return 'public'
+  const value = text.trim().replace(/[\s.,;:!?]+$/, '').toLowerCase()
+  if (value === 'fippa required') return 'fippa'
+  if (value === 'council record') return 'council'
+  if (value === 'public') return 'public'
   return null
 }
 
