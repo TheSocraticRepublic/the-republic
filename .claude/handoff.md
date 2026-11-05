@@ -85,6 +85,9 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 
 ## Log (newest first)
 
+### 2026-11-05 — E1 merged
+Relay `republic-ui-e1` merged at `eb998e0`: `DetailHeader` on the seven Votes and profile detail pages. The freshness badge reads "Sync time unknown" for a missing time, a failed request or a failed newest sync (Razor W1: the sync route's catch writes `completedAt` = now on a total failure). Jen's seven E1 concerns were adopted; the manifest widened to `mp-profile-card.tsx` to remove the double name. Back labels match the sidebar ("Back to Vote Tracker", "Back to New Investigation"). Razor PASS after two fix passes; 53/53 mutants; harness-required suite 2452 passed. The vote-detail double name is carried to E2b (ROADMAP → Deferred from republic-ui-e1). Next: E2a.
+
 ### 2026-11-05 — First Light A0 merged; release card for deps + A0
 Relay `republic-first-light-a0` merged at `8c4f604`: one `[retrieval]` log line per briefing, with reasons taken from the code path (`no-api-key` decided by the same `resolveVoyageApiKey` the client uses, versus `embed-failed`), candidates and best similarity before the threshold, and no user text; error logs on the retrieval path carry name and code only. Razor PASS after one fix pass; 16/16 mutants. Release branch `release/deps-a0-2026-11` at `d970608` is origin/main `c2c92d0` plus the deps batch and A0, every file byte-identical to the reviewed session versions; all gates pass; harness 8/8; pushed. D_prev `6ada8d2f` (c2c92d0). The card is on the Checks page (`release-deps-a0`); on Lee's yes, open the PR, wait for green CI, merge, verify `commit_ref`, run the probes and the 30-minute log watch. After release, merge main back into the session branch and rewrite the B1-C4 rollback note.
 
