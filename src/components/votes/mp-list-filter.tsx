@@ -150,56 +150,61 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
             />
           )}
         </Field>
-        <Field id="mp-province" label="Province or territory">
-          {(control) => (
-            <div className="relative">
-              <select
-                {...control}
-                value={filters.province}
-                onChange={(e) => set('province')(e.target.value)}
-                className={fieldControlClass('select')}
-              >
-                <option value="">All</option>
-                {provinces.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={13}
-                strokeWidth={2}
-                aria-hidden="true"
-                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-              />
-            </div>
-          )}
-        </Field>
-        <Field id="mp-party" label="Party">
-          {(control) => (
-            <div className="relative">
-              <select
-                {...control}
-                value={filters.party}
-                onChange={(e) => set('party')(e.target.value)}
-                className={fieldControlClass('select')}
-              >
-                <option value="">All</option>
-                {parties.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={13}
-                strokeWidth={2}
-                aria-hidden="true"
-                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
-              />
-            </div>
-          )}
-        </Field>
+        {/* Province and Party side by side on phones from 360px, so the list
+            starts above the keyboard; stacked at 320; at sm and up the wrapper
+            dissolves (`contents`) into the three-across row (Jen C9). */}
+        <div data-select-pair className="grid gap-3 min-[360px]:grid-cols-2 sm:contents">
+          <Field id="mp-province" label="Province or territory">
+            {(control) => (
+              <div className="relative">
+                <select
+                  {...control}
+                  value={filters.province}
+                  onChange={(e) => set('province')(e.target.value)}
+                  className={fieldControlClass('select')}
+                >
+                  <option value="">All</option>
+                  {provinces.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={13}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+                />
+              </div>
+            )}
+          </Field>
+          <Field id="mp-party" label="Party">
+            {(control) => (
+              <div className="relative">
+                <select
+                  {...control}
+                  value={filters.party}
+                  onChange={(e) => set('party')(e.target.value)}
+                  className={fieldControlClass('select')}
+                >
+                  <option value="">All</option>
+                  {parties.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={13}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+                />
+              </div>
+            )}
+          </Field>
+        </div>
       </div>
 
       <p className="mb-2 text-xs text-text-muted" aria-live="polite" data-testid="mp-count">

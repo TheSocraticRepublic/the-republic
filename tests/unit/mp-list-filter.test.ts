@@ -249,6 +249,16 @@ describe('filters (AND)', () => {
     expect(screen.getByTestId('mp-count').textContent).toBe('10 MPs')
   })
 
+  it('pairs Province and Party on phones from 360px and folds them into the three-across row at sm', () => {
+    const { container } = renderList()
+    const pair = container.querySelector('[data-select-pair]')!
+    for (const cls of ['grid', 'min-[360px]:grid-cols-2', 'sm:contents']) expect(pair.classList.contains(cls)).toBe(true)
+    expect(pair.contains(province())).toBe(true)
+    expect(pair.contains(party())).toBe(true)
+    expect(pair.contains(search())).toBe(false)
+    expect(pair.parentElement!.classList.contains('sm:grid-cols-[minmax(0,1fr)_auto_auto]')).toBe(true)
+  })
+
   it("hides Chromium's native clear glyph on the search field, as Scout does", () => {
     renderList()
     expect(search().type).toBe('search')
