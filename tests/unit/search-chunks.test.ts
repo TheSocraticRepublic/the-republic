@@ -288,3 +288,52 @@ describe('searchDocumentChunksWithReason', () => {
     expect(plain).toEqual([])
   })
 })
+
+describe('search-chunks error logging carries no query parameters', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // Shaped like a DrizzleQueryError: the message embeds the SQL params.
+  function drizzleLikeError() {
+    const cause = Object.assign(new Error('relation missing'), { code: '42P01' })
+    const err = new Error('Failed query: select ...\nparams: user-1,[0.1,0.2,0.3]', { cause })
+    err.name = 'DrizzleQueryError'
+    return err
+  }
+
+  function warnText(spy: ReturnType<typeof vi.spyOn>) {
+    return spy.mock.calls.map((c: unknown[]) => c.map(String).join(' ')).join('\n')
+  }
+
+  it('the similarity-search warn logs name and code, never the message', async () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const db = makeMockDb({ corpusFound: true, searchError: true })
+    const limit = (db as unknown as { select: () => { from: () => { innerJoin: () => { where: () => { orderBy: () => { limit: ReturnType<typeof vi.fn> } } } } } })
+      .select().from().innerJoin().where().orderBy().limit
+    limit.mockImplementation(() => Promise.reject(drizzleLikeError()))
+    await searchDocumentChunksWithReason(db, 'user-1', 'test query', 5, [0.1, 0.2, 0.3])
+    const text = warnText(spy)
+    spy.mockRestore()
+    expect(text).toContain('similarity search failed')
+    expect(text).toContain('DrizzleQueryError code=42P01')
+    expect(text).not.toContain('params')
+    expect(text).not.toContain('user-1')
+    expect(text).not.toContain('0.1')
+  })
+
+  it('the corpus-check warn logs name and code, never the message', async () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const db = makeMockDb()
+    ;(db as unknown as { execute: ReturnType<typeof vi.fn> }).execute.mockImplementation(() =>
+      Promise.reject(drizzleLikeError())
+    )
+    await searchDocumentChunksWithReason(db, 'user-1', 'test query')
+    const text = warnText(spy)
+    spy.mockRestore()
+    expect(text).toContain('corpus-check failed')
+    expect(text).toContain('DrizzleQueryError code=42P01')
+    expect(text).not.toContain('params')
+    expect(text).not.toContain('user-1')
+  })
+})
