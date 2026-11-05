@@ -307,7 +307,8 @@ export function parsePlayers(content: string): PlayersItem[] {
     if (field) {
       if (!current) return
       if (field.key === 'role') {
-        current.data.role = field.value
+        // A second Role line joins the first, in order; it never replaces it.
+        current.data.role = [current.data.role, field.value].filter(Boolean).join(' / ')
         open = null
       } else {
         open = { type: 'field', key: field.key, value: field.value, line: i, afterBlank: blank }

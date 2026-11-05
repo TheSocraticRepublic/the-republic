@@ -356,6 +356,16 @@ const GOLDENS: Record<string, BriefingParse> = {
       },
     ],
   },
+  'players-two-roles': {
+    title: null,
+    sections: [
+      {
+        heading: 'Key Players',
+        kind: 'players',
+        items: [player('Synthetic Mine Co (QA)', 'proponent / applicant', 'They want the permit.')],
+      },
+    ],
+  },
   'document-access-values': {
     title: null,
     sections: [
@@ -921,16 +931,18 @@ function governsInRenderOrder(markdown: string): string {
 function playersInRenderOrder(markdown: string): string {
   const out: string[] = []
   let inPlayers = false
-  let nameAt = -1
+  // Where the next Role line goes: just after the name, then after any Role line
+  // already moved there, so two Role lines keep their order (they join " / ").
+  let roleAt = -1
   for (const l of markdown.split('\n')) {
     if (/^##\s/.test(l)) {
       inPlayers = /key players/i.test(l)
-      nameAt = -1
+      roleAt = -1
     }
     const text = l.replace(/^\s*[-*]\s+/, '').trim()
-    if (inPlayers && (/^\*\*name:\*\*/i.test(text) || /^name:/i.test(text) || /^\*\*[^*]+\*\*$/.test(text))) nameAt = out.length
-    if (inPlayers && nameAt !== -1 && /^(?:\*\*role:\*\*|\*\*role\*\*\s*:|role:)/i.test(text)) {
-      out.splice(nameAt + 1, 0, l)
+    if (inPlayers && (/^\*\*name:\*\*/i.test(text) || /^name:/i.test(text) || /^\*\*[^*]+\*\*$/.test(text))) roleAt = out.length + 1
+    if (inPlayers && roleAt !== -1 && /^(?:\*\*role:\*\*|\*\*role\*\*\s*:|role:)/i.test(text)) {
+      out.splice(roleAt++, 0, l)
       continue
     }
     out.push(l)

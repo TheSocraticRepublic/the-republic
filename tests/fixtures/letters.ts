@@ -1260,6 +1260,18 @@ export const BRIEFING_SHAPE_FIXTURES: readonly BriefingShapeFixture[] = [
     ),
   },
   {
+    id: 'players-two-roles',
+    shape: 'Two Role lines for one player (Razor RN1: the second replaced the first).',
+    content: lines(
+      '## Key Players',
+      '',
+      '- **Name:** Synthetic Mine Co (QA)',
+      '- **Role:** proponent',
+      '- **Role:** applicant',
+      '- **Why they matter:** They want the permit.'
+    ),
+  },
+  {
     id: 'mixed-list-lead-in',
     shape: 'A lead-in line in the same block as a mixed numbered and bulleted list.',
     content: lines(
