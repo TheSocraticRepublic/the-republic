@@ -178,12 +178,19 @@ export function preprocessBlocks(content: string): BlockElement[] {
   return result
 }
 
+export type PlayerField = 'whyTheyMatter' | 'trackRecord' | 'whatTheyDo' | 'howTheyRelate'
+
+/** A player's content after the name and role badge, in source order. */
+export type PlayerPart = { type: 'field'; key: PlayerField; value: string } | { type: 'prose'; text: string }
+
 export interface PlayerData {
   name: string
   role: string
-  whyTheyMatter: string
-  trackRecord: string
+  parts: PlayerPart[]
 }
+
+/** Key Players in source order: player cards and the section prose around them. Nothing is dropped. */
+export type PlayersItem = { type: 'player'; player: PlayerData } | { type: 'prose'; text: string }
 
 /**
  * A role's island token stem (`--island-role-*` in globals.css). Rights holders
@@ -216,50 +223,143 @@ export function roleLabel(role: string): string {
   return role.replace(/_/g, ' ')
 }
 
+const PLAYER_LABELS: [key: 'name' | 'role' | PlayerField, label: string][] = [
+  ['name', 'name'],
+  ['role', 'role'],
+  ['whyTheyMatter', 'why they matter'],
+  ['trackRecord', 'track record'],
+  ['whatTheyDo', 'what they do'],
+  ['howTheyRelate', 'how they relate'],
+]
+const PLAYER_FIELD_LINES = PLAYER_LABELS.map(
+  ([key, label]) => [key, new RegExp(String.raw`^(?:\*\*${label}:\*\*|\*\*${label}\*\*\s*:|${label}\s*:)\s*(.*)$`, 'i')] as const
+)
+
 /**
- * The value after a player field label (`**Role:** x`, `**Role**: x`,
- * `Role: x`), with the value's own markup kept for renderInline.
+ * A player field line (`**Role:** x`, `**Role**: x`, `Role: x`; colon
+ * required), with the value's own markup kept for renderInline.
  */
-function playerFieldValue(line: string, label: string): string {
-  const m = line.match(new RegExp(`^(?:\\*\\*)?${label}(?:\\*\\*)?\\s*:?\\s*(?:\\*\\*)?[:\\s]*([\\s\\S]*)$`, 'i'))
-  return (m ? m[1] : '').replace(/^[-\s]+|[-\s]+$/g, '')
+function matchPlayerField(text: string): { key: 'name' | 'role' | PlayerField; value: string } | null {
+  for (const [key, re] of PLAYER_FIELD_LINES) {
+    const m = text.match(re)
+    if (m) return { key, value: m[1].replace(/^[-\s]+|[-\s]+$/g, '') }
+  }
+  return null
 }
 
-export function parsePlayers(content: string): PlayerData[] {
-  const players: PlayerData[] = []
+interface PlayerLine {
+  bulleted: boolean
+  indented: boolean
+  text: string
+}
 
-  const lines = content.split('\n').map((l) => l.replace(/^\s*[-*]\s+/, '').trim()).filter((l) => l && !/^-{2,}$/.test(l))
-
-  const fieldLabels = /^(?:\*\*)?(?:role|why they matter|track record|what they do|how they relate)(?:\*\*)?[:\s]/i
-
-  let current: { name: string; role: string; whyTheyMatter: string; trackRecord: string } | null = null
-
-  for (const line of lines) {
-    // Labels are recognised on the line without bold markers; values are taken
-    // from the line as written, so renderInline renders their markup.
-    const cleanLine = line.replace(/\*\*/g, '')
-
-    // A **Name:** field starts a player, and so does any line that is not a
-    // field label (the bare-name form: `**City Planning**` then `Role: …`).
-    const isName = /^name\s*:/i.test(cleanLine)
-    if (isName || (!fieldLabels.test(cleanLine) && !cleanLine.startsWith('Role:'))) {
-      if (current && current.name) players.push({ ...current })
-      // A bare name wholly in bold is a heading; its ** are the heading's, not the name's.
-      const bareName = line.match(/^\*\*([^*]+)\*\*$/)?.[1].trim() ?? line
-      current = { name: isName ? playerFieldValue(line, 'name') : bareName, role: '', whyTheyMatter: '', trackRecord: '' }
-      continue
+/**
+ * Key Players, in source order. A player starts at a `Name:` field, at a line
+ * wholly in bold, or at a bare line followed by a field (`City Planning` then
+ * `Role: …`). Text the parser does not recognise is never dropped (Razor C2):
+ * before the first player it is section prose; inside a player it is a prose
+ * part in position; after a player's last field, past a blank line, it closes
+ * the card and is section prose after it. A wrapped field value (an
+ * unbulleted line straight after a field) joins the open field instead of
+ * starting a player.
+ */
+export function parsePlayers(content: string): PlayersItem[] {
+  const raw = content.split('\n')
+  const lines: PlayerLine[] = raw.map((l) => ({
+    bulleted: /^\s*[-*]\s+/.test(l),
+    indented: /^\s+\S/.test(l) && !/^\s*[-*]\s+/.test(l),
+    text: l.replace(/^\s*[-*]\s+/, '').trim(),
+  }))
+  const isGap = (t: string) => !t || /^-{2,}$/.test(t)
+  const nextIsField = (i: number): boolean => {
+    for (let j = i + 1; j < lines.length; j++) {
+      if (isGap(lines[j].text)) continue
+      const f = matchPlayerField(lines[j].text)
+      return f !== null && f.key !== 'name'
     }
-
-    if (!current) continue
-
-    if (/^role[:\s]+\S/i.test(cleanLine)) { current.role = playerFieldValue(line, 'role'); continue }
-    if (/^why they matter[:\s]+\S/i.test(cleanLine)) { current.whyTheyMatter = playerFieldValue(line, 'why they matter'); continue }
-    if (/^track record[:\s]+\S/i.test(cleanLine)) { current.trackRecord = playerFieldValue(line, 'track record'); continue }
+    return false
   }
 
-  if (current && current.name) players.push({ ...current })
+  type Part = PlayerPart & { line: number; afterBlank: boolean }
+  const players: { data: Omit<PlayerData, 'parts'>; parts: Part[]; start: number }[] = []
+  let open: Part | null = null
+  let openBulleted = false
+  let blank = false
 
-  return players
+  const startPlayer = (name: string, i: number) => {
+    players.push({ data: { name, role: '' }, parts: [], start: i })
+    open = null
+    blank = false
+  }
+
+  lines.forEach((line, i) => {
+    const { text } = line
+    if (isGap(text)) {
+      open = null
+      blank = true
+      return
+    }
+    const current = players[players.length - 1]
+    const field = matchPlayerField(text)
+    const boldName = text.match(/^\*\*([^*]+)\*\*$/)?.[1].trim()
+
+    if (field?.key === 'name') return startPlayer(field.value, i)
+    if (field) {
+      if (!current) return
+      if (field.key === 'role') {
+        current.data.role = field.value
+        open = null
+      } else {
+        open = { type: 'field', key: field.key, value: field.value, line: i, afterBlank: blank }
+        openBulleted = line.bulleted
+        current.parts.push(open)
+      }
+      blank = false
+      return
+    }
+    // A name wholly in bold is a heading; its ** are the heading's, not the name's.
+    if (boldName && !matchPlayerField(boldName.replace(/:?$/, ':'))) return startPlayer(boldName, i)
+    const o = open as Part | null
+    if (current && o && !blank && !line.bulleted && (openBulleted || line.indented || !nextIsField(i))) {
+      if (o.type === 'field') o.value = `${o.value} ${text}`
+      else o.text = `${o.text} ${text}`
+      return
+    }
+    // The bare-name form, unless the line sits under a name that has no role or
+    // field yet: there it is a note under that name.
+    const underBareName = current && !current.data.role && !current.parts.some((p) => p.type === 'field')
+    if (nextIsField(i) && !underBareName) return startPlayer(text, i)
+    if (!current) return
+    open = { type: 'prose', text, line: i, afterBlank: blank }
+    openBulleted = line.bulleted
+    current.parts.push(open)
+    blank = false
+  })
+
+  if (players.length === 0) return []
+
+  const items: PlayersItem[] = []
+  const lead = proseFrom(raw.slice(0, players[0].start))
+  if (lead) items.push({ type: 'prose', text: lead })
+
+  players.forEach((p, k) => {
+    const end = k + 1 < players.length ? players[k + 1].start : raw.length
+    let lastField = -1
+    p.parts.forEach((part, j) => {
+      if (part.type === 'field') lastField = j
+    })
+    // After the last field, prose past a blank line is not this player's.
+    const cut = p.parts.findIndex((part, j) => j > lastField && (lastField === -1 || part.afterBlank))
+    const kept = cut === -1 ? p.parts : p.parts.slice(0, cut)
+    const parts: PlayerPart[] = kept.map((part) =>
+      part.type === 'field' ? { type: 'field', key: part.key, value: part.value } : { type: 'prose', text: part.text }
+    )
+    items.push({ type: 'player', player: { ...p.data, parts } })
+    const after = cut === -1 ? null : proseFrom(raw.slice(p.parts[cut].line, end))
+    if (after) items.push({ type: 'prose', text: after })
+  })
+
+  return items
 }
 
 export type JurisdictionField = 'whatTheyDid' | 'whyItMatters' | 'outcome'

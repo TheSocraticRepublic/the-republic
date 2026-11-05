@@ -385,15 +385,17 @@ const ROLE_TOKENS: Record<RoleKey, { color: string; ink: string }> = {
 }
 
 function PlayersSection({ content }: { content: string }) {
-  const players = parsePlayers(content)
+  const items = parsePlayers(content)
 
-  if (players.length === 0) {
+  if (items.length === 0) {
     return <ProseSection content={content} />
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {players.map((player, i) => {
+      {items.map((item, i) => {
+        if (item.type === 'prose') return <ProseSection key={i} content={item.text} />
+        const player = item.player
         // The role colour draws the rule and the tint; badge text is its darker -ink twin (4.5:1 on the tint).
         const { color: roleColor, ink: roleInk } = ROLE_TOKENS[getRoleKey(player.role)]
         return (
@@ -438,37 +440,26 @@ function PlayersSection({ content }: { content: string }) {
               )}
             </div>
 
-            {/* Why they matter */}
-            {player.whyTheyMatter && (
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '14px',
-                  lineHeight: '1.5',
-                  color: 'var(--color-island-secondary)',
-                  marginTop: '8px',
-                  marginBottom: 0,
-                }}
-              >
-                {renderInline(player.whyTheyMatter)}
-              </p>
-            )}
-
-            {/* Track record */}
-            {player.trackRecord && (
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '13px',
-                  lineHeight: '1.5',
-                  color: 'var(--color-island-muted)',
-                  marginTop: '8px',
-                  marginBottom: 0,
-                }}
-              >
-                {renderInline(player.trackRecord)}
-              </p>
-            )}
+            {/* Fields and prose in source order. Track record is the quieter line;
+                why they matter, what they do and how they relate read as body. */}
+            {player.parts.map((part, j) => {
+              const quiet = part.type === 'field' && part.key === 'trackRecord'
+              return (
+                <p
+                  key={j}
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: quiet ? '13px' : '14px',
+                    lineHeight: '1.5',
+                    color: quiet ? 'var(--color-island-muted)' : 'var(--color-island-secondary)',
+                    marginTop: '8px',
+                    marginBottom: 0,
+                  }}
+                >
+                  {renderInline(part.type === 'field' ? part.value : part.text)}
+                </p>
+              )
+            })}
           </div>
         )
       })}

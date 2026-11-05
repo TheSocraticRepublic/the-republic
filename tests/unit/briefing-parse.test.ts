@@ -29,7 +29,8 @@ import {
   type GoverningBlock,
   type ComparisonItem,
   type JurisdictionPart,
-  type PlayerData,
+  type PlayerPart,
+  type PlayersItem,
   extractFippaLetter,
   extractTitle,
   getRoleKey,
@@ -49,7 +50,7 @@ import { BRIEFING_SHAPE_FIXTURES, SEEDED_BRIEFING } from '../fixtures/letters'
 type SectionParse =
   | { heading: string; kind: 'prose'; blocks: BlockElement[] }
   | { heading: string; kind: 'governs'; blocks: GoverningBlock[] }
-  | { heading: string; kind: 'players'; players: PlayerData[] }
+  | { heading: string; kind: 'players'; items: PlayersItem[] }
   | { heading: string; kind: 'actions'; before: BlockElement[]; letter: string; after: BlockElement[] }
   | { heading: string; kind: 'comparison'; items: ComparisonItem[] }
 
@@ -66,8 +67,8 @@ function parseSection(heading: string, content: string): SectionParse {
       return blocks.some((b) => b.type === 'document') ? { heading, kind: 'governs', blocks } : prose()
     }
     case 'players': {
-      const players = parsePlayers(content)
-      return players.length > 0 ? { heading, kind: 'players', players } : prose()
+      const items = parsePlayers(content)
+      return items.length > 0 ? { heading, kind: 'players', items } : prose()
     }
     case 'actions': {
       const fippa = extractFippaLetter(content)
@@ -100,12 +101,16 @@ function parseBriefing(text: string): BriefingParse {
 
 const p = (text: string): BlockElement => ({ type: 'paragraph', text })
 const list = (...items: string[]): BlockElement => ({ type: 'list', items })
-const player = (name: string, role: string, whyTheyMatter = '', trackRecord = ''): PlayerData => ({
-  name,
-  role,
-  whyTheyMatter,
-  trackRecord,
-})
+/** A player whose parts are a Why they matter line then a Track record line, when given. */
+const player = (name: string, role: string, whyTheyMatter = '', trackRecord = ''): PlayersItem =>
+  playerOf(name, role, ...(whyTheyMatter ? [whyM(whyTheyMatter)] : []), ...(trackRecord ? [track(trackRecord)] : []))
+const playerOf = (name: string, role: string, ...parts: PlayerPart[]): PlayersItem => ({ type: 'player', player: { name, role, parts } })
+const whyM = (value: string): PlayerPart => ({ type: 'field', key: 'whyTheyMatter', value })
+const track = (value: string): PlayerPart => ({ type: 'field', key: 'trackRecord', value })
+const whatDo = (value: string): PlayerPart => ({ type: 'field', key: 'whatTheyDo', value })
+const relate = (value: string): PlayerPart => ({ type: 'field', key: 'howTheyRelate', value })
+const note = (text: string): PlayerPart => ({ type: 'prose', text })
+const playersProse = (text: string): PlayersItem => ({ type: 'prose', text })
 const jur = (name: string, ...parts: JurisdictionPart[]): ComparisonItem => ({ type: 'jurisdiction', jurisdiction: { name, parts } })
 const body = (text: string): JurisdictionPart => ({ type: 'body', text })
 const what = (value: string): JurisdictionPart => ({ type: 'field', key: 'whatTheyDid', value })
@@ -120,7 +125,7 @@ const GOLDENS: Record<string, BriefingParse> = {
       {
         heading: 'Key Players',
         kind: 'players',
-        players: [
+        items: [
           player('District Manager (QA)', 'decision_maker'),
           player('Synthetic Nation (QA)', 'rights_holder'),
           player('Synthetic Timber Ltd. (QA)', 'proponent'),
@@ -176,7 +181,7 @@ const GOLDENS: Record<string, BriefingParse> = {
       // No document under the heading: the section falls back to prose, where
       // the heading is the 11px subheading label.
       { heading: 'What Governs This', kind: 'prose', blocks: [{ type: 'subheading', text: 'Supporting Documents' }] },
-      { heading: 'Key Players', kind: 'players', players: [player('Someone (QA)', '')] },
+      { heading: 'Key Players', kind: 'players', items: [player('Someone (QA)', '')] },
     ],
   },
   'outcome-word': {
@@ -226,7 +231,7 @@ const GOLDENS: Record<string, BriefingParse> = {
   },
   'name-field': {
     title: null,
-    sections: [{ heading: 'Key Players', kind: 'players', players: [player('Mill Creek Water Users (QA)', 'affected')] }],
+    sections: [{ heading: 'Key Players', kind: 'players', items: [player('Mill Creek Water Users (QA)', 'affected')] }],
   },
   'many-paragraphs': {
     title: null,
@@ -292,7 +297,7 @@ const SEEDED_GOLDEN: BriefingParse = {
     {
       heading: 'Key Players',
       kind: 'players',
-      players: [
+      items: [
         player(
           'Synthetic Timber Ltd. (QA)',
           'proponent',
@@ -494,6 +499,39 @@ describe('parse rules', () => {
     ])
   })
 
+  it('players: nothing is dropped; unrecognised text is prose in its source position (Razor C2)', () => {
+    expect(
+      parsePlayers(
+        [
+          'These are the people with a hand in it:',
+          '',
+          '- **Name:** A (QA)',
+          'A note under the name.',
+          '- **Role:** regulator',
+          '- **What they do:** Issues permits.',
+          '- **How they relate:** Answers to the minister.',
+          '- **Why they matter:** They decide',
+          '  whether notice is given.',
+          '- **Track record:** None found.',
+          '',
+          'Taken together, the regulator holds most of the cards.',
+        ].join('\n')
+      )
+    ).toEqual([
+      playersProse('These are the people with a hand in it:'),
+      playerOf(
+        'A (QA)',
+        'regulator',
+        note('A note under the name.'),
+        whatDo('Issues permits.'),
+        relate('Answers to the minister.'),
+        whyM('They decide whether notice is given.'),
+        track('None found.')
+      ),
+      playersProse('Taken together, the regulator holds most of the cards.'),
+    ])
+  })
+
   it.each([
     ['decision_maker', 'Decision-maker'],
     ['decision maker', 'Decision-maker'],
@@ -601,7 +639,13 @@ function outputWords(parse: BriefingParse): string[] {
         }
         break
       case 'players':
-        for (const pl of s.players) out.push(inlineText(pl.name), roleLabel(pl.role), inlineText(pl.whyTheyMatter), inlineText(pl.trackRecord))
+        for (const item of s.items) {
+          if (item.type === 'prose') preprocessBlocks(item.text).forEach((b) => out.push(...blockText(b)))
+          else {
+            out.push(inlineText(item.player.name), roleLabel(item.player.role))
+            for (const part of item.player.parts) out.push(inlineText(part.type === 'field' ? part.value : part.text))
+          }
+        }
         break
       case 'actions':
         s.before.forEach((b) => out.push(...blockText(b)))
@@ -635,7 +679,9 @@ describe('word-sequence property: nothing dropped, duplicated or reordered', () 
     const parse = parseBriefing(SEEDED_BRIEFING)
     const players = parse.sections.find((s) => s.kind === 'players')
     if (players?.kind !== 'players') throw new Error('no players section')
-    players.players[0] = { ...players.players[0], trackRecord: '' }
+    const first = players.items[0]
+    if (first.type !== 'player') throw new Error('no first player')
+    first.player = { ...first.player, parts: first.player.parts.slice(0, -1) }
     expect(outputWords(parse)).not.toEqual(inputWords(SEEDED_BRIEFING))
   })
 })
