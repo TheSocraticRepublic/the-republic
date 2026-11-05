@@ -4,62 +4,112 @@ import { useState, useEffect } from 'react'
 
 interface SyncStatus {
   lastSync: {
-    startedAt: string
+    startedAt: string | null
     completedAt: string | null
     durationMs: number | null
   } | null
-  counts: {
+  counts?: {
     totalMps: number
     totalVotes: number
     totalBills: number
   }
 }
 
+/**
+ * What the badge can say. `unknown` covers every way the sync time cannot be
+ * read: the request rejected, a non-OK response, a body that is not JSON, no
+ * sync on record, or a date that does not parse. In that state the badge says
+ * "Sync time unknown" and nothing else; it never shows a guessed or computed
+ * age.
+ */
+type BadgeState =
+  | { kind: 'loading' }
+  | { kind: 'unknown' }
+  | { kind: 'known'; syncedAt: Date; daysSince: number; counts: SyncStatus['counts'] }
+
+const STALE_AFTER_DAYS = 7
+const MS_PER_DAY = 1000 * 60 * 60 * 24
+
+/** The sync time is `completedAt`, or `startedAt` when no sync has completed. */
+export function readSyncTime(data: SyncStatus | null | undefined): Date | null {
+  const raw = data?.lastSync?.completedAt ?? data?.lastSync?.startedAt
+  if (!raw) return null
+  const date = new Date(raw)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
 export function DataFreshnessBadge() {
-  const [status, setStatus] = useState<SyncStatus | null>(null)
-  // Computed at fetch time — Date.now() is impure during render
-  const [daysSince, setDaysSince] = useState<number | null>(null)
+  const [state, setState] = useState<BadgeState>({ kind: 'loading' })
 
   useEffect(() => {
+    let cancelled = false
     fetch('/api/parliament/sync/status')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: SyncStatus | null) => {
-        if (!data) return
-        const last = data.lastSync?.completedAt ?? data.lastSync?.startedAt
-        setDaysSince(
-          last
-            ? Math.floor((Date.now() - new Date(last).getTime()) / (1000 * 60 * 60 * 24))
-            : null
-        )
-        setStatus(data)
+      .then((res) => {
+        if (!res.ok) throw new Error(`sync status ${res.status}`)
+        return res.json() as Promise<SyncStatus>
       })
-      .catch(() => {})
+      .then((data) => {
+        if (cancelled) return
+        const syncedAt = readSyncTime(data)
+        if (!syncedAt) {
+          setState({ kind: 'unknown' })
+          return
+        }
+        // Computed at fetch time: Date.now() is impure during render.
+        const daysSince = Math.floor((Date.now() - syncedAt.getTime()) / MS_PER_DAY)
+        setState({ kind: 'known', syncedAt, daysSince, counts: data.counts })
+      })
+      .catch(() => {
+        // Not swallowed: a failed or malformed request is shown to the reader
+        // as "Sync time unknown", the same honest state as no sync on record.
+        if (!cancelled) setState({ kind: 'unknown' })
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  if (!status) return null
+  if (state.kind === 'loading') {
+    // Neutral placeholder, same line height as the final text, so the meta
+    // line does not jump when the answer arrives.
+    return (
+      <div
+        data-freshness="loading"
+        aria-busy="true"
+        className="flex items-center gap-2 text-2xs font-medium text-text-faint"
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-current" />
+        <span>Checking sync time</span>
+      </div>
+    )
+  }
 
-  const lastSyncDate = status.lastSync?.completedAt ?? status.lastSync?.startedAt
+  if (state.kind === 'unknown') {
+    return (
+      <div data-freshness="unknown" className="flex items-center gap-2 text-2xs font-medium text-text-muted">
+        <span className="h-1.5 w-1.5 rounded-full bg-current" />
+        <span>Sync time unknown</span>
+      </div>
+    )
+  }
 
-  const isStale = daysSince !== null && daysSince > 7
+  const isStale = state.daysSince > STALE_AFTER_DAYS
   const color = isStale ? 'var(--status-warning)' : 'var(--text-muted)'
+  const counts = state.counts
 
   return (
-    <div className="flex items-center gap-2 text-2xs font-medium" style={{ color }}>
+    <div data-freshness="known" className="flex items-center gap-2 text-2xs font-medium" style={{ color }}>
       <span
         className="h-1.5 w-1.5 rounded-full"
         style={{ backgroundColor: color }}
       />
-      {lastSyncDate ? (
-        <span>
-          Data as of {new Date(lastSyncDate).toLocaleDateString('en-CA')}
-          {isStale && ' (stale)'}
-        </span>
-      ) : (
-        <span>No data synced</span>
-      )}
-      {status.counts.totalMps > 0 && (
+      <span>
+        Data as of {state.syncedAt.toLocaleDateString('en-CA')}
+        {isStale && ' (stale)'}
+      </span>
+      {counts && counts.totalMps > 0 && (
         <span style={{ color: 'var(--text-muted)' }}>
-          {status.counts.totalMps} MPs, {status.counts.totalVotes} votes
+          {counts.totalMps} MPs, {counts.totalVotes} votes
         </span>
       )}
     </div>

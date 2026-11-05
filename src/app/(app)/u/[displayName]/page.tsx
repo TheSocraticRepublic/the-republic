@@ -4,6 +4,7 @@ import { userProfiles, credentialEvents } from '@/lib/db/schema'
 import { eq, count, sum, sql } from 'drizzle-orm'
 import { ProfileBadge } from '@/components/profile/profile-badge'
 import { CredentialBreakdown } from '@/components/credentials/credential-breakdown'
+import { DetailHeader } from '@/components/layout/detail-header'
 import {
   CREDENTIAL_LABELS,
   computeDecayMultiplier,
@@ -93,6 +94,12 @@ export default async function PublicProfilePage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
+      <DetailHeader
+        backHref="/investigate"
+        backLabel="Back to Investigate"
+        title={profile.displayName}
+      />
+
       {/* Profile card */}
       <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-6">
         <div className="flex flex-col gap-4">

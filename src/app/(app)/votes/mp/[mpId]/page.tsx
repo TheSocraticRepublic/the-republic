@@ -7,6 +7,8 @@ import { VotingPatterns } from '@/components/votes/voting-patterns'
 import { ContradictionList } from '@/components/votes/contradiction-list'
 import { MpVoteList } from '@/components/votes/mp-vote-list'
 import { MpLetterGenerator } from '@/components/votes/mp-letter-generator'
+import { DetailHeader } from '@/components/layout/detail-header'
+import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
 
 export const metadata = {
@@ -34,6 +36,14 @@ export default async function MpProfilePage({ params }: PageProps) {
   return (
     <div data-arm="votes">
       <div className="mx-auto max-w-2xl px-6 py-10 space-y-10">
+        <DetailHeader
+          arm="votes"
+          backHref="/votes/mp"
+          backLabel="Back to MPs"
+          title={mp.name}
+          meta={<DataFreshnessBadge />}
+        />
+
         {/* MP Profile */}
         <MpProfileCard
           name={mp.name}

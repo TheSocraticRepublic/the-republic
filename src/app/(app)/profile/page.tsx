@@ -7,6 +7,7 @@ import { eq, count, sum, sql } from 'drizzle-orm'
 import { ProfileBadge } from '@/components/profile/profile-badge'
 import { CredentialBreakdown } from '@/components/credentials/credential-breakdown'
 import { DeleteAccount } from '@/components/profile/delete-account'
+import { DetailHeader } from '@/components/layout/detail-header'
 import {
   CREDENTIAL_LABELS,
   computeDecayMultiplier,
@@ -82,15 +83,12 @@ export default async function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
-      {/* Header */}
-      <div className="mb-8">
-        <h1
-          className="text-xl font-bold tracking-tight text-text-primary"
-        >
-          Profile
-        </h1>
-        <p className="mt-0.5 text-xs text-text-muted">Your public identity</p>
-      </div>
+      <DetailHeader
+        backHref="/investigate"
+        backLabel="Back to Investigate"
+        title="Profile"
+        meta={<span>Your public identity</span>}
+      />
 
       {/* Profile card */}
       <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-6">
