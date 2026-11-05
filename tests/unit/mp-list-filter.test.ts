@@ -197,6 +197,8 @@ describe('sort and grouping', () => {
     const first = rows[0].querySelector('a')!
     expect(first.getAttribute('href')).toBe(`/votes/mp/${ABBOTT.id}`)
     expect(first.className).toContain('min-h-12')
+    // Inset focus ring, important so it beats the unlayered global offset.
+    expect(first.classList.contains('-outline-offset-2!')).toBe(true)
 
     // The header sits directly before its group's first row.
     const items = [...lists[0].children]

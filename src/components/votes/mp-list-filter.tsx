@@ -230,9 +230,13 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
             </li>,
             ...group.mps.map((mp) => (
               <li key={mp.id}>
+                {/* The inset ring needs `!`: the unlayered global
+                    `*:focus-visible { outline-offset: 2px }` beats any layered
+                    utility, and an outset ring is clipped by the list's
+                    rounding (Razor W1, Jen C4). */}
                 <Link
                   href={`/votes/mp/${mp.id}`}
-                  className="group flex min-h-12 items-center gap-4 px-4 py-2 transition-colors duration-150 -outline-offset-2 hover:bg-surface-3"
+                  className="group flex min-h-12 items-center gap-4 px-4 py-2 transition-colors duration-150 -outline-offset-2! hover:bg-surface-3"
                 >
                   {mp.photoUrl ? (
                     <Image
