@@ -311,6 +311,7 @@ Named during relay `republic-ui-d2` (Razor review, re-checks b1-b6; behavioral e
 - **At 768, adjacent document cards place their badges differently (Jen C5).** Wrapping depends on content width; switch by card width. D4.
 - **"NEXT STEPS:" prints in capitals inside a serif paragraph (Jen C6).** The briefing prompt asks for that line, so every real briefing shows it. Make it a run-in label. This is for the re-plan after First Light.
 - **The footer reads "1 votes" (behavioral).** Pluralisation on the investigation footer, outside the briefing parser.
+- **No fixture covers an eyebrow followed directly by another eyebrow (Razor RN7).** A mutant that renders that label instead of dropping it survives. It fails safe, since nothing is lost. One fixture with an h4 assertion would close it.
 
 ### Deferred from republic-ui-d1 (2026-10-16)
 
