@@ -304,6 +304,10 @@ describe('DetailHeader', () => {
     const h1s = container.querySelectorAll('h1')
     expect(h1s).toHaveLength(1)
     expect(h1s[0].textContent).toBe('Jane Doe')
+    // Jen E1 C4: a 50-character name with no break points (underscores) must
+    // wrap at 320. jsdom has no layout, so this pins the class; the compiled
+    // rule it maps to is checked in the CSS block below.
+    expect(h1s[0].className.split(/\s+/)).toContain('break-words')
     const meta = container.querySelector('[data-detail-meta]')
     expect(meta).not.toBeNull()
     expect(meta!.contains(screen.getByTestId('meta'))).toBe(true)

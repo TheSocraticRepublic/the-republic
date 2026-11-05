@@ -51,7 +51,7 @@ export function DetailHeader({ arm, backHref, backLabel, title, meta, action }: 
               backgroundColor: barColor,
             }}
           />
-          <h1 className="font-display text-2xl font-bold text-text-primary">
+          <h1 className="font-display text-2xl font-bold text-text-primary break-words">
             {title}
           </h1>
           {meta && (
