@@ -35,7 +35,7 @@ import { VoteDetailCard } from '@/components/votes/vote-detail-card'
 import { VoteBadge } from '@/components/votes/vote-badge'
 import { PartyBreakdown } from '@/components/votes/party-breakdown'
 import { BallotGroups, groupBallots, type BallotRecord } from '@/components/votes/ballot-list'
-import { MpVoteList } from '@/components/votes/mp-vote-list'
+import { MpVoteList, keepBillNumbersWhole } from '@/components/votes/mp-vote-list'
 import { InvestigationVotePanel } from '@/components/votes/investigation-vote-panel'
 
 afterEach(() => {
@@ -266,6 +266,14 @@ describe('BallotList grouping', () => {
   })
 })
 
+describe('keepBillNumbersWhole', () => {
+  it('wraps each House and Senate bill number, and leaves the rest as text', () => {
+    const host = html(createElement('p', null, ...keepBillNumbersWhole('Bills C-39 and S-209, not C-')))
+    expect(host.textContent).toBe('Bills C-39 and S-209, not C-')
+    expect(Array.from(host.querySelectorAll('span.whitespace-nowrap')).map((el) => el.textContent)).toEqual(['C-39', 'S-209'])
+  })
+})
+
 describe('MpVoteList rows', () => {
   it("leads with the MP's ballot, clamps the title, labels the division, and states the outcome neutrally", async () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({
@@ -280,13 +288,20 @@ describe('MpVoteList rows', () => {
       }),
     } as unknown as Response)))
     const { container } = render(createElement(MpVoteList, { mpId: 'mp-1' }))
-    await screen.findByText('2nd reading of Bill C-218')
+    // The title is split by the bill number's nowrap span, so match the <p>.
+    const byTitle = (_: string, el: Element | null) => el?.tagName === 'P' && el.textContent === '2nd reading of Bill C-218'
+    const title = await screen.findByText(byTitle)
     const row = container.querySelector('[data-mp-vote-row]')!
     const column = row.firstElementChild!
     expect(column.hasAttribute('data-ballot-column')).toBe(true)
     expect(column.textContent).toBe("Didn't vote")
-    const title = screen.getByText('2nd reading of Bill C-218')
     expect(title.className.split(/\s+/)).toEqual(expect.arrayContaining(['line-clamp-3', 'md:line-clamp-2']))
+    // Jen C3: a 96px column from 640px, stacked above the title below it,
+    // and the bill number never splits at its hyphen.
+    expect(row.className.split(/\s+/)).toEqual(expect.arrayContaining(['flex', 'max-sm:flex-col']))
+    expect(column.className.split(/\s+/)).toEqual(expect.arrayContaining(['w-24', 'max-sm:w-auto']))
+    const bill = Array.from(title.querySelectorAll('span.whitespace-nowrap')).map((el) => el.textContent)
+    expect(bill).toEqual(['C-218'])
     expect(row.querySelector('[data-division]')!.textContent).toBe('45-1/177')
     expect(row.querySelector('[data-result]')!.textContent).toBe('Defeated')
   })
