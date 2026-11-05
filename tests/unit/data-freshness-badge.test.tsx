@@ -10,8 +10,12 @@
  * Rendered with React DOM in jsdom; only `fetch` is stubbed, with the body the
  * status route (src/app/api/parliament/sync/status/route.ts) returns.
  */
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
+import fs from 'fs'
+import path from 'path'
+import postcss, { type Root } from 'postcss'
+import tailwind from '@tailwindcss/postcss'
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: () => {}, replace: () => {}, refresh: () => {}, back: () => {}, prefetch: () => {} }),
@@ -503,5 +507,67 @@ describe('MpProfileCard under DetailHeader', () => {
     expect(initial).toBeTruthy()
     expect(initial.getAttribute('aria-hidden')).toBe('true')
     expect(container.textContent).not.toContain('Jane Doe')
+  })
+})
+
+/*
+ * Jen E1 C4 and C5, checked against the CSS Tailwind actually compiles from
+ * globals.css (the app's own pipeline), since jsdom has no layout: the h1's
+ * class wraps, and the coarse-pointer target is an overlay, not layout.
+ */
+describe('DetailHeader compiled CSS', () => {
+  let css = ''
+  let compiled: Root
+  let backClasses: string[] = []
+
+  beforeAll(async () => {
+    const file = path.resolve(__dirname, '../../src/app/globals.css')
+    const result = await postcss([tailwind()]).process(fs.readFileSync(file, 'utf8'), { from: file })
+    css = result.css
+    compiled = postcss.parse(css)
+    const { container } = render(
+      <DetailHeader arm="votes" backHref="/votes" backLabel="Back to Vote Tracker" title="t" />
+    )
+    backClasses = container.querySelector('a')!.className.split(/\s+/)
+    cleanup()
+  }, 60_000)
+
+  function declsFor(selectorPart: string): Record<string, string> {
+    const out: Record<string, string> = {}
+    compiled.walkRules((rule) => {
+      if (!rule.selector.includes(selectorPart)) return
+      rule.walkDecls((d) => { out[d.prop] = d.value })
+    })
+    return out
+  }
+
+  it('break-words compiles to overflow-wrap: break-word', () => {
+    expect(declsFor('.break-words')['overflow-wrap']).toBe('break-word')
+  })
+
+  it('the back link stays a 24px box on coarse pointers; the 44px is an ::after overlay', () => {
+    expect(backClasses).toContain('relative')
+    expect(backClasses).toContain('min-h-6')
+    expect(backClasses.some((c) => /^pointer-coarse:min-h-/.test(c))).toBe(false)
+    expect(backClasses).toContain('pointer-coarse:after:absolute')
+    expect(backClasses).toContain('pointer-coarse:after:-inset-y-2.5')
+    expect(backClasses).toContain('pointer-coarse:after:inset-x-0')
+    // The overlay rules exist, under the coarse-pointer query, on ::after.
+    expect(css).toMatch(/pointer:\s*coarse/)
+    const overlay = declsFor('pointer-coarse\\:after\\:-inset-y-2\\.5')
+    expect(Object.keys(overlay).length).toBeGreaterThan(0)
+    expect(JSON.stringify(overlay)).toMatch(/calc\(var\(--spacing\) \* -2\.5\)|-0\.625rem|-10px/)
+    // Tailwind 4 nests: .class { @media (pointer: coarse) { &::after { ... } } }
+    let afterAbsolute = false
+    compiled.walkRules((rule) => {
+      if (!rule.selector.includes('pointer-coarse\\:after\\:absolute')) return
+      rule.walkRules((inner) => {
+        const media = inner.parent?.type === 'atrule' ? (inner.parent as unknown as { params: string }).params : ''
+        if (inner.selector.includes('::after') && /pointer:\s*coarse/.test(media)) {
+          inner.walkDecls('position', (d) => { if (d.value === 'absolute') afterAbsolute = true })
+        }
+      })
+    })
+    expect(afterAbsolute).toBe(true)
   })
 })

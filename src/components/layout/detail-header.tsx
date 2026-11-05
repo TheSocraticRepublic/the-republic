@@ -12,8 +12,10 @@ import { ChevronLeft } from 'lucide-react'
  * `arm` is optional because profile pages belong to no arm: without one the
  * bar takes the neutral `--border-strong` instead of an arm accent.
  *
- * The back link is a real `<Link>`: a 24px hit area on fine pointers, 44px on
- * coarse ones, and the global `--focus-ring` outline (globals.css) on focus.
+ * The back link is a real `<Link>`: a 24px box in flow on every pointer, and
+ * on coarse pointers a 44px hit area laid over it by an `::after` (10px above
+ * and below), so the label keeps its position and the focus ring (the global
+ * `--focus-ring` outline, globals.css) still hugs the label (Jen E1 C5).
  */
 interface DetailHeaderProps {
   arm?: string
@@ -33,7 +35,7 @@ export function DetailHeader({ arm, backHref, backLabel, title, meta, action }: 
     <div data-detail-header>
       <Link
         href={backHref}
-        className="-ml-1 mb-4 inline-flex min-h-6 items-center gap-1 rounded-sm pr-1 text-xs text-text-muted transition-colors hover:text-text-primary pointer-coarse:min-h-11"
+        className="relative -ml-1 mb-4 inline-flex min-h-6 items-center gap-1 rounded-sm pr-1 text-xs text-text-muted transition-colors hover:text-text-primary pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5"
       >
         <ChevronLeft aria-hidden="true" className="h-3.5 w-3.5" />
         {backLabel}
