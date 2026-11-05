@@ -111,12 +111,15 @@ export function BallotGroups({ ballots, sortBy, onSort }: BallotGroupsProps) {
               type="button"
               aria-pressed={sortBy === s}
               onClick={() => onSort(s)}
-              className="text-2xs font-medium px-2 py-1 rounded transition-colors"
-              style={{
-                color: sortBy === s ? 'var(--accent-votes)' : 'var(--text-muted)',
-                backgroundColor:
-                  sortBy === s ? 'rgba(212,118,78,0.10)' : 'transparent',
-              }}
+              // A pressed toggle is neutral, told apart by lightness, not the
+              // arm's action hue (Jen E2b C6, the C2b rule). min-h-6 in flow,
+              // and on coarse pointers a 44px hit area laid over it (E1's
+              // DetailHeader back-link recipe).
+              className={`relative min-h-6 rounded border px-2 py-1 text-2xs font-medium transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 ${
+                sortBy === s
+                  ? 'border-text-muted bg-surface-3 text-text-primary'
+                  : 'border-transparent text-text-muted hover:text-text-secondary'
+              }`}
             >
               {SORT_LABELS[s]}
             </button>

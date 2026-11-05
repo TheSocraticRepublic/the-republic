@@ -264,6 +264,23 @@ describe('BallotList grouping', () => {
       ['Name', 'true'],
     ])
   })
+
+  it('the pressed sort is neutral, not the action hue, and has a 44px coarse-pointer target (Jen C6)', () => {
+    const host = html(createElement(BallotGroups, { ballots: BALLOTS, sortBy: 'name', onSort: () => {} }))
+    const [party, name] = Array.from(host.querySelectorAll('button'))
+    const pressed = name.className.split(/\s+/)
+    const unpressed = party.className.split(/\s+/)
+    expect(pressed).toEqual(expect.arrayContaining(['border', 'border-text-muted', 'bg-surface-3', 'text-text-primary']))
+    expect(unpressed).toEqual(expect.arrayContaining(['border', 'border-transparent', 'text-text-muted']))
+    expect(unpressed).not.toContain('bg-surface-3')
+    for (const cls of [pressed, unpressed]) {
+      expect(cls).toEqual(expect.arrayContaining([
+        'relative', 'min-h-6', 'pointer-coarse:after:absolute', 'pointer-coarse:after:inset-x-0', 'pointer-coarse:after:-inset-y-2.5',
+      ]))
+    }
+    expect(name.getAttribute('style')).toBeNull()
+    expect(party.getAttribute('style')).toBeNull()
+  })
 })
 
 describe('keepBillNumbersWhole', () => {
