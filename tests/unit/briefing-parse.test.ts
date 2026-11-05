@@ -182,12 +182,14 @@ const GOLDENS: Record<string, BriefingParse> = {
   'outcome-word': {
     title: null,
     sections: [
+      // Places written as bullets are not jurisdiction cards (Razor C1): the
+      // section renders as prose, as before D2, and nothing is invented.
       {
         heading: 'How Other Places Handle This',
-        kind: 'comparison',
-        jurisdictions: [
-          jur('Synthetic Town A (QA)', ['publishes permits before approval.'], { outcome: 'Reported but unverified.' }),
-          jur('Synthetic Town B (QA)', ['requires a hydrology assessment. The outcome is not documented.']),
+        kind: 'prose',
+        blocks: [
+          list('**Synthetic Town A (QA)** publishes permits before approval.', '**Outcome:** Reported but unverified.'),
+          list('**Synthetic Town B (QA)** requires a hydrology assessment. The outcome is not documented.'),
         ],
       },
     ],
@@ -355,12 +357,13 @@ const SEEDED_GOLDEN: BriefingParse = {
     },
     {
       heading: 'How Other Places Handle This',
-      kind: 'comparison',
-      jurisdictions: [
-        jur('Synthetic Town A (QA)', ['publishes every cutting permit near a drinking-water intake before approval.'], {
-          outcome: 'Reported but unverified in this synthetic fixture.',
-        }),
-        jur('Synthetic Town B (QA)', ['requires a hydrology assessment above every intake. The outcome is not documented.']),
+      kind: 'prose',
+      blocks: [
+        list(
+          '**Synthetic Town A (QA)** publishes every cutting permit near a drinking-water intake before approval.',
+          '**Outcome:** Reported but unverified in this synthetic fixture.'
+        ),
+        list('**Synthetic Town B (QA)** requires a hydrology assessment above every intake. The outcome is not documented.'),
       ],
     },
     {
@@ -473,6 +476,12 @@ describe('parse rules', () => {
     expect(k).toEqual(
       jur('Synthetic Town F (QA)', [], { whatTheyDid: 'Published.', whyItMatters: 'It can be appealed.', outcome: 'Fewer variances.' })
     )
+  })
+
+  it('bulleted places are prose, not cards: no Outcome box, no invented jurisdiction', () => {
+    const doc = render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === 'outcome-word')!.content)
+    expect(findAll(doc, 'span', 'OUTCOME')).toHaveLength(0)
+    expect([...doc.querySelectorAll('li')].some((li) => li.textContent?.startsWith('Synthetic Town A (QA) publishes'))).toBe(true)
   })
 
   it('a field value continues on the following lines until a blank line', () => {
@@ -619,7 +628,7 @@ function outputWords(parse: BriefingParse): string[] {
         break
     }
   }
-  return words(out.join('\n'))
+  return words(out.join('\n').split('\n').map(stripLabel).join('\n'))
 }
 
 describe('word-sequence property: nothing dropped, duplicated or reordered', () => {
@@ -734,7 +743,7 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
   })
 
   it('an Outcome box appears only where an Outcome line was written', () => {
-    for (const id of ['outcome-word', 'outcome-word-heading']) {
+    for (const id of ['outcome-word-heading']) {
       const doc = render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === id)!.content)
       const outcomes = findAll(doc, 'span', 'OUTCOME')
       expect(outcomes, id).toHaveLength(1)

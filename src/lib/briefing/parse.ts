@@ -276,10 +276,25 @@ type JurisdictionField = 'whatTheyDid' | 'whyItMatters' | 'outcome'
 // A Mirror field comes only from a line that opens with its label and a colon
 // (`**Outcome:** x`, `**Outcome**: x`, `Outcome: x`), after optional
 // indentation or a bullet. Never from the word inside prose, and never by
-// position: "The outcome is not documented" is prose (D2).
-const WHAT_THEY_DID_LINE = /^\s*(?:[-*]\s+)?(?:\*\*what they did(?:\s+[\w']+){0,3}:\*\*|\*\*what they did(?:\s+[\w']+){0,3}\*\*:|what they did(?:\s+[\w']+){0,3}:)\s*(.*)$/i
-const WHY_IT_MATTERS_LINE = /^\s*(?:[-*]\s+)?(?:\*\*why it matters(?:\s+[\w']+){0,3}:\*\*|\*\*why it matters(?:\s+[\w']+){0,3}\*\*:|why it matters(?:\s+[\w']+){0,3}:)\s*(.*)$/i
-const OUTCOME_LINE = /^\s*(?:[-*]\s+)?(?:\*\*outcome:\*\*|\*\*outcome\*\*:|outcome:)\s*(.*)$/i
+// position: "The outcome is not documented" is prose (D2). The labels take
+// the briefing prompt's own phrasings (briefing-system.ts: "What they did
+// differently", "Why it matters for the citizen's situation", "What the
+// outcome was"): What they did and Why it matters accept any trailing words
+// up to the colon, within one clause.
+const TRAILING = String.raw`(?:\s+[^:*.!?\n]{1,60}?)?`
+const MIRROR_LABELS: Record<JurisdictionField, string> = {
+  whatTheyDid: String.raw`what they did${TRAILING}`,
+  whyItMatters: String.raw`why it matters${TRAILING}`,
+  outcome: String.raw`(?:outcome|what the outcome was)`,
+}
+const mirrorLine = (label: string) =>
+  new RegExp(String.raw`^\s*(?:[-*]\s+)?(?:\*\*${label}:\*\*|\*\*${label}\*\*\s*:|${label}:)\s*(.*)$`, 'i')
+const WHAT_THEY_DID_LINE = mirrorLine(MIRROR_LABELS.whatTheyDid)
+const WHY_IT_MATTERS_LINE = mirrorLine(MIRROR_LABELS.whyItMatters)
+const OUTCOME_LINE = mirrorLine(MIRROR_LABELS.outcome)
+
+/** Bold text that is a Mirror field label, with or without a colon or trailing words. */
+const MIRROR_LABEL_TEXT = /^(?:what they did|why it matters|outcome|what the outcome was)\b/i
 
 function matchJurisdictionField(line: string): { key: JurisdictionField; value: string } | null {
   const what = line.match(WHAT_THEY_DID_LINE)
@@ -292,18 +307,17 @@ function matchJurisdictionField(line: string): { key: JurisdictionField; value: 
 }
 
 /**
- * A line that opens a jurisdiction, with its name and any prose after the name
- * on the same line: `### Name`, a line wholly in bold, or a bullet led by a
- * bold name (`- **Town A** publishes …`). A bold span ending in a colon is a
- * field label, not a name.
+ * A line that opens a jurisdiction: a `### Name` heading, or, only in a section
+ * with no `###` headings at all, a line wholly in bold whose text is not a
+ * Mirror field label. A bold-led bullet never opens one (Razor C1: it invented
+ * places from "- **Policy 4.2** requires ..." and colon-less labels).
  */
-function matchJurisdictionStart(line: string): { name: string; rest: string } | null {
+function matchJurisdictionStart(line: string, sectionHasHeadings: boolean): { name: string; rest: string } | null {
   const h3 = line.match(/^###\s+(.+)$/)
   if (h3) return { name: h3[1].trim(), rest: '' }
+  if (sectionHasHeadings) return null
   const bold = line.match(/^\*\*([^*]+)\*\*\s*$/)
-  if (bold && !bold[1].trim().endsWith(':')) return { name: bold[1].trim(), rest: '' }
-  const led = line.match(/^[-*]\s+\*\*([^*]+)\*\*(.*)$/)
-  if (led && !led[1].trim().endsWith(':') && !led[2].trim().startsWith(':')) return { name: led[1].trim(), rest: led[2].trim() }
+  if (bold && !MIRROR_LABEL_TEXT.test(bold[1].trim()) && !bold[1].trim().endsWith(':')) return { name: bold[1].trim(), rest: '' }
   return null
 }
 
@@ -315,6 +329,8 @@ export function parseJurisdictions(content: string): JurisdictionData[] {
   // The body paragraph a following non-blank line continues, until a blank line.
   let openParagraph = false
 
+  const sectionHasHeadings = content.split('\n').some((l) => /^###\s+/.test(l.trim()))
+
   for (const raw of content.split('\n')) {
     const line = raw.trim()
 
@@ -324,7 +340,7 @@ export function parseJurisdictions(content: string): JurisdictionData[] {
       continue
     }
 
-    const start = matchJurisdictionStart(line)
+    const start = matchJurisdictionStart(line, sectionHasHeadings)
     if (start) {
       if (current) jurisdictions.push(current)
       current = { name: start.name, body: [], whatTheyDid: '', whyItMatters: '', outcome: '' }
