@@ -142,6 +142,15 @@ CSP is delivered from middleware as `Content-Security-Policy-Report-Only`. It is
 
 Flagged explicitly in ROADMAP as non-delegable to Ted/Razor.
 
+### P2 First Light runs before the rest of the UI and filings plan; what the real filing reveals re-plans D3 onward.
+*2026-11-05, per Lee (fleet decision the-republic-19, relayed by the stand-in driver)*
+
+Lee, 2026-11-05: "for the republic lets run the real test first so that we can identify what parts of the plan might need updating; can we evaluate if any of the 20+ batches can begin while i perform the test?"
+
+This reverses the 2026-10-11 order, in which the UI and filings batches ran before First Light. D2 finishes and merges. D3, D4, E3b, F3, G1, and anything Lever-, briefing- or Gadfly-shaped wait until Lee's first real filing is done and its frictions note (`.claude/first-light-frictions.md`, plus his answers on the Checks page) has been read. A real citizen filing is the cheapest usability study the project will get, and those batches would otherwise be built on guesses it can correct.
+
+Batches a real filing will not reshape may run while Lee files, chosen by reading their manifests for shared files: E1, E2a, E2b, E3a, F1 and F2 (Votes and the landing). They still run in the plan's serial order among themselves, because several of them share files.
+
 ---
 
 ## Evidence corrections
