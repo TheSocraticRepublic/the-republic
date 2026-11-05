@@ -325,19 +325,24 @@ describe('MpVoteList rows', () => {
 })
 
 describe('InvestigationVotePanel rows', () => {
-  it("leads with the MP's ballot", async () => {
+  function stubPanel(mp: unknown, mpBallot: string | null) {
     vi.stubGlobal('fetch', vi.fn(async () => ({
       ok: true,
       status: 200,
       json: async () => ({
-        mp: null,
+        mp,
         concern: '',
         votes: [{
           voteId: 'v-178', date: '2026-10-08', descriptionEn: '2nd reading of Bill C-39',
-          result: 'passed', relevanceExplanation: null, mpBallot: 'yes',
+          result: 'passed', relevanceExplanation: null, mpBallot,
         }],
       }),
     } as unknown as Response)))
+  }
+  const MP = { id: 'mp-1', name: 'Jane Doe', party: 'Liberal', ridingName: 'Nelson', photoUrl: null }
+
+  it("with an MP, leads with the MP's ballot", async () => {
+    stubPanel(MP, 'yes')
     const { container } = render(createElement(InvestigationVotePanel, { investigationId: 'inv-1' }))
     const title = await screen.findByText('2nd reading of Bill C-39')
     const link = title.closest('a')!
@@ -345,5 +350,14 @@ describe('InvestigationVotePanel rows', () => {
     expect(column.hasAttribute('data-ballot-column')).toBe(true)
     expect(column.textContent).toBe('Yea')
     expect(container.textContent).not.toMatch(/absent/i)
+  })
+
+  it('without an MP, draws no ballot column, and the title clamps 3 lines on phones (Jen C7)', async () => {
+    stubPanel(null, null)
+    const { container } = render(createElement(InvestigationVotePanel, { investigationId: 'inv-1' }))
+    const title = await screen.findByText('2nd reading of Bill C-39')
+    expect(container.querySelector('[data-ballot-column]')).toBeNull()
+    expect(title.closest('a')!.firstElementChild!.firstElementChild!.contains(title)).toBe(true)
+    expect(title.className.split(/\s+/)).toEqual(expect.arrayContaining(['line-clamp-3', 'md:line-clamp-2']))
   })
 })
