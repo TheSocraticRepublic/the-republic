@@ -423,12 +423,14 @@ function PlayersSection({ content }: { content: string }) {
               {player.role && (
                 <span
                   style={{
+                    // The paper's one badge recipe (the access badge's): 12px/500,
+                    // sentence case, normal tracking, 2px 10px, 16px line, 18% border.
                     display: 'inline-block',
                     borderRadius: '9999px',
                     padding: '2px 10px',
-                    fontSize: '11px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
+                    fontSize: '12px',
+                    lineHeight: '16px',
+                    border: '1px solid color-mix(in srgb, currentColor 18%, transparent)',
                     // 8% of the role colour: the old `${hex}14` alpha (20/255).
                     backgroundColor: `color-mix(in srgb, ${roleColor} 8%, transparent)`,
                     color: roleInk,
@@ -652,15 +654,16 @@ function DocumentCard({
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
             <span
               style={{
+                // The paper's one badge recipe (the access badge's), on its own Scout tint.
                 display: 'inline-block',
                 borderRadius: '9999px',
-                padding: '2px 8px',
-                fontSize: '11px',
-                textTransform: 'uppercase' as const,
-                letterSpacing: '0.06em',
+                padding: '2px 10px',
+                fontSize: '12px',
+                lineHeight: '16px',
+                border: '1px solid color-mix(in srgb, currentColor 18%, transparent)',
                 backgroundColor: 'color-mix(in srgb, var(--accent-scout) 10%, transparent)',
                 color: 'var(--accent-scout-ink)',
-                fontWeight: 600,
+                fontWeight: 500,
               }}
             >
               Primary Authority

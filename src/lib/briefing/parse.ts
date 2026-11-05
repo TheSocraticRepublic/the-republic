@@ -212,15 +212,18 @@ export function getRoleKey(role: string): RoleKey {
 
 /**
  * The words a role badge shows. The briefing prompt's enum values become plain
- * words; any other value has its underscores turned to spaces and is otherwise
- * shown as written (never a word the briefing did not use).
+ * words; any other value has its underscores turned to spaces and its first
+ * letter capitalised, and is otherwise shown as written (never a word the
+ * briefing did not use). Badges are sentence case, not CSS uppercase.
  */
 export function roleLabel(role: string): string {
   const r = role.trim().toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ')
   if (r === 'decision maker') return 'Decision-maker'
   if (r === 'rights holder') return 'Rights holder'
   if (r === 'proponent') return 'Proponent'
-  return role.replace(/_/g, ' ')
+  // Any other value: the briefing's own word, underscores as spaces, first letter capitalised.
+  const words = role.replace(/_/g, ' ')
+  return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
 const PLAYER_LABELS: [key: 'name' | 'role' | PlayerField, label: string][] = [

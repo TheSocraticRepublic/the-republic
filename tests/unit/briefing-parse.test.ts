@@ -790,8 +790,8 @@ describe('parse rules', () => {
     ['rights_holder', 'Rights holder'],
     ['rights holder', 'Rights holder'],
     ['proponent', 'Proponent'],
-    ['affected', 'affected'],
-    ['certificate_holder', 'certificate holder'],
+    ['affected', 'Affected'],
+    ['certificate_holder', 'Certificate holder'],
     ['Regulator', 'Regulator'],
   ])('roleLabel(%s) -> %s', (role, label) => {
     expect(roleLabel(role)).toBe(label)
@@ -807,8 +807,8 @@ describe('parse rules', () => {
     expect(getRoleKey(role)).toBe(key)
   })
 
-  it('a joined role is shown as written', () => {
-    expect(roleLabel('proponent / applicant')).toBe('proponent / applicant')
+  it('a joined role is shown as written, first letter capitalised', () => {
+    expect(roleLabel('proponent / applicant')).toBe('Proponent / applicant')
   })
 
   it.each([
@@ -1166,6 +1166,23 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
     const [leadIn] = findAll(doc, 'p', 'The first document is the Primary Authority.')
     expect(leadIn).toBeDefined()
     expect(cardOf(leadIn)).toBeNull()
+  })
+
+  it('one badge recipe on the paper: role and Primary Authority badges take the access badge recipe (Jen D2 C1)', () => {
+    const doc = render(SEEDED_BRIEFING)
+    const primary = findAll(doc, 'span', 'Primary Authority')[0]
+    const role = findAll(render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === 'name-field')!.content), 'span', 'Affected')[0]
+    for (const badge of [primary, role]) {
+      expect(badge).toBeDefined()
+      const s = styleOf(badge)
+      expect(s).toContain('font-size:12px')
+      expect(s).toContain('line-height:16px')
+      expect(s).toContain('padding:2px 10px')
+      expect(s).toContain('font-weight:500')
+      expect(s).toContain('border:1px solid color-mix(in srgb, currentColor 18%, transparent)')
+      expect(s).not.toContain('text-transform')
+      expect(s).not.toContain('letter-spacing')
+    }
   })
 
   it('a group label with nothing under it is the 11px muted eyebrow, never a card', () => {
