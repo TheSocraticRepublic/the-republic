@@ -970,8 +970,46 @@ function playersInRenderOrder(markdown: string): string {
   return out.join('\n')
 }
 
-function inputWords(markdown: string): string[] {
-  const text = playersInRenderOrder(governsInRenderOrder(markdown))
+/**
+ * DELIBERATE DROP, the one named exception to "nothing dropped" (Jen D2 C3): in a
+ * What Governs section that has documents, an eyebrow renders only when a document
+ * block follows it. One with nothing under it labels nothing, so it is left out.
+ * (A section with no document at all renders as prose, eyebrow included.) The
+ * property removes exactly these from the input, and a pin test below lists every
+ * case that has one, so a new drop cannot pass silently.
+ */
+function eyebrowDropped(blocks: GoverningBlock[], j: number): boolean {
+  return blocks[j].type === 'eyebrow' && blocks.some((b) => b.type === 'document') && blocks[j + 1]?.type !== 'document'
+}
+function droppedEyebrows(parse: BriefingParse): string[] {
+  const out: string[] = []
+  for (const s of parse.sections) {
+    if (s.kind !== 'governs') continue
+    s.blocks.forEach((b, j) => {
+      if (b.type === 'eyebrow' && eyebrowDropped(s.blocks, j)) out.push(b.text)
+    })
+  }
+  return out
+}
+/** The input with each deliberately dropped eyebrow's own heading line removed (first match in What Governs). */
+function withoutDroppedEyebrows(markdown: string, dropped: string[]): string {
+  const lines = markdown.split('\n')
+  let inGoverns = false
+  const left = [...dropped]
+  return lines
+    .filter((l) => {
+      if (/^##\s/.test(l)) inGoverns = /governs/i.test(l)
+      const text = l.replace(/^#{3,6}\s+/, '').replace(/^\*\*(.+)\*\*\s*$/, '$1').trim()
+      const k = inGoverns && l !== text ? left.indexOf(text) : -1
+      if (k === -1) return true
+      left.splice(k, 1)
+      return false
+    })
+    .join('\n')
+}
+
+function inputWords(markdown: string, dropped: string[] = []): string[] {
+  const text = playersInRenderOrder(governsInRenderOrder(withoutDroppedEyebrows(markdown, dropped)))
     .split('\n')
     .map((line) =>
       line
@@ -1013,9 +1051,10 @@ function outputWords(parse: BriefingParse): string[] {
       case 'governs':
         // In render order, as DocumentCard lays a card out: name, Access badge,
         // intro, the remaining fields under their labels, How to find it last.
-        for (const b of s.blocks) {
-          if (b.type === 'eyebrow') out.push(b.text)
-          else if (b.type === 'prose') preprocessBlocks(b.text).forEach((x) => out.push(...blockText(x)))
+        s.blocks.forEach((b, j) => {
+          if (b.type === 'eyebrow') {
+            if (!eyebrowDropped(s.blocks, j)) out.push(b.text)
+          } else if (b.type === 'prose') preprocessBlocks(b.text).forEach((x) => out.push(...blockText(x)))
           else {
             const access = b.fields.find((f) => f.label.toLowerCase() === 'access')
             const level = access ? detectAccess(access.value) : null
@@ -1033,7 +1072,7 @@ function outputWords(parse: BriefingParse): string[] {
             }
             if (howTo) out.push(inlineText(howTo.value))
           }
-        }
+        })
         break
       case 'players':
         for (const item of s.items) {
@@ -1067,9 +1106,15 @@ describe('word-sequence property: nothing dropped, duplicated or reordered', () 
   const cases: [string, string][] = [...BRIEFING_SHAPE_FIXTURES.map((f) => [f.id, f.content] as [string, string]), ['SEEDED_BRIEFING', SEEDED_BRIEFING]]
 
   it.each(cases)('%s', (_id, content) => {
-    const input = inputWords(content)
+    const parse = parseBriefing(content)
+    const input = inputWords(content, droppedEyebrows(parse))
     expect(input.length).toBeGreaterThan(0)
-    expect(outputWords(parseBriefing(content))).toEqual(input)
+    expect(outputWords(parse)).toEqual(input)
+  })
+
+  it('the deliberate drops, pinned: only SEEDED_BRIEFING has an eyebrow over nothing', () => {
+    const drops = Object.fromEntries(cases.map(([id, content]) => [id, droppedEyebrows(parseBriefing(content))]).filter(([, d]) => d.length > 0))
+    expect(drops).toEqual({ SEEDED_BRIEFING: ['Supporting Documents'] })
   })
 
   it('the property fires: a parse that drops a word fails it', () => {
@@ -1185,11 +1230,26 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
     }
   })
 
-  it('a group label with nothing under it is the 11px muted eyebrow, never a card', () => {
-    const doc = render(SEEDED_BRIEFING)
+  it('a group label over a document is the 11px/600 muted eyebrow, never a card; over nothing it is left out (Jen D2 C3)', () => {
+    expect(findAll(render(SEEDED_BRIEFING), 'h4', 'Supporting Documents')).toHaveLength(0)
+    const doc = render(
+      [
+        '## What Governs This',
+        '',
+        '### Synthetic Plan (QA)',
+        '- **What it is:** A plan.',
+        '',
+        '### Supporting Documents',
+        '',
+        '### Synthetic Permit (QA)',
+        '- **What it is:** A permit.',
+      ].join('\n')
+    )
     const [eyebrow] = findAll(doc, 'h4', 'Supporting Documents')
     expect(eyebrow).toBeDefined()
     expect(styleOf(eyebrow)).toContain('font-size:11px')
+    expect(styleOf(eyebrow)).toContain('font-weight:600')
+    expect(styleOf(eyebrow)).toContain('letter-spacing:0.08em')
     expect(styleOf(eyebrow)).toContain('color:var(--color-island-muted)')
     expect(cardOf(eyebrow)).toBeNull()
   })

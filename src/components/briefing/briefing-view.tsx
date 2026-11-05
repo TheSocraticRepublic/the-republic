@@ -211,9 +211,10 @@ function SubheadingLabel({ text, first }: { text: string; first: boolean }) {
       style={{
         fontFamily: 'var(--font-body)',
         fontSize: '11px',
-        fontWeight: 700,
+        // The field-label recipe, so it sits under the 600 section header, not over it.
+        fontWeight: 600,
         textTransform: 'uppercase' as const,
-        letterSpacing: '0.06em',
+        letterSpacing: '0.08em',
         color: 'var(--color-island-muted)',
         marginTop: first ? '0' : '24px',
         marginBottom: '4px',
@@ -818,8 +819,13 @@ function WhatGovernsSection({ content }: { content: string }) {
         if (block.type === 'document') {
           return <DocumentCard key={j} name={block.name} intro={block.intro} fields={block.fields} isPrimary={block.isPrimary} />
         }
-        // A group label with no fields under it: the eyebrow ProseSection uses for subheadings.
-        if (block.type === 'eyebrow') return <SubheadingLabel key={j} text={block.text} first={j === 0} />
+        // A group label: the eyebrow ProseSection uses for subheadings. It renders only
+        // over a document; with none following before the section ends it labels nothing
+        // and reads as Key Players' label or a failed load, so it is left out (Jen D2 C3).
+        if (block.type === 'eyebrow') {
+          if (blocks[j + 1]?.type !== 'document') return null
+          return <SubheadingLabel key={j} text={block.text} first={j === 0} />
+        }
         return <ProseSection key={j} content={block.text} />
       })}
     </div>
