@@ -31,6 +31,14 @@ vi.mock('next/link', async () => {
       createElement('a', { href, ...rest }, children),
   }
 })
+// next/image, reduced to the img it renders (no image optimizer in jsdom).
+vi.mock('next/image', async () => {
+  const { createElement } = await import('react')
+  return {
+    default: ({ src, alt, width, height, ...rest }: { src: string; alt: string; width?: number; height?: number } & Record<string, unknown>) =>
+      createElement('img', { src, alt, width, height, ...rest }),
+  }
+})
 /**
  * The database, as a Drizzle chain: every builder method returns the chain,
  * and awaiting it yields the next queued result set, in query order.
@@ -52,6 +60,7 @@ vi.mock('@/lib/db', () => {
 
 import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 import { DetailHeader } from '@/components/layout/detail-header'
+import { MpProfileCard } from '@/components/votes/mp-profile-card'
 import AllMPsPage from '@/app/(app)/votes/mp/page'
 import RecentVotesPage from '@/app/(app)/votes/recent/page'
 import MpProfilePage from '@/app/(app)/votes/mp/[mpId]/page'
@@ -391,5 +400,34 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     expect(container.querySelector('[data-detail-meta]')!.textContent).toBe('Your public identity')
     expect(container.querySelector('[data-freshness]')).toBeNull()
     expect(container.querySelector('[data-detail-header]')).not.toBeNull()
+  })
+})
+
+/*
+ * Jen E1 C1: on MP detail the DetailHeader h1 owns the name. The card stops
+ * repeating it, leads with party and riding, and its photo or initial is
+ * decorative.
+ */
+describe('MpProfileCard under DetailHeader', () => {
+  const PROPS = { name: 'Jane Doe', party: 'Liberal', ridingName: 'Nelson', ridingProvince: 'BC', email: 'jane.doe@parl.gc.ca' }
+
+  it('does not repeat the name, and the photo is decorative', () => {
+    const { container } = render(<MpProfileCard {...PROPS} photoUrl="https://example.org/jane.jpg" />)
+    expect(container.querySelector('h1, h2, h3')).toBeNull()
+    expect(container.textContent).not.toContain('Jane Doe')
+    expect(container.textContent).toContain('Nelson, BC')
+    const img = container.querySelector('img')!
+    expect(img.getAttribute('alt')).toBe('')
+    expect(img.getAttribute('aria-hidden')).toBe('true')
+    const mail = screen.getByRole('link', { name: 'jane.doe@parl.gc.ca' })
+    expect(mail.getAttribute('href')).toBe('mailto:jane.doe@parl.gc.ca')
+  })
+
+  it('without a photo, the initial is decorative', () => {
+    const { container } = render(<MpProfileCard {...PROPS} photoUrl={null} />)
+    const initial = Array.from(container.querySelectorAll('div')).find((d) => d.textContent === 'J')!
+    expect(initial).toBeTruthy()
+    expect(initial.getAttribute('aria-hidden')).toBe('true')
+    expect(container.textContent).not.toContain('Jane Doe')
   })
 })
