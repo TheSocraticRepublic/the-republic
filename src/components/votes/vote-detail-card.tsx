@@ -1,69 +1,35 @@
-function resultColor(result: string): string {
-  if (result === 'passed') return 'var(--status-success)'
-  if (result === 'tie') return 'var(--status-warning)'
-  return 'var(--status-danger)'
-}
+import { ResultLabel } from './result-label'
+import { Tally } from './tally'
 
+/**
+ * The outcome and the totals of one division. The motion's description, its
+ * division number and its date live in the page's DetailHeader (the h1 and
+ * the meta line), so the card does not repeat them.
+ */
 interface VoteDetailCardProps {
-  date: string
-  descriptionEn: string
   result: string
   yeaTotal: number
   nayTotal: number
   pairedTotal: number | null
-  session: string
-  number: number
 }
 
 export function VoteDetailCard({
-  date,
-  descriptionEn,
   result,
   yeaTotal,
   nayTotal,
   pairedTotal,
-  session,
-  number,
 }: VoteDetailCardProps) {
   return (
     <div
-      className="rounded-xl border shadow-sm px-6 py-6"
+      data-vote-detail-card
+      className="flex flex-wrap items-baseline gap-x-6 gap-y-2 rounded-xl border shadow-sm px-6 py-5"
       style={{
         borderColor: 'var(--border)',
         backgroundColor: 'var(--surface-1)',
       }}
     >
-      <p className="text-3xs font-semibold uppercase text-text-faint mb-3">
-        Vote {session}/{number}
-      </p>
-
-      <p
-        className="text-base font-semibold text-text-primary leading-relaxed mb-4"
-      >
-        {descriptionEn}
-      </p>
-
-      <div className="flex flex-wrap items-center gap-4">
-        <span className="text-xs text-text-muted">{date}</span>
-
-        <span
-          className="rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wider"
-          style={{
-            color: resultColor(result),
-            backgroundColor: `color-mix(in srgb, ${resultColor(result)} 10%, transparent)`,
-          }}
-        >
-          {result}
-        </span>
-
-        <div className="flex items-center gap-3 text-xs">
-          <span className="text-status-success">{yeaTotal} Yea</span>
-          <span className="text-status-danger">{nayTotal} Nay</span>
-          {pairedTotal != null && pairedTotal > 0 && (
-            <span className="text-status-warning">{pairedTotal} Paired</span>
-          )}
-        </div>
-      </div>
+      <ResultLabel result={result} />
+      <Tally yeaTotal={yeaTotal} nayTotal={nayTotal} pairedTotal={pairedTotal} />
     </div>
   )
 }

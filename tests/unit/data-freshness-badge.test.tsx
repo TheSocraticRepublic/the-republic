@@ -418,8 +418,16 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     stubNetwork()
     dbResults.push([VOTE])
     const { container } = render(await VoteDetailPage({ params: Promise.resolve({ voteId: 'v-1' }) }))
-    await expectHeader(container, { href: '/votes', label: 'Back to Vote Tracker' }, 'Vote 45-1/12')
+    // Jen's E1 ruling, built in E2b: the h1 is the motion, and the division
+    // number and date move to the meta line; nothing says the same thing twice.
+    await expectHeader(container, { href: '/votes', label: 'Back to Vote Tracker' }, 'Second reading')
     await expectBadgeInMeta(container)
+    const meta = container.querySelector('[data-detail-header] [data-detail-meta]')!
+    expect(meta.querySelector('[data-division]')!.textContent).toBe('Vote 45-1/12')
+    expect(meta.textContent).toContain('2026-10-01')
+    expect(container.textContent!.split('Second reading').length - 1).toBe(1)
+    expect(container.textContent!.split('45-1/12').length - 1).toBe(1)
+    expect(container.textContent!.split('2026-10-01').length - 1).toBe(1)
   })
 
   it('/votes/bill/[billId] goes back to Vote Tracker, titles the bill, and shows the badge', async () => {

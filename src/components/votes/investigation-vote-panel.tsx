@@ -119,7 +119,11 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
                 backgroundColor: 'var(--surface-1)',
               }}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                {/* The MP's own ballot leads the row, as on the MP's page. */}
+                <div data-ballot-column className="w-24 flex-shrink-0 pt-px">
+                  {vote.mpBallot && <VoteBadge ballot={vote.mpBallot} />}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-text-secondary leading-snug line-clamp-2">
                     {vote.descriptionEn}
@@ -131,7 +135,6 @@ export function InvestigationVotePanel({ investigationId }: InvestigationVotePan
                   )}
                   <span className="mt-1 text-2xs font-medium text-text-faint">{vote.date}</span>
                 </div>
-                {vote.mpBallot && <VoteBadge ballot={vote.mpBallot} />}
               </div>
             </Link>
           ))}

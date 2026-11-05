@@ -3,12 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { VoteBadge } from './vote-badge'
-
-function resultColor(result: string): string {
-  if (result === 'passed') return 'var(--status-success)'
-  if (result === 'tie') return 'var(--status-warning)'
-  return 'var(--status-danger)'
-}
+import { ResultLabel } from './result-label'
 
 interface MpVoteRecord {
   voteId: string
@@ -118,25 +113,23 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
             backgroundColor: 'var(--surface-1)',
           }}
         >
-          <div className="flex items-start justify-between gap-3">
+          <div data-mp-vote-row className="flex items-start gap-3">
+            {/* The MP's own ballot leads the row (app-arms P1-9). */}
+            <div data-ballot-column className="w-24 flex-shrink-0 pt-px">
+              <VoteBadge ballot={vote.ballot} />
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-text-secondary leading-snug line-clamp-2">
+              <p className="text-xs font-medium text-text-secondary leading-snug line-clamp-3 md:line-clamp-2">
                 {vote.descriptionEn}
               </p>
-              <div className="mt-1.5 flex items-center gap-2">
-                <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
-                <span
-                  className="rounded px-1.5 py-0.5 text-xs font-medium uppercase tracking-wider"
-                  style={{
-                    color: resultColor(vote.result),
-                    backgroundColor: `color-mix(in srgb, ${resultColor(vote.result)} 8%, transparent)`,
-                  }}
-                >
-                  {vote.result}
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span data-division className="text-2xs font-medium tabular-nums text-text-faint">
+                  {vote.session}/{vote.number}
                 </span>
+                <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
+                <ResultLabel result={vote.result} size="2xs" />
               </div>
             </div>
-            <VoteBadge ballot={vote.ballot} />
           </div>
         </Link>
       ))}

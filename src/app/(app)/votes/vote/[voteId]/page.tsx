@@ -52,19 +52,21 @@ export default async function VoteDetailPage({ params }: PageProps) {
           arm="votes"
           backHref="/votes"
           backLabel="Back to Vote Tracker"
-          title={`Vote ${vote.session}/${vote.number}`}
-          meta={<DataFreshnessBadge variant="meta" />}
+          title={vote.descriptionEn}
+          meta={
+            <>
+              <span data-division>Vote {vote.session}/{vote.number}</span>
+              <span>{vote.date}</span>
+              <DataFreshnessBadge variant="meta" />
+            </>
+          }
         />
 
         <VoteDetailCard
-          date={vote.date}
-          descriptionEn={vote.descriptionEn}
           result={vote.result}
           yeaTotal={vote.yeaTotal}
           nayTotal={vote.nayTotal}
           pairedTotal={vote.pairedTotal}
-          session={vote.session}
-          number={vote.number}
         />
 
         {bill && (

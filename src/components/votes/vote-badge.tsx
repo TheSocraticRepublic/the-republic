@@ -1,8 +1,10 @@
+import { BALLOT_LABELS } from './result-label'
+
 const BALLOT_STYLES: Record<string, { color: string; bg: string; label: string }> = {
-  yes:        { color: 'var(--status-success)', bg: 'color-mix(in srgb, var(--status-success) 10%, transparent)', label: 'Yea' },
-  no:         { color: 'var(--status-danger)',  bg: 'color-mix(in srgb, var(--status-danger) 10%, transparent)',  label: 'Nay' },
-  paired:     { color: 'var(--status-warning)', bg: 'color-mix(in srgb, var(--status-warning) 10%, transparent)', label: 'Paired' },
-  didnt_vote: { color: 'var(--status-neutral)', bg: 'color-mix(in srgb, var(--status-neutral) 10%, transparent)', label: 'Absent' },
+  yes:        { color: 'var(--status-success)', bg: 'color-mix(in srgb, var(--status-success) 10%, transparent)', label: BALLOT_LABELS.yes },
+  no:         { color: 'var(--status-danger)',  bg: 'color-mix(in srgb, var(--status-danger) 10%, transparent)',  label: BALLOT_LABELS.no },
+  paired:     { color: 'var(--status-warning)', bg: 'color-mix(in srgb, var(--status-warning) 10%, transparent)', label: BALLOT_LABELS.paired },
+  didnt_vote: { color: 'var(--status-neutral)', bg: 'color-mix(in srgb, var(--status-neutral) 10%, transparent)', label: BALLOT_LABELS.didnt_vote },
 }
 
 interface VoteBadgeProps {

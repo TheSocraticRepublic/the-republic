@@ -1,4 +1,5 @@
 import { PARTY_COLORS } from './party-badge'
+import { BALLOT_LABELS } from './result-label'
 
 interface PartyVoteData {
   party: string
@@ -10,10 +11,12 @@ interface PartyBreakdownProps {
   partyVotes: PartyVoteData[]
 }
 
+// The keys are parsePartyVotes' normalised positions; the labels are the
+// House's own words, the same ones the ballots use (app-arms P2-4).
 const POSITION_STYLES: Record<string, { color: string; label: string }> = {
-  Yes: { color: 'var(--status-success)', label: 'Yes' },
-  No: { color: 'var(--status-danger)', label: 'No' },
-  Paired: { color: 'var(--status-warning)', label: 'Paired' },
+  Yes: { color: 'var(--status-success)', label: BALLOT_LABELS.yes },
+  No: { color: 'var(--status-danger)', label: BALLOT_LABELS.no },
+  Paired: { color: 'var(--status-warning)', label: BALLOT_LABELS.paired },
   Unknown: { color: 'var(--status-neutral)', label: 'Unknown' },
 }
 

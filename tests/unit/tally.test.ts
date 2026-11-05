@@ -1,0 +1,261 @@
+// @vitest-environment jsdom
+/**
+ * UI plan E2b: ballots and tallies.
+ *
+ * The words come from the data model: a division's result is
+ * passed / defeated / tie (`voteResultEnum`), a ballot is
+ * yes / no / paired / didnt_vote (`mpBallotEnum`), and a division's totals
+ * are yea_total, nay_total and paired_total. Shown as Passed / Defeated (a tie
+ * shows as Defeated, R-A4), Yea / Nay / Paired / Didn't vote, and three
+ * totals with no "Absent" and no percentage.
+ *
+ * The two fixtures are real House of Commons divisions, totals hard-coded from
+ * the source (the same records scripts/qa/seed-local.ts transcribes, from
+ * api.openparliament.ca, fetched 2026-10-11):
+ *   https://openparliament.ca/votes/45-1/177/  Failed (stored as defeated), 141 yea, 187 nay, 6 paired
+ *   https://openparliament.ca/votes/45-1/178/  Passed, 296 yea, 26 nay, 10 paired
+ */
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createElement, type ReactNode } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { cleanup, render, screen } from '@testing-library/react'
+
+// next/link, reduced to the anchor it renders (jsdom has no app router).
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react')
+  return {
+    default: ({ href, children, ...rest }: { href: string; children?: ReactNode } & Record<string, unknown>) =>
+      createElement('a', { href, ...rest }, children),
+  }
+})
+
+import { BALLOT_LABELS, BALLOT_ORDER, ResultLabel, resultLabelText } from '@/components/votes/result-label'
+import { Tally, tallyLongForm } from '@/components/votes/tally'
+import { VoteDetailCard } from '@/components/votes/vote-detail-card'
+import { VoteBadge } from '@/components/votes/vote-badge'
+import { PartyBreakdown } from '@/components/votes/party-breakdown'
+import { BallotGroups, groupBallots, type BallotRecord } from '@/components/votes/ballot-list'
+import { MpVoteList } from '@/components/votes/mp-vote-list'
+import { InvestigationVotePanel } from '@/components/votes/investigation-vote-panel'
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
+
+function html(node: ReturnType<typeof createElement>): HTMLElement {
+  const host = document.createElement('div')
+  host.innerHTML = renderToStaticMarkup(node)
+  return host
+}
+
+/** The visible tally items, as read on screen. */
+function tallyItems(host: HTMLElement): string[] {
+  return Array.from(host.querySelectorAll('[data-tally-item]')).map((el) => el.textContent ?? '')
+}
+
+function srText(host: HTMLElement): string {
+  return host.querySelector('[data-tally] .sr-only')?.textContent ?? ''
+}
+
+// Source totals, https://openparliament.ca/votes/45-1/177/ and /178/.
+const DIVISION_177 = { result: 'defeated', yeaTotal: 141, nayTotal: 187, pairedTotal: 6 }
+const DIVISION_178 = { result: 'passed', yeaTotal: 296, nayTotal: 26, pairedTotal: 10 }
+
+describe('Tally and ResultLabel against the source divisions', () => {
+  it('45-1/177 renders Defeated, 141 Yea, 187 Nay, 6 Paired', () => {
+    const host = html(createElement(VoteDetailCard, DIVISION_177))
+    expect(host.querySelector('[data-result]')!.textContent).toBe('Defeated')
+    expect(tallyItems(host)).toEqual(['141 Yea', '187 Nay', '6 Paired'])
+    expect(srText(host)).toBe('141 voted yea, 187 voted nay, 6 paired')
+  })
+
+  it('45-1/178 renders Passed, 296 Yea, 26 Nay, 10 Paired', () => {
+    const host = html(createElement(VoteDetailCard, DIVISION_178))
+    expect(host.querySelector('[data-result]')!.textContent).toBe('Passed')
+    expect(tallyItems(host)).toEqual(['296 Yea', '26 Nay', '10 Paired'])
+    expect(srText(host)).toBe('296 voted yea, 26 voted nay, 10 paired')
+  })
+
+  it('the visible line is hidden from screen readers, which get the long form', () => {
+    const host = html(createElement(Tally, { yeaTotal: 141, nayTotal: 187, pairedTotal: 6 }))
+    expect(host.querySelector('[data-tally] > [aria-hidden="true"]')).not.toBeNull()
+    expect(host.querySelector('[data-tally] > .sr-only')).not.toBeNull()
+  })
+
+  it('shows no Absent figure and no percentage', () => {
+    const host = html(createElement(VoteDetailCard, DIVISION_177))
+    expect(host.textContent).toContain('141')
+    expect(host.textContent).not.toMatch(/absent/i)
+    expect(host.textContent).not.toContain('%')
+  })
+
+  it('a paired total of 0 still shows, as 0 Paired', () => {
+    const host = html(createElement(Tally, { yeaTotal: 170, nayTotal: 150, pairedTotal: 0 }))
+    expect(tallyItems(host)).toEqual(['170 Yea', '150 Nay', '0 Paired'])
+    expect(srText(host)).toBe('170 voted yea, 150 voted nay, 0 paired')
+  })
+
+  it('a null paired total leaves Paired out', () => {
+    const host = html(createElement(Tally, { yeaTotal: 170, nayTotal: 150, pairedTotal: null }))
+    expect(tallyItems(host)).toEqual(['170 Yea', '150 Nay'])
+    expect(srText(host)).toBe('170 voted yea, 150 voted nay')
+    expect(tallyLongForm({ yeaTotal: 1, nayTotal: 2, pairedTotal: null })).not.toContain('paired')
+    expect(tallyLongForm({ yeaTotal: 1, nayTotal: 2, pairedTotal: 3 })).toContain('3 paired')
+  })
+})
+
+describe('ResultLabel', () => {
+  it('a tie displays as Defeated (R-A4), never as carried', () => {
+    expect(resultLabelText('tie')).toBe('Defeated')
+    const host = html(createElement(ResultLabel, { result: 'tie' }))
+    expect(host.textContent).toBe('Defeated')
+    expect(host.textContent).not.toMatch(/passed|carried/i)
+  })
+
+  it('maps passed and defeated, and shows an unknown value as stored', () => {
+    expect(resultLabelText('passed')).toBe('Passed')
+    expect(resultLabelText('defeated')).toBe('Defeated')
+    expect(resultLabelText('withdrawn')).toBe('withdrawn')
+  })
+
+  it('is neutral text: no success, danger or warning colour', () => {
+    for (const result of ['passed', 'defeated', 'tie']) {
+      const span = html(createElement(ResultLabel, { result })).querySelector('span')!
+      expect(span.className).toContain('text-text-secondary')
+      expect(span.getAttribute('style')).toBeNull()
+      expect(span.className).not.toMatch(/status-/)
+    }
+  })
+
+  it('the 2xs size swaps the type size only', () => {
+    const span = html(createElement(ResultLabel, { result: 'passed', size: '2xs' })).querySelector('span')!
+    expect(span.className.split(/\s+/)).toContain('text-2xs')
+    expect(span.className.split(/\s+/)).not.toContain('text-xs')
+  })
+})
+
+describe('ballot words', () => {
+  it('maps all four stored ballots to the House words', () => {
+    expect(BALLOT_LABELS).toEqual({ yes: 'Yea', no: 'Nay', paired: 'Paired', didnt_vote: "Didn't vote" })
+    expect(BALLOT_ORDER).toEqual(['yes', 'no', 'paired', 'didnt_vote'])
+  })
+
+  it("VoteBadge shows Didn't vote, not Absent", () => {
+    const text = html(createElement(VoteBadge, { ballot: 'didnt_vote' })).textContent
+    expect(text).toBe("Didn't vote")
+    expect(text).not.toMatch(/absent/i)
+    expect(html(createElement(VoteBadge, { ballot: 'yes' })).textContent).toBe('Yea')
+    expect(html(createElement(VoteBadge, { ballot: 'no' })).textContent).toBe('Nay')
+    expect(html(createElement(VoteBadge, { ballot: 'paired' })).textContent).toBe('Paired')
+  })
+
+  it('PartyBreakdown says Yea and Nay, not Yes and No (app-arms P2-4)', () => {
+    const host = html(createElement(PartyBreakdown, {
+      partyVotes: [
+        { party: 'Liberal', position: 'Yes', disagreement: 0 },
+        { party: 'Conservative', position: 'No', disagreement: 0 },
+        { party: 'Bloc', position: 'Paired', disagreement: null },
+      ],
+    }))
+    const labels = Array.from(host.querySelectorAll('.rounded-md')).map((el) => el.textContent)
+    expect(labels).toEqual(['Yea', 'Nay', 'Paired'])
+  })
+})
+
+describe('BallotList grouping', () => {
+  const B = (mpId: string, mpName: string, party: string, ballot: string): BallotRecord =>
+    ({ mpId, mpName, party, ridingName: 'R', ballot })
+  const BALLOTS = [
+    B('1', 'Zed', 'Liberal', 'didnt_vote'),
+    B('2', 'Amy', 'NDP', 'no'),
+    B('3', 'Bea', 'Bloc', 'paired'),
+    B('4', 'Cal', 'Liberal', 'yes'),
+    B('5', 'Abe', 'Conservative', 'yes'),
+    B('6', 'Dee', 'Bloc', 'no'),
+  ]
+
+  it('groups under Yea, Nay, Paired, Didn\'t vote, in that order', () => {
+    const groups = groupBallots(BALLOTS, 'name')
+    expect(groups.map((g) => g.label)).toEqual(['Yea', 'Nay', 'Paired', "Didn't vote"])
+    expect(groups[0].rows.map((r) => r.mpName)).toEqual(['Abe', 'Cal'])
+    expect(groups[1].rows.map((r) => r.mpName)).toEqual(['Amy', 'Dee'])
+  })
+
+  it('sorts within a group by party, then name', () => {
+    const groups = groupBallots(BALLOTS, 'party')
+    expect(groups[0].rows.map((r) => r.mpName)).toEqual(['Abe', 'Cal'])
+    expect(groups[1].rows.map((r) => r.mpName)).toEqual(['Dee', 'Amy'])
+  })
+
+  it('leaves out an empty group and keeps an unknown value in its own group, last', () => {
+    const groups = groupBallots([B('1', 'Amy', 'NDP', 'no'), B('2', 'Bo', 'NDP', 'spoiled')], 'name')
+    expect(groups.map((g) => g.label)).toEqual(['Nay', 'spoiled'])
+  })
+
+  it('renders the group headers in order, with counts', () => {
+    const host = html(createElement(BallotGroups, { ballots: BALLOTS, sortBy: 'party', onSort: () => {} }))
+    const headers = Array.from(host.querySelectorAll('[data-ballot-group] h2')).map((h) => h.textContent)
+    expect(headers).toEqual(['Yea (2)', 'Nay (2)', 'Paired (1)', "Didn't vote (1)"])
+    expect(host.textContent).toContain('All Ballots (6)')
+  })
+
+  it('the sort control reports its state with aria-pressed (mobile P2-5)', () => {
+    const host = html(createElement(BallotGroups, { ballots: BALLOTS, sortBy: 'name', onSort: () => {} }))
+    const buttons = Array.from(host.querySelectorAll('button'))
+    expect(buttons.map((b) => [b.textContent, b.getAttribute('aria-pressed')])).toEqual([
+      ['Party', 'false'],
+      ['Name', 'true'],
+    ])
+  })
+})
+
+describe('MpVoteList rows', () => {
+  it("leads with the MP's ballot, clamps the title, labels the division, and states the outcome neutrally", async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        votes: [{
+          voteId: 'v-177', session: '45-1', number: 177, date: '2026-10-07',
+          descriptionEn: '2nd reading of Bill C-218', result: 'tie', ballot: 'didnt_vote',
+        }],
+        hasMore: false,
+      }),
+    } as unknown as Response)))
+    const { container } = render(createElement(MpVoteList, { mpId: 'mp-1' }))
+    await screen.findByText('2nd reading of Bill C-218')
+    const row = container.querySelector('[data-mp-vote-row]')!
+    const column = row.firstElementChild!
+    expect(column.hasAttribute('data-ballot-column')).toBe(true)
+    expect(column.textContent).toBe("Didn't vote")
+    const title = screen.getByText('2nd reading of Bill C-218')
+    expect(title.className.split(/\s+/)).toEqual(expect.arrayContaining(['line-clamp-3', 'md:line-clamp-2']))
+    expect(row.querySelector('[data-division]')!.textContent).toBe('45-1/177')
+    expect(row.querySelector('[data-result]')!.textContent).toBe('Defeated')
+  })
+})
+
+describe('InvestigationVotePanel rows', () => {
+  it("leads with the MP's ballot", async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        mp: null,
+        concern: '',
+        votes: [{
+          voteId: 'v-178', date: '2026-10-08', descriptionEn: '2nd reading of Bill C-39',
+          result: 'passed', relevanceExplanation: null, mpBallot: 'yes',
+        }],
+      }),
+    } as unknown as Response)))
+    const { container } = render(createElement(InvestigationVotePanel, { investigationId: 'inv-1' }))
+    const title = await screen.findByText('2nd reading of Bill C-39')
+    const link = title.closest('a')!
+    const column = link.firstElementChild!.firstElementChild!
+    expect(column.hasAttribute('data-ballot-column')).toBe(true)
+    expect(column.textContent).toBe('Yea')
+    expect(container.textContent).not.toMatch(/absent/i)
+  })
+})
