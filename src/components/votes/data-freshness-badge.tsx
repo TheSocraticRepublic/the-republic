@@ -7,6 +7,8 @@ interface SyncStatus {
     startedAt: string | null
     completedAt: string | null
     durationMs: number | null
+    recordsUpserted?: number | null
+    errors?: unknown
   } | null
   counts?: {
     totalMps: number
@@ -20,7 +22,7 @@ interface SyncStatus {
  * read: the request rejected, a non-OK response, a body that is not JSON, no
  * sync on record, or a date that does not parse. In that state the badge says
  * "Sync time unknown" and nothing else; it never shows a guessed or computed
- * age.
+ * age. A failed newest sync (see `isFailedSync`) is unknown too.
  */
 type BadgeState =
   | { kind: 'loading' }
@@ -30,8 +32,29 @@ type BadgeState =
 const STALE_AFTER_DAYS = 7
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
+function hasErrors(errors: unknown): boolean {
+  if (errors == null) return false
+  if (Array.isArray(errors)) return errors.length > 0
+  if (typeof errors === 'string') return errors.length > 0
+  if (typeof errors === 'object') return Object.keys(errors).length > 0
+  return true
+}
+
+/**
+ * A failed sync: it logged errors and upserted nothing. The status route
+ * returns the newest attempt even when it failed (the sync route's catch sets
+ * `completedAt`; the full-sync script leaves it null), so its date is not the
+ * date of the data. A sync with some errors but some upserts keeps its date.
+ */
+export function isFailedSync(lastSync: SyncStatus['lastSync']): boolean {
+  if (!lastSync) return false
+  return hasErrors(lastSync.errors) && !lastSync.recordsUpserted
+}
+
 /** The sync time is `completedAt`, or `startedAt` when no sync has completed. */
 export function readSyncTime(data: SyncStatus | null | undefined): Date | null {
+  if (isFailedSync(data?.lastSync ?? null)) return null
+  // The startedAt fallback covers only a row that is not failed: an in-progress sync.
   const raw = data?.lastSync?.completedAt ?? data?.lastSync?.startedAt
   if (!raw) return null
   const date = new Date(raw)

@@ -161,6 +161,60 @@ describe('DataFreshnessBadge', () => {
     })
   })
 
+  describe('a failed newest sync: says "Sync time unknown", not its date', () => {
+    it("errors and 0 upserts with completedAt set (the sync route's catch shape)", async () => {
+      const at = daysAgo(1)
+      respondWith({
+        lastSync: { startedAt: at, completedAt: at, durationMs: 5, recordsUpserted: 0, errors: ['openparliament 503'] },
+        counts: COUNTS,
+      })
+      const { container } = render(<DataFreshnessBadge />)
+      await screen.findByText('Sync time unknown')
+      expectNoAge(container)
+    })
+
+    it("errors and null completedAt (the full-sync script's shape)", async () => {
+      respondWith({
+        lastSync: { startedAt: daysAgo(1), completedAt: null, durationMs: 5, recordsUpserted: 0, errors: [{ stage: 'votes', message: 'timeout' }] },
+        counts: COUNTS,
+      })
+      const { container } = render(<DataFreshnessBadge />)
+      await screen.findByText('Sync time unknown')
+      expectNoAge(container)
+    })
+
+    it('errors and null upserts, errors as an object', async () => {
+      const at = daysAgo(1)
+      respondWith({
+        lastSync: { startedAt: at, completedAt: at, durationMs: 5, recordsUpserted: null, errors: { fatal: 'boom' } },
+        counts: COUNTS,
+      })
+      const { container } = render(<DataFreshnessBadge />)
+      await screen.findByText('Sync time unknown')
+      expectNoAge(container)
+    })
+
+    it('errors with some upserts keeps its date (partial success)', async () => {
+      const at = daysAgo(1)
+      respondWith({
+        lastSync: { startedAt: at, completedAt: at, durationMs: 5, recordsUpserted: 42, errors: ['one ballot failed'] },
+        counts: COUNTS,
+      })
+      render(<DataFreshnessBadge />)
+      await screen.findByText(`Data as of ${localDate(at)}`)
+    })
+
+    it('an empty errors array with 0 upserts is not a failure', async () => {
+      const at = daysAgo(1)
+      respondWith({
+        lastSync: { startedAt: at, completedAt: at, durationMs: 5, recordsUpserted: 0, errors: [] },
+        counts: COUNTS,
+      })
+      render(<DataFreshnessBadge />)
+      await screen.findByText(`Data as of ${localDate(at)}`)
+    })
+  })
+
   describe('request failure: says "Sync time unknown", never a computed age', () => {
     it('when fetch rejects', async () => {
       vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('network down') }))
