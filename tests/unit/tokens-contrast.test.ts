@@ -903,8 +903,10 @@ describe('fonts', () => {
         if (vars.length === 0 || vars.some((v) => !emitted.has(v))) unknown.push(`${file}: ${m[2]}`)
       }
     }
-    // briefing-view: 2 serif base fonts + 7 body + 2 serif + 1 display (the H1). The dialog: none.
-    expect(sites).toHaveLength(12)
+    // briefing-view: 2 serif base fonts + 4 body + 2 serif + 1 display (the H1). The dialog: none.
+    // D2 fix pass: the three Mirror field labels render from one span, and the
+    // player parts from one paragraph, so body sites went from 7 to 4.
+    expect(sites).toHaveLength(9)
     expect(unknown).toEqual([])
   })
 
@@ -914,11 +916,11 @@ describe('fonts', () => {
     expect(display).toHaveLength(1)
     // ...and that one site is the 22px H1.
     expect(bv.slice(display[0].index, (display[0].index as number) + 120)).toContain("fontSize: '22px'")
-    // The primary document name: the span rendering {docName} sets no family.
+    // The primary document name: the span rendering docName (through renderInline since D2) sets no family.
     const docName = bv.indexOf('{docName && (\n            <span')
     expect(docName).toBeGreaterThan(-1)
     const span = bv.slice(docName, bv.indexOf('</span>', docName))
-    expect(span).toContain('{docName}')
+    expect(span).toContain('{renderInline(docName)}')
     expect(span).not.toContain('fontFamily')
     const fd = fs.readFileSync(path.join(REPO, 'src/components/layout/feedback-dialog.tsx'), 'utf8')
     expect(fd).toContain('<Dialog.Title')

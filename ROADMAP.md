@@ -239,7 +239,8 @@ Named elsewhere and not yet scheduled:
 - Field border contrast 1.53:1 needs a ruling; boundary-test false positives (see Deferred from republic-ui-c2b)
 - Small sign-out and onboarding edges (see Deferred from republic-ui-c3)
 - Carried-concern edges (see Deferred from republic-ui-c4)
-- Island dark mode off until D4; role "nation" substring; load-flaky front-door timing (see Deferred from republic-ui-d1)
+- Island dark mode off until D4; role "nation" substring (closed by D2); load-flaky front-door timing (see Deferred from republic-ui-d1)
+- Scout's own copy of the old access check and field parser; briefing label/eyebrow polish; Questions-card and Cannot-See rules; 768 badge placement; "NEXT STEPS:" run-in (see Deferred from republic-ui-d2)
 - Next.js 404 and malformed-URL behaviour on dynamic routes (see Deferred from republic-ui-b2)
 - D4 "The Athenians" — illustration variant selection
 - Release mechanics for dependency deploys (publish boundary, post-deploy checks, containment) — see Deferred from republic-ci-green-deps
@@ -291,6 +292,26 @@ Written verbatim from `~/marvin/state/plans/republic-ui-filings-2026-10/republic
 - **Votes on the landing** (arm station plus chip, landing-public L17).
 - **Briefing mobile sticky section bar** (reading-surfaces F-P1-5).
 - **CSP walk checklist** additions: allowlisted links, grain, new fonts.
+
+### Deferred from republic-ui-d2 (2026-11-05)
+
+Named during relay `republic-ui-d2` (Razor review, re-checks b1-b6; behavioral evaluation; Jen's review). Closed by D2 and no longer open: the D1 carry for `getRoleKey`'s bare "nation" (now whole-word), and Jen's D1 parser-debris list (`Name:` prefixes, raw `DECISION_MAKER`, raw markdown links, trailing `---`, the Primary Authority card on a lead-in).
+
+- **Scout keeps its own copy of the old parsing (Ted, Razor).** `src/components/scout/scout-result-view.tsx:49` has its own `detectAccess` with the old `includes('public')` rule, so "Partly public" and "Not public" still show a Public badge there. Around line 98 it has a copy of the old field parser that drops text it doesn't recognise. Same class as D2's C2 and RW1. It needs its own small batch, and it should reuse `src/lib/briefing/parse.ts` rather than keep a second copy.
+- **Field labels and eyebrows are rendered raw (Razor N2).** Document field labels and eyebrow/subheading text don't go through `renderInline`, and eyebrows strip `**` but not `*`. They're prompt constants, so the risk is low.
+- **An orphan `**` or `*` shows literally (Razor N3, pre-existing).** `renderInline` returns its input unchanged when there's no complete markup span. D2 widens its reach to every field.
+- **"What they did differently:" renders under WHAT THEY DID (Razor N4).** The word "differently" is dropped from the screen, because the renderer replaces the label.
+- **An empty `- **Name:**` renders a nameless player card (Razor RN2).** Stored briefings only; low risk.
+- **A bold-only line opens a Mirror card in a section with no `###` (Razor RN3).** For example `**Bottom line**` becomes a card named "Bottom line". The orchestrator's ruling allows this, because without `###` a bold-only line is the only place signal.
+- **The access badge labels are BC-only (Razor RN5).** Alberta briefings write "FOIP Required", which gets no badge and shows as the Access field. That fails safe. It's a question for the AB/ON module work (JURIS-2).
+- **The phone layout tests are style-level only (Razor RN6).** The 320 and 375 layouts were verified by harness capture (`~/marvin/state/relay/republic-ui-d2-final/`); no geometry test asserts them yet. That belongs with D4's phone work.
+- **The Questions card draws its section divider inside the card, with a doubled rule above "What This Analysis Cannot See" (behavioral, pre-existing).** Already in D4's scope ("the Questions-card hairline removed").
+- **Document titles are underlined but aren't links (behavioral, pre-existing).** Already in D4's scope ("no fake underlines").
+- **An indented `**Outcome:**` under a bullet-written place shows as its own bullet (behavioral, pre-existing; the live site does the same).** Places written as bullets render as prose by ruling, and `preprocessBlocks` splits indented continuation lines into separate items. Joining an indented continuation line to its bullet is a small parser fix, for the re-plan after First Light.
+- **At 768, adjacent document cards place their badges differently (Jen C5).** Wrapping depends on content width; switch by card width. D4.
+- **"NEXT STEPS:" prints in capitals inside a serif paragraph (Jen C6).** The briefing prompt asks for that line, so every real briefing shows it. Make it a run-in label. This is for the re-plan after First Light.
+- **The footer reads "1 votes" (behavioral).** Pluralisation on the investigation footer, outside the briefing parser.
+- **No fixture covers an eyebrow followed directly by another eyebrow (Razor RN7).** A mutant that renders that label instead of dropping it survives. It fails safe, since nothing is lost. One fixture with an h4 assertion would close it.
 
 ### Deferred from republic-ui-d1 (2026-10-16)
 

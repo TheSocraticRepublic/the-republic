@@ -149,10 +149,11 @@ describe('preprocessBlocks', () => {
     expect((blocks[0] as { type: 'subheading'; text: string }).text).toBe('Key Finding')
   })
 
-  it('converts standalone --- to hr block', () => {
-    const blocks = preprocessBlocks('---')
-    expect(blocks).toHaveLength(1)
-    expect(blocks[0].type).toBe('hr')
+  it('converts standalone --- between blocks to hr block; a rule at the edge is dropped (D2)', () => {
+    const blocks = preprocessBlocks('Before.\n\n---\n\nAfter.')
+    expect(blocks).toHaveLength(3)
+    expect(blocks[1].type).toBe('hr')
+    expect(preprocessBlocks('---')).toEqual([])
   })
 
   it('does NOT convert --- inside other text to hr, but standalone --- does become hr', () => {

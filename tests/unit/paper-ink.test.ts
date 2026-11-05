@@ -452,11 +452,16 @@ describe('one label size on the paper: 11px (Jen D1 C5)', () => {
     expect(small).toEqual([])
   })
 
-  it('the labels Jen counted are 11px: section headers, field labels, the note label, role badges, Mirror labels', () => {
+  it('the labels Jen counted are 11px: section headers, field labels, the note label, Mirror labels', () => {
     const doc = renderBriefing(false)
     expect(byText(doc, 'h3', 'Key Players').className.split(/\s+/)).toContain('text-2xs')
     expect(styleOf(byText(doc, 'span', 'What it is'))).toContain('font-size:11px')
-    expect(styleOf(byText(doc, 'span', 'Regulator'))).toContain('font-size:11px')
+    // Role badges left the 11px label set in D2: Jen D2 C1 gave every badge on the paper the
+    // access badge's recipe (12px/500, sentence case, 16px line, 18% currentColor border).
+    const role = styleOf(byText(doc, 'span', 'Regulator'))
+    expect(role).toContain('font-size:12px')
+    expect(role).toContain('line-height:16px')
+    expect(role).not.toContain('text-transform')
     expect(styleOf(byText(doc, 'span', 'WHAT THEY DID'))).toContain('font-size:11px')
     const noteLabel = [...doc.querySelectorAll('[role="note"] div')].find((d) => d.textContent?.trim() === 'What This Analysis Cannot See')
     expect(styleOf(noteLabel)).toContain('font-size:11px')
