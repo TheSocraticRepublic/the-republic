@@ -11,7 +11,7 @@ export interface ParsedSection {
   content: string
 }
 
-// ---- Section parser — DO NOT MODIFY (backward-compat: also strips # Title lines before section parsing) ----
+// ---- Section parser (also strips # Title lines before section parsing). D2 owns the parser now; the goldens in tests/unit/briefing-parse.test.ts are the contract. ----
 
 export function parseSections(text: string): ParsedSection[] {
   const sections: ParsedSection[] = []
@@ -69,17 +69,6 @@ export function isInsightParagraph(text: string): boolean {
     lower.includes('the absence') ||
     lower.includes('is absent')
   )
-}
-
-// ---- Evidence citation detection ----
-
-export function isEvidenceParagraph(text: string): boolean {
-  return /s\.\s*\d/.test(text) ||
-    /FIPPA/i.test(text) ||
-    /\b[A-Z][a-z]+ Act\b/.test(text) ||
-    /\bpursuant\b/i.test(text) ||
-    /\bCertificate\b/.test(text) ||
-    /\([^)]*(?:19|20)\d{2}[^)]*\)/.test(text)
 }
 
 // ---- Pull quote detection ----
@@ -264,7 +253,7 @@ export function parseJurisdictions(content: string): JurisdictionData[] {
   return jurisdictions
 }
 
-// ---- Document field parser — DO NOT MODIFY ----
+// ---- Document field parser. D2 owns the parser now; the goldens in tests/unit/briefing-parse.test.ts are the contract. ----
 
 export interface DocumentField {
   label: string
@@ -299,7 +288,7 @@ export function detectAccess(text: string): AccessLevel | null {
   return null
 }
 
-// ---- Block splitter — DO NOT MODIFY ----
+// ---- Block splitter. D2 owns the parser now; the goldens in tests/unit/briefing-parse.test.ts are the contract. ----
 
 export function splitDocumentBlocks(content: string): string[] {
   const blocks: string[] = []
@@ -327,7 +316,9 @@ export function splitDocumentBlocks(content: string): string[] {
   return blocks.length > 0 ? blocks : [content]
 }
 
-// ---- FIPPA letter extractor — DO NOT MODIFY ----
+// ---- FIPPA letter extractor. D2 owns the parser now; the goldens in tests/unit/briefing-parse.test.ts are the contract. ----
+// The \n---\n...\n---\n fence is load-bearing for What You Can Do: preprocessBlocks'
+// leading/trailing rule drop never sees it, because this runs on the raw section first.
 
 export function extractFippaLetter(content: string): { before: string; letter: string; after: string } | null {
   const hrPattern = /\n---\n([\s\S]+?)\n---\n/

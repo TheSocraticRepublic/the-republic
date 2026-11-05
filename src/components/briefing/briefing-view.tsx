@@ -23,7 +23,6 @@ import {
   parseSections,
   extractTitle,
   isInsightParagraph,
-  isEvidenceParagraph,
   isPullQuote,
   preprocessBlocks,
   getRoleKey,
@@ -219,27 +218,11 @@ function ProseSection({
   const blocks = preprocessBlocks(content)
   const elements: React.ReactNode[] = []
 
-  // Insert section break rule before every 5th/9th/13th paragraph-type block
-  // (matches original i % 4 === 0 timing: divider appears before the 5th paragraph, then every 4)
+  // paraCount drives the lead paragraph only (D2 deleted the every-5th-paragraph divider).
   let paraCount = 0
 
   blocks.forEach((block, i) => {
-    if (block.type === 'paragraph') {
-      paraCount++
-      if (paraCount > 1 && paraCount % 4 === 1) {
-        elements.push(
-          <div
-            key={`rule-${i}`}
-            style={{
-              width: '40%',
-              margin: '24px auto',
-              height: '1px',
-              backgroundColor: 'var(--color-island-border)',
-            }}
-          />
-        )
-      }
-    }
+    if (block.type === 'paragraph') paraCount++
 
     switch (block.type) {
       case 'hr':
@@ -349,27 +332,6 @@ function ProseSection({
               }}
             >
               <p className="whitespace-pre-wrap" style={{ ...baseFont, color: 'var(--color-island-body)', margin: 0, fontStyle: 'italic' }}>
-                {renderInline(para)}
-              </p>
-            </div>
-          )
-          break
-        }
-
-        // Evidence callout
-        if (isEvidenceParagraph(para)) {
-          elements.push(
-            <div
-              key={i}
-              style={{
-                borderLeft: `3px solid color-mix(in srgb, var(--color-island-accent-oracle) 30%, transparent)`,
-                backgroundColor: 'color-mix(in srgb, var(--color-island-accent-oracle) 6%, transparent)',
-                padding: '16px',
-                borderRadius: '0 8px 8px 0',
-                margin: '16px 0',
-              }}
-            >
-              <p className="whitespace-pre-wrap" style={{ ...baseFont, color: 'var(--color-island-body)', margin: 0 }}>
                 {renderInline(para)}
               </p>
             </div>
