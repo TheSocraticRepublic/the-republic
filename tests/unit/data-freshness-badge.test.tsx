@@ -479,6 +479,40 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     await expectBadgeInMeta(container)
   })
 
+  // Razor W1, Jen C8: Recent and the bill page state a division as its own
+  // page does: a neutral ResultLabel (a tie reads Defeated, never an amber
+  // "tie") and the Tally, paired figure included.
+  const TIED = { ...VOTE, id: 'v-94', number: 94, descriptionEn: 'Tied motion', result: 'tie', yeaTotal: 164, nayTotal: 164, pairedTotal: 10 }
+  function expectNeutralRow(container: HTMLElement) {
+    const meta = container.querySelector('[data-vote-row-meta]')!
+    const result = meta.querySelector('[data-result]')!
+    expect(result.textContent).toBe('Defeated')
+    expect(result.getAttribute('style')).toBeNull()
+    expect(result.className).toContain('text-text-secondary')
+    expect(Array.from(meta.querySelectorAll('[data-tally-item]')).map((el) => el.textContent)).toEqual(['164 Yea', '164 Nay', '10 Paired'])
+    expect(meta.textContent).not.toMatch(/\btie\b|\dY \/ \dN/i)
+    expect(meta.querySelector('[style]')).toBeNull()
+  }
+
+  it('/votes/bill/[billId] lists its divisions with ResultLabel and Tally', async () => {
+    stubNetwork()
+    dbResults.push([BILL], [TIED])
+    const { container } = render(await BillDetailPage({ params: Promise.resolve({ billId: 'b-1' }) }))
+    expectNeutralRow(container)
+  })
+
+  it('/votes/recent lists divisions with ResultLabel and Tally', async () => {
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.startsWith('/api/parliament/votes?')) {
+        return Promise.resolve({ ok: true, status: 200, json: async () => ({ votes: [TIED], hasMore: false }) } as unknown as Response)
+      }
+      return new Promise(() => {})
+    }))
+    const { container } = render(<RecentVotesPage />)
+    await screen.findByText('Tied motion')
+    expectNeutralRow(container)
+  })
+
   it('/u/[displayName] goes back to New Investigation, with no freshness badge', async () => {
     stubNetwork()
     dbResults.push([PROFILE], [], [{ lastActivity: null }])
