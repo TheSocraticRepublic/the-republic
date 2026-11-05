@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { searchDocumentChunks, searchDocumentChunksWithReason } from '@/lib/ai/search-chunks'
 
 // Mock the voyage client — searchDocumentChunks imports it via relative path
-vi.mock('@/lib/ai/voyage', () => ({
+// The real resolveVoyageApiKey is kept so the no-key predicate under test is
+// the one the client actually applies; only the network call is mocked.
+vi.mock('@/lib/ai/voyage', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/ai/voyage')>()),
   voyageEmbed: vi.fn(),
 }))
 
@@ -157,9 +160,14 @@ describe('searchDocumentChunks', () => {
 
 describe('searchDocumentChunksWithReason', () => {
   const VEC = () => Array.from({ length: 1024 }, () => 0.1)
+  const NEVER_SEARCHED = { candidates: null, bestSimilarity: null }
 
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   // Each case asserts the tagged reason AND that the plain wrapper still
@@ -182,6 +190,9 @@ describe('searchDocumentChunksWithReason', () => {
     const { tagged, plain } = await both(db)
     expect(tagged.reason).toBe('hits')
     expect(tagged.results).toEqual([{ id: 'chunk-1', title: 'Doc A', content: 'Content A', similarity: 0.82 }])
+    // candidates is the pre-threshold row count, not the hit count
+    expect(tagged.candidates).toBe(2)
+    expect(tagged.bestSimilarity).toBe(0.82)
     expect(plain).toEqual(tagged.results)
   })
 
@@ -202,7 +213,7 @@ describe('searchDocumentChunksWithReason', () => {
   it("reason 'no-corpus' when the user has no embedded chunks", async () => {
     const db = makeMockDb({ corpusFound: false })
     const { tagged, plain } = await both(db)
-    expect(tagged).toEqual({ results: [], reason: 'no-corpus' })
+    expect(tagged).toEqual({ results: [], reason: 'no-corpus', ...NEVER_SEARCHED })
     expect(plain).toEqual([])
     expect(mockVoyageEmbed).not.toHaveBeenCalled()
   })
@@ -210,23 +221,34 @@ describe('searchDocumentChunksWithReason', () => {
   it("reason 'corpus-check-failed' when the corpus check throws", async () => {
     const db = makeMockDb({ executeError: true })
     const { tagged, plain } = await both(db)
-    expect(tagged).toEqual({ results: [], reason: 'corpus-check-failed' })
+    expect(tagged).toEqual({ results: [], reason: 'corpus-check-failed', ...NEVER_SEARCHED })
     expect(plain).toEqual([])
   })
 
-  it("reason 'no-query-vector' when Voyage returns no vector (no key)", async () => {
+  it("reason 'no-api-key' when VOYAGE_API_KEY is absent (client returns [null])", async () => {
+    vi.stubEnv('VOYAGE_API_KEY', '')
     const db = makeMockDb({ corpusFound: true })
     mockVoyageEmbed.mockResolvedValue([null])
     const { tagged, plain } = await both(db)
-    expect(tagged).toEqual({ results: [], reason: 'no-query-vector' })
+    expect(tagged).toEqual({ results: [], reason: 'no-api-key', ...NEVER_SEARCHED })
     expect(plain).toEqual([])
   })
 
-  it("reason 'embed-failed' when Voyage throws", async () => {
+  it("reason 'embed-failed' when the key is set but the client returns [null] (outage, 401, 429, timeout)", async () => {
+    vi.stubEnv('VOYAGE_API_KEY', 'test-key')
+    const db = makeMockDb({ corpusFound: true })
+    mockVoyageEmbed.mockResolvedValue([null])
+    const { tagged, plain } = await both(db)
+    expect(tagged).toEqual({ results: [], reason: 'embed-failed', ...NEVER_SEARCHED })
+    expect(plain).toEqual([])
+  })
+
+  it("reason 'embed-failed' defensively if the client ever throws", async () => {
+    vi.stubEnv('VOYAGE_API_KEY', 'test-key')
     const db = makeMockDb({ corpusFound: true })
     mockVoyageEmbed.mockRejectedValue(new Error('Network error'))
     const { tagged, plain } = await both(db)
-    expect(tagged).toEqual({ results: [], reason: 'embed-failed' })
+    expect(tagged).toEqual({ results: [], reason: 'embed-failed', ...NEVER_SEARCHED })
     expect(plain).toEqual([])
   })
 
@@ -239,14 +261,30 @@ describe('searchDocumentChunksWithReason', () => {
       ],
     })
     const { tagged, plain } = await both(db, VEC())
-    expect(tagged).toEqual({ results: [], reason: 'below-threshold' })
+    expect(tagged).toEqual({ results: [], reason: 'below-threshold', candidates: 2, bestSimilarity: 0.49 })
     expect(plain).toEqual([])
+  })
+
+  it("reason 'below-threshold' with zero candidates when the query returns no rows", async () => {
+    const db = makeMockDb({ corpusFound: true, searchRows: [] })
+    const { tagged, plain } = await both(db, VEC())
+    expect(tagged).toEqual({ results: [], reason: 'below-threshold', candidates: 0, bestSimilarity: null })
+    expect(plain).toEqual([])
+  })
+
+  it('bestSimilarity is rounded to 3 places', async () => {
+    const db = makeMockDb({
+      corpusFound: true,
+      searchRows: [{ id: 'chunk-1', title: 'Doc A', content: 'Content A', similarity: 0.473849 }],
+    })
+    const { tagged } = await both(db, VEC())
+    expect(tagged.bestSimilarity).toBe(0.474)
   })
 
   it("reason 'search-failed' when the similarity query throws", async () => {
     const db = makeMockDb({ corpusFound: true, searchError: true })
     const { tagged, plain } = await both(db, VEC())
-    expect(tagged).toEqual({ results: [], reason: 'search-failed' })
+    expect(tagged).toEqual({ results: [], reason: 'search-failed', ...NEVER_SEARCHED })
     expect(plain).toEqual([])
   })
 })

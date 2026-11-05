@@ -16,7 +16,7 @@
 import { sql, eq, and, isNotNull } from 'drizzle-orm'
 import type { PgDatabase } from 'drizzle-orm/pg-core'
 import { documents, documentChunks } from '../db/schema'
-import { voyageEmbed } from './voyage'
+import { voyageEmbed, resolveVoyageApiKey } from './voyage'
 
 export interface ChunkSearchResult {
   /** documentChunks.id: an opaque uuid, not citizen content. */
@@ -43,7 +43,7 @@ export type RetrievalReason =
   | 'hits'
   | 'no-corpus'
   | 'corpus-check-failed'
-  | 'no-query-vector'
+  | 'no-api-key'
   | 'embed-failed'
   | 'below-threshold'
   | 'search-failed'
@@ -51,7 +51,21 @@ export type RetrievalReason =
 export interface ChunkSearchOutcome {
   results: ChunkSearchResult[]
   reason: RetrievalReason
+  /** Rows the similarity query returned before the threshold; null if it never ran. */
+  candidates: number | null
+  /** Best pre-threshold similarity, rounded to 3 places; null if no rows or never ran. */
+  bestSimilarity: number | null
 }
+
+const round3 = (n: number) => Math.round(n * 1000) / 1000
+
+/** An outcome for a path that never reached the similarity query. */
+const empty = (reason: RetrievalReason): ChunkSearchOutcome => ({
+  results: [],
+  reason,
+  candidates: null,
+  bestSimilarity: null,
+})
 
 /**
  * Search document chunks owned by a user using cosine similarity.
@@ -107,22 +121,29 @@ export async function searchDocumentChunksWithReason(
       ) AS found
     `)
     const found = result.rows?.[0]?.found ?? result[0]?.found ?? false
-    if (!found) return { results: [], reason: 'no-corpus' }
+    if (!found) return empty('no-corpus')
   } catch (err) {
     console.warn('[search-chunks] corpus-check failed:', err instanceof Error ? err.message : err)
-    return { results: [], reason: 'corpus-check-failed' }
+    return empty('corpus-check-failed')
   }
 
   // --- Embed the query (or use a pre-computed vector for testing) ---
   let queryVec: number[] | null = _queryVec ?? null
   if (!queryVec) {
+    // voyageEmbed never throws: a missing key, an HTTP error, a network failure
+    // and a timeout all come back as [null]. The reason is decided from the key
+    // check voyageEmbed itself applies, taken before the call, not from the null.
+    // Same options object for both, so the key check cannot drift from the call.
+    const embedOptions = { timeoutMs: QUERY_EMBED_TIMEOUT_MS }
+    const hasApiKey = Boolean(resolveVoyageApiKey(embedOptions))
     try {
-      const [vec] = await voyageEmbed([query], 'query', { timeoutMs: QUERY_EMBED_TIMEOUT_MS })
+      const [vec] = await voyageEmbed([query], 'query', embedOptions)
       queryVec = vec ?? null
     } catch {
-      return { results: [], reason: 'embed-failed' }
+      // Defensive: the client's contract says it never throws.
+      return empty('embed-failed')
     }
-    if (!queryVec) return { results: [], reason: 'no-query-vector' }
+    if (!queryVec) return empty(hasApiKey ? 'embed-failed' : 'no-api-key')
   }
 
   // --- Cosine similarity search ---
@@ -161,9 +182,21 @@ export async function searchDocumentChunksWithReason(
         content: r.content,
         similarity: r.similarity,
       }))
-    return { results, reason: results.length > 0 ? 'hits' : 'below-threshold' }
+    // Pre-threshold view: candidates=0 with a corpus present points at recall
+    // (e.g. HNSW post-filtering); candidates>0 with a best under the threshold
+    // points at the threshold. Neither needs its own reason.
+    const best = rows.reduce<number | null>(
+      (m, r) => (m === null || r.similarity > m ? r.similarity : m),
+      null
+    )
+    return {
+      results,
+      reason: results.length > 0 ? 'hits' : 'below-threshold',
+      candidates: rows.length,
+      bestSimilarity: best === null ? null : round3(best),
+    }
   } catch (err) {
     console.warn('[search-chunks] similarity search failed:', err instanceof Error ? err.message : err)
-    return { results: [], reason: 'search-failed' }
+    return empty('search-failed')
   }
 }
