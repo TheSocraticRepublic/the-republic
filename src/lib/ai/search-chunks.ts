@@ -59,6 +59,19 @@ export interface ChunkSearchOutcome {
 
 const round3 = (n: number) => Math.round(n * 1000) / 1000
 
+/**
+ * A log-safe description of a DB error: its name and code only.
+ * Never the message: a DrizzleQueryError message is "Failed query: <sql>
+ * params: <params>", and here the params are the userId and the embedding of
+ * the citizen's concern.
+ */
+function errorTag(err: unknown): string {
+  if (!(err instanceof Error)) return typeof err
+  const e = err as Error & { code?: unknown; cause?: { code?: unknown } }
+  const code = e.code ?? e.cause?.code
+  return code === undefined ? e.name : `${e.name} code=${String(code)}`
+}
+
 /** An outcome for a path that never reached the similarity query. */
 const empty = (reason: RetrievalReason): ChunkSearchOutcome => ({
   results: [],
@@ -123,7 +136,7 @@ export async function searchDocumentChunksWithReason(
     const found = result.rows?.[0]?.found ?? result[0]?.found ?? false
     if (!found) return empty('no-corpus')
   } catch (err) {
-    console.warn('[search-chunks] corpus-check failed:', err instanceof Error ? err.message : err)
+    console.warn('[search-chunks] corpus-check failed:', errorTag(err))
     return empty('corpus-check-failed')
   }
 
@@ -196,7 +209,7 @@ export async function searchDocumentChunksWithReason(
       bestSimilarity: best === null ? null : round3(best),
     }
   } catch (err) {
-    console.warn('[search-chunks] similarity search failed:', err instanceof Error ? err.message : err)
+    console.warn('[search-chunks] similarity search failed:', errorTag(err))
     return empty('search-failed')
   }
 }
