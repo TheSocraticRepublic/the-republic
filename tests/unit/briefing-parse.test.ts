@@ -25,6 +25,7 @@ import { describe, it, expect } from 'vitest'
 import { createElement, Fragment } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import {
+  type AccessLevel,
   type BlockElement,
   type GoverningBlock,
   type ComparisonItem,
@@ -351,6 +352,77 @@ const GOLDENS: Record<string, BriefingParse> = {
             isPrimary: true,
           },
           { type: 'prose', text: 'Council can amend it again.' },
+        ],
+      },
+    ],
+  },
+  'document-access-values': {
+    title: null,
+    sections: [
+      {
+        heading: 'What Governs This',
+        kind: 'governs',
+        blocks: [
+          {
+            type: 'document',
+            name: 'Synthetic Bylaw A (QA)',
+            intro: '',
+            fields: [
+              { label: 'What it is', value: 'A bylaw.' },
+              { label: 'Access', value: 'Public' },
+            ],
+            isPrimary: true,
+          },
+          {
+            type: 'document',
+            name: 'Synthetic Plan B (QA)',
+            intro: '',
+            fields: [
+              { label: 'What it is', value: 'A plan.' },
+              { label: 'Access', value: 'Public, online' },
+            ],
+            isPrimary: false,
+          },
+          {
+            type: 'document',
+            name: 'Synthetic Memo C (QA)',
+            intro: '',
+            fields: [
+              { label: 'What it is', value: 'A memo.' },
+              { label: 'Access', value: 'FIPPA Required (withheld as deliberative advice)' },
+            ],
+            isPrimary: false,
+          },
+          {
+            type: 'document',
+            name: 'Synthetic Report D (QA)',
+            intro: '',
+            fields: [
+              { label: 'What it is', value: 'A report.' },
+              { label: 'Access', value: 'Partly public' },
+            ],
+            isPrimary: false,
+          },
+          {
+            type: 'document',
+            name: 'Synthetic Permit E (QA)',
+            intro: '',
+            fields: [
+              { label: 'What it is', value: 'A permit.' },
+              { label: 'Access', value: 'Not public' },
+            ],
+            isPrimary: false,
+          },
+          {
+            type: 'document',
+            name: 'Synthetic Minutes F (QA)',
+            intro: '',
+            fields: [
+              { label: 'What it is', value: 'Minutes.' },
+              { label: 'Access', value: 'Council Record' },
+            ],
+            isPrimary: false,
+          },
         ],
       },
     ],
@@ -704,6 +776,31 @@ describe('parse rules', () => {
   ])('getRoleKey(%s) -> %s (nation is a whole word)', (role, key) => {
     expect(getRoleKey(role)).toBe(key)
   })
+
+  it('a joined role is shown as written', () => {
+    expect(roleLabel('proponent / applicant')).toBe('proponent / applicant')
+  })
+
+  it.each([
+    ['Public', 'public'],
+    ['public', 'public'],
+    ['Public, online', 'public'],
+    ['  Public.', 'public'],
+    ['Publicly posted', null],
+    ['Partly public', null],
+    ['Partially public', null],
+    ['Not public', null],
+    ['FIPPA Required', 'fippa'],
+    ['FIPPA required (withheld as deliberative advice)', 'fippa'],
+    ['FIPPA request needed', 'fippa'],
+    ['Needs a FIPPA request', null],
+    ['Council Record', 'council'],
+    ['council record, 2019 minutes', 'council'],
+    ['In the council record', null],
+    ['On request from the district', null],
+  ] as [string, AccessLevel | null][])('detectAccess(%s) -> %s (the value begins with the badge phrase)', (value, level) => {
+    expect(detectAccess(value)).toBe(level)
+  })
 })
 
 // ---- the word-sequence property ---------------------------------------------
@@ -745,11 +842,30 @@ const stripLabel = (line: string): string => {
 const isReplacedLabel = (label: string) => REPLACED_LABELS.some((re) => re.test(`${label}:`))
 
 /**
+ * The Access badge, written down here rather than imported: a value earns a
+ * badge only when it BEGINS with the badge phrase, and the badge shows its own
+ * label, not the value.
+ */
+const ACCESS_BADGES: [RegExp, string][] = [
+  [/^fippa requ(?:ired|est)/i, 'FIPPA Required'],
+  [/^council record/i, 'Council Record'],
+  [/^public\b/i, 'Public'],
+]
+const BADGE_LABEL: Record<AccessLevel, string> = { public: 'Public', fippa: 'FIPPA Required', council: 'Council Record' }
+const accessBadgeOf = (value: string): string | null => ACCESS_BADGES.find(([re]) => re.test(value.trim()))?.[1] ?? null
+/** The Access field leaves the card only when the badge says all of it. */
+const badgeSaysAll = (value: string, label: string | null): boolean =>
+  label !== null && value.trim().replace(/[\s.,;:!?]+$/, '').toLowerCase() === label.toLowerCase()
+
+/**
  * DocumentCard's layout, applied to the input so it reads in render order:
- * an Access line moves up to just after its card's start (the badge sits in
- * the header), and a How/Where to find line moves down to the end of its
- * field run (its footer). Card starts: a ### or bold-only heading, or a
- * Document name field. Written down, not derived from the parser.
+ * the Access badge goes to just after its card's start (the header). When the
+ * badge says the whole value, the Access line moves there; when it says only
+ * part, a line with the badge's label goes there and the Access line stays a
+ * field in place; with no badge it just stays in place. A How/Where to find
+ * line moves down to the end of its field run (its footer). Card starts: a ###
+ * or bold-only heading, or a Document name field. Written down, not derived
+ * from the parser.
  */
 function governsInRenderOrder(markdown: string): string {
   const out: string[] = []
@@ -778,7 +894,11 @@ function governsInRenderOrder(markdown: string): string {
       while (e < card.length && card[e].trim() && !isField(card[e])) e++
       return card.splice(k, e - k)
     }
-    const access = take(/^[-*]\s+\*\*Access:\*\*/i)
+    const ACCESS_LINE = /^[-*]\s+\*\*Access:\*\*/i
+    const accessAt = card.findIndex((x) => ACCESS_LINE.test(x))
+    const accessValue = accessAt === -1 ? '' : card[accessAt].replace(ACCESS_LINE, '').trim()
+    const badge = accessAt === -1 ? null : accessBadgeOf(accessValue)
+    const access = badgeSaysAll(accessValue, badge) ? take(ACCESS_LINE) : badge ? [badge] : []
     const howTo = take(/^[-*]\s+\*\*(?:How|Where) to find(?: it)?:\*\*/i)
     // The end of the field run: after the last field and its continuation lines.
     let end = -1
@@ -866,13 +986,16 @@ function outputWords(parse: BriefingParse): string[] {
           else if (b.type === 'prose') preprocessBlocks(b.text).forEach((x) => out.push(...blockText(x)))
           else {
             const access = b.fields.find((f) => f.label.toLowerCase() === 'access')
-            const badge = access && detectAccess(access.value) ? access : undefined
+            const level = access ? detectAccess(access.value) : null
+            const badge = level ? BADGE_LABEL[level] : null
+            // The badge shows its label; the field shows the whole value unless the badge says all of it.
+            const accessHidden = access !== undefined && badgeSaysAll(access.value, badge)
             const howTo = b.fields.find((f) => /^(?:how|where) to find/i.test(f.label))
             out.push(inlineText(b.name))
-            if (badge) out.push(badge.value)
+            if (badge) out.push(badge)
             if (b.intro) out.push(inlineText(b.intro))
             for (const f of b.fields) {
-              if (f === badge || f === howTo) continue
+              if ((f === access && accessHidden) || f === howTo) continue
               if (!isReplacedLabel(f.label)) out.push(f.label)
               out.push(inlineText(f.value))
             }
@@ -937,7 +1060,7 @@ function render(text: string): Document {
 
 const styleOf = (el: Element | null | undefined) => el?.getAttribute('style') ?? ''
 const textOf = (doc: Document) => doc.body.textContent ?? ''
-const findAll = (doc: Document, selector: string, text: string) =>
+const findAll = (doc: ParentNode, selector: string, text: string) =>
   [...doc.querySelectorAll(selector)].filter((e) => e.textContent?.trim() === text)
 /** The card an element sits in (the 12px-radius island card or the primary rounded-xl card). */
 const cardOf = (el: Element) => el.closest('div[style*="border-radius:12px"], div.rounded-xl')
@@ -1103,6 +1226,29 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
     expect(findAll(pub, 'span', 'Public')).toHaveLength(1)
     expect(findAll(pub, 'span', 'Access')).toHaveLength(0)
   })
+
+  it.each([
+    // [card name, badge label or null, the Access value rendered as a field or null]
+    ['Synthetic Bylaw A (QA)', 'Public', null],
+    ['Synthetic Plan B (QA)', 'Public', 'Public, online'],
+    ['Synthetic Memo C (QA)', 'FIPPA Required', 'FIPPA Required (withheld as deliberative advice)'],
+    ['Synthetic Report D (QA)', null, 'Partly public'],
+    ['Synthetic Permit E (QA)', null, 'Not public'],
+    ['Synthetic Minutes F (QA)', 'Council Record', null],
+  ] as [string, string | null, string | null][])(
+    'Access on %s: badge %s, field %s (the badge never says more or less than the text)',
+    (name, badge, field) => {
+      const doc = render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === 'document-access-values')!.content)
+      const [heading] = [...doc.querySelectorAll('span, p, h3, h4, div')].filter((e) => e.textContent?.trim() === name)
+      expect(heading).toBeDefined()
+      const card = cardOf(heading)!
+      expect(card).not.toBeNull()
+      const badges = ['Public', 'FIPPA Required', 'Council Record'].flatMap((l) => findAll(card, 'span', l))
+      expect(badges.map((b) => b.textContent)).toEqual(badge ? [badge] : [])
+      expect(findAll(card, 'span', 'Access')).toHaveLength(field ? 1 : 0)
+      if (field) expect(findAll(card, 'p', field)).toHaveLength(1)
+    }
+  )
 
   it('a citation-heavy paragraph is a plain paragraph: no evidence callout', () => {
     const doc = render(['## What the Public Record Shows', '', 'Under s. 25 of FIPPA, pursuant to the Forest Act (2024), the Certificate applies.'].join('\n'))

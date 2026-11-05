@@ -533,11 +533,16 @@ export interface DocumentField {
 
 export type AccessLevel = 'public' | 'fippa' | 'council'
 
+/**
+ * The badge level an Access value states, or null. Only a value that BEGINS
+ * with the badge phrase gets a badge: "Partly public" and "Not public" are not
+ * Public, so they get none and render as a field.
+ */
 export function detectAccess(text: string): AccessLevel | null {
-  const lower = text.toLowerCase()
-  if (lower.includes('fippa required') || lower.includes('fippa request')) return 'fippa'
-  if (lower.includes('council record')) return 'council'
-  if (lower.includes('public')) return 'public'
+  const lower = text.trim().toLowerCase()
+  if (/^fippa requ(?:ired|est)/.test(lower)) return 'fippa'
+  if (/^council record/.test(lower)) return 'council'
+  if (/^public\b/.test(lower)) return 'public'
   return null
 }
 

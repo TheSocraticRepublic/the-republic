@@ -600,8 +600,14 @@ function DocumentCard({
 }) {
   const accessField = fields.find((f) => f.label.toLowerCase() === 'access')
   const accessLevel = accessField ? detectAccess(accessField.value) : null
-  // Access becomes the badge only when the badge can say it; otherwise it stays a field (nothing dropped).
-  const displayFields = fields.filter((f) => !(f === accessField && accessLevel))
+  // The Access field leaves the card only when the badge says all of it: the value,
+  // trimmed and without trailing punctuation, is the badge's own label. Otherwise
+  // the badge (if any) shows AND the full value stays as a field (nothing dropped).
+  const badgeSaysAll =
+    accessField !== undefined &&
+    accessLevel !== null &&
+    accessField.value.trim().replace(/[\s.,;:!?]+$/, '').toLowerCase() === ACCESS_STYLES[accessLevel].label.toLowerCase()
+  const displayFields = fields.filter((f) => !(f === accessField && badgeSaysAll))
   const howToFindField = displayFields.find(
     (f) => f.label.toLowerCase().includes('how to find') || f.label.toLowerCase().includes('where to find')
   )
