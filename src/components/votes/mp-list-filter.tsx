@@ -245,7 +245,9 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
                       alt=""
                       width={36}
                       height={36}
-                      className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+                      // openparliament portraits are tall (142x230): crop from the top so the
+                      // whole head shows, not the tie (Jen C8).
+                      className="h-9 w-9 flex-shrink-0 rounded-full object-cover object-top"
                     />
                   ) : (
                     <div

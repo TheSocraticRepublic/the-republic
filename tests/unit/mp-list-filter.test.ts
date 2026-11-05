@@ -211,6 +211,7 @@ describe('sort and grouping', () => {
     const img = container.querySelector('img')!
     expect(img.getAttribute('alt')).toBe('')
     expect(img.getAttribute('src')).toBe('https://example.test/mcguinty.jpg')
+    expect(img.classList.contains('object-top')).toBe(true)
     const initial = [...container.querySelectorAll('[aria-hidden="true"]')].find((el) => el.textContent === 'A')
     expect(initial).toBeDefined()
     const gunnRow = screen.getByText('Aaron Gunn').closest('a')!
