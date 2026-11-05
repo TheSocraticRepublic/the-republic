@@ -430,6 +430,17 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     expect(container.textContent!.split('2026-10-01').length - 1).toBe(1)
   })
 
+  // Jen E2b C9: the related-bill link joins number and title with a comma,
+  // the House's own form, and no em dash.
+  it('/votes/vote/[voteId] names the related bill as "C-5, An Act respecting rivers"', async () => {
+    stubNetwork()
+    dbResults.push([{ ...VOTE, billId: 'b-1' }], [{ id: 'b-1', number: 'C-5', titleEn: 'An Act respecting rivers' }])
+    const { container } = render(await VoteDetailPage({ params: Promise.resolve({ voteId: 'v-1' }) }))
+    const link = container.querySelector('a[href="/votes/bill/b-1"]')!
+    expect(link.querySelector('p')!.textContent).toBe('C-5, An Act respecting rivers')
+    expect(container.textContent).not.toContain('\u2014')
+  })
+
   // Jen E2b C5: a motion over 140 characters steps the h1 down to 20/28 on
   // phones; at 140 or fewer it keeps the 24px h1.
   it('/votes/vote/[voteId] steps a motion over 140 characters down a size, and not one of 140', async () => {

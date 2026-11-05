@@ -86,7 +86,8 @@ export default async function VoteDetailPage({ params }: PageProps) {
             <span className="text-2xs font-semibold uppercase text-text-faint">Related Bill</span>
             <p className="mt-1 text-xs text-text-secondary">
               <span className="font-semibold" style={{ color: 'var(--accent-votes)' }}>{bill.number}</span>
-              {' — '}
+              {/* The House's own form, "C-218, An Act..."; no em dash (Jen E2b C9). */}
+              {', '}
               {bill.titleEn}
             </p>
           </Link>
