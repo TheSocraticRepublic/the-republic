@@ -296,10 +296,13 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
                 {/* The inset ring needs `!`: the unlayered global
                     `*:focus-visible { outline-offset: 2px }` beats any layered
                     utility, and an outset ring is clipped by the list's
-                    rounding (Razor W1, Jen C4). */}
+                    rounding (Razor W1, Jen C4). scroll-mt-8 (32px) clears the
+                    28px stuck letter header when focus scrolls a row into
+                    view; the page scroller (app-shell's overflow-y-auto div)
+                    has no other sticky band above it (Razor RW1). */}
                 <Link
                   href={`/votes/mp/${mp.id}`}
-                  className="group flex min-h-12 items-center gap-4 px-4 py-2 transition-colors duration-150 -outline-offset-2! hover:bg-surface-3"
+                  className="group flex min-h-12 scroll-mt-8 items-center gap-4 px-4 py-2 transition-colors duration-150 -outline-offset-2! hover:bg-surface-3"
                 >
                   {mp.photoUrl ? (
                     <Image
