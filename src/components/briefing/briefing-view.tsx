@@ -820,11 +820,12 @@ function WhatGovernsSection({ content }: { content: string }) {
         if (block.type === 'document') {
           return <DocumentCard key={j} name={block.name} intro={block.intro} fields={block.fields} isPrimary={block.isPrimary} />
         }
-        // A group label: the eyebrow ProseSection uses for subheadings. It renders only
-        // over a document; with none following before the section ends it labels nothing
-        // and reads as Key Players' label or a failed load, so it is left out (Jen D2 C3).
+        // A group label: the eyebrow ProseSection uses for subheadings. It is left out only
+        // when it labels nothing: no block follows it before the section ends, or the next
+        // block is another eyebrow (Jen D2 C3). A document or a paragraph under it keeps it.
         if (block.type === 'eyebrow') {
-          if (blocks[j + 1]?.type !== 'document') return null
+          const next = blocks[j + 1]
+          if (!next || next.type === 'eyebrow') return null
           return <SubheadingLabel key={j} text={block.text} first={j === 0} />
         }
         return <ProseSection key={j} content={block.text} />

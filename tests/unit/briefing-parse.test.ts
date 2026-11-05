@@ -366,6 +366,26 @@ const GOLDENS: Record<string, BriefingParse> = {
       },
     ],
   },
+  'eyebrow-over-prose': {
+    title: null,
+    sections: [
+      {
+        heading: 'What Governs This',
+        kind: 'governs',
+        blocks: [
+          {
+            type: 'document',
+            name: 'Synthetic Plan (QA)',
+            intro: '',
+            fields: [{ label: 'What it is', value: 'A plan.' }],
+            isPrimary: true,
+          },
+          { type: 'eyebrow', text: 'Supporting Documents' },
+          { type: 'prose', text: 'None were found in the record.' },
+        ],
+      },
+    ],
+  },
   'document-access-values': {
     title: null,
     sections: [
@@ -974,14 +994,16 @@ function playersInRenderOrder(markdown: string): string {
 
 /**
  * DELIBERATE DROP, the one named exception to "nothing dropped" (Jen D2 C3): in a
- * What Governs section that has documents, an eyebrow renders only when a document
- * block follows it. One with nothing under it labels nothing, so it is left out.
+ * What Governs section that has documents, an eyebrow is left out only when it labels
+ * nothing: no block follows it before the section ends, or the next block is another
+ * eyebrow. A document or a paragraph under it keeps it.
  * (A section with no document at all renders as prose, eyebrow included.) The
  * property removes exactly these from the input, and a pin test below lists every
  * case that has one, so a new drop cannot pass silently.
  */
 function eyebrowDropped(blocks: GoverningBlock[], j: number): boolean {
-  return blocks[j].type === 'eyebrow' && blocks.some((b) => b.type === 'document') && blocks[j + 1]?.type !== 'document'
+  const next = blocks[j + 1]
+  return blocks[j].type === 'eyebrow' && blocks.some((b) => b.type === 'document') && (!next || next.type === 'eyebrow')
 }
 function droppedEyebrows(parse: BriefingParse): string[] {
   const out: string[] = []
@@ -1406,6 +1428,14 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
       }
     }
   )
+
+  it('a group label over its own paragraph renders, with the paragraph under it (Razor RW2)', () => {
+    const doc = render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === 'eyebrow-over-prose')!.content)
+    const [eyebrow] = findAll(doc, 'h4', 'Supporting Documents')
+    expect(eyebrow).toBeDefined()
+    expect(cardOf(eyebrow)).toBeNull()
+    expect(textOf(doc).indexOf('Supporting Documents')).toBeLessThan(textOf(doc).indexOf('None were found in the record.'))
+  })
 
   it('the footer reads How to find it, then an Access value with no badge; the description stays above the hairline (Jen D2 C4)', () => {
     const doc = render(

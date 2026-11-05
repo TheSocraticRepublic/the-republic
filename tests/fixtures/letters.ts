@@ -1229,6 +1229,20 @@ export const BRIEFING_SHAPE_FIXTURES: readonly BriefingShapeFixture[] = [
     ),
   },
   {
+    id: 'eyebrow-over-prose',
+    shape: 'A group label over its own paragraph, after a document (Razor RW2: the label was dropped).',
+    content: lines(
+      '## What Governs This',
+      '',
+      '### Synthetic Plan (QA)',
+      '- **What it is:** A plan.',
+      '',
+      '**Supporting Documents**',
+      '',
+      'None were found in the record.'
+    ),
+  },
+  {
     id: 'document-access-values',
     shape: 'Eight Access values: two are exactly a badge label (badge alone), six are not (field alone, no badge) (Razor C2 and RW1).',
     content: lines(
