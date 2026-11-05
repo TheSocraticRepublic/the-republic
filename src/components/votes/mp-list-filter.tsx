@@ -68,6 +68,15 @@ export function letterFor(name: string): string {
   return first ? fold(first).toUpperCase() : '#'
 }
 
+/**
+ * The two letters in a row's placeholder disc: the given name's initial, then
+ * the letter the row files under ("Adam van Koeverden" is AV), so the disc
+ * agrees with the letter header instead of reading as a second index (Jen C1).
+ */
+export function monogramFor(name: string): string {
+  return `${name.trim().charAt(0).toUpperCase()}${letterFor(name)}`
+}
+
 /** One collator for every comparison: `localeCompare` with options builds a
  *  new one per call, and the sort runs on every keystroke (Razor N1). */
 const COLLATOR = new Intl.Collator('en-CA', { sensitivity: 'base' })
@@ -254,7 +263,7 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
                       aria-hidden="true"
                       className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-3 text-xs font-bold text-text-muted"
                     >
-                      {mp.name.charAt(0)}
+                      {monogramFor(mp.name)}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">

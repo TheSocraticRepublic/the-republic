@@ -48,6 +48,7 @@ import {
   MpListFilter,
   lastNameKey,
   letterFor,
+  monogramFor,
   sortByLastName,
   filterMps,
   groupByLetter,
@@ -154,6 +155,23 @@ describe('lastNameKey: particles as stored', () => {
   })
 })
 
+describe('monogramFor: the disc agrees with the letter header', () => {
+  it('is the given-name initial plus the filing letter', () => {
+    expect(monogramFor('Adam van Koeverden')).toBe('AV')
+    expect(monogramFor('Aaron Gunn')).toBe('AG')
+    expect(monogramFor('Heath MacDonald')).toBe('HM')
+    expect(monogramFor('Claude DeBellefeuille')).toBe('CD')
+    // The filing letter is accent-folded, as its header is.
+    expect(monogramFor('Al Élan')).toBe('AE')
+  })
+
+  it('renders in the placeholder disc, aria-hidden', () => {
+    const { container } = renderList([VAN_KOEVERDEN])
+    const disc = container.querySelector('ul a [aria-hidden="true"]')!
+    expect(disc.textContent).toBe('AV')
+  })
+})
+
 describe('sort and grouping', () => {
   it('sorts the whole list by last name, not first name', () => {
     expect(sortByLastName(ALL).map((m) => m.name)).toEqual([
@@ -212,7 +230,7 @@ describe('sort and grouping', () => {
     expect(img.getAttribute('alt')).toBe('')
     expect(img.getAttribute('src')).toBe('https://example.test/mcguinty.jpg')
     expect(img.classList.contains('object-top')).toBe(true)
-    const initial = [...container.querySelectorAll('[aria-hidden="true"]')].find((el) => el.textContent === 'A')
+    const initial = [...container.querySelectorAll('[aria-hidden="true"]')].find((el) => el.textContent === 'AG')
     expect(initial).toBeDefined()
     const gunnRow = screen.getByText('Aaron Gunn').closest('a')!
     expect(within(gunnRow).getByText('Conservative')).toBeTruthy()
