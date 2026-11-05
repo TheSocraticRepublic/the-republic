@@ -11,7 +11,8 @@ interface TallyProps {
   yeaTotal: number
   nayTotal: number
   pairedTotal: number | null
-  className?: string
+  /** `sm` under the vote card's outcome (Jen E2b C2); `xs` in a list row. */
+  size?: 'sm' | 'xs'
 }
 
 export function tallyLongForm({ yeaTotal, nayTotal, pairedTotal }: TallyProps): string {
@@ -21,7 +22,7 @@ export function tallyLongForm({ yeaTotal, nayTotal, pairedTotal }: TallyProps): 
 }
 
 export function Tally(props: TallyProps) {
-  const { yeaTotal, nayTotal, pairedTotal, className } = props
+  const { yeaTotal, nayTotal, pairedTotal, size = 'xs' } = props
   const items: { label: string; value: number }[] = [
     { label: 'Yea', value: yeaTotal },
     { label: 'Nay', value: nayTotal },
@@ -29,7 +30,7 @@ export function Tally(props: TallyProps) {
   if (pairedTotal != null) items.push({ label: 'Paired', value: pairedTotal })
 
   return (
-    <p data-tally className={`text-xs text-text-muted${className ? ` ${className}` : ''}`}>
+    <p data-tally className={`${size === 'sm' ? 'text-sm' : 'text-xs'} text-text-muted`}>
       <span aria-hidden="true" className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         {items.map((item) => (
           <span key={item.label} data-tally-item={item.label}>

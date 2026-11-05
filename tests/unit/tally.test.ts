@@ -128,6 +128,17 @@ describe('ResultLabel', () => {
     }
   })
 
+  it('on the vote card the outcome is the headline: 18px primary on its own line, the tally beneath at 14px (Jen C2)', () => {
+    const host = html(createElement(VoteDetailCard, DIVISION_177))
+    const card = host.querySelector('[data-vote-detail-card]')!
+    expect(card.className.split(/\s+/)).toContain('flex-col')
+    const [first, second] = Array.from(card.children)
+    expect(first.hasAttribute('data-result')).toBe(true)
+    expect(first.className.split(/\s+/)).toEqual(expect.arrayContaining(['text-lg', 'text-text-primary', 'font-semibold']))
+    expect(second.hasAttribute('data-tally')).toBe(true)
+    expect(second.className.split(/\s+/)).toContain('text-sm')
+  })
+
   it('the 2xs size swaps the type size only', () => {
     const span = html(createElement(ResultLabel, { result: 'passed', size: '2xs' })).querySelector('span')!
     expect(span.className.split(/\s+/)).toContain('text-2xs')

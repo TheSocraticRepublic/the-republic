@@ -36,15 +36,24 @@ export function resultLabelText(result: string): string {
 
 interface ResultLabelProps {
   result: string
-  /** `xs` on the vote detail card, `2xs` inside a list row's meta line. */
-  size?: 'xs' | '2xs'
+  /**
+   * `lg` is the vote card's headline (18/28, primary ink: without colour, size
+   * carries the answer, Jen E2b C2); `xs` and `2xs` sit in a list row's meta.
+   */
+  size?: 'lg' | 'xs' | '2xs'
+}
+
+const SIZE_CLASSES: Record<NonNullable<ResultLabelProps['size']>, string> = {
+  lg: 'text-lg text-text-primary',
+  xs: 'text-xs text-text-secondary',
+  '2xs': 'text-2xs text-text-secondary',
 }
 
 export function ResultLabel({ result, size = 'xs' }: ResultLabelProps) {
   return (
     <span
       data-result={result}
-      className={`${size === '2xs' ? 'text-2xs' : 'text-xs'} font-semibold text-text-secondary`}
+      className={`${SIZE_CLASSES[size]} font-semibold`}
     >
       {resultLabelText(result)}
     </span>

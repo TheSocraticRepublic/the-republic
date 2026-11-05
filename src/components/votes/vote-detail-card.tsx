@@ -22,14 +22,15 @@ export function VoteDetailCard({
   return (
     <div
       data-vote-detail-card
-      className="flex flex-wrap items-baseline gap-x-6 gap-y-2 rounded-xl border shadow-sm px-6 py-5"
+      className="flex flex-col gap-1 rounded-xl border shadow-sm px-6 py-5"
       style={{
         borderColor: 'var(--border)',
         backgroundColor: 'var(--surface-1)',
       }}
     >
-      <ResultLabel result={result} />
-      <Tally yeaTotal={yeaTotal} nayTotal={nayTotal} pairedTotal={pairedTotal} />
+      {/* The answer reads first, on its own line, with the totals beneath (Jen E2b C2). */}
+      <ResultLabel result={result} size="lg" />
+      <Tally yeaTotal={yeaTotal} nayTotal={nayTotal} pairedTotal={pairedTotal} size="sm" />
     </div>
   )
 }
