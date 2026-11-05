@@ -44,14 +44,14 @@ const SURNAME_PARTICLES = new Set(['van', 'von', 'de', 'du', 'des', 'la', 'le', 
 
 /**
  * The last-name sort key for a name held in one field ("Aaron Gunn"). The key
- * starts at the first lowercase particle after the first token, if one is
- * followed by more of the name, and runs to the end; otherwise it is the last
- * token. Hyphenated surnames are one token and stay whole.
+ * starts at the first lowercase particle after the first token and runs to
+ * the end; otherwise it is the last token (a particle that is itself the last
+ * token is both). Hyphenated surnames are one token and stay whole.
  */
 export function lastNameKey(name: string): string {
   const tokens = name.trim().split(/\s+/).filter(Boolean)
   if (tokens.length === 0) return ''
-  for (let i = 1; i < tokens.length - 1; i++) {
+  for (let i = 1; i < tokens.length; i++) {
     if (SURNAME_PARTICLES.has(tokens[i])) return tokens.slice(i).join(' ')
   }
   return tokens[tokens.length - 1]

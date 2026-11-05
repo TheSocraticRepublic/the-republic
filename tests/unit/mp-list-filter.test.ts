@@ -146,8 +146,11 @@ describe('lastNameKey: particles as stored', () => {
   })
 
   it('sorts an accented given name by its surname, ties broken by the whole name', () => {
-    // Brière and Briere share a base key; the whole name breaks the tie (É ~ E < Z).
-    expect(sortByLastName([BRIERE, ELISABETH]).map((m) => m.name)).toEqual(['Élisabeth Brière', 'Zoe Briere'])
+    // Brière and Briere share a base key; the whole name breaks the tie (É ~ E < Z),
+    // not the id: Zoe is made first here, so an id tie-break would put her first.
+    const zoe = mp('Zoe Briere', 'NDP', 'Lévis—Lotbinière', 'Quebec')
+    const elisabeth = mp('Élisabeth Brière', 'Liberal', 'Sherbrooke', 'Quebec')
+    expect(sortByLastName([zoe, elisabeth]).map((m) => m.name)).toEqual(['Élisabeth Brière', 'Zoe Briere'])
   })
 })
 
