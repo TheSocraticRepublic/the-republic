@@ -15,6 +15,10 @@ export const metadata = {
   title: 'Vote Detail',
 }
 
+// Above this many characters the motion's h1 steps down a size on phones
+// (Jen E2b C5): 49 of the 190 divisions in 45-1 are longer.
+const LONG_MOTION_CHARS = 140
+
 interface PageProps {
   params: Promise<{ voteId: string }>
 }
@@ -53,6 +57,7 @@ export default async function VoteDetailPage({ params }: PageProps) {
           backHref="/votes"
           backLabel="Back to Vote Tracker"
           title={vote.descriptionEn}
+          long={vote.descriptionEn.length > LONG_MOTION_CHARS}
           meta={
             <>
               <span data-division>Vote {vote.session}/{vote.number}</span>

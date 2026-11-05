@@ -430,6 +430,28 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     expect(container.textContent!.split('2026-10-01').length - 1).toBe(1)
   })
 
+  // Jen E2b C5: a motion over 140 characters steps the h1 down to 20/28 on
+  // phones; at 140 or fewer it keeps the 24px h1.
+  it('/votes/vote/[voteId] steps a motion over 140 characters down a size, and not one of 140', async () => {
+    const h1Classes = async (descriptionEn: string) => {
+      stubNetwork()
+      dbResults.push([{ ...VOTE, descriptionEn }])
+      const { container, unmount } = render(await VoteDetailPage({ params: Promise.resolve({ voteId: 'v-1' }) }))
+      const h1 = container.querySelector('h1')!
+      expect(h1.textContent).toBe(descriptionEn)
+      const cls = h1.className.split(/\s+/)
+      unmount()
+      return cls
+    }
+    const at140 = await h1Classes('m'.repeat(140))
+    expect(at140).toContain('text-2xl')
+    expect(at140).not.toContain('text-xl')
+    expect(at140).not.toContain('text-pretty')
+    const at141 = await h1Classes('m'.repeat(141))
+    expect(at141).toEqual(expect.arrayContaining(['text-xl', 'leading-7', 'sm:text-2xl', 'text-pretty', 'break-words']))
+    expect(at141).not.toContain('text-2xl')
+  })
+
   it('/votes/bill/[billId] goes back to Vote Tracker, titles the bill, and shows the badge', async () => {
     stubNetwork()
     dbResults.push([BILL], [])

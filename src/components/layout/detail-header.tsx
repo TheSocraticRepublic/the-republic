@@ -26,9 +26,15 @@ interface DetailHeaderProps {
   title: ReactNode
   meta?: ReactNode
   action?: ReactNode
+  /**
+   * A long title (a vote page's motion over 140 characters) steps down to
+   * 20/28 below 640px and sets with `text-pretty`, so the page's answer is not
+   * pushed below a phone's fold (Jen E2b C5).
+   */
+  long?: boolean
 }
 
-export function DetailHeader({ arm, backHref, backLabel, title, meta, action }: DetailHeaderProps) {
+export function DetailHeader({ arm, backHref, backLabel, title, meta, action, long = false }: DetailHeaderProps) {
   const barColor = arm
     ? `color-mix(in srgb, var(--accent-${arm}) 60%, transparent)`
     : 'color-mix(in srgb, var(--text-faint) 60%, transparent)'
@@ -54,7 +60,7 @@ export function DetailHeader({ arm, backHref, backLabel, title, meta, action }: 
               backgroundColor: barColor,
             }}
           />
-          <h1 className="font-display text-2xl font-bold text-text-primary break-words">
+          <h1 className={`font-display ${long ? 'text-xl leading-7 sm:text-2xl text-pretty' : 'text-2xl'} font-bold text-text-primary break-words`}>
             {title}
           </h1>
           {meta && (
