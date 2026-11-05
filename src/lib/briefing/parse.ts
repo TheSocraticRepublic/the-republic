@@ -237,59 +237,107 @@ export function parsePlayers(content: string): PlayerData[] {
 
 export interface JurisdictionData {
   name: string
+  /** Prose under the name that is not a field line, one entry per paragraph. */
+  body: string[]
   whatTheyDid: string
   whyItMatters: string
   outcome: string
 }
 
+type JurisdictionField = 'whatTheyDid' | 'whyItMatters' | 'outcome'
+
+// A Mirror field comes only from a line that opens with its label and a colon
+// (`**Outcome:** x`, `**Outcome**: x`, `Outcome: x`), after optional
+// indentation or a bullet. Never from the word inside prose, and never by
+// position: "The outcome is not documented" is prose (D2).
+const WHAT_THEY_DID_LINE = /^\s*(?:[-*]\s+)?(?:\*\*what they did(?:\s+[\w']+){0,3}:\*\*|\*\*what they did(?:\s+[\w']+){0,3}\*\*:|what they did(?:\s+[\w']+){0,3}:)\s*(.*)$/i
+const WHY_IT_MATTERS_LINE = /^\s*(?:[-*]\s+)?(?:\*\*why it matters(?:\s+[\w']+){0,3}:\*\*|\*\*why it matters(?:\s+[\w']+){0,3}\*\*:|why it matters(?:\s+[\w']+){0,3}:)\s*(.*)$/i
+const OUTCOME_LINE = /^\s*(?:[-*]\s+)?(?:\*\*outcome:\*\*|\*\*outcome\*\*:|outcome:)\s*(.*)$/i
+
+function matchJurisdictionField(line: string): { key: JurisdictionField; value: string } | null {
+  const what = line.match(WHAT_THEY_DID_LINE)
+  if (what) return { key: 'whatTheyDid', value: what[1].trim() }
+  const why = line.match(WHY_IT_MATTERS_LINE)
+  if (why) return { key: 'whyItMatters', value: why[1].trim() }
+  const outcome = line.match(OUTCOME_LINE)
+  if (outcome) return { key: 'outcome', value: outcome[1].trim() }
+  return null
+}
+
+/**
+ * A line that opens a jurisdiction, with its name and any prose after the name
+ * on the same line: `### Name`, a line wholly in bold, or a bullet led by a
+ * bold name (`- **Town A** publishes …`). A bold span ending in a colon is a
+ * field label, not a name.
+ */
+function matchJurisdictionStart(line: string): { name: string; rest: string } | null {
+  const h3 = line.match(/^###\s+(.+)$/)
+  if (h3) return { name: h3[1].trim(), rest: '' }
+  const bold = line.match(/^\*\*([^*]+)\*\*\s*$/)
+  if (bold && !bold[1].trim().endsWith(':')) return { name: bold[1].trim(), rest: '' }
+  const led = line.match(/^[-*]\s+\*\*([^*]+)\*\*(.*)$/)
+  if (led && !led[1].trim().endsWith(':') && !led[2].trim().startsWith(':')) return { name: led[1].trim(), rest: led[2].trim() }
+  return null
+}
+
 export function parseJurisdictions(content: string): JurisdictionData[] {
   const jurisdictions: JurisdictionData[] = []
+  let current: JurisdictionData | null = null
+  // The field a following non-blank line continues, until a blank line.
+  let openField: JurisdictionField | null = null
+  // The body paragraph a following non-blank line continues, until a blank line.
+  let openParagraph = false
 
-  // Split on ### headings or **Bold Name** delimiters
-  const blocks = content.split(/(?=^###\s+|^\*\*[^*]+\*\*\s*$)/m).filter((b) => b.trim())
+  for (const raw of content.split('\n')) {
+    const line = raw.trim()
 
-  for (const block of blocks) {
-    const lines = block.split('\n').map((l) => l.trim()).filter(Boolean)
-    if (lines.length === 0) continue
-
-    // Extract jurisdiction name from heading or bold text
-    let name = ''
-    const h3Match = lines[0].match(/^###\s+(.+)/)
-    const boldMatch = lines[0].match(/^\*\*(.+?)\*\*/)
-    if (h3Match) name = h3Match[1].replace(/\*\*/g, '').trim()
-    else if (boldMatch) name = boldMatch[1].trim()
-    else continue
-
-    const restLines = lines.slice(1)
-    const restText = restLines.join('\n')
-
-    // Try structured field extraction
-    let whatTheyDid = ''
-    let whyItMatters = ''
-    let outcome = ''
-
-    // Capture only the VALUE after the label — handle optional trailing words like "differently", "for you"
-    const whatMatch = restText.match(/(?:\*\*)?[Ww]hat\s+they\s+did(?:\s+\w+)?(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Ww]hy\s+it|[Oo]utcome|$))/i)
-    if (whatMatch) whatTheyDid = whatMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
-
-    const whyMatch = restText.match(/(?:\*\*)?[Ww]hy\s+it\s+matters(?:\s+\w+)?(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Oo]utcome|$))/i)
-    if (whyMatch) whyItMatters = whyMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
-
-    const outcomeMatch = restText.match(/(?:\*\*)?[Oo]utcome(?:\s+\w+)?(?:\*\*)?[:\s]+([\s\S]+)/i)
-    if (outcomeMatch) outcome = outcomeMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
-
-    // Fallback: split paragraphs positionally
-    if (!whatTheyDid && !whyItMatters) {
-      const paras = restText.split(/\n{2,}/).map((p) => p.replace(/\*\*/g, '').trim()).filter(Boolean)
-      if (paras.length >= 1) whatTheyDid = paras[0]
-      if (paras.length >= 2) whyItMatters = paras[1]
-      if (paras.length >= 3) outcome = paras[2]
+    if (!line || /^-{3,}$/.test(line)) {
+      openField = null
+      openParagraph = false
+      continue
     }
 
-    if (name) {
-      jurisdictions.push({ name, whatTheyDid, whyItMatters, outcome })
+    const start = matchJurisdictionStart(line)
+    if (start) {
+      if (current) jurisdictions.push(current)
+      current = { name: start.name, body: [], whatTheyDid: '', whyItMatters: '', outcome: '' }
+      openField = null
+      openParagraph = false
+      if (start.rest) {
+        current.body.push(start.rest)
+        openParagraph = true
+      }
+      continue
+    }
+
+    // Text before the first jurisdiction has no card to go on (as before D2).
+    if (!current) continue
+
+    const field = matchJurisdictionField(line)
+    if (field) {
+      current[field.key] = field.value
+      openField = field.key
+      openParagraph = false
+      continue
+    }
+
+    // A bullet under a jurisdiction is a body paragraph of its own, without its marker.
+    const bullet = line.match(/^[-*]\s+(.*)$/)
+    if (bullet) {
+      openField = null
+      current.body.push(bullet[1].trim())
+      openParagraph = true
+    } else if (openField) {
+      current[openField] = `${current[openField]} ${line}`.trim()
+    } else if (openParagraph) {
+      current.body[current.body.length - 1] += ` ${line}`
+    } else {
+      current.body.push(line)
+      openParagraph = true
     }
   }
+
+  if (current) jurisdictions.push(current)
 
   return jurisdictions
 }

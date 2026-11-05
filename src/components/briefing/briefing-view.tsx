@@ -505,6 +505,17 @@ function ComparisonSection({ content }: { content: string }) {
             {renderInline(jur.name)}
           </span>
 
+          {/* Prose under the name that is not a field line (D2: no field is invented from it) */}
+          {jur.body.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: jur.whatTheyDid || jur.whyItMatters || jur.outcome ? '12px' : 0 }}>
+              {jur.body.map((para, j) => (
+                <p key={j} style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
+                  {renderInline(para)}
+                </p>
+              ))}
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {jur.whatTheyDid && (
               <div>
