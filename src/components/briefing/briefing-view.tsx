@@ -600,7 +600,8 @@ function DocumentCard({
 }) {
   const accessField = fields.find((f) => f.label.toLowerCase() === 'access')
   const accessLevel = accessField ? detectAccess(accessField.value) : null
-  const displayFields = fields.filter((f) => f.label.toLowerCase() !== 'access')
+  // Access becomes the badge only when the badge can say it; otherwise it stays a field (nothing dropped).
+  const displayFields = fields.filter((f) => !(f === accessField && accessLevel))
   const howToFindField = displayFields.find(
     (f) => f.label.toLowerCase().includes('how to find') || f.label.toLowerCase().includes('where to find')
   )

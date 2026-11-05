@@ -842,6 +842,14 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
     expect([...doc.querySelectorAll('div')].filter((d) => styleOf(d).includes('width:40%'))).toHaveLength(0)
   })
 
+  it('an Access value the badge cannot say stays on the card as a field', () => {
+    const doc = render(['## What Governs This', '', '- **Document name:** Plan (QA)', '- **Access:** On request from the district'].join('\n'))
+    expect(textOf(doc)).toContain('On request from the district')
+    const pub = render(['## What Governs This', '', '- **Document name:** Plan (QA)', '- **Access:** Public'].join('\n'))
+    expect(findAll(pub, 'span', 'Public')).toHaveLength(1)
+    expect(findAll(pub, 'span', 'Access')).toHaveLength(0)
+  })
+
   it('a citation-heavy paragraph is a plain paragraph: no evidence callout', () => {
     const doc = render(['## What the Public Record Shows', '', 'Under s. 25 of FIPPA, pursuant to the Forest Act (2024), the Certificate applies.'].join('\n'))
     const [para] = [...doc.querySelectorAll('p')].filter((e) => e.textContent?.startsWith('Under s. 25'))
