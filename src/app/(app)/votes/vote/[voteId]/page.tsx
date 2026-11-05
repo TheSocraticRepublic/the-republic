@@ -51,7 +51,7 @@ export default async function VoteDetailPage({ params }: PageProps) {
         <DetailHeader
           arm="votes"
           backHref="/votes"
-          backLabel="Back to Votes"
+          backLabel="Back to Vote Tracker"
           title={`Vote ${vote.session}/${vote.number}`}
           meta={<DataFreshnessBadge variant="meta" />}
         />

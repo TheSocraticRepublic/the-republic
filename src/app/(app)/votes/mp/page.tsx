@@ -36,7 +36,7 @@ export default async function AllMPsPage() {
         <DetailHeader
           arm="votes"
           backHref="/votes"
-          backLabel="Back to Votes"
+          backLabel="Back to Vote Tracker"
           title="Members of Parliament"
           meta={
             <>

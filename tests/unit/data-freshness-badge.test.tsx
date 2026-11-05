@@ -321,7 +321,7 @@ describe('DetailHeader', () => {
 
   it('omits the meta line when there is no meta', () => {
     const { container } = render(
-      <DetailHeader backHref="/investigate" backLabel="Back to Investigate" title="Profile" />
+      <DetailHeader backHref="/investigate" backLabel="Back to New Investigation" title="Profile" />
     )
     expect(container.querySelector('[data-detail-meta]')).toBeNull()
     expect(container.querySelector('h1')!.textContent).toBe('Profile')
@@ -390,19 +390,19 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     expect(badge.className).not.toContain('text-2xs')
   }
 
-  it('/votes/mp goes back to Votes and shows the badge', async () => {
+  it('/votes/mp goes back to Vote Tracker and shows the badge', async () => {
     stubNetwork()
     dbResults.push([MP])
     const { container } = render(await AllMPsPage())
-    await expectHeader(container, { href: '/votes', label: 'Back to Votes' }, 'Members of Parliament')
+    await expectHeader(container, { href: '/votes', label: 'Back to Vote Tracker' }, 'Members of Parliament')
     expect(container.querySelector('[data-detail-meta]')!.textContent).toContain('1 current MPs across 1 provinces and territories')
     await expectBadgeInMeta(container)
   })
 
-  it('/votes/recent goes back to Votes and shows the badge', async () => {
+  it('/votes/recent goes back to Vote Tracker and shows the badge', async () => {
     stubNetwork()
     const { container } = render(<RecentVotesPage />)
-    await expectHeader(container, { href: '/votes', label: 'Back to Votes' }, 'Recent Votes')
+    await expectHeader(container, { href: '/votes', label: 'Back to Vote Tracker' }, 'Recent Votes')
     await expectBadgeInMeta(container)
   })
 
@@ -414,27 +414,27 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     await expectBadgeInMeta(container)
   })
 
-  it('/votes/vote/[voteId] goes back to Votes and shows the badge', async () => {
+  it('/votes/vote/[voteId] goes back to Vote Tracker and shows the badge', async () => {
     stubNetwork()
     dbResults.push([VOTE])
     const { container } = render(await VoteDetailPage({ params: Promise.resolve({ voteId: 'v-1' }) }))
-    await expectHeader(container, { href: '/votes', label: 'Back to Votes' }, 'Vote 45-1/12')
+    await expectHeader(container, { href: '/votes', label: 'Back to Vote Tracker' }, 'Vote 45-1/12')
     await expectBadgeInMeta(container)
   })
 
-  it('/votes/bill/[billId] goes back to Votes, titles the bill, and shows the badge', async () => {
+  it('/votes/bill/[billId] goes back to Vote Tracker, titles the bill, and shows the badge', async () => {
     stubNetwork()
     dbResults.push([BILL], [])
     const { container } = render(await BillDetailPage({ params: Promise.resolve({ billId: 'b-1' }) }))
-    await expectHeader(container, { href: '/votes', label: 'Back to Votes' }, 'An Act respecting rivers')
+    await expectHeader(container, { href: '/votes', label: 'Back to Vote Tracker' }, 'An Act respecting rivers')
     await expectBadgeInMeta(container)
   })
 
-  it('/u/[displayName] goes back to Investigate, with no freshness badge', async () => {
+  it('/u/[displayName] goes back to New Investigation, with no freshness badge', async () => {
     stubNetwork()
     dbResults.push([PROFILE], [], [{ lastActivity: null }])
     const { container } = render(await PublicProfilePage({ params: Promise.resolve({ displayName: 'citizen' }) }))
-    await expectHeader(container, { href: '/investigate', label: 'Back to Investigate' }, 'citizen')
+    await expectHeader(container, { href: '/investigate', label: 'Back to New Investigation' }, 'citizen')
     expect(container.querySelector('[data-freshness]')).toBeNull()
     expect(container.querySelector('[data-detail-header]')).not.toBeNull()
   })
@@ -472,11 +472,11 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     expect(container.textContent!.split('citizen').length - 1).toBe(1)
   })
 
-  it('/profile goes back to Investigate, with no freshness badge', async () => {
+  it('/profile goes back to New Investigation, with no freshness badge', async () => {
     stubNetwork()
     dbResults.push([PROFILE], [], [{ lastActivity: null }])
     const { container } = render(await ProfilePage())
-    await expectHeader(container, { href: '/investigate', label: 'Back to Investigate' }, 'Profile')
+    await expectHeader(container, { href: '/investigate', label: 'Back to New Investigation' }, 'Profile')
     expect(container.querySelector('[data-detail-meta]')!.textContent).toBe('Your public identity')
     expect(container.querySelector('[data-freshness]')).toBeNull()
     expect(container.querySelector('[data-detail-header]')).not.toBeNull()

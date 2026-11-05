@@ -70,7 +70,7 @@ export default async function BillDetailPage({ params }: PageProps) {
         <DetailHeader
           arm="votes"
           backHref="/votes"
-          backLabel="Back to Votes"
+          backLabel="Back to Vote Tracker"
           title={bill.titleEn}
           meta={<DataFreshnessBadge variant="meta" />}
         />

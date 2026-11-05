@@ -85,7 +85,7 @@ export default async function ProfilePage() {
     <div className="mx-auto max-w-2xl px-6 py-10">
       <DetailHeader
         backHref="/investigate"
-        backLabel="Back to Investigate"
+        backLabel="Back to New Investigation"
         title="Profile"
         meta={<span>Your public identity</span>}
       />

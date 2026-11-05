@@ -21,7 +21,7 @@ import { ChevronLeft } from 'lucide-react'
 interface DetailHeaderProps {
   arm?: string
   backHref: string
-  /** Plain-instructional, e.g. "Back to Votes". */
+  /** Plain-instructional, naming the destination as the sidebar does, e.g. "Back to Vote Tracker". */
   backLabel: string
   title: ReactNode
   meta?: ReactNode

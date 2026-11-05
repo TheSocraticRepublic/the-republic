@@ -39,7 +39,7 @@ export default function RecentVotesPage() {
         <DetailHeader
           arm="votes"
           backHref="/votes"
-          backLabel="Back to Votes"
+          backLabel="Back to Vote Tracker"
           title="Recent Votes"
           meta={
             <>
