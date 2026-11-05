@@ -25,7 +25,7 @@ import {
   shadowAlerts,
 } from '@/lib/db/schema'
 import { buildBriefingPrompt } from '@/lib/ai/prompts/briefing-system'
-import { searchDocumentChunks } from '@/lib/ai/search-chunks'
+import { searchDocumentChunksWithReason, type ChunkSearchOutcome } from '@/lib/ai/search-chunks'
 import { detectShadows, type ShadowAlert } from '@/lib/archive/shadow'
 import { loadJurisdictionModule, resolveJurisdictionModuleId } from '@/lib/jurisdictions'
 import { matchDocumentTypesFromConcern } from '@/lib/jurisdictions/match'
@@ -302,13 +302,20 @@ export async function runBriefingGeneration({
     let documentExcerptsBlock = ''
     {
       let timeoutId: ReturnType<typeof setTimeout> | undefined
+      let timedOut = false
+      let retrieval: ChunkSearchOutcome | null = null
+      const retrievalStart = Date.now()
       try {
-        const excerpts = await Promise.race([
-          searchDocumentChunks(db, inv.userId, inv.concern.trim()),
+        retrieval = await Promise.race([
+          searchDocumentChunksWithReason(db, inv.userId, inv.concern.trim()),
           new Promise<never>((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error('excerpt search timeout')), 5000)
+            timeoutId = setTimeout(() => {
+              timedOut = true
+              reject(new Error('excerpt search timeout'))
+            }, 5000)
           }),
         ])
+        const excerpts = retrieval.results
         if (excerpts.length > 0) {
           const excerptLines = excerpts
             .map((e) => `Document: ${e.title}\n---\n${e.content}`)
@@ -319,6 +326,18 @@ export async function runBriefingGeneration({
         // Non-fatal — proceed without excerpts
       } finally {
         clearTimeout(timeoutId)
+        // One observability line per briefing: what retrieval did and why.
+        // Ids, counts and similarities only; never content, title or concern.
+        const results = retrieval?.results ?? []
+        console.info('[retrieval]', JSON.stringify({
+          investigationId,
+          outcome: retrieval ? 'ok' : timedOut ? 'timeout' : 'error',
+          reason: retrieval?.reason ?? null,
+          hits: results.length,
+          chunkIds: results.map((r) => r.id),
+          topSimilarity: results.length > 0 ? Math.round(results[0].similarity * 1000) / 1000 : null,
+          ms: Date.now() - retrievalStart,
+        }))
       }
     }
 
