@@ -458,3 +458,81 @@ describe('runBriefingGeneration — [retrieval] carries the pre-threshold view',
     })
   })
 })
+
+describe('runBriefingGeneration — retrieval timer and late settlement', () => {
+  let infoSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    selectReturnValues = [[makeInvestigationRow()]]
+    dbMock = buildDbMock()
+    ;(generateText as Mock).mockResolvedValue({ text: 'briefing text' })
+    infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+  })
+
+  afterEach(() => {
+    infoSpy.mockRestore()
+    vi.useRealTimers()
+  })
+
+  const retrievalLines = () =>
+    infoSpy.mock.calls.filter((c: unknown[]) => c[0] === '[retrieval]').map((c: unknown[]) => c[1] as string)
+
+  async function runToCompletion() {
+    let settled = false
+    const run = runBriefingGeneration({ db: dbMock as unknown as DbLike, investigationId: INVESTIGATION_ID })
+      .finally(() => { settled = true })
+    for (let i = 0; i < 20 && !settled; i++) {
+      await vi.advanceTimersByTimeAsync(1000)
+    }
+    await run
+  }
+
+  it('a search that resolves after the 5 s timeout still yields exactly one line, outcome timeout', async () => {
+    ;(searchDocumentChunksWithReason as Mock).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(
+            () =>
+              resolve({
+                results: [{ id: 'late-chunk', title: 't', content: 'c', similarity: 0.9 }],
+                reason: 'hits',
+                candidates: 1,
+                bestSimilarity: 0.9,
+              }),
+            8000
+          )
+        })
+    )
+
+    await runToCompletion()
+    // Let the late resolution land, then flush anything it might schedule.
+    await vi.advanceTimersByTimeAsync(10_000)
+    await vi.runAllTimersAsync()
+
+    const lines = retrievalLines()
+    expect(lines).toHaveLength(1)
+    const parsed = JSON.parse(lines[0])
+    expect(parsed.outcome).toBe('timeout')
+    expect(parsed.reason).toBeNull()
+    expect(parsed.hits).toBe(0)
+    expect(parsed.chunkIds).toEqual([])
+    expect(lines[0]).not.toContain('late-chunk')
+  })
+
+  it('a search that wins the race leaves no pending retrieval timer behind', async () => {
+    ;(searchDocumentChunksWithReason as Mock).mockResolvedValueOnce({
+      results: [],
+      reason: 'no-corpus',
+      candidates: null,
+      bestSimilarity: null,
+    })
+
+    await runToCompletion()
+
+    expect(retrievalLines()).toHaveLength(1)
+    // The 5 s race timer must be cleared once retrieval settles.
+    expect(vi.getTimerCount()).toBe(0)
+  })
+})
