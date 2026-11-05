@@ -15,8 +15,8 @@
  *    renderInline, role words, eyebrows, Primary Authority, no invented
  *    Outcome box, no edge rule, no every-5th divider, no evidence callout.
  *
- * The section routing below mirrors BriefingView's heading tests, in the same
- * order. Questions Worth Asking is rendered by QuestionsSection's own line
+ * Sections are routed by routeSection, the same function BriefingView switches
+ * on. Questions Worth Asking is rendered by QuestionsSection's own line
  * parser, which D2 does not own; here it is flattened through preprocessBlocks,
  * which yields the same words.
  */
@@ -38,6 +38,7 @@ import {
   parseSections,
   preprocessBlocks,
   roleLabel,
+  routeSection,
 } from '@/lib/briefing/parse'
 import { BriefingView, renderInline } from '@/components/briefing/briefing-view'
 import { BRIEFING_SHAPE_FIXTURES, SEEDED_BRIEFING } from '../fixtures/letters'
@@ -57,34 +58,34 @@ interface BriefingParse {
 }
 
 function parseSection(heading: string, content: string): SectionParse {
-  const h = heading.toLowerCase()
   const prose = (): SectionParse => ({ heading, kind: 'prose', blocks: preprocessBlocks(content) })
-  if (h.includes('context') || h.includes('your concern')) return prose()
-  if (h.includes('what governs') || h.includes('governs this')) {
-    const blocks = parseGoverningDocuments(content)
-    return blocks.some((b) => b.type === 'document') ? { heading, kind: 'governs', blocks } : prose()
-  }
-  if (h.includes('key players')) {
-    const players = parsePlayers(content)
-    return players.length > 0 ? { heading, kind: 'players', players } : prose()
-  }
-  if (h.includes('public record') || h.includes('record shows')) return prose()
-  if (h.includes('what you can do') || h.includes('you can do')) {
-    const fippa = extractFippaLetter(content)
-    if (!fippa) return prose()
-    return {
-      heading,
-      kind: 'actions',
-      before: fippa.before ? preprocessBlocks(fippa.before) : [],
-      letter: fippa.letter,
-      after: fippa.after ? preprocessBlocks(fippa.after) : [],
+  switch (routeSection(heading)) {
+    case 'governs': {
+      const blocks = parseGoverningDocuments(content)
+      return blocks.some((b) => b.type === 'document') ? { heading, kind: 'governs', blocks } : prose()
     }
+    case 'players': {
+      const players = parsePlayers(content)
+      return players.length > 0 ? { heading, kind: 'players', players } : prose()
+    }
+    case 'actions': {
+      const fippa = extractFippaLetter(content)
+      if (!fippa) return prose()
+      return {
+        heading,
+        kind: 'actions',
+        before: fippa.before ? preprocessBlocks(fippa.before) : [],
+        letter: fippa.letter,
+        after: fippa.after ? preprocessBlocks(fippa.after) : [],
+      }
+    }
+    case 'comparison': {
+      const jurisdictions = parseJurisdictions(content)
+      return jurisdictions.length > 0 ? { heading, kind: 'comparison', jurisdictions } : prose()
+    }
+    default:
+      return prose()
   }
-  if (h.includes('other places') || h.includes('how other')) {
-    const jurisdictions = parseJurisdictions(content)
-    return jurisdictions.length > 0 ? { heading, kind: 'comparison', jurisdictions } : prose()
-  }
-  return prose()
 }
 
 function parseBriefing(text: string): BriefingParse {
@@ -406,6 +407,26 @@ describe('goldens: one hand-written parse per briefing shape', () => {
 })
 
 // ---- the rules the goldens rest on, one at a time ---------------------------
+
+describe('routeSection', () => {
+  it.each([
+    ['Context', 'context'],
+    ['Your Concern', 'context'],
+    ['What Governs This', 'governs'],
+    ['Key Players', 'players'],
+    ['What the Public Record Shows', 'record'],
+    ['What You Can Do', 'actions'],
+    ['How Other Places Handle This', 'comparison'],
+    ['Questions Worth Asking', 'questions'],
+    ['What This Analysis Cannot See', 'limitations'],
+    ['Limitations', 'limitations'],
+    ['Appendix', 'other'],
+    // First match wins: a heading naming two sections goes to the earlier test.
+    ['Context: what governs this', 'context'],
+  ])('%s -> %s', (heading, kind) => {
+    expect(routeSection(heading)).toBe(kind)
+  })
+})
 
 describe('parse rules', () => {
   it('a lone heading with no fields is an eyebrow, and the primary goes to the first block with fields', () => {

@@ -42,6 +42,33 @@ export function parseSections(text: string): ParsedSection[] {
   return sections
 }
 
+// ---- Section router: which renderer a ## section gets. BriefingView switches on this. ----
+
+export type SectionKind =
+  | 'context'
+  | 'governs'
+  | 'players'
+  | 'record'
+  | 'actions'
+  | 'comparison'
+  | 'questions'
+  | 'limitations'
+  | 'other'
+
+/** Heading tests in BriefingView's historical order: the first match wins. */
+export function routeSection(heading: string): SectionKind {
+  const h = heading.toLowerCase()
+  if (h.includes('context') || h.includes('your concern')) return 'context'
+  if (h.includes('what governs') || h.includes('governs this')) return 'governs'
+  if (h.includes('key players')) return 'players'
+  if (h.includes('public record') || h.includes('record shows')) return 'record'
+  if (h.includes('what you can do') || h.includes('you can do')) return 'actions'
+  if (h.includes('other places') || h.includes('how other')) return 'comparison'
+  if (h.includes('questions worth') || h.includes('worth asking')) return 'questions'
+  if (h.includes('cannot see') || h.includes('limitations')) return 'limitations'
+  return 'other'
+}
+
 // ---- Title extractor (new prompt emits `# Title`; old prompts used ## Your Concern) ----
 
 export function extractTitle(text: string): string | null {

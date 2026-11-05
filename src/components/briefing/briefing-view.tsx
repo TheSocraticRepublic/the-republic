@@ -22,6 +22,7 @@ import {
   type AccessLevel,
   type DocumentField,
   parseSections,
+  routeSection,
   extractTitle,
   isInsightParagraph,
   isPullQuote,
@@ -1581,13 +1582,13 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
       {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onScrollToQuestions={onScrollToQuestions} />}
 
       {sections.map((section, i) => {
-        const headingLower = section.heading.toLowerCase()
+        const kind = routeSection(section.heading)
         const isFirst = i === 0
         const showDivider = !isFirst
 
         // --- Context (new prompt) or Your Concern (old prompt, backward compat) ---
         // Both render as lead prose without a card box.
-        if (headingLower.includes('context') || headingLower.includes('your concern')) {
+        if (kind === 'context') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
@@ -1598,7 +1599,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- What Governs This (document discovery) ---
-        if (headingLower.includes('what governs') || headingLower.includes('governs this')) {
+        if (kind === 'governs') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
@@ -1609,7 +1610,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- Key Players ---
-        if (headingLower.includes('key players')) {
+        if (kind === 'players') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
@@ -1620,7 +1621,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- What the Public Record Shows (analysis, Inter only — spec 3.1) ---
-        if (headingLower.includes('public record') || headingLower.includes('record shows')) {
+        if (kind === 'record') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
@@ -1633,7 +1634,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- What You Can Do (civic actions + FIPPA letter) ---
-        if (headingLower.includes('what you can do') || headingLower.includes('you can do')) {
+        if (kind === 'actions') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
@@ -1644,7 +1645,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- How Other Places Handle This (mirror comparison) ---
-        if (headingLower.includes('other places') || headingLower.includes('how other')) {
+        if (kind === 'comparison') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
@@ -1655,7 +1656,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- Questions Worth Asking (gadfly) ---
-        if (headingLower.includes('questions worth') || headingLower.includes('worth asking')) {
+        if (kind === 'questions') {
           return (
             <div
               key={i}
@@ -1676,7 +1677,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- What This Analysis Cannot See (limitations) ---
-        if (headingLower.includes('cannot see') || headingLower.includes('limitations')) {
+        if (kind === 'limitations') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
