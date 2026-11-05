@@ -193,11 +193,26 @@ describe('BallotList grouping', () => {
     expect(groups.map((g) => g.label)).toEqual(['Nay', 'spoiled'])
   })
 
-  it('renders the group headers in order, with counts', () => {
+  // Razor C1: the rows can be a few short of the House's totals, so neither
+  // the headers nor the list title carry a count; the official figures are
+  // the Tally's alone.
+  it('renders the group headers in order, with no count, under "Recorded ballots"', () => {
     const host = html(createElement(BallotGroups, { ballots: BALLOTS, sortBy: 'party', onSort: () => {} }))
     const headers = Array.from(host.querySelectorAll('[data-ballot-group] h2')).map((h) => h.textContent)
-    expect(headers).toEqual(['Yea (2)', 'Nay (2)', 'Paired (1)', "Didn't vote (1)"])
-    expect(host.textContent).toContain('All Ballots (6)')
+    expect(headers).toEqual(['Yea', 'Nay', 'Paired', "Didn't vote"])
+    expect(host.textContent).toContain('Recorded ballots')
+    expect(host.textContent).not.toMatch(/All Ballots/i)
+    expect(host.textContent).not.toMatch(/\(\d+\)/)
+  })
+
+  it('group headers stick, and each row carries its ballot for a screen reader (Jen C1)', () => {
+    const host = html(createElement(BallotGroups, { ballots: BALLOTS, sortBy: 'name', onSort: () => {} }))
+    const h2 = host.querySelector('[data-ballot-group="no"] h2')!
+    expect(h2.className.split(/\s+/)).toEqual(expect.arrayContaining(['sticky', 'top-0', 'bg-surface-2', 'text-sm']))
+    expect(h2.className).not.toContain('uppercase')
+    const rows = Array.from(host.querySelectorAll('[data-ballot-group="no"] a'))
+    expect(rows.map((r) => r.querySelector('.sr-only')!.textContent)).toEqual([', Nay', ', Nay'])
+    expect(rows[0].className.split(/\s+/)).toContain('scroll-mt-8')
   })
 
   it('the sort control reports its state with aria-pressed (mobile P2-5)', () => {

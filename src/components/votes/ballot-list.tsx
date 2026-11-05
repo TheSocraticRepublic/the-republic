@@ -97,8 +97,12 @@ export function BallotGroups({ ballots, sortBy, onSort }: BallotGroupsProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
+        {/* No count here or on the group headers: the rows are the ballots
+            the app has on record, which can be a few short of the House's
+            totals (the sync skips MPs it does not hold), and the official
+            figures are the Tally's (Razor C1). */}
         <p className="text-3xs font-semibold uppercase text-text-faint">
-          All Ballots ({ballots.length})
+          Recorded ballots
         </p>
         <div className="flex items-center gap-2" role="group" aria-label="Sort ballots by">
           {(Object.keys(SORT_LABELS) as BallotSort[]).map((s) => (
@@ -123,23 +127,27 @@ export function BallotGroups({ ballots, sortBy, onSort }: BallotGroupsProps) {
       <div className="space-y-6">
         {groups.map((g) => (
           <section key={g.ballot} data-ballot-group={g.ballot} aria-labelledby={`ballot-group-${g.ballot}`}>
+            {/* Sticky, so a row deep in a long group still has its ballot on
+                screen (Jen C1, E2a's letter-header recipe). */}
             <h2
               id={`ballot-group-${g.ballot}`}
-              className="mb-1 px-3 text-3xs font-semibold uppercase text-text-muted"
+              className="sticky top-0 z-10 mb-1 bg-surface-2 px-3 py-1 text-sm font-semibold text-text-secondary"
             >
-              {g.label} <span className="tabular-nums text-text-faint">({g.rows.length})</span>
+              {g.label}
             </h2>
             <div className="space-y-1">
               {g.rows.map((b) => (
                 <Link
                   key={b.mpId}
                   href={`/votes/mp/${b.mpId}`}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-150 hover:bg-surface-3"
+                  className="flex scroll-mt-8 items-center gap-3 rounded-lg px-3 py-2 transition-all duration-150 hover:bg-surface-3"
                 >
                   <span className="text-xs text-text-secondary truncate">
                     {b.mpName}
                   </span>
                   <PartyBadge party={b.party} />
+                  {/* The ballot, for a link list read out of its group. */}
+                  <span className="sr-only">, {g.label}</span>
                 </Link>
               ))}
             </div>
