@@ -68,7 +68,7 @@ import { MpProfileCard } from '@/components/votes/mp-profile-card'
 import AllMPsPage from '@/app/(app)/votes/mp/page'
 import RecentVotesPage from '@/app/(app)/votes/recent/page'
 import MpProfilePage from '@/app/(app)/votes/mp/[mpId]/page'
-import VoteDetailPage from '@/app/(app)/votes/vote/[voteId]/page'
+import VoteDetailPage, { generateMetadata as voteMetadata } from '@/app/(app)/votes/vote/[voteId]/page'
 import BillDetailPage from '@/app/(app)/votes/bill/[billId]/page'
 import PublicProfilePage from '@/app/(app)/u/[displayName]/page'
 import ProfilePage from '@/app/(app)/profile/page'
@@ -428,6 +428,14 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     expect(container.textContent!.split('Second reading').length - 1).toBe(1)
     expect(container.textContent!.split('45-1/12').length - 1).toBe(1)
     expect(container.textContent!.split('2026-10-01').length - 1).toBe(1)
+  })
+
+  // Jen E2b C10: the tab names the division and the motion.
+  it('/votes/vote/[voteId] titles the tab "Vote 45-1/12: <motion>", and plainly "Vote" for an unknown id', async () => {
+    dbResults.push([{ session: '45-1', number: 12, descriptionEn: 'Second reading' }])
+    expect(await voteMetadata({ params: Promise.resolve({ voteId: 'v-1' }) })).toEqual({ title: 'Vote 45-1/12: Second reading' })
+    dbResults.push([])
+    expect(await voteMetadata({ params: Promise.resolve({ voteId: 'nope' }) })).toEqual({ title: 'Vote' })
   })
 
   // Jen E2b C9: the related-bill link joins number and title with a comma,

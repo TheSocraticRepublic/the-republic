@@ -11,17 +11,33 @@ import { DetailHeader } from '@/components/layout/detail-header'
 import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
 
-export const metadata = {
-  title: 'Vote Detail',
+interface PageProps {
+  params: Promise<{ voteId: string }>
+}
+
+/**
+ * The tab names the division and its motion, so two vote tabs or two history
+ * entries never read the same (Jen E2b C10). An unknown id keeps a plain
+ * title; the page itself then 404s.
+ */
+export async function generateMetadata({ params }: PageProps) {
+  const { voteId } = await params
+  const [vote] = await getDb()
+    .select({
+      session: federalVotes.session,
+      number: federalVotes.number,
+      descriptionEn: federalVotes.descriptionEn,
+    })
+    .from(federalVotes)
+    .where(eq(federalVotes.id, voteId))
+    .limit(1)
+  if (!vote) return { title: 'Vote' }
+  return { title: `Vote ${vote.session}/${vote.number}: ${vote.descriptionEn}` }
 }
 
 // Above this many characters the motion's h1 steps down a size on phones
 // (Jen E2b C5): 49 of the 190 divisions in 45-1 are longer.
 const LONG_MOTION_CHARS = 140
-
-interface PageProps {
-  params: Promise<{ voteId: string }>
-}
 
 export default async function VoteDetailPage({ params }: PageProps) {
   const { voteId } = await params
