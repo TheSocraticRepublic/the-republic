@@ -1125,6 +1125,109 @@ export const BRIEFING_SHAPE_FIXTURES: readonly BriefingShapeFixture[] = [
     ),
   },
   {
+    id: 'mirror-lead-in-and-closing',
+    shape:
+      'A lead-in before the first place, prompt-style labels, prose between a heading and its first field, and a closing Argument from Existence paragraph after the last field (Razor C2, W1).',
+    content: lines(
+      '## How Other Places Handle This',
+      '',
+      'Several comparable municipalities have handled this differently:',
+      '',
+      '### Synthetic Town H (QA)',
+      '- **What they did differently:** Posted every permit online.',
+      '- **Outcome:** Reported but unverified.',
+      '',
+      '### Synthetic Town I (QA)',
+      'It runs a smaller program.',
+      '- **What they did:** Required a hearing.',
+      '',
+      'If two comparable towns can publish permits, the status quo here needs a reason.'
+    ),
+  },
+  {
+    id: 'mirror-bullet-inside-heading',
+    shape: 'A bold-led content bullet inside a ### place (Razor C1 probe 1: it became a fake jurisdiction).',
+    content: lines(
+      '## How Other Places Handle This',
+      '',
+      '### Synthetic Saanich (QA)',
+      '- **Policy 4.2** requires notice within 30 days.',
+      '- **Outcome:** Fewer complaints.'
+    ),
+  },
+  {
+    id: 'mirror-colonless-labels',
+    shape: 'Mirror labels in bold with no colon (Razor C1 probe 2: each became a fake jurisdiction).',
+    content: lines(
+      '## How Other Places Handle This',
+      '',
+      '### Synthetic Saanich (QA)',
+      '- **What they did differently** — the town requires notice.',
+      '- **Why it matters** — residents hear before approval.',
+      '- **Outcome** (unverified) — fewer complaints.'
+    ),
+  },
+  {
+    id: 'mirror-prompt-labels',
+    shape: "Bold-only place names with the briefing prompt's own label phrasings (Razor W2).",
+    content: lines(
+      '## How Other Places Handle This',
+      '',
+      '**Synthetic Town J (QA)**',
+      '- **What they did differently:** Published every permit.',
+      "- **Why it matters for the citizen's situation:** Residents could object in time.",
+      '- **What the outcome was:** Reported but unverified.'
+    ),
+  },
+  {
+    id: 'players-extra-fields',
+    shape: 'A lead-in, a note under a name, What they do and How they relate, and a closing paragraph (Razor C2).',
+    content: lines(
+      '## Key Players',
+      '',
+      'These are the people with a hand in it:',
+      '',
+      '- **Name:** Synthetic Regulator (QA)',
+      'Named in the permit file.',
+      '- **Role:** regulator',
+      '- **What they do:** Issues cutting permits.',
+      '- **How they relate:** Answers to the minister.',
+      '- **Why they matter:** They decide.',
+      '',
+      'Taken together, the regulator holds most of the cards.'
+    ),
+  },
+  {
+    id: 'players-wrapped-value',
+    shape: 'A field value wrapped onto an indented line (Razor C2: it became a fake player).',
+    content: lines(
+      '## Key Players',
+      '',
+      '- **Name:** Synthetic Council (QA)',
+      '- **Role:** decision_maker',
+      '- **Why they matter:** It decides',
+      '  whether notice is given.',
+      '- **Track record:** None found.'
+    ),
+  },
+  {
+    id: 'document-intro',
+    shape: 'A section lead-in, prose between a document heading and its first field, and prose after the last field (Razor C2).',
+    content: lines(
+      '## What Governs This',
+      '',
+      'Two documents set the rules here.',
+      '',
+      '### Zoning Bylaw 2287 (QA)',
+      'The bylaw was amended in 2019.',
+      '- **What it is:** The bylaw that sets the height limit.',
+      "- **How to find it:** The city clerk's office.",
+      '- **Access:** Public',
+      '',
+      'Council can amend it again.'
+    ),
+  },
+  {
     id: 'mixed-list-lead-in',
     shape: 'A lead-in line in the same block as a mixed numbered and bulleted list.',
     content: lines(

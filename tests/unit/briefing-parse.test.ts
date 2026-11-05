@@ -31,6 +31,7 @@ import {
   type JurisdictionPart,
   type PlayerPart,
   type PlayersItem,
+  detectAccess,
   extractFippaLetter,
   extractTitle,
   getRoleKey,
@@ -234,6 +235,120 @@ const GOLDENS: Record<string, BriefingParse> = {
   'name-field': {
     title: null,
     sections: [{ heading: 'Key Players', kind: 'players', items: [player('Mill Creek Water Users (QA)', 'affected')] }],
+  },
+  'mirror-lead-in-and-closing': {
+    title: null,
+    sections: [
+      {
+        heading: 'How Other Places Handle This',
+        kind: 'comparison',
+        items: [
+          prose('Several comparable municipalities have handled this differently:'),
+          jur('Synthetic Town H (QA)', what('Posted every permit online.'), outcome('Reported but unverified.')),
+          jur('Synthetic Town I (QA)', body('It runs a smaller program.'), what('Required a hearing.')),
+          prose('If two comparable towns can publish permits, the status quo here needs a reason.'),
+        ],
+      },
+    ],
+  },
+  'mirror-bullet-inside-heading': {
+    title: null,
+    sections: [
+      {
+        heading: 'How Other Places Handle This',
+        kind: 'comparison',
+        items: [jur('Synthetic Saanich (QA)', body('**Policy 4.2** requires notice within 30 days.'), outcome('Fewer complaints.'))],
+      },
+    ],
+  },
+  'mirror-colonless-labels': {
+    title: null,
+    sections: [
+      {
+        heading: 'How Other Places Handle This',
+        kind: 'comparison',
+        items: [
+          jur(
+            'Synthetic Saanich (QA)',
+            body('**What they did differently** — the town requires notice.'),
+            body('**Why it matters** — residents hear before approval.'),
+            body('**Outcome** (unverified) — fewer complaints.')
+          ),
+        ],
+      },
+    ],
+  },
+  'mirror-prompt-labels': {
+    title: null,
+    sections: [
+      {
+        heading: 'How Other Places Handle This',
+        kind: 'comparison',
+        items: [
+          jur(
+            'Synthetic Town J (QA)',
+            what('Published every permit.'),
+            why('Residents could object in time.'),
+            outcome('Reported but unverified.')
+          ),
+        ],
+      },
+    ],
+  },
+  'players-extra-fields': {
+    title: null,
+    sections: [
+      {
+        heading: 'Key Players',
+        kind: 'players',
+        items: [
+          playersProse('These are the people with a hand in it:'),
+          playerOf(
+            'Synthetic Regulator (QA)',
+            'regulator',
+            note('Named in the permit file.'),
+            whatDo('Issues cutting permits.'),
+            relate('Answers to the minister.'),
+            whyM('They decide.')
+          ),
+          playersProse('Taken together, the regulator holds most of the cards.'),
+        ],
+      },
+    ],
+  },
+  'players-wrapped-value': {
+    title: null,
+    sections: [
+      {
+        heading: 'Key Players',
+        kind: 'players',
+        items: [player('Synthetic Council (QA)', 'decision_maker', 'It decides whether notice is given.', 'None found.')],
+      },
+    ],
+  },
+  'document-intro': {
+    title: null,
+    sections: [
+      {
+        heading: 'What Governs This',
+        kind: 'governs',
+        blocks: [
+          { type: 'prose', text: 'Two documents set the rules here.' },
+          {
+            type: 'document',
+            name: 'Zoning Bylaw 2287 (QA)',
+            intro: 'The bylaw was amended in 2019.',
+            fields: [
+              { label: 'What it is', value: 'The bylaw that sets the height limit.' },
+              { label: 'How to find it', value: "The city clerk's office." },
+              { label: 'Access', value: 'Public' },
+            ],
+            isPrimary: true,
+          },
+          { type: 'prose', text: 'Council can amend it again.' },
+        ],
+      },
+    ],
   },
   'many-paragraphs': {
     title: null,
@@ -589,33 +704,117 @@ describe('parse rules', () => {
 // ---- the word-sequence property ---------------------------------------------
 
 /**
- * Field labels the renderer replaces with its own eyebrow or position. Written
- * down, not derived: removed from both sides at the start of a line.
+ * Every field label variant the parser accepts and the renderer replaces with
+ * its own eyebrow, badge or position. Written down here, not imported from the
+ * parser: removed from both sides at the start of a line.
  */
-const REPLACED_LABELS = [
-  'Name:',
-  'Role:',
-  'Why they matter:',
-  'Track record:',
-  'Document name:',
-  'What it is:',
-  'Access:',
-  'Outcome:',
-  'What they did:',
-  'Why it matters:',
+const REPLACED_LABELS: RegExp[] = [
+  // Key Players: the name and role go to the card header and badge; the rest render without a label.
+  /^name:/i,
+  /^role:/i,
+  /^why they matter:/i,
+  /^track record:/i,
+  /^what they do:/i,
+  /^how they relate:/i,
+  // What Governs This: the name goes to the header, Access to the badge, How to find it to its own footer label.
+  /^document name:/i,
+  /^document:/i,
+  /^what it is:/i,
+  /^access:/i,
+  /^(?:how|where) to find(?: it)?:/i,
+  // How Other Places Handle This: the three Mirror labels, in every phrasing the parser takes.
+  /^what they did(?:\s+[^:*.!?\n]{1,60}?)?:/i,
+  /^why it matters(?:\s+[^:*.!?\n]{1,60}?)?:/i,
+  /^(?:outcome|what the outcome was):/i,
 ]
 
 const words = (text: string): string[] => text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []
 
 const stripLabel = (line: string): string => {
   for (const label of REPLACED_LABELS) {
-    if (line.toLowerCase().startsWith(label.toLowerCase())) return line.slice(label.length)
+    const m = line.match(label)
+    if (m) return line.slice(m[0].length)
   }
   return line
 }
+const isReplacedLabel = (label: string) => REPLACED_LABELS.some((re) => re.test(`${label}:`))
+
+/**
+ * DocumentCard's layout, applied to the input so it reads in render order:
+ * an Access line moves up to just after its card's start (the badge sits in
+ * the header), and a How/Where to find line moves down to the end of its
+ * field run (its footer). Card starts: a ### or bold-only heading, or a
+ * Document name field. Written down, not derived from the parser.
+ */
+function governsInRenderOrder(markdown: string): string {
+  const out: string[] = []
+  let inGoverns = false
+  const isCardStart = (l: string) => /^###\s/.test(l) || /^\*\*[^*]+\*\*\s*$/.test(l) || /^[-*]\s+\*\*Document name:\*\*/i.test(l)
+  const isField = (l: string) => /^[-*]\s+\*\*.+?:\*\*/.test(l)
+  const lines = markdown.split('\n')
+  let i = 0
+  while (i < lines.length) {
+    const l = lines[i]
+    if (/^##\s/.test(l)) inGoverns = /governs/i.test(l)
+    if (!inGoverns || !isCardStart(l)) {
+      out.push(l)
+      i++
+      continue
+    }
+    // One card: its start line, then lines up to the next card start or section.
+    let j = i + 1
+    while (j < lines.length && !isCardStart(lines[j]) && !/^##\s/.test(lines[j])) j++
+    const card = lines.slice(i + 1, j)
+    // A field with its continuation lines.
+    const take = (re: RegExp): string[] => {
+      const k = card.findIndex((x) => re.test(x))
+      if (k === -1) return []
+      let e = k + 1
+      while (e < card.length && card[e].trim() && !isField(card[e])) e++
+      return card.splice(k, e - k)
+    }
+    const access = take(/^[-*]\s+\*\*Access:\*\*/i)
+    const howTo = take(/^[-*]\s+\*\*(?:How|Where) to find(?: it)?:\*\*/i)
+    // The end of the field run: after the last field and its continuation lines.
+    let end = -1
+    card.forEach((x, k) => {
+      if (isField(x)) end = k
+    })
+    if (end !== -1) while (end + 1 < card.length && card[end + 1].trim()) end++
+    card.splice(end + 1, 0, ...howTo)
+    out.push(l, ...access, ...card)
+    i = j
+  }
+  return out.join('\n')
+}
+
+/**
+ * PlayersSection's layout, applied to the input: a Role line moves up to just
+ * after its player's Name line or bold name (the badge sits in the header).
+ * Written down, not derived from the parser.
+ */
+function playersInRenderOrder(markdown: string): string {
+  const out: string[] = []
+  let inPlayers = false
+  let nameAt = -1
+  for (const l of markdown.split('\n')) {
+    if (/^##\s/.test(l)) {
+      inPlayers = /key players/i.test(l)
+      nameAt = -1
+    }
+    const text = l.replace(/^\s*[-*]\s+/, '').trim()
+    if (inPlayers && (/^\*\*name:\*\*/i.test(text) || /^name:/i.test(text) || /^\*\*[^*]+\*\*$/.test(text))) nameAt = out.length
+    if (inPlayers && nameAt !== -1 && /^(?:\*\*role:\*\*|\*\*role\*\*\s*:|role:)/i.test(text)) {
+      out.splice(nameAt + 1, 0, l)
+      continue
+    }
+    out.push(l)
+  }
+  return out.join('\n')
+}
 
 function inputWords(markdown: string): string[] {
-  const text = markdown
+  const text = playersInRenderOrder(governsInRenderOrder(markdown))
     .split('\n')
     .map((line) =>
       line
@@ -655,15 +854,24 @@ function outputWords(parse: BriefingParse): string[] {
         s.blocks.forEach((b) => out.push(...blockText(b)))
         break
       case 'governs':
+        // In render order, as DocumentCard lays a card out: name, Access badge,
+        // intro, the remaining fields under their labels, How to find it last.
         for (const b of s.blocks) {
           if (b.type === 'eyebrow') out.push(b.text)
           else if (b.type === 'prose') preprocessBlocks(b.text).forEach((x) => out.push(...blockText(x)))
           else {
+            const access = b.fields.find((f) => f.label.toLowerCase() === 'access')
+            const badge = access && detectAccess(access.value) ? access : undefined
+            const howTo = b.fields.find((f) => /^(?:how|where) to find/i.test(f.label))
             out.push(inlineText(b.name))
+            if (badge) out.push(badge.value)
+            if (b.intro) out.push(inlineText(b.intro))
             for (const f of b.fields) {
-              if (!REPLACED_LABELS.includes(`${f.label}:`)) out.push(f.label)
+              if (f === badge || f === howTo) continue
+              if (!isReplacedLabel(f.label)) out.push(f.label)
               out.push(inlineText(f.value))
             }
+            if (howTo) out.push(inlineText(howTo.value))
           }
         }
         break
@@ -818,6 +1026,43 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
       const prose = [...doc.querySelectorAll('p')].find((e) => e.textContent?.includes('The outcome is not documented.'))
       expect(prose, id).toBeDefined()
     }
+  })
+
+  it('one place, one card: bold-led bullets and colon-less labels inside a ### place invent nothing (Razor C1)', () => {
+    for (const id of ['mirror-bullet-inside-heading', 'mirror-colonless-labels']) {
+      const doc = render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === id)!.content)
+      const cards = [...doc.querySelectorAll('div')].filter((d) => styleOf(d).includes('border-left:2px solid var(--accent-mirror)'))
+      expect(cards, id).toHaveLength(1)
+      expect(cards[0].textContent, id).toContain('Synthetic Saanich (QA)')
+    }
+  })
+
+  it('section prose sits outside the cards, in source order; parts keep source order (Razor C2, W1)', () => {
+    const doc = render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === 'mirror-lead-in-and-closing')!.content)
+    const cards = [...doc.querySelectorAll('div')].filter((d) => styleOf(d).includes('border-left:2px solid var(--accent-mirror)'))
+    expect(cards).toHaveLength(2)
+    const [lead] = findAll(doc, 'p', 'Several comparable municipalities have handled this differently:')
+    const [closing] = findAll(doc, 'p', 'If two comparable towns can publish permits, the status quo here needs a reason.')
+    for (const p of [lead, closing]) {
+      expect(p).toBeDefined()
+      expect(cards.some((c) => c.contains(p))).toBe(false)
+    }
+    // Town I: its prose renders above its WHAT THEY DID box, as written.
+    const townI = cards[1].textContent ?? ''
+    expect(townI.indexOf('It runs a smaller program.')).toBeLessThan(townI.indexOf('WHAT THEY DID'))
+    // Document order: lead, both cards, closing.
+    const all = [...doc.querySelectorAll('p, div')]
+    expect(all.indexOf(lead)).toBeLessThan(all.indexOf(cards[0]))
+    expect(all.indexOf(closing)).toBeGreaterThan(all.indexOf(cards[1]))
+  })
+
+  it('players and documents: lead-in, notes and closing prose all reach the page (Razor C2)', () => {
+    const players = textOf(render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === 'players-extra-fields')!.content))
+    for (const s of ['These are the people with a hand in it:', 'Named in the permit file.', 'Issues cutting permits.', 'Answers to the minister.', 'Taken together, the regulator holds most of the cards.']) {
+      expect(players).toContain(s)
+    }
+    const docs = textOf(render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === 'document-intro')!.content))
+    for (const s of ['Two documents set the rules here.', 'The bylaw was amended in 2019.', 'Council can amend it again.']) expect(docs).toContain(s)
   })
 
   it('no stray rule at the end of a section', () => {
