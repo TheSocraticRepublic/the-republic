@@ -10,7 +10,8 @@ import { ChevronLeft } from 'lucide-react'
  * action.
  *
  * `arm` is optional because profile pages belong to no arm: without one the
- * bar takes the neutral `--border-strong` instead of an arm accent.
+ * bar is `--text-faint` at 60%, neutral but at the arm bars' presence
+ * (2.85:1, per Jen E1 C6), not the rule's colour.
  *
  * The back link is a real `<Link>`: a 24px box in flow on every pointer, and
  * on coarse pointers a 44px hit area laid over it by an `::after` (10px above
@@ -30,7 +31,7 @@ interface DetailHeaderProps {
 export function DetailHeader({ arm, backHref, backLabel, title, meta, action }: DetailHeaderProps) {
   const barColor = arm
     ? `color-mix(in srgb, var(--accent-${arm}) 60%, transparent)`
-    : 'var(--border-strong)'
+    : 'color-mix(in srgb, var(--text-faint) 60%, transparent)'
   return (
     <div data-detail-header>
       <Link

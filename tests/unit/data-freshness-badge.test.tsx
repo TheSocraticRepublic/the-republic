@@ -326,7 +326,9 @@ describe('DetailHeader', () => {
     expect(container.querySelector('[data-detail-meta]')).toBeNull()
     expect(container.querySelector('h1')!.textContent).toBe('Profile')
     const bar = container.querySelector('[data-accent-bar]') as HTMLElement
-    expect(bar.getAttribute('style')).toContain('--border-strong')
+    // Jen E1 C6: neutral, but not the rule's colour.
+    expect(bar.getAttribute('style')).toContain('color-mix(in srgb, var(--text-faint) 60%, transparent)')
+    expect(bar.getAttribute('style')).not.toContain('--border-strong')
   })
 })
 
