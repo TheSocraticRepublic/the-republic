@@ -3,7 +3,8 @@
  * (`voteResultEnum`, `mpBallotEnum` in src/lib/db/schema.ts).
  *
  * The outcome is neutral text: no green for carried, no red for defeated
- * (app-arms P1-9). A tie displays as defeated (the plan's R-A4 rule): a tied
+ * (app-arms P1-9). It is a value, so it is a word in sentence case, not
+ * tracked caps (Jen E2b C4). A tie displays as defeated (the plan's R-A4 rule): a tied
  * motion did not carry.
  */
 
@@ -43,7 +44,7 @@ export function ResultLabel({ result, size = 'xs' }: ResultLabelProps) {
   return (
     <span
       data-result={result}
-      className={`${size === '2xs' ? 'text-2xs' : 'text-xs'} font-semibold uppercase tracking-wider text-text-secondary`}
+      className={`${size === '2xs' ? 'text-2xs' : 'text-xs'} font-semibold text-text-secondary`}
     >
       {resultLabelText(result)}
     </span>

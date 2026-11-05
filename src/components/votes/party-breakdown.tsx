@@ -1,5 +1,5 @@
 import { PARTY_COLORS } from './party-badge'
-import { BALLOT_LABELS } from './result-label'
+import { VoteBadge } from './vote-badge'
 
 interface PartyVoteData {
   party: string
@@ -11,13 +11,12 @@ interface PartyBreakdownProps {
   partyVotes: PartyVoteData[]
 }
 
-// The keys are parsePartyVotes' normalised positions; the labels are the
-// House's own words, the same ones the ballots use (app-arms P2-4).
-const POSITION_STYLES: Record<string, { color: string; label: string }> = {
-  Yes: { color: 'var(--status-success)', label: BALLOT_LABELS.yes },
-  No: { color: 'var(--status-danger)', label: BALLOT_LABELS.no },
-  Paired: { color: 'var(--status-warning)', label: BALLOT_LABELS.paired },
-  Unknown: { color: 'var(--status-neutral)', label: 'Unknown' },
+// parsePartyVotes' normalised positions, as the stored ballot they are, so a
+// party's position draws the same chip as an MP's ballot (Jen E2b C4).
+const POSITION_BALLOTS: Record<string, string> = {
+  Yes: 'yes',
+  No: 'no',
+  Paired: 'paired',
 }
 
 export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
@@ -30,7 +29,6 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
       </p>
       {partyVotes.map((pv) => {
         const partyColor = PARTY_COLORS[pv.party] ?? '#8F8F8F'
-        const posStyle = POSITION_STYLES[pv.position] ?? POSITION_STYLES.Unknown
 
         return (
           <div key={pv.party} className="flex items-center justify-between gap-3">
@@ -42,15 +40,7 @@ export function PartyBreakdown({ partyVotes }: PartyBreakdownProps) {
               <span className="text-xs text-text-secondary truncate">{pv.party}</span>
             </span>
             <span className="flex items-center gap-2 flex-shrink-0">
-              <span
-                className="inline-flex items-center rounded-md px-2 py-0.5 text-2xs font-medium"
-                style={{
-                  color: posStyle.color,
-                  backgroundColor: `color-mix(in srgb, ${posStyle.color} 12%, transparent)`,
-                }}
-              >
-                {posStyle.label}
-              </span>
+              <VoteBadge ballot={POSITION_BALLOTS[pv.position] ?? pv.position} />
               {pv.disagreement != null && pv.disagreement > 0 && (
                 <span className="text-2xs text-text-faint">
                   {Math.round(pv.disagreement * 100)}% broke ranks

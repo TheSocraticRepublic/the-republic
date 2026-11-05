@@ -158,8 +158,38 @@ describe('ballot words', () => {
         { party: 'Bloc', position: 'Paired', disagreement: null },
       ],
     }))
-    const labels = Array.from(host.querySelectorAll('.rounded-md')).map((el) => el.textContent)
-    expect(labels).toEqual(['Yea', 'Nay', 'Paired'])
+    // The same chip as an MP's ballot (Jen C4), so it is VoteBadge's markup.
+    const chips = Array.from(host.querySelectorAll('[data-ballot]'))
+    expect(chips.map((el) => el.textContent)).toEqual(['Yea', 'Nay', 'Paired'])
+    expect(chips.map((el) => el.getAttribute('data-ballot'))).toEqual(['yes', 'no', 'paired'])
+  })
+
+  it('PartyBreakdown shows an unknown position as Unknown, in the neutral chip', () => {
+    const host = html(createElement(PartyBreakdown, {
+      partyVotes: [{ party: 'Green', position: 'Unknown', disagreement: null }],
+    }))
+    const chip = host.querySelector('[data-ballot]')!
+    expect(chip.textContent).toBe('Unknown')
+    expect(chip.getAttribute('style')).toContain('status-neutral')
+  })
+
+  it('ballot and outcome values are words, not tracked caps, and a ballot never wraps (Jen C4)', () => {
+    for (const ballot of ['yes', 'no', 'paired', 'didnt_vote']) {
+      const cls = html(createElement(VoteBadge, { ballot })).querySelector('span')!.className.split(/\s+/)
+      expect(cls).toContain('whitespace-nowrap')
+      expect(cls).not.toContain('uppercase')
+      expect(cls).not.toContain('tracking-wider')
+    }
+    const rl = html(createElement(ResultLabel, { result: 'passed' })).querySelector('span')!.className.split(/\s+/)
+    expect(rl).toContain('font-semibold')
+    expect(rl).not.toContain('uppercase')
+    expect(rl).not.toContain('tracking-wider')
+  })
+
+  it('VoteBadge shows a value outside the enum as stored, not as Didn\'t vote', () => {
+    const chip = html(createElement(VoteBadge, { ballot: 'spoiled' })).querySelector('span')!
+    expect(chip.textContent).toBe('spoiled')
+    expect(chip.getAttribute('style')).toContain('status-neutral')
   })
 })
 
