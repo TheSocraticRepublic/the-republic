@@ -93,6 +93,27 @@ export type BlockElement =
 // ---- Block preprocessor — handles ###, ---, bold-only lines (no colon) ----
 // Called by ProseSection before paragraph-level rendering.
 
+/** A bulleted (`- `, `* `) or numbered (`1. `, `1) `) list line. */
+const LIST_LINE = /^(?:[-*]|\d+[.)])\s+/
+
+/** One blank-line-separated paragraph that holds no list line. */
+function classifyBlock(para: string): BlockElement {
+  // --- separator → hr (only when it's JUST "---" on its own, not inside other text)
+  if (/^---\s*$/.test(para)) return { type: 'hr' }
+
+  // ### Sub-heading
+  if (para.match(/^###\s+/)) {
+    return { type: 'subheading', text: para.replace(/^###\s+/, '').replace(/\*\*/g, '').trim() }
+  }
+
+  // Bold-only line (no colon) → treat as sub-heading
+  // Must be a single line, wrapped entirely in **, no colon inside
+  const boldOnlyMatch = para.match(/^\*\*([^*:]+)\*\*\s*$/)
+  if (boldOnlyMatch && !para.includes('\n')) return { type: 'subheading', text: boldOnlyMatch[1].trim() }
+
+  return { type: 'paragraph', text: para }
+}
+
 export function preprocessBlocks(content: string): BlockElement[] {
   const result: BlockElement[] = []
 
@@ -100,37 +121,32 @@ export function preprocessBlocks(content: string): BlockElement[] {
   const rawParagraphs = content.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
 
   for (const para of rawParagraphs) {
-    // --- separator → hr (only when it's JUST "---" on its own, not inside other text)
-    if (/^---\s*$/.test(para)) {
-      result.push({ type: 'hr' })
+    const lines = para.split('\n')
+    const firstListLine = lines.findIndex((l) => LIST_LINE.test(l))
+
+    if (firstListLine === -1 || para.match(/^###\s+/)) {
+      result.push(classifyBlock(para))
       continue
     }
 
-    // ### Sub-heading
-    if (para.match(/^###\s+/)) {
-      const text = para.replace(/^###\s+/, '').replace(/\*\*/g, '').trim()
-      result.push({ type: 'subheading', text })
-      continue
-    }
+    // A lead-in written in the same block as its list ("Two things you can do
+    // this week:") is peeled off as its own block, before the list, instead of
+    // becoming the list's first bullet.
+    const leadIn = lines.slice(0, firstListLine).join('\n').trim()
+    if (leadIn) result.push(classifyBlock(leadIn))
 
-    // Bullet/numbered list paragraph
-    if (para.match(/^[-*]\s+/m) || para.match(/^\d+[.)]\s+/m)) {
-      const lines = para.split('\n').filter((l) => l.trim())
-      const items = lines.map((l) => l.replace(/^[-*]\s+/, '').replace(/^\d+[.)]\s+/, '').trim())
-      result.push({ type: 'list', items })
-      continue
-    }
-
-    // Bold-only line (no colon) → treat as sub-heading
-    // Must be a single line, wrapped entirely in **, no colon inside
-    const boldOnlyMatch = para.match(/^\*\*([^*:]+)\*\*\s*$/)
-    if (boldOnlyMatch && !para.includes('\n')) {
-      result.push({ type: 'subheading', text: boldOnlyMatch[1].trim() })
-      continue
-    }
-
-    result.push({ type: 'paragraph', text: para })
+    // Bulleted and numbered items stay items, in order.
+    const items = lines
+      .slice(firstListLine)
+      .filter((l) => l.trim())
+      .map((l) => l.replace(/^[-*]\s+/, '').replace(/^\d+[.)]\s+/, '').trim())
+    result.push({ type: 'list', items })
   }
+
+  // A rule at a section's edge separates nothing: drop it (the stray trailing
+  // `---` a briefing often ends on). Rules between blocks stay.
+  while (result.length > 0 && result[0].type === 'hr') result.shift()
+  while (result.length > 0 && result[result.length - 1].type === 'hr') result.pop()
 
   return result
 }
