@@ -247,7 +247,8 @@ Named elsewhere and not yet scheduled:
 - `next` 16.4.0 (minor) — deferred from the 2026-10-07 CI batch
 - Authenticated post-deploy checks need a session that can sign in; owner Lee
 - `/icon` (the 32px PNG favicon) redirects signed-out visitors to `/login`: the middleware public list has `/favicon` but not `/icon`. Pre-existing (the 2026-10-02 deploy behaves the same); the `.ico` favicon still serves. Found in the 2026-10-11 post-deploy check
-- Node 22.22.1 CI pin predates the 22.22.2 security release and differs from Netlify's floating NODE_VERSION=22 — review with the next dependency batch
+- Node 22.22.1 CI pin predates the 22.22.2 security release and differs from Netlify's floating NODE_VERSION=22. Reviewed with the November dependency batch (2026-11-05) and deferred again: CI's provenance step fails on any npm other than 10.9.4, so moving Node re-pins the lockfile toolchain, which needs its own batch and critic. Review with the next dependency batch, or by 2027-01-05.
+- November dependency batch notes (see Deferred from republic-deps-2026-11)
 - Lever writer redesign (template assembly) — see Deferred from the 2026-10-02 UI and filings plan
 - Structured briefing output (JSON per section)
 - AB and ON FIPPA templates (the JURIS-2 human review)
@@ -271,7 +272,7 @@ Named elsewhere and not yet scheduled:
 
 ### Deferred from 2026-08-27 audit remediation (pass 2)
 
-- ~~32 moderate/low npm vulns~~ re-measured 2026-10-08 after `republic-ci-green-deps`: full tree 26 moderate / 20 low; production tree 18 moderate / 20 low; 0 high, 0 critical in production. One dev-only high (braces, GHSA-vfj7-8cjw-p6xm) is allow-listed on one path in `audit-ci.jsonc`, review by 2027-01-05, owner Lee
+- ~~32 moderate/low npm vulns~~ re-measured 2026-10-08 after `republic-ci-green-deps`: full tree 26 moderate / 20 low; production tree 18 moderate / 20 low; 0 high, 0 critical in production. One dev-only high (braces, GHSA-vfj7-8cjw-p6xm) is allow-listed on one path in `audit-ci.jsonc`, review by 2027-01-05, owner Lee. Re-measured 2026-11-05 after `republic-deps-2026-11` (`npm audit --json` on the session branch): full tree 39 moderate / 20 low, production tree 24 moderate / 20 low, 0 high and 0 critical in both. GHSA-vfj7-8cjw-p6xm was withdrawn on 2026-10-23 (`gh api /advisories/GHSA-vfj7-8cjw-p6xm`, `withdrawn_at`), so its allow-list entry now matches nothing (audit-ci prints "Consider not allowlisting"). Removing it is Lee's call, raised on the release card
 - Unbounded all-jurisdictions query in run-briefing.ts — advisory; 3 jurisdictions currently, scales linearly
 
 ### Deferred from the 2026-10-02 UI and filings plan
@@ -292,6 +293,15 @@ Written verbatim from `~/marvin/state/plans/republic-ui-filings-2026-10/republic
 - **Votes on the landing** (arm station plus chip, landing-public L17).
 - **Briefing mobile sticky section bar** (reading-surfaces F-P1-5).
 - **CSP walk checklist** additions: allowlisted links, grain, new fonts.
+
+### Deferred from republic-deps-2026-11 (2026-11-05)
+
+Named during relay `republic-deps-2026-11` (Ted's report, Razor's review). The batch itself is merged to the session branch at `11bb0f1`.
+
+- **The media route's ZodError retry gets less guidance under zod 4.6 (Razor N1, Ted concern 1).** The 4.6.6 fix stops checking an array's elements once it's over its `.max()`. Six malformed talking points used to yield 25 issues; now they yield only `points: too_big`, so the single retry in `src/app/api/investigate/[id]/media/route.ts:244` gets less to correct from and may end in a 502. It fails gracefully, but no test covers the route.
+- **Arrays without a `.max()` still pile up every issue (Razor N2).** 2,000 bad elements give 8,001 issues under both versions. The advisory is cleared as npm reports it, which was this batch's goal. Bounding the campaign schema's unbounded arrays is a separate hardening item.
+- **The exact `vite` 8.1.6 devDependency pin has no recorded exit (Razor N4).** The next vite advisory needs a hand bump. Remove the pin once vitest's own range carries a fixed vite.
+- **`next` bundles its own zod v3 (Ted concern 2, Razor N3).** npm can't see it, and it isn't in this advisory's v4 code path. No action.
 
 ### Deferred from republic-ui-d2 (2026-11-05)
 
