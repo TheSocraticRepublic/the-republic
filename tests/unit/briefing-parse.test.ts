@@ -1259,6 +1259,24 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
     expect(findAll(pub, 'span', 'Access')).toHaveLength(0)
   })
 
+  // jsdom has no layout, so this holds the cause, not the pixels: a title with a zero
+  // flex basis shrinks to nothing beside the no-shrink badge group before the row wraps
+  // (one word per line at 375px). The harness screenshot holds the pixels.
+  it.each(['Synthetic Bylaw A (QA)', 'Synthetic Minutes F (QA)'])(
+    'the document title on %s has a real flex basis, so the badges wrap below it on a narrow card',
+    (name) => {
+      const doc = render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === 'document-access-values')!.content)
+      const [title] = findAll(doc, 'span', name)
+      expect(title).toBeDefined()
+      const flex = styleOf(title).match(/(?:^|;)flex:([^;]+)/)?.[1].trim() ?? ''
+      const [grow, , basis] = flex.split(/\s+/)
+      expect(grow).toBe('1')
+      const rem = basis?.match(/^(\d+(?:\.\d+)?)rem$/)?.[1]
+      expect(Number(rem ?? 0)).toBeGreaterThanOrEqual(10)
+      expect(styleOf(title.parentElement)).toContain('flex-wrap:wrap')
+    }
+  )
+
   it.each([
     // [card name, badge label or null, the Access value rendered as a field or null]
     ['Synthetic Bylaw A (QA)', 'Public', null],

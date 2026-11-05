@@ -641,7 +641,8 @@ function DocumentCard({
                 textDecoration: 'underline',
                 textDecorationThickness: '1px',
                 textUnderlineOffset: '3px',
-                flex: '1 1 0',
+                // A real basis: on a narrow card the badges wrap below the title instead of crushing it.
+                flex: '1 1 14rem',
                 minWidth: '0',
               }}
             >
@@ -743,7 +744,8 @@ function DocumentCard({
               textDecoration: 'underline',
               textDecorationThickness: '1px',
               textUnderlineOffset: '3px',
-              flex: '1 1 0',
+              // A real basis: on a narrow card the badge wraps below the title instead of crushing it.
+              flex: '1 1 14rem',
               minWidth: '0',
             }}
           >
