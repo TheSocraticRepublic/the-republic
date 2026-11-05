@@ -68,16 +68,22 @@ export function letterFor(name: string): string {
   return first ? fold(first).toUpperCase() : '#'
 }
 
-const collate = (a: string, b: string) => a.localeCompare(b, 'en-CA', { sensitivity: 'base' })
+/** One collator for every comparison: `localeCompare` with options builds a
+ *  new one per call, and the sort runs on every keystroke (Razor N1). */
+const COLLATOR = new Intl.Collator('en-CA', { sensitivity: 'base' })
+const collate = COLLATOR.compare
 
 /** By last name, then by the whole name, then by id so equal names keep a stable order. */
 export function sortByLastName<T extends Pick<MpListRow, 'id' | 'name'>>(rows: readonly T[]): T[] {
-  return [...rows].sort(
+  // Each key is derived once, not twice per comparison.
+  const keyed = rows.map((row) => ({ row, key: lastNameKey(row.name) }))
+  keyed.sort(
     (a, b) =>
-      collate(lastNameKey(a.name), lastNameKey(b.name)) ||
-      collate(a.name, b.name) ||
-      (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+      collate(a.key, b.key) ||
+      collate(a.row.name, b.row.name) ||
+      (a.row.id < b.row.id ? -1 : a.row.id > b.row.id ? 1 : 0)
   )
+  return keyed.map((k) => k.row)
 }
 
 /** Every set filter must match (AND). The search matches the name or the riding. */
