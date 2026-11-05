@@ -241,6 +241,7 @@ Named elsewhere and not yet scheduled:
 - Carried-concern edges (see Deferred from republic-ui-c4)
 - Island dark mode off until D4; role "nation" substring (closed by D2); load-flaky front-door timing (see Deferred from republic-ui-d1)
 - Scout's own copy of the old access check and field parser; briefing label/eyebrow polish; Questions-card and Cannot-See rules; 768 badge placement; "NEXT STEPS:" run-in (see Deferred from republic-ui-d2)
+- Vote detail double name (to E2b); Lever detail back link; badge hides an earlier good sync after a failure (see Deferred from republic-ui-e1)
 - Next.js 404 and malformed-URL behaviour on dynamic routes (see Deferred from republic-ui-b2)
 - D4 "The Athenians" — illustration variant selection
 - Release mechanics for dependency deploys (publish boundary, post-deploy checks, containment) — see Deferred from republic-ci-green-deps
@@ -293,6 +294,17 @@ Written verbatim from `~/marvin/state/plans/republic-ui-filings-2026-10/republic
 - **Votes on the landing** (arm station plus chip, landing-public L17).
 - **Briefing mobile sticky section bar** (reading-surfaces F-P1-5).
 - **CSP walk checklist** additions: allowlisted links, grain, new fonts.
+
+### Deferred from republic-ui-e1 (2026-11-05)
+
+Named during relay `republic-ui-e1` (Razor review and re-checks, Jen's review).
+
+- **The vote detail page shows the vote's name twice (Jen):** once in the new h1 ("Vote {session}/{number}") and once in the VoteDetailCard label. For E2b, which already rewrites that card: the h1 becomes the motion description, and "Vote 45-1/177", the date and the badge go in the meta line. E2b's manifest needs `src/app/(app)/votes/vote/[voteId]/page.tsx` added; if it can't take it, the minimum is dropping the card's eyebrow.
+- **Lever's detail page keeps its own back link with a different recipe (Jen).** No batch touches that file; adopt `DetailHeader` there when Lever is next opened (after First Light).
+- **A failed newest sync hides an earlier good sync date (Razor RN2).** The badge honestly says "Sync time unknown". Returning the newest *successful* sync from `src/app/api/parliament/sync/status/route.ts` would let it show that date. That's an optional, small route change.
+- **The badge's comment says the `startedAt` fallback is for "an in-progress sync", but no writer ever saves one (Razor RN1).** The code is right; only the comment is wrong.
+- **The failed-sync tests render only the landing form of the badge (Razor).** It holds by construction for the meta form; add one meta-form case.
+- **Two of Razor's own mutants survive:** the badge's unmount guard (harmless), and the rounding at the 7-day stale edge.
 
 ### Deferred from republic-deps-2026-11 (2026-11-05)
 
