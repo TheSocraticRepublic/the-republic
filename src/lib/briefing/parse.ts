@@ -262,16 +262,24 @@ export function parsePlayers(content: string): PlayerData[] {
   return players
 }
 
+export type JurisdictionField = 'whatTheyDid' | 'whyItMatters' | 'outcome'
+
+/** A jurisdiction's content in source order: prose and fields interleave as written. */
+export type JurisdictionPart =
+  | { type: 'body'; text: string }
+  | { type: 'field'; key: JurisdictionField; value: string }
+
 export interface JurisdictionData {
   name: string
-  /** Prose under the name that is not a field line, one entry per paragraph. */
-  body: string[]
-  whatTheyDid: string
-  whyItMatters: string
-  outcome: string
+  parts: JurisdictionPart[]
 }
 
-type JurisdictionField = 'whatTheyDid' | 'whyItMatters' | 'outcome'
+/**
+ * How Other Places Handle This, in source order: jurisdiction cards, and the
+ * section prose around them (a lead-in before the first place, a closing
+ * paragraph after the last). Nothing is dropped.
+ */
+export type ComparisonItem = { type: 'jurisdiction'; jurisdiction: JurisdictionData } | { type: 'prose'; text: string }
 
 // A Mirror field comes only from a line that opens with its label and a colon
 // (`**Outcome:** x`, `**Outcome**: x`, `Outcome: x`), after optional
@@ -312,77 +320,107 @@ function matchJurisdictionField(line: string): { key: JurisdictionField; value: 
  * Mirror field label. A bold-led bullet never opens one (Razor C1: it invented
  * places from "- **Policy 4.2** requires ..." and colon-less labels).
  */
-function matchJurisdictionStart(line: string, sectionHasHeadings: boolean): { name: string; rest: string } | null {
+function matchJurisdictionStart(line: string, sectionHasHeadings: boolean): { name: string } | null {
   const h3 = line.match(/^###\s+(.+)$/)
-  if (h3) return { name: h3[1].trim(), rest: '' }
+  if (h3) return { name: h3[1].trim() }
   if (sectionHasHeadings) return null
   const bold = line.match(/^\*\*([^*]+)\*\*\s*$/)
-  if (bold && !MIRROR_LABEL_TEXT.test(bold[1].trim()) && !bold[1].trim().endsWith(':')) return { name: bold[1].trim(), rest: '' }
+  if (bold && !MIRROR_LABEL_TEXT.test(bold[1].trim()) && !bold[1].trim().endsWith(':')) return { name: bold[1].trim() }
   return null
 }
 
-export function parseJurisdictions(content: string): JurisdictionData[] {
-  const jurisdictions: JurisdictionData[] = []
-  let current: JurisdictionData | null = null
-  // The field a following non-blank line continues, until a blank line.
-  let openField: JurisdictionField | null = null
-  // The body paragraph a following non-blank line continues, until a blank line.
-  let openParagraph = false
+/** Section prose from source lines, or null when they hold only blank lines and rules. */
+function proseFrom(lines: string[]): string | null {
+  if (lines.every((l) => !l.trim() || /^-{3,}\s*$/.test(l.trim()))) return null
+  return lines.join('\n').trim()
+}
 
-  const sectionHasHeadings = content.split('\n').some((l) => /^###\s+/.test(l.trim()))
+/**
+ * One jurisdiction's lines (after its name). Fields and prose become parts in
+ * source order. A field value continues on following plain lines until a blank
+ * line. Prose after the last field, past a blank line, is not the place's: it
+ * closes the card and is returned as trailing section prose (the prompt's
+ * closing "Argument from Existence" paragraph lands below the cards).
+ */
+function parseJurisdictionLines(name: string, lines: string[]): { jurisdiction: JurisdictionData; trailing: string[] } {
+  const parts: (JurisdictionPart & { line: number; afterBlank: boolean })[] = []
+  let open: number | null = null
+  let blank = false
 
-  for (const raw of content.split('\n')) {
+  lines.forEach((raw, i) => {
     const line = raw.trim()
-
     if (!line || /^-{3,}$/.test(line)) {
-      openField = null
-      openParagraph = false
-      continue
+      open = null
+      blank = true
+      return
     }
-
-    const start = matchJurisdictionStart(line, sectionHasHeadings)
-    if (start) {
-      if (current) jurisdictions.push(current)
-      current = { name: start.name, body: [], whatTheyDid: '', whyItMatters: '', outcome: '' }
-      openField = null
-      openParagraph = false
-      if (start.rest) {
-        current.body.push(start.rest)
-        openParagraph = true
-      }
-      continue
-    }
-
-    // Text before the first jurisdiction has no card to go on (as before D2).
-    if (!current) continue
-
     const field = matchJurisdictionField(line)
     if (field) {
-      current[field.key] = field.value
-      openField = field.key
-      openParagraph = false
-      continue
+      parts.push({ type: 'field', key: field.key, value: field.value, line: i, afterBlank: blank })
+      open = parts.length - 1
+      blank = false
+      return
     }
-
-    // A bullet under a jurisdiction is a body paragraph of its own, without its marker.
+    // A bullet is a body paragraph of its own, without its marker.
     const bullet = line.match(/^[-*]\s+(.*)$/)
     if (bullet) {
-      openField = null
-      current.body.push(bullet[1].trim())
-      openParagraph = true
-    } else if (openField) {
-      current[openField] = `${current[openField]} ${line}`.trim()
-    } else if (openParagraph) {
-      current.body[current.body.length - 1] += ` ${line}`
-    } else {
-      current.body.push(line)
-      openParagraph = true
+      parts.push({ type: 'body', text: bullet[1].trim(), line: i, afterBlank: blank })
+      open = parts.length - 1
+      blank = false
+      return
     }
+    if (open !== null) {
+      const part = parts[open]
+      if (part.type === 'field') part.value = `${part.value} ${line}`.trim()
+      else part.text = `${part.text} ${line}`
+      return
+    }
+    parts.push({ type: 'body', text: line, line: i, afterBlank: blank })
+    open = parts.length - 1
+    blank = false
+  })
+
+  let lastField = -1
+  parts.forEach((p, k) => {
+    if (p.type === 'field') lastField = k
+  })
+  const cut = lastField === -1 ? -1 : parts.findIndex((p, k) => k > lastField && p.afterBlank)
+  const kept = cut === -1 ? parts : parts.slice(0, cut)
+  const trailing = cut === -1 ? [] : lines.slice(parts[cut].line)
+
+  return {
+    jurisdiction: {
+      name,
+      parts: kept.map((p) => (p.type === 'field' ? { type: 'field', key: p.key, value: p.value } : { type: 'body', text: p.text })),
+    },
+    trailing,
+  }
+}
+
+export function parseComparison(content: string): ComparisonItem[] {
+  const lines = content.split('\n')
+  const sectionHasHeadings = lines.some((l) => /^###\s+/.test(l.trim()))
+  const preamble: string[] = []
+  const places: { name: string; lines: string[] }[] = []
+
+  for (const raw of lines) {
+    const start = matchJurisdictionStart(raw.trim(), sectionHasHeadings)
+    if (start) places.push({ name: start.name, lines: [] })
+    else if (places.length > 0) places[places.length - 1].lines.push(raw)
+    else preamble.push(raw)
   }
 
-  if (current) jurisdictions.push(current)
-
-  return jurisdictions
+  const items: ComparisonItem[] = []
+  // Text before the first place is section prose, not dropped (Razor C2).
+  const lead = proseFrom(preamble)
+  if (lead) items.push({ type: 'prose', text: lead })
+  for (const place of places) {
+    const { jurisdiction, trailing } = parseJurisdictionLines(place.name, place.lines)
+    items.push({ type: 'jurisdiction', jurisdiction })
+    const after = proseFrom(trailing)
+    if (after) items.push({ type: 'prose', text: after })
+  }
+  return items
 }
 
 // ---- Document field parser. D2 owns the parser now; the goldens in tests/unit/briefing-parse.test.ts are the contract. ----

@@ -30,7 +30,8 @@ import {
   getRoleKey,
   roleLabel,
   parsePlayers,
-  parseJurisdictions,
+  parseComparison,
+  type JurisdictionField,
   detectAccess,
   parseGoverningDocuments,
   extractFippaLetter,
@@ -477,119 +478,81 @@ function PlayersSection({ content }: { content: string }) {
 
 // ---- Mirror Comparison parser and renderer (Step 2) ----
 
-function ComparisonSection({ content }: { content: string }) {
-  const jurisdictions = parseJurisdictions(content)
+const MIRROR_FIELD_LABELS: Record<JurisdictionField, string> = {
+  whatTheyDid: 'WHAT THEY DID',
+  whyItMatters: 'WHY IT MATTERS',
+  outcome: 'OUTCOME',
+}
 
-  if (jurisdictions.length === 0) {
+function ComparisonSection({ content }: { content: string }) {
+  const items = parseComparison(content)
+
+  if (!items.some((item) => item.type === 'jurisdiction')) {
     return <ProseSection content={content} />
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {jurisdictions.map((jur, i) => (
-        <div
-          key={i}
-          style={{
-            backgroundColor: 'var(--color-island-card)',
-            border: `1px solid var(--color-island-card-border)`,
-            borderLeft: '2px solid var(--accent-mirror)',
-            borderRadius: '12px',
-            padding: '16px 20px',
-          }}
-        >
-          {/* Jurisdiction name */}
-          <span
+      {items.map((item, i) => {
+        if (item.type === 'prose') return <ProseSection key={i} content={item.text} />
+        const jur = item.jurisdiction
+        return (
+          <div
+            key={i}
             style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: 'var(--color-island-text)',
-              display: 'block',
-              marginBottom: '12px',
+              backgroundColor: 'var(--color-island-card)',
+              border: `1px solid var(--color-island-card-border)`,
+              borderLeft: '2px solid var(--accent-mirror)',
+              borderRadius: '12px',
+              padding: '16px 20px',
             }}
           >
-            {renderInline(jur.name)}
-          </span>
+            {/* Jurisdiction name */}
+            <span
+              style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'var(--color-island-text)',
+                display: 'block',
+                marginBottom: jur.parts.length > 0 ? '12px' : 0,
+              }}
+            >
+              {renderInline(jur.name)}
+            </span>
 
-          {/* Prose under the name that is not a field line (D2: no field is invented from it) */}
-          {jur.body.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: jur.whatTheyDid || jur.whyItMatters || jur.outcome ? '12px' : 0 }}>
-              {jur.body.map((para, j) => (
-                <p key={j} style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
-                  {renderInline(para)}
-                </p>
-              ))}
+            {/* Prose and fields in source order (D2: no field is invented from prose) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {jur.parts.map((part, j) =>
+                part.type === 'body' ? (
+                  <p key={j} style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
+                    {renderInline(part.text)}
+                  </p>
+                ) : (
+                  <div key={j}>
+                    <span
+                      style={{
+                        display: 'block',
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase' as const,
+                        letterSpacing: '0.08em',
+                        color: 'var(--color-island-muted)',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      {MIRROR_FIELD_LABELS[part.key]}
+                    </span>
+                    <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
+                      {renderInline(part.value)}
+                    </p>
+                  </div>
+                )
+              )}
             </div>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {jur.whatTheyDid && (
-              <div>
-                <span
-                  style={{
-                    display: 'block',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.08em',
-                    color: 'var(--color-island-muted)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  WHAT THEY DID
-                </span>
-                <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
-                  {renderInline(jur.whatTheyDid)}
-                </p>
-              </div>
-            )}
-
-            {jur.whyItMatters && (
-              <div>
-                <span
-                  style={{
-                    display: 'block',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.08em',
-                    color: 'var(--color-island-muted)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  WHY IT MATTERS
-                </span>
-                <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
-                  {renderInline(jur.whyItMatters)}
-                </p>
-              </div>
-            )}
-
-            {jur.outcome && (
-              <div>
-                <span
-                  style={{
-                    display: 'block',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.08em',
-                    color: 'var(--color-island-muted)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  OUTCOME
-                </span>
-                <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
-                  {renderInline(jur.outcome)}
-                </p>
-              </div>
-            )}
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

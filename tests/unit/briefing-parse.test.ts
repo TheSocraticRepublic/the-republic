@@ -27,13 +27,14 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import {
   type BlockElement,
   type GoverningBlock,
-  type JurisdictionData,
+  type ComparisonItem,
+  type JurisdictionPart,
   type PlayerData,
   extractFippaLetter,
   extractTitle,
   getRoleKey,
   parseGoverningDocuments,
-  parseJurisdictions,
+  parseComparison,
   parsePlayers,
   parseSections,
   preprocessBlocks,
@@ -50,7 +51,7 @@ type SectionParse =
   | { heading: string; kind: 'governs'; blocks: GoverningBlock[] }
   | { heading: string; kind: 'players'; players: PlayerData[] }
   | { heading: string; kind: 'actions'; before: BlockElement[]; letter: string; after: BlockElement[] }
-  | { heading: string; kind: 'comparison'; jurisdictions: JurisdictionData[] }
+  | { heading: string; kind: 'comparison'; items: ComparisonItem[] }
 
 interface BriefingParse {
   title: string | null
@@ -80,8 +81,8 @@ function parseSection(heading: string, content: string): SectionParse {
       }
     }
     case 'comparison': {
-      const jurisdictions = parseJurisdictions(content)
-      return jurisdictions.length > 0 ? { heading, kind: 'comparison', jurisdictions } : prose()
+      const items = parseComparison(content)
+      return items.some((x) => x.type === 'jurisdiction') ? { heading, kind: 'comparison', items } : prose()
     }
     default:
       return prose()
@@ -105,13 +106,12 @@ const player = (name: string, role: string, whyTheyMatter = '', trackRecord = ''
   whyTheyMatter,
   trackRecord,
 })
-const jur = (name: string, body: string[], f: Partial<Omit<JurisdictionData, 'name' | 'body'>> = {}): JurisdictionData => ({
-  name,
-  body,
-  whatTheyDid: f.whatTheyDid ?? '',
-  whyItMatters: f.whyItMatters ?? '',
-  outcome: f.outcome ?? '',
-})
+const jur = (name: string, ...parts: JurisdictionPart[]): ComparisonItem => ({ type: 'jurisdiction', jurisdiction: { name, parts } })
+const body = (text: string): JurisdictionPart => ({ type: 'body', text })
+const what = (value: string): JurisdictionPart => ({ type: 'field', key: 'whatTheyDid', value })
+const why = (value: string): JurisdictionPart => ({ type: 'field', key: 'whyItMatters', value })
+const outcome = (value: string): JurisdictionPart => ({ type: 'field', key: 'outcome', value })
+const prose = (text: string): ComparisonItem => ({ type: 'prose', text })
 
 const GOLDENS: Record<string, BriefingParse> = {
   'role-raw-enum': {
@@ -200,12 +200,9 @@ const GOLDENS: Record<string, BriefingParse> = {
       {
         heading: 'How Other Places Handle This',
         kind: 'comparison',
-        jurisdictions: [
-          jur('Synthetic Town C (QA)', [], {
-            whatTheyDid: 'Published every *cutting permit* before approval.',
-            outcome: 'Reported but unverified.',
-          }),
-          jur('Synthetic Town D (QA)', ['Requires a hydrology assessment above every intake.', 'The outcome is not documented.']),
+        items: [
+          jur('Synthetic Town C (QA)', what('Published every *cutting permit* before approval.'), outcome('Reported but unverified.')),
+          jur('Synthetic Town D (QA)', body('Requires a hydrology assessment above every intake.'), body('The outcome is not documented.')),
         ],
       },
     ],
@@ -461,32 +458,22 @@ describe('parse rules', () => {
   })
 
   it('Outcome, What they did and Why it matters come only from a line that opens with the label', () => {
-    const [j] = parseJurisdictions(
-      [
-        '### Synthetic Town E (QA)',
-        'What they did differently was publish. The outcome is unknown. Why it matters is unclear.',
-      ].join('\n')
-    )
-    expect(j).toEqual(
-      jur('Synthetic Town E (QA)', ['What they did differently was publish. The outcome is unknown. Why it matters is unclear.'])
-    )
-    const [k] = parseJurisdictions(
-      ['**Synthetic Town F (QA)**', '- **What they did:** Published.', '  **Why it matters:** It can be appealed.', '**Outcome**: Fewer variances.'].join('\n')
-    )
-    expect(k).toEqual(
-      jur('Synthetic Town F (QA)', [], { whatTheyDid: 'Published.', whyItMatters: 'It can be appealed.', outcome: 'Fewer variances.' })
-    )
+    expect(
+      parseComparison(
+        ['### Synthetic Town E (QA)', 'What they did differently was publish. The outcome is unknown. Why it matters is unclear.'].join('\n')
+      )
+    ).toEqual([jur('Synthetic Town E (QA)', body('What they did differently was publish. The outcome is unknown. Why it matters is unclear.'))])
+    expect(
+      parseComparison(
+        ['**Synthetic Town F (QA)**', '- **What they did:** Published.', '  **Why it matters:** It can be appealed.', '**Outcome**: Fewer variances.'].join('\n')
+      )
+    ).toEqual([jur('Synthetic Town F (QA)', what('Published.'), why('It can be appealed.'), outcome('Fewer variances.'))])
   })
 
-  it('bulleted places are prose, not cards: no Outcome box, no invented jurisdiction', () => {
-    const doc = render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === 'outcome-word')!.content)
-    expect(findAll(doc, 'span', 'OUTCOME')).toHaveLength(0)
-    expect([...doc.querySelectorAll('li')].some((li) => li.textContent?.startsWith('Synthetic Town A (QA) publishes'))).toBe(true)
-  })
-
-  it('a field value continues on the following lines until a blank line', () => {
-    const [j] = parseJurisdictions(['### Synthetic Town G (QA)', 'Outcome: Variances fell', 'by a third.', '', 'Later prose.'].join('\n'))
-    expect(j).toEqual(jur('Synthetic Town G (QA)', ['Later prose.'], { outcome: 'Variances fell by a third.' }))
+  it('a field value continues until a blank line; prose past it after the last field closes the card', () => {
+    expect(
+      parseComparison(['### Synthetic Town G (QA)', 'Outcome: Variances fell', 'by a third.', '', 'Later prose.'].join('\n'))
+    ).toEqual([jur('Synthetic Town G (QA)', outcome('Variances fell by a third.')), prose('Later prose.')])
   })
 
   it('a section-edge rule is dropped, a rule between blocks stays', () => {
@@ -622,8 +609,12 @@ function outputWords(parse: BriefingParse): string[] {
         s.after.forEach((b) => out.push(...blockText(b)))
         break
       case 'comparison':
-        for (const j of s.jurisdictions) {
-          out.push(inlineText(j.name), ...j.body.map(inlineText), inlineText(j.whatTheyDid), inlineText(j.whyItMatters), inlineText(j.outcome))
+        for (const item of s.items) {
+          if (item.type === 'prose') preprocessBlocks(item.text).forEach((b) => out.push(...blockText(b)))
+          else {
+            out.push(inlineText(item.jurisdiction.name))
+            for (const part of item.jurisdiction.parts) out.push(inlineText(part.type === 'body' ? part.text : part.value))
+          }
         }
         break
     }
