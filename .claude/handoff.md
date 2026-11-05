@@ -85,6 +85,9 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 
 ## Log (newest first)
 
+### 2026-11-05 — E2a merged
+Relay `republic-ui-e2a` merged at `5ba4ddc`: the MP list gets search, province and party filters, a last-name sort keeping particles as stored, sticky letter headers above 20 rows, two-letter monograms, and divided rows (68px on phones). Razor W1/W2 (clipped focus ring, focus lost on Clear) and RW1 (stuck header covering focused rows) were fixed and verified in Chromium on the harness: 0 of 40 Shift+Tab steps covered, down from 6-7. Jen's nine E2a concerns adopted. 39/39 mutants; harness-required suite 2482 passed. Jen measured 4 of 337 MPs misfiled against official surnames; the sync should store openparliament's `family_name` (ROADMAP → Deferred from republic-ui-e2a). Next: E2b, which also takes the vote-detail double name carried from E1.
+
 ### 2026-11-05 — E1 merged
 Relay `republic-ui-e1` merged at `eb998e0`: `DetailHeader` on the seven Votes and profile detail pages. The freshness badge reads "Sync time unknown" for a missing time, a failed request or a failed newest sync (Razor W1: the sync route's catch writes `completedAt` = now on a total failure). Jen's seven E1 concerns were adopted; the manifest widened to `mp-profile-card.tsx` to remove the double name. Back labels match the sidebar ("Back to Vote Tracker", "Back to New Investigation"). Razor PASS after two fix passes; 53/53 mutants; harness-required suite 2452 passed. The vote-detail double name is carried to E2b (ROADMAP → Deferred from republic-ui-e1). Next: E2a.
 
