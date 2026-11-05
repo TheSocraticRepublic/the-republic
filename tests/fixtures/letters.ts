@@ -1136,6 +1136,7 @@ export const BRIEFING_SHAPE_FIXTURES: readonly BriefingShapeFixture[] = [
       '### Synthetic Town H (QA)',
       '- **What they did differently:** Posted every permit online.',
       '- **Outcome:** Reported but unverified.',
+      "- The figures come from the town's own report.",
       '',
       '### Synthetic Town I (QA)',
       'It runs a smaller program.',

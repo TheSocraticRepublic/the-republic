@@ -244,7 +244,12 @@ const GOLDENS: Record<string, BriefingParse> = {
         kind: 'comparison',
         items: [
           prose('Several comparable municipalities have handled this differently:'),
-          jur('Synthetic Town H (QA)', what('Posted every permit online.'), outcome('Reported but unverified.')),
+          jur(
+            'Synthetic Town H (QA)',
+            what('Posted every permit online.'),
+            outcome('Reported but unverified.'),
+            body("The figures come from the town's own report.")
+          ),
           jur('Synthetic Town I (QA)', body('It runs a smaller program.'), what('Required a hearing.')),
           prose('If two comparable towns can publish permits, the status quo here needs a reason.'),
         ],
@@ -944,6 +949,7 @@ const EVERY_FIELD = [
   '## What Governs This',
   '',
   '### Primary *docprimary* Plan (QA)',
+  'Its *docintro* note.',
   '- **What it is:** A plan.',
   '',
   '### Supporting *docsupporting* Permit (QA)',
@@ -969,7 +975,7 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
   it('every field renderer goes through renderInline', () => {
     const doc = render(EVERY_FIELD)
     const ems = [...doc.querySelectorAll('em')].map((e) => e.textContent)
-    for (const word of ['docprimary', 'docsupporting', 'playername', 'playerwhy', 'playertrack', 'jurname', 'jurbody', 'jurwhat', 'jurwhy', 'juroutcome']) {
+    for (const word of ['docprimary', 'docintro', 'docsupporting', 'playername', 'playerwhy', 'playertrack', 'jurname', 'jurbody', 'jurwhat', 'jurwhy', 'juroutcome']) {
       expect(ems, word).toContain(word)
     }
     expect(textOf(doc)).not.toMatch(/\*|\]\(/)
@@ -1047,6 +1053,9 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
       expect(p).toBeDefined()
       expect(cards.some((c) => c.contains(p))).toBe(false)
     }
+    // Town H: the note written after its Outcome renders after it.
+    const townH = cards[0].textContent ?? ''
+    expect(townH.indexOf('OUTCOME')).toBeLessThan(townH.indexOf("The figures come from the town's own report."))
     // Town I: its prose renders above its WHAT THEY DID box, as written.
     const townI = cards[1].textContent ?? ''
     expect(townI.indexOf('It runs a smaller program.')).toBeLessThan(townI.indexOf('WHAT THEY DID'))
