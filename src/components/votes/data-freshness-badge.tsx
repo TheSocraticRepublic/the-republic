@@ -61,7 +61,21 @@ export function readSyncTime(data: SyncStatus | null | undefined): Date | null {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-export function DataFreshnessBadge() {
+/**
+ * `standalone` (the /votes landing) is the badge on its own: 11px/500, with
+ * the MP and vote counts. `meta` sits in DetailHeader's meta line: the date
+ * line only, in the line's own 12px/400 type, because counts beside an MP's
+ * name read as that MP's tally (Jen E1 C3).
+ */
+export type FreshnessVariant = 'standalone' | 'meta'
+
+const TYPE: Record<FreshnessVariant, string> = {
+  standalone: 'text-2xs font-medium',
+  meta: 'text-xs font-normal',
+}
+
+export function DataFreshnessBadge({ variant = 'standalone' }: { variant?: FreshnessVariant } = {}) {
+  const type = TYPE[variant]
   const [state, setState] = useState<BadgeState>({ kind: 'loading' })
 
   useEffect(() => {
@@ -99,7 +113,8 @@ export function DataFreshnessBadge() {
       <div
         data-freshness="loading"
         aria-busy="true"
-        className="flex items-center gap-2 text-2xs font-medium text-text-faint"
+        data-variant={variant}
+        className={`flex items-center gap-2 ${type} text-text-faint`}
       >
         <span className="h-1.5 w-1.5 rounded-full bg-current" />
         <span>Checking sync time</span>
@@ -109,7 +124,7 @@ export function DataFreshnessBadge() {
 
   if (state.kind === 'unknown') {
     return (
-      <div data-freshness="unknown" className="flex items-center gap-2 text-2xs font-medium text-text-muted">
+      <div data-freshness="unknown" data-variant={variant} className={`flex items-center gap-2 ${type} text-text-muted`}>
         <span className="h-1.5 w-1.5 rounded-full bg-current" />
         <span>Sync time unknown</span>
       </div>
@@ -118,10 +133,10 @@ export function DataFreshnessBadge() {
 
   const isStale = state.daysSince > STALE_AFTER_DAYS
   const color = isStale ? 'var(--status-warning)' : 'var(--text-muted)'
-  const counts = state.counts
+  const counts = variant === 'standalone' ? state.counts : undefined
 
   return (
-    <div data-freshness="known" className="flex items-center gap-2 text-2xs font-medium" style={{ color }}>
+    <div data-freshness="known" data-variant={variant} className={`flex items-center gap-2 ${type}`} style={{ color }}>
       <span
         className="h-1.5 w-1.5 rounded-full"
         style={{ backgroundColor: color }}

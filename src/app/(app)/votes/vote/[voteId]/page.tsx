@@ -53,7 +53,7 @@ export default async function VoteDetailPage({ params }: PageProps) {
           backHref="/votes"
           backLabel="Back to Votes"
           title={`Vote ${vote.session}/${vote.number}`}
-          meta={<DataFreshnessBadge />}
+          meta={<DataFreshnessBadge variant="meta" />}
         />
 
         <VoteDetailCard

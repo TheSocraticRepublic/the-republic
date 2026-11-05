@@ -41,7 +41,7 @@ export default async function MpProfilePage({ params }: PageProps) {
           backHref="/votes/mp"
           backLabel="Back to MPs"
           title={mp.name}
-          meta={<DataFreshnessBadge />}
+          meta={<DataFreshnessBadge variant="meta" />}
         />
 
         {/* MP Profile */}

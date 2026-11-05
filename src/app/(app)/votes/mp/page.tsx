@@ -43,7 +43,7 @@ export default async function AllMPsPage() {
               <span>
                 {mps.length} current MPs across {provinces.length} provinces and territories
               </span>
-              <DataFreshnessBadge />
+              <DataFreshnessBadge variant="meta" />
             </>
           }
         />

@@ -140,6 +140,37 @@ describe('DataFreshnessBadge', () => {
     await screen.findByText(`Data as of ${localDate(completedAt)} (stale)`)
   })
 
+  it('the meta variant shows the date only, without counts, in 12px/400', async () => {
+    const completedAt = daysAgo(2)
+    respondWith({ lastSync: { startedAt: completedAt, completedAt, durationMs: 1 }, counts: COUNTS })
+    const { container } = render(<DataFreshnessBadge variant="meta" />)
+    await screen.findByText(`Data as of ${localDate(completedAt)}`)
+    expect(container.textContent).toBe(`Data as of ${localDate(completedAt)}`)
+    expect(container.textContent).not.toContain('338 MPs')
+    const badge = container.querySelector('[data-freshness]')!
+    expect(badge.className).toContain('text-xs font-normal')
+  })
+
+  it('the meta variant keeps the stale and unknown wordings', async () => {
+    const completedAt = daysAgo(10)
+    respondWith({ lastSync: { startedAt: completedAt, completedAt, durationMs: 1 }, counts: COUNTS })
+    render(<DataFreshnessBadge variant="meta" />)
+    await screen.findByText(`Data as of ${localDate(completedAt)} (stale)`)
+    cleanup()
+    respondWith({ lastSync: null, counts: COUNTS })
+    const { container } = render(<DataFreshnessBadge variant="meta" />)
+    await screen.findByText('Sync time unknown')
+    expect(container.querySelector('[data-freshness]')!.className).toContain('text-xs font-normal')
+  })
+
+  it('the standalone badge (the /votes landing) keeps its 11px/500 type', async () => {
+    const completedAt = daysAgo(2)
+    respondWith({ lastSync: { startedAt: completedAt, completedAt, durationMs: 1 }, counts: COUNTS })
+    const { container } = render(<DataFreshnessBadge />)
+    await screen.findByText(`Data as of ${localDate(completedAt)}`)
+    expect(container.querySelector('[data-freshness]')!.className).toContain('text-2xs font-medium')
+  })
+
   it('shows a neutral loading state, not nothing, while the request is open', () => {
     vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
     const { container } = render(<DataFreshnessBadge />)
@@ -341,6 +372,12 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     const meta = container.querySelector('[data-detail-header] [data-detail-meta]')
     expect(meta).not.toBeNull()
     expect(meta!.contains(text)).toBe(true)
+    // Jen E1 C3: in the meta line, the date only (no counts), in the line's type.
+    const badge = meta!.querySelector('[data-freshness]')!
+    expect(badge.textContent).toBe(`Data as of ${localDate(SYNCED)}`)
+    expect(badge.getAttribute('data-variant')).toBe('meta')
+    expect(badge.className).toContain('text-xs font-normal')
+    expect(badge.className).not.toContain('text-2xs')
   }
 
   it('/votes/mp goes back to Votes and shows the badge', async () => {

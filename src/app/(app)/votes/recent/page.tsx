@@ -44,7 +44,7 @@ export default function RecentVotesPage() {
           meta={
             <>
               <span>Recorded divisions in the House of Commons</span>
-              <DataFreshnessBadge />
+              <DataFreshnessBadge variant="meta" />
             </>
           }
         />
