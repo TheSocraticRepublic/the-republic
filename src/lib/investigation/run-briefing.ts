@@ -334,6 +334,8 @@ export async function runBriefingGeneration({
           outcome: retrieval ? 'ok' : timedOut ? 'timeout' : 'error',
           reason: retrieval?.reason ?? null,
           hits: results.length,
+          candidates: retrieval?.candidates ?? null,
+          bestSimilarity: retrieval?.bestSimilarity ?? null,
           chunkIds: results.map((r) => r.id),
           topSimilarity: results.length > 0 ? Math.round(results[0].similarity * 1000) / 1000 : null,
           ms: Date.now() - retrievalStart,

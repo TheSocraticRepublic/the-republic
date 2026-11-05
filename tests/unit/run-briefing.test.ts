@@ -101,7 +101,9 @@ vi.mock('@/lib/ai/prompts/briefing-system', () => ({
 
 vi.mock('@/lib/ai/search-chunks', () => ({
   searchDocumentChunks: vi.fn(() => Promise.resolve([])),
-  searchDocumentChunksWithReason: vi.fn(() => Promise.resolve({ results: [], reason: 'no-corpus' })),
+  searchDocumentChunksWithReason: vi.fn(() =>
+    Promise.resolve({ results: [], reason: 'no-corpus', candidates: null, bestSimilarity: null })
+  ),
 }))
 
 vi.mock('@/lib/archive/shadow', () => ({
@@ -312,6 +314,8 @@ describe('runBriefingGeneration — [retrieval] log line', () => {
   it("ok with hits: logs reason 'hits', ids, rounded top similarity", async () => {
     ;(searchDocumentChunksWithReason as Mock).mockResolvedValueOnce({
       reason: 'hits',
+      candidates: 7,
+      bestSimilarity: 0.812,
       results: [
         { id: 'chunk-uuid-1', title: CHUNK_TITLE, content: CHUNK_CONTENT, similarity: 0.812345 },
         { id: 'chunk-uuid-2', title: CHUNK_TITLE, content: CHUNK_CONTENT, similarity: 0.61 },
@@ -322,12 +326,14 @@ describe('runBriefingGeneration — [retrieval] log line', () => {
 
     const { raw, parsed } = onlyLine()
     expect(Object.keys(parsed).sort()).toEqual(
-      ['chunkIds', 'hits', 'investigationId', 'ms', 'outcome', 'reason', 'topSimilarity'].sort()
+      ['bestSimilarity', 'candidates', 'chunkIds', 'hits', 'investigationId', 'ms', 'outcome', 'reason', 'topSimilarity'].sort()
     )
     expect(parsed.investigationId).toBe(INVESTIGATION_ID)
     expect(parsed.outcome).toBe('ok')
     expect(parsed.reason).toBe('hits')
     expect(parsed.hits).toBe(2)
+    expect(parsed.candidates).toBe(7)
+    expect(parsed.bestSimilarity).toBe(0.812)
     expect(parsed.chunkIds).toEqual(['chunk-uuid-1', 'chunk-uuid-2'])
     expect(parsed.topSimilarity).toBe(0.812)
     expect(typeof parsed.ms).toBe('number')
@@ -341,7 +347,7 @@ describe('runBriefingGeneration — [retrieval] log line', () => {
   })
 
   it("ok with no-corpus: logs zero hits and a null top similarity", async () => {
-    ;(searchDocumentChunksWithReason as Mock).mockResolvedValueOnce({ results: [], reason: 'no-corpus' })
+    ;(searchDocumentChunksWithReason as Mock).mockResolvedValueOnce({ results: [], reason: 'no-corpus', candidates: null, bestSimilarity: null })
 
     await runBriefingGeneration({ db: dbMock as unknown as DbLike, investigationId: INVESTIGATION_ID })
 
@@ -351,6 +357,8 @@ describe('runBriefingGeneration — [retrieval] log line', () => {
       outcome: 'ok',
       reason: 'no-corpus',
       hits: 0,
+      candidates: null,
+      bestSimilarity: null,
       chunkIds: [],
       topSimilarity: null,
       ms: expect.any(Number),
@@ -378,6 +386,8 @@ describe('runBriefingGeneration — [retrieval] log line', () => {
       outcome: 'timeout',
       reason: null,
       hits: 0,
+      candidates: null,
+      bestSimilarity: null,
       chunkIds: [],
       topSimilarity: null,
       ms: expect.any(Number),
@@ -399,11 +409,52 @@ describe('runBriefingGeneration — [retrieval] log line', () => {
       outcome: 'error',
       reason: null,
       hits: 0,
+      candidates: null,
+      bestSimilarity: null,
       chunkIds: [],
       topSimilarity: null,
       ms: expect.any(Number),
     })
     expectNoUserText(raw)
     expect(generateText).toHaveBeenCalledOnce()
+  })
+})
+
+describe('runBriefingGeneration — [retrieval] carries the pre-threshold view', () => {
+  let infoSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    selectReturnValues = [[makeInvestigationRow()]]
+    dbMock = buildDbMock()
+    ;(generateText as Mock).mockResolvedValue({ text: 'briefing text' })
+    infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    infoSpy.mockRestore()
+  })
+
+  it('below-threshold: logs candidates and the best pre-threshold similarity', async () => {
+    ;(searchDocumentChunksWithReason as Mock).mockResolvedValueOnce({
+      results: [],
+      reason: 'below-threshold',
+      candidates: 20,
+      bestSimilarity: 0.47,
+    })
+
+    await runBriefingGeneration({ db: dbMock as unknown as DbLike, investigationId: INVESTIGATION_ID })
+
+    const lines = infoSpy.mock.calls.filter((c: unknown[]) => c[0] === '[retrieval]')
+    expect(lines).toHaveLength(1)
+    const parsed = JSON.parse(lines[0][1] as string)
+    expect(parsed).toMatchObject({
+      outcome: 'ok',
+      reason: 'below-threshold',
+      hits: 0,
+      candidates: 20,
+      bestSimilarity: 0.47,
+      topSimilarity: null,
+    })
   })
 })
