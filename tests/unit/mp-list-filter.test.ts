@@ -347,7 +347,10 @@ describe('filters (AND)', () => {
     fireEvent.change(search(), { target: { value: 'Gunn' } })
     fireEvent.change(province(), { target: { value: 'Ontario' } })
     expect(container.querySelector('ul')).toBeNull()
-    expect(container.textContent).toContain('No MPs match these filters.')
+    // The visible message is EmptyState's own, not only the announced count line.
+    const empty = container.querySelector('.rounded-xl.border.border-border.bg-surface-1.text-center')!
+    expect(empty.textContent).toContain('No MPs match these filters.')
+    expect(empty.querySelector('button')!.textContent).toBe('Clear filters')
     // The count line no longer shows "0 MPs" above the message: it is announced only, with no button of its own.
     const line = screen.getByTestId('mp-count')
     expect(line.textContent).toBe('No MPs match these filters.')
