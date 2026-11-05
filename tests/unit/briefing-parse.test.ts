@@ -891,9 +891,9 @@ const accessBadgeOf = (value: string): string | null => {
 /**
  * DocumentCard's layout, applied to the input so it reads in render order:
  * an Access line that is exactly a badge label moves up to just after its
- * card's start (the badge sits in the header); any other Access line stays a
- * field in place. A How/Where to find
- * line moves down to the end of its field run (its footer). Card starts: a ###
+ * card's start (the badge sits in the header). A How/Where to find line moves
+ * down to the end of its field run (the footer, below the hairline), and any
+ * other Access line follows it there (Jen D2 C4). Card starts: a ###
  * or bold-only heading, or a Document name field. Written down, not derived
  * from the parser.
  */
@@ -929,6 +929,8 @@ function governsInRenderOrder(markdown: string): string {
     const accessValue = accessAt === -1 ? '' : card[accessAt].replace(ACCESS_LINE, '').trim()
     const badge = accessAt === -1 ? null : accessBadgeOf(accessValue)
     const access = badge ? take(ACCESS_LINE) : []
+    // With no badge the Access line goes to the footer, after How to find it (Jen D2 C4).
+    const accessFoot = badge || accessAt === -1 ? [] : take(ACCESS_LINE)
     const howTo = take(/^[-*]\s+\*\*(?:How|Where) to find(?: it)?:\*\*/i)
     // The end of the field run: after the last field and its continuation lines.
     let end = -1
@@ -936,7 +938,7 @@ function governsInRenderOrder(markdown: string): string {
       if (isField(x)) end = k
     })
     if (end !== -1) while (end + 1 < card.length && card[end + 1].trim()) end++
-    card.splice(end + 1, 0, ...howTo)
+    card.splice(end + 1, 0, ...howTo, ...accessFoot)
     out.push(l, ...access, ...card)
     i = j
   }
@@ -1050,7 +1052,8 @@ function outputWords(parse: BriefingParse): string[] {
         break
       case 'governs':
         // In render order, as DocumentCard lays a card out: name, Access badge,
-        // intro, the remaining fields under their labels, How to find it last.
+        // intro, the remaining fields under their labels, then the footer: How to
+        // find it, and an Access value with no badge.
         s.blocks.forEach((b, j) => {
           if (b.type === 'eyebrow') {
             if (!eyebrowDropped(s.blocks, j)) out.push(b.text)
@@ -1059,18 +1062,19 @@ function outputWords(parse: BriefingParse): string[] {
             const access = b.fields.find((f) => f.label.toLowerCase() === 'access')
             const level = access ? detectAccess(access.value) : null
             const badge = level ? BADGE_LABEL[level] : null
-            // A badge replaces the field; with no badge the field shows the whole value.
-            const accessHidden = badge !== null
+            // A badge replaces the field; with no badge the whole value goes to the footer.
+            const accessFoot = access && badge === null ? access : undefined
             const howTo = b.fields.find((f) => /^(?:how|where) to find/i.test(f.label))
             out.push(inlineText(b.name))
             if (badge) out.push(badge)
             if (b.intro) out.push(inlineText(b.intro))
             for (const f of b.fields) {
-              if ((f === access && accessHidden) || f === howTo) continue
+              if (f === access || f === howTo) continue
               if (!isReplacedLabel(f.label)) out.push(f.label)
               out.push(inlineText(f.value))
             }
             if (howTo) out.push(inlineText(howTo.value))
+            if (accessFoot) out.push(inlineText(accessFoot.value))
           }
         })
         break
@@ -1390,9 +1394,35 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
       const badges = ['Public', 'FIPPA Required', 'Council Record'].flatMap((l) => findAll(card, 'span', l))
       expect(badges.map((b) => b.textContent)).toEqual(badge ? [badge] : [])
       expect(findAll(card, 'span', 'Access')).toHaveLength(field ? 1 : 0)
-      if (field) expect(findAll(card, 'p', field)).toHaveLength(1)
+      if (field) {
+        expect(findAll(card, 'p', field)).toHaveLength(1)
+        // Below the hairline in the How to find it style (Jen D2 C4), not a 14px body field.
+        const [label] = findAll(card, 'span', 'Access')
+        const [value] = findAll(card, 'p', field)
+        expect(styleOf(label)).toContain('color:var(--color-island-faint)')
+        expect(styleOf(value)).toContain('font-size:12px')
+        expect(styleOf(value)).toContain('color:var(--color-island-muted)')
+        expect(styleOf(label.closest('div[style*="border-top"]'))).toContain('border-top:1px solid var(--color-island-border)')
+      }
     }
   )
+
+  it('the footer reads How to find it, then an Access value with no badge; the description stays above the hairline (Jen D2 C4)', () => {
+    const doc = render(
+      [
+        '## What Governs This',
+        '',
+        '### Synthetic Plan (QA)',
+        '- **What it is:** A plan.',
+        '- **Access:** FIPPA Required, or ask the district office for a copy first',
+        '- **How to find it:** The district office.',
+      ].join('\n')
+    )
+    const footer = findAll(doc, 'span', 'How to find it')[0].closest('div[style*="border-top"]')!
+    expect([...footer.querySelectorAll('span')].map((e) => e.textContent)).toEqual(['How to find it', 'Access'])
+    expect(footer.textContent).not.toContain('A plan.')
+    expect(findAll(doc, 'span', 'FIPPA Required')).toHaveLength(0)
+  })
 
   it('a citation-heavy paragraph is a plain paragraph: no evidence callout', () => {
     const doc = render(['## What the Public Record Shows', '', 'Under s. 25 of FIPPA, pursuant to the Forest Act (2024), the Certificate applies.'].join('\n'))

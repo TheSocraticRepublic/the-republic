@@ -586,6 +586,34 @@ function AccessBadge({ level }: { level: AccessLevel }) {
   )
 }
 
+// ---- Document card footer: below the hairline, how to get the document ----
+// How to find it first, then an Access value the badge cannot say, both in the
+// quieter 11px faint label / 12px muted value style. One renderer for both tiers.
+
+function DocumentCardFooter({ howToFind, access }: { howToFind?: DocumentField; access?: DocumentField }) {
+  const entries = [
+    ...(howToFind ? [{ label: 'How to find it', value: howToFind.value }] : []),
+    ...(access ? [{ label: access.label, value: access.value }] : []),
+  ]
+  return (
+    <div style={{ borderTop: `1px solid var(--color-island-border)`, marginTop: '16px', paddingTop: '12px' }}>
+      {entries.map((entry, i) => (
+        <div key={entry.label} style={{ marginTop: i === 0 ? 0 : '8px' }}>
+          <span
+            className="block font-semibold uppercase tracking-[0.08em]"
+            style={{ fontSize: '11px', color: 'var(--color-island-faint)' }}
+          >
+            {entry.label}
+          </span>
+          <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: 'var(--color-island-muted)' }}>
+            {renderInline(entry.value)}
+          </p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ---- Document card — two-tier: primary authority + supporting list ----
 // parseGoverningDocuments gives isPrimary to the first block that has fields.
 // Touched: previously a single-tier flat card; now split into primary/supporting visual tiers.
@@ -603,14 +631,17 @@ function DocumentCard({
 }) {
   const accessField = fields.find((f) => f.label.toLowerCase() === 'access')
   const accessLevel = accessField ? detectAccess(accessField.value) : null
-  // detectAccess gives a level only when the value IS a badge label, so a card has
-  // either the badge alone or the Access field alone, never both and never a badge
-  // that says more than the text.
-  const displayFields = fields.filter((f) => !(f === accessField && accessLevel))
-  const howToFindField = displayFields.find(
+  const howToFindField = fields.find(
     (f) => f.label.toLowerCase().includes('how to find') || f.label.toLowerCase().includes('where to find')
   )
-  const mainFields = displayFields.filter((f) => f !== howToFindField)
+  // Access is never a body field. detectAccess gives a level only when the value IS a
+  // badge label, so a card has either the badge alone or the Access value alone, never
+  // both and never a badge that says more than the text. An Access value with no badge
+  // says how to get the document, so it sits below the hairline with How to find it, in
+  // that quieter style, not with the description (Jen D2 C4).
+  const accessFootField = accessField && !accessLevel ? accessField : undefined
+  const mainFields = fields.filter((f) => f !== howToFindField && f !== accessField)
+  const hasFooter = howToFindField !== undefined || accessFootField !== undefined
 
   // Primary Authority: warmLift bg, Scout-purple left accent
   if (isPrimary) {
@@ -678,7 +709,7 @@ function DocumentCard({
         </div>
 
         {intro && (
-          <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', marginBottom: mainFields.length > 0 || howToFindField ? '12px' : 0 }}>
+          <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', marginBottom: mainFields.length > 0 || hasFooter ? '12px' : 0 }}>
             {renderInline(intro)}
           </p>
         )}
@@ -701,25 +732,7 @@ function DocumentCard({
           </div>
         )}
 
-        {howToFindField && (
-          <div
-            style={{
-              borderTop: `1px solid var(--color-island-border)`,
-              marginTop: '16px',
-              paddingTop: '12px',
-            }}
-          >
-            <span
-              className="block font-semibold uppercase tracking-[0.08em]"
-              style={{ fontSize: '11px', color: 'var(--color-island-faint)' }}
-            >
-              How to find it
-            </span>
-            <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: 'var(--color-island-muted)' }}>
-              {renderInline(howToFindField.value)}
-            </p>
-          </div>
-        )}
+        {hasFooter && <DocumentCardFooter howToFind={howToFindField} access={accessFootField} />}
       </div>
     )
   }
@@ -764,7 +777,7 @@ function DocumentCard({
       </div>
 
       {intro && (
-        <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', marginBottom: mainFields.length > 0 || howToFindField ? '12px' : 0 }}>
+        <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', marginBottom: mainFields.length > 0 || hasFooter ? '12px' : 0 }}>
           {renderInline(intro)}
         </p>
       )}
@@ -787,19 +800,7 @@ function DocumentCard({
         </div>
       )}
 
-      {howToFindField && (
-        <div style={{ borderTop: `1px solid var(--color-island-border)`, marginTop: '16px', paddingTop: '12px' }}>
-          <span
-            className="block font-semibold uppercase tracking-[0.08em]"
-            style={{ fontSize: '11px', color: 'var(--color-island-faint)' }}
-          >
-            How to find it
-          </span>
-          <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: 'var(--color-island-muted)' }}>
-            {renderInline(howToFindField.value)}
-          </p>
-        </div>
-      )}
+        {hasFooter && <DocumentCardFooter howToFind={howToFindField} access={accessFootField} />}
     </div>
   )
 }
