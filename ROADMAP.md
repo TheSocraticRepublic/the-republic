@@ -242,6 +242,7 @@ Named elsewhere and not yet scheduled:
 - Island dark mode off until D4; role "nation" substring (closed by D2); load-flaky front-door timing (see Deferred from republic-ui-d1)
 - Scout's own copy of the old access check and field parser; briefing label/eyebrow polish; Questions-card and Cannot-See rules; 768 badge placement; "NEXT STEPS:" run-in (see Deferred from republic-ui-d2)
 - Vote detail double name (to E2b); Lever detail back link; badge hides an earlier good sync after a failure (see Deferred from republic-ui-e1)
+- MP surnames from sync (4 of 337 misfiled); EmptyState button action; Ø/Ł headers (see Deferred from republic-ui-e2a)
 - Next.js 404 and malformed-URL behaviour on dynamic routes (see Deferred from republic-ui-b2)
 - D4 "The Athenians" — illustration variant selection
 - Release mechanics for dependency deploys (publish boundary, post-deploy checks, containment) — see Deferred from republic-ci-green-deps
@@ -294,6 +295,16 @@ Written verbatim from `~/marvin/state/plans/republic-ui-filings-2026-10/republic
 - **Votes on the landing** (arm station plus chip, landing-public L17).
 - **Briefing mobile sticky section bar** (reading-surfaces F-P1-5).
 - **CSP walk checklist** additions: allowlisted links, grain, new fonts.
+
+### Deferred from republic-ui-e2a (2026-11-05)
+
+Named during relay `republic-ui-e2a` (Razor review and re-checks, Jen's review).
+
+- **Some MPs file under the wrong letter (Jen).** Measured against the House of Commons' official last names, 4 of 337 MPs land under a different letter than their surname: Tesser Derksen, Van Popta, Al Soud, Petitpas Taylor. `federal_mps` stores one `name`, so the list derives the surname, keeping particles as stored. The fix is to store the official family name at sync: openparliament's `family_name`, already typed in `src/lib/parliament/types.ts`. That's a schema and sync change, so it needs `/probe`.
+- **EmptyState has no button action (Jen).** "Clear filters" is a hand-copied button inside EmptyState's message. Give EmptyState a button-action variant.
+- **Letters such as Ø and Ł split a letter group (Razor note).** They give headers O, Ø, O. Fold them in the header key.
+- **The list uses `overflow-clip`, which Safari before 16 doesn't support (Razor note).** Cosmetic: the sticky headers degrade there.
+- **The no-match count is read twice by screen readers (Razor note).**
 
 ### Deferred from republic-ui-e1 (2026-11-05)
 
