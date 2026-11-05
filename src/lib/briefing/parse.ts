@@ -405,6 +405,69 @@ export function splitDocumentBlocks(content: string): string[] {
   return blocks.length > 0 ? blocks : [content]
 }
 
+// ---- What Governs This: blocks to documents, eyebrows and prose. D2 owns this; the goldens are the contract. ----
+
+export type GoverningBlock =
+  | { type: 'document'; name: string; fields: DocumentField[]; isPrimary: boolean }
+  | { type: 'eyebrow'; text: string }
+  | { type: 'prose'; text: string }
+
+/**
+ * A block with fields is a document card; its name comes from a leading `###`
+ * or bold-only line, else from its Document name field. A `###` or bold-only
+ * line with no fields under it is a group label (an eyebrow), never a card,
+ * and any text under it is prose. A block with no heading and no fields is
+ * prose. isPrimary goes to the first document, not to block 0 (which is often
+ * a lead-in sentence).
+ */
+export function parseGoverningDocuments(content: string): GoverningBlock[] {
+  const out: GoverningBlock[] = []
+  let primaryTaken = false
+
+  for (const block of splitDocumentBlocks(content)) {
+    const fields = parseDocumentFields(block)
+    const lines = block.split('\n')
+    const firstLine = lines[0]?.trim() ?? ''
+
+    let heading: string | null = null
+    if (firstLine.startsWith('###')) {
+      heading = firstLine.replace(/^###\s*/, '').trim()
+    } else if (firstLine.startsWith('**') && firstLine.endsWith('**') && !firstLine.match(/^[-*]\s+\*\*/)) {
+      // A line wholly in bold: the bold is the heading's, not the name's.
+      heading = firstLine.match(/^\*\*([^*]+)\*\*$/)?.[1].trim() ?? firstLine
+    }
+
+    if (fields.length === 0) {
+      if (heading === null) {
+        out.push({ type: 'prose', text: block })
+        continue
+      }
+      const label = heading.replace(/\*\*/g, '').trim()
+      if (label) out.push({ type: 'eyebrow', text: label })
+      const rest = lines.slice(1).join('\n').trim()
+      if (rest) out.push({ type: 'prose', text: rest })
+      continue
+    }
+
+    let name = heading ?? ''
+    let docFields = fields
+    if (!name) {
+      const nameField = fields.find(
+        (f) => f.label.toLowerCase() === 'document name' || f.label.toLowerCase() === 'document'
+      )
+      if (nameField) {
+        name = nameField.value
+        docFields = fields.filter((f) => f !== nameField)
+      }
+    }
+
+    out.push({ type: 'document', name, fields: docFields, isPrimary: !primaryTaken })
+    primaryTaken = true
+  }
+
+  return out
+}
+
 // ---- FIPPA letter extractor. D2 owns the parser now; the goldens in tests/unit/briefing-parse.test.ts are the contract. ----
 // The \n---\n...\n---\n fence is load-bearing for What You Can Do: preprocessBlocks'
 // leading/trailing rule drop never sees it, because this runs on the raw section first.

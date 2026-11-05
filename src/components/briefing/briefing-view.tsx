@@ -20,6 +20,7 @@ import {
   type ParsedSection,
   type RoleKey,
   type AccessLevel,
+  type DocumentField,
   parseSections,
   extractTitle,
   isInsightParagraph,
@@ -29,9 +30,8 @@ import {
   roleLabel,
   parsePlayers,
   parseJurisdictions,
-  parseDocumentFields,
   detectAccess,
-  splitDocumentBlocks,
+  parseGoverningDocuments,
   extractFippaLetter,
 } from '@/lib/briefing/parse'
 
@@ -202,6 +202,26 @@ export function renderInline(text: string): React.ReactNode {
   return nodes
 }
 
+/** The 11px muted uppercase label: a prose subheading, and a What Governs group label. */
+function SubheadingLabel({ text, first }: { text: string; first: boolean }) {
+  return (
+    <h4
+      style={{
+        fontFamily: 'var(--font-body)',
+        fontSize: '11px',
+        fontWeight: 700,
+        textTransform: 'uppercase' as const,
+        letterSpacing: '0.06em',
+        color: 'var(--color-island-muted)',
+        marginTop: first ? '0' : '24px',
+        marginBottom: '4px',
+      }}
+    >
+      {text}
+    </h4>
+  )
+}
+
 function ProseSection({
   content,
   oracleSerif,
@@ -241,23 +261,7 @@ function ProseSection({
         break
 
       case 'subheading':
-        elements.push(
-          <h4
-            key={i}
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '11px',
-              fontWeight: 700,
-              textTransform: 'uppercase' as const,
-              letterSpacing: '0.06em',
-              color: 'var(--color-island-muted)',
-              marginTop: i === 0 ? '0' : '24px',
-              marginBottom: '4px',
-            }}
-          >
-            {block.text}
-          </h4>
-        )
+        elements.push(<SubheadingLabel key={i} text={block.text} first={i === 0} />)
         break
 
       case 'list': {
@@ -625,58 +629,25 @@ function AccessBadge({ level }: { level: AccessLevel }) {
 }
 
 // ---- Document card — two-tier: primary authority + supporting list ----
-// First block rendered by WhatGovernsSection gets isPrimary=true.
+// parseGoverningDocuments gives isPrimary to the first block that has fields.
 // Touched: previously a single-tier flat card; now split into primary/supporting visual tiers.
 
 function DocumentCard({
-  block,
+  name: docName,
+  fields,
   isPrimary = false,
 }: {
-  block: string
-  
+  name: string
+  fields: DocumentField[]
   isPrimary?: boolean
 }) {
-  const fields = parseDocumentFields(block)
-
-  let docName = ''
-  let bodyFields = fields
-  const firstLine = block.split('\n')[0]?.trim() ?? ''
-  if (firstLine.startsWith('###')) {
-    docName = firstLine.replace(/^###\s*/, '').replace(/\*\*/g, '').trim()
-  } else if (firstLine.startsWith('**') && firstLine.endsWith('**') && !firstLine.match(/^[-*]\s+\*\*/)) {
-    docName = firstLine.replace(/\*\*/g, '').trim()
-  }
-
-  if (!docName) {
-    const nameField = fields.find(
-      (f) => f.label.toLowerCase() === 'document name' || f.label.toLowerCase() === 'document'
-    )
-    if (nameField) {
-      docName = nameField.value
-      bodyFields = fields.filter((f) => f !== nameField)
-    }
-  }
-
-  const accessField = bodyFields.find((f) => f.label.toLowerCase() === 'access')
+  const accessField = fields.find((f) => f.label.toLowerCase() === 'access')
   const accessLevel = accessField ? detectAccess(accessField.value) : null
-  const displayFields = bodyFields.filter((f) => f.label.toLowerCase() !== 'access')
+  const displayFields = fields.filter((f) => f.label.toLowerCase() !== 'access')
   const howToFindField = displayFields.find(
     (f) => f.label.toLowerCase().includes('how to find') || f.label.toLowerCase().includes('where to find')
   )
   const mainFields = displayFields.filter((f) => f !== howToFindField)
-
-  if (fields.length === 0) {
-    return (
-      <div
-        className="rounded-xl p-5"
-        style={{ backgroundColor: 'var(--color-island-card)', border: `1px solid var(--color-island-card-border)` }}
-      >
-        <p className="whitespace-pre-wrap" style={{ fontSize: '16px', lineHeight: '1.7', color: 'var(--color-island-body)' }}>
-          {renderInline(block)}
-        </p>
-      </div>
-    )
-  }
 
   // Primary Authority: warmLift bg, Scout-purple left accent
   if (isPrimary) {
@@ -854,18 +825,22 @@ function DocumentCard({
 // ---- What Governs This section renderer (two-tier) ----
 
 function WhatGovernsSection({ content }: { content: string }) {
-  const blocks = splitDocumentBlocks(content)
-  const hasCards = blocks.some((b) => parseDocumentFields(b).length > 0)
+  const blocks = parseGoverningDocuments(content)
 
-  if (!hasCards) {
+  if (!blocks.some((b) => b.type === 'document')) {
     return <ProseSection content={content} />
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {blocks.map((block, j) => (
-        <DocumentCard key={j} block={block} isPrimary={j === 0} />
-      ))}
+      {blocks.map((block, j) => {
+        if (block.type === 'document') {
+          return <DocumentCard key={j} name={block.name} fields={block.fields} isPrimary={block.isPrimary} />
+        }
+        // A group label with no fields under it: the eyebrow ProseSection uses for subheadings.
+        if (block.type === 'eyebrow') return <SubheadingLabel key={j} text={block.text} first={j === 0} />
+        return <ProseSection key={j} content={block.text} />
+      })}
     </div>
   )
 }
