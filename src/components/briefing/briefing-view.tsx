@@ -410,7 +410,7 @@ function PlayersSection({ content }: { content: string }) {
                   color: 'var(--color-island-text)',
                 }}
               >
-                {player.name}
+                {renderInline(player.name)}
               </span>
               {player.role && (
                 <span
@@ -444,7 +444,7 @@ function PlayersSection({ content }: { content: string }) {
                   marginBottom: 0,
                 }}
               >
-                {player.whyTheyMatter}
+                {renderInline(player.whyTheyMatter)}
               </p>
             )}
 
@@ -460,7 +460,7 @@ function PlayersSection({ content }: { content: string }) {
                   marginBottom: 0,
                 }}
               >
-                {player.trackRecord}
+                {renderInline(player.trackRecord)}
               </p>
             )}
           </div>
@@ -502,7 +502,7 @@ function ComparisonSection({ content }: { content: string }) {
               marginBottom: '12px',
             }}
           >
-            {jur.name}
+            {renderInline(jur.name)}
           </span>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -523,7 +523,7 @@ function ComparisonSection({ content }: { content: string }) {
                   WHAT THEY DID
                 </span>
                 <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
-                  {jur.whatTheyDid}
+                  {renderInline(jur.whatTheyDid)}
                 </p>
               </div>
             )}
@@ -545,7 +545,7 @@ function ComparisonSection({ content }: { content: string }) {
                   WHY IT MATTERS
                 </span>
                 <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
-                  {jur.whyItMatters}
+                  {renderInline(jur.whyItMatters)}
                 </p>
               </div>
             )}
@@ -567,7 +567,7 @@ function ComparisonSection({ content }: { content: string }) {
                   OUTCOME
                 </span>
                 <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
-                  {jur.outcome}
+                  {renderInline(jur.outcome)}
                 </p>
               </div>
             )}
@@ -703,7 +703,7 @@ function DocumentCard({
                 minWidth: '0',
               }}
             >
-              {docName}
+              {renderInline(docName)}
             </span>
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
@@ -799,7 +799,7 @@ function DocumentCard({
               minWidth: '0',
             }}
           >
-            {docName}
+            {renderInline(docName)}
           </span>
         )}
         {accessLevel && <AccessBadge level={accessLevel} />}

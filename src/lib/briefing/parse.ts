@@ -189,6 +189,15 @@ export function roleLabel(role: string): string {
   return role.replace(/_/g, ' ')
 }
 
+/**
+ * The value after a player field label (`**Role:** x`, `**Role**: x`,
+ * `Role: x`), with the value's own markup kept for renderInline.
+ */
+function playerFieldValue(line: string, label: string): string {
+  const m = line.match(new RegExp(`^(?:\\*\\*)?${label}(?:\\*\\*)?\\s*:?\\s*(?:\\*\\*)?[:\\s]*([\\s\\S]*)$`, 'i'))
+  return (m ? m[1] : '').replace(/^[-\s]+|[-\s]+$/g, '')
+}
+
 export function parsePlayers(content: string): PlayerData[] {
   const players: PlayerData[] = []
 
@@ -199,27 +208,26 @@ export function parsePlayers(content: string): PlayerData[] {
   let current: { name: string; role: string; whyTheyMatter: string; trackRecord: string } | null = null
 
   for (const line of lines) {
+    // Labels are recognised on the line without bold markers; values are taken
+    // from the line as written, so renderInline renders their markup.
     const cleanLine = line.replace(/\*\*/g, '')
 
     // A **Name:** field starts a player, and so does any line that is not a
     // field label (the bare-name form: `**City Planning**` then `Role: …`).
-    const nameMatch = cleanLine.match(/^name\s*:\s*(.*)$/i)
-    if (nameMatch || (!fieldLabels.test(cleanLine) && !cleanLine.startsWith('Role:'))) {
+    const isName = /^name\s*:/i.test(cleanLine)
+    if (isName || (!fieldLabels.test(cleanLine) && !cleanLine.startsWith('Role:'))) {
       if (current && current.name) players.push({ ...current })
-      current = { name: nameMatch ? nameMatch[1].trim() : cleanLine, role: '', whyTheyMatter: '', trackRecord: '' }
+      // A bare name wholly in bold is a heading; its ** are the heading's, not the name's.
+      const bareName = line.match(/^\*\*([^*]+)\*\*$/)?.[1].trim() ?? line
+      current = { name: isName ? playerFieldValue(line, 'name') : bareName, role: '', whyTheyMatter: '', trackRecord: '' }
       continue
     }
 
     if (!current) continue
 
-    const roleMatch = cleanLine.match(/^(?:role)[:\s]+(.+)/i)
-    if (roleMatch) { current.role = roleMatch[1].replace(/^[-\s]+|[-\s]+$/g, ''); continue }
-
-    const whyMatch = cleanLine.match(/^(?:why they matter)[:\s]+(.+)/i)
-    if (whyMatch) { current.whyTheyMatter = whyMatch[1].replace(/^[-\s]+|[-\s]+$/g, ''); continue }
-
-    const trackMatch = cleanLine.match(/^(?:track record)[:\s]+(.+)/i)
-    if (trackMatch) { current.trackRecord = trackMatch[1].replace(/^[-\s]+|[-\s]+$/g, ''); continue }
+    if (/^role[:\s]+\S/i.test(cleanLine)) { current.role = playerFieldValue(line, 'role'); continue }
+    if (/^why they matter[:\s]+\S/i.test(cleanLine)) { current.whyTheyMatter = playerFieldValue(line, 'why they matter'); continue }
+    if (/^track record[:\s]+\S/i.test(cleanLine)) { current.trackRecord = playerFieldValue(line, 'track record'); continue }
   }
 
   if (current && current.name) players.push({ ...current })
