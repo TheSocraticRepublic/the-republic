@@ -171,8 +171,22 @@ export function getRoleKey(role: string): RoleKey {
   if (r.includes('beneficiary') || r.includes('affected')) return 'affected'
   if (r.includes('rights holder') || r.includes('indigenous') || r.includes('first nation')) return 'indigenous'
   if (r.includes('community') || r.includes('local')) return 'affected'
-  if (r.includes('nation')) return 'indigenous'
+  // Whole word: "international" and "self-determination" are not nations (Razor D1 DN1).
+  if (/\bnations?\b/.test(r)) return 'indigenous'
   return 'other'
+}
+
+/**
+ * The words a role badge shows. The briefing prompt's enum values become plain
+ * words; any other value has its underscores turned to spaces and is otherwise
+ * shown as written (never a word the briefing did not use).
+ */
+export function roleLabel(role: string): string {
+  const r = role.trim().toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ')
+  if (r === 'decision maker') return 'Decision-maker'
+  if (r === 'rights holder') return 'Rights holder'
+  if (r === 'proponent') return 'Proponent'
+  return role.replace(/_/g, ' ')
 }
 
 export function parsePlayers(content: string): PlayerData[] {
@@ -187,9 +201,12 @@ export function parsePlayers(content: string): PlayerData[] {
   for (const line of lines) {
     const cleanLine = line.replace(/\*\*/g, '')
 
-    if (!fieldLabels.test(cleanLine) && !cleanLine.startsWith('Role:')) {
+    // A **Name:** field starts a player, and so does any line that is not a
+    // field label (the bare-name form: `**City Planning**` then `Role: …`).
+    const nameMatch = cleanLine.match(/^name\s*:\s*(.*)$/i)
+    if (nameMatch || (!fieldLabels.test(cleanLine) && !cleanLine.startsWith('Role:'))) {
       if (current && current.name) players.push({ ...current })
-      current = { name: cleanLine, role: '', whyTheyMatter: '', trackRecord: '' }
+      current = { name: nameMatch ? nameMatch[1].trim() : cleanLine, role: '', whyTheyMatter: '', trackRecord: '' }
       continue
     }
 

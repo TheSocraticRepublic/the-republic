@@ -26,6 +26,7 @@ import {
   isPullQuote,
   preprocessBlocks,
   getRoleKey,
+  roleLabel,
   parsePlayers,
   parseJurisdictions,
   parseDocumentFields,
@@ -426,7 +427,7 @@ function PlayersSection({ content }: { content: string }) {
                     fontWeight: 500,
                   }}
                 >
-                  {player.role}
+                  {roleLabel(player.role)}
                 </span>
               )}
             </div>
