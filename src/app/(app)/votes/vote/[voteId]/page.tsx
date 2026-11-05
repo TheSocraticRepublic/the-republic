@@ -7,6 +7,8 @@ import { VoteDetailCard } from '@/components/votes/vote-detail-card'
 import { PartyBreakdown, parsePartyVotes } from '@/components/votes/party-breakdown'
 import { BallotList } from '@/components/votes/ballot-list'
 import { VoteExplanation } from '@/components/votes/vote-explanation'
+import { DetailHeader } from '@/components/layout/detail-header'
+import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
 
 export const metadata = {
@@ -46,6 +48,14 @@ export default async function VoteDetailPage({ params }: PageProps) {
   return (
     <div data-arm="votes">
       <div className="mx-auto max-w-2xl px-6 py-10 space-y-10">
+        <DetailHeader
+          arm="votes"
+          backHref="/votes"
+          backLabel="Back to Vote Tracker"
+          title={`Vote ${vote.session}/${vote.number}`}
+          meta={<DataFreshnessBadge variant="meta" />}
+        />
+
         <VoteDetailCard
           date={vote.date}
           descriptionEn={vote.descriptionEn}

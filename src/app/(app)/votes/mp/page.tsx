@@ -4,6 +4,8 @@ import { getDb } from '@/lib/db'
 import { federalMps } from '@/lib/db/schema'
 import { eq, asc } from 'drizzle-orm'
 import { PartyBadge } from '@/components/votes/party-badge'
+import { DetailHeader } from '@/components/layout/detail-header'
+import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
 
 export const metadata = {
@@ -31,16 +33,20 @@ export default async function AllMPsPage() {
   return (
     <div data-arm="votes">
       <div className="mx-auto max-w-2xl px-6 py-10">
-        <div className="mb-8">
-          <h1
-            className="mb-2 text-xl font-bold tracking-tight text-text-primary"
-          >
-            Members of Parliament
-          </h1>
-          <p className="text-xs text-text-muted">
-            {mps.length} current MPs across {provinces.length} provinces and territories
-          </p>
-        </div>
+        <DetailHeader
+          arm="votes"
+          backHref="/votes"
+          backLabel="Back to Vote Tracker"
+          title="Members of Parliament"
+          meta={
+            <>
+              <span>
+                {mps.length} current MPs across {provinces.length} provinces and territories
+              </span>
+              <DataFreshnessBadge variant="meta" />
+            </>
+          }
+        />
 
         {mps.length === 0 ? (
           <div

@@ -6,6 +6,8 @@ import { eq, desc } from 'drizzle-orm'
 import { PartyBadge } from '@/components/votes/party-badge'
 import { BillSummary } from '@/components/votes/bill-summary'
 import { BILL_SUMMARY_PROMPT_VERSION } from '@/lib/ai/prompts/vote-tracker-system'
+import { DetailHeader } from '@/components/layout/detail-header'
+import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
 
 export const metadata = {
@@ -65,7 +67,15 @@ export default async function BillDetailPage({ params }: PageProps) {
   return (
     <div data-arm="votes">
       <div className="mx-auto max-w-2xl px-6 py-10 space-y-10">
-        {/* Bill header */}
+        <DetailHeader
+          arm="votes"
+          backHref="/votes"
+          backLabel="Back to Vote Tracker"
+          title={bill.titleEn}
+          meta={<DataFreshnessBadge variant="meta" />}
+        />
+
+        {/* Bill facts */}
         <div
           className="rounded-xl border px-6 py-6"
           style={{
@@ -89,12 +99,6 @@ export default async function BillDetailPage({ params }: PageProps) {
               </span>
             )}
           </div>
-
-          <h1
-            className="text-base font-semibold text-text-primary leading-relaxed mb-4"
-          >
-            {bill.titleEn}
-          </h1>
 
           <div className="flex flex-wrap items-center gap-4 text-xs">
             {bill.introduced && (

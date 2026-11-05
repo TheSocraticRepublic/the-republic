@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { DetailHeader } from '@/components/layout/detail-header'
+import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
 interface VoteSummary {
   id: string
@@ -34,16 +36,18 @@ export default function RecentVotesPage() {
   return (
     <div data-arm="votes">
       <div className="mx-auto max-w-2xl px-6 py-10">
-        <div className="mb-8">
-          <h1
-            className="mb-2 text-xl font-bold tracking-tight text-text-primary"
-          >
-            Recent Votes
-          </h1>
-          <p className="text-xs text-text-muted">
-            Recorded divisions in the House of Commons
-          </p>
-        </div>
+        <DetailHeader
+          arm="votes"
+          backHref="/votes"
+          backLabel="Back to Vote Tracker"
+          title="Recent Votes"
+          meta={
+            <>
+              <span>Recorded divisions in the House of Commons</span>
+              <DataFreshnessBadge variant="meta" />
+            </>
+          }
+        />
 
         {loading ? (
           <div className="space-y-3">
