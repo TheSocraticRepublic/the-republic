@@ -235,6 +235,9 @@ describe('sort and grouping', () => {
     const gunnRow = screen.getByText('Aaron Gunn').closest('a')!
     expect(within(gunnRow).getByText('Conservative')).toBeTruthy()
     expect(gunnRow.textContent).toContain('North Island—Powell River, British Columbia')
+    const riding = gunnRow.querySelector('[data-riding]')!
+    expect(riding.textContent).toBe('North Island—Powell River, British Columbia')
+    for (const cls of ['text-xs', 'text-text-muted', 'max-sm:basis-full']) expect(riding.classList.contains(cls)).toBe(true)
   })
 })
 

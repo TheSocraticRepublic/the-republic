@@ -270,7 +270,10 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
                     <p className="truncate text-sm font-medium leading-tight text-text-primary">{mp.name}</p>
                     <div className="mt-0.5 flex flex-wrap items-center gap-x-2">
                       <PartyBadge party={mp.party} />
-                      <span className="text-2xs font-medium text-text-faint">
+                      {/* The riding is what a citizen recognises: 12px muted,
+                          and on phones always its own line, so rows hold one
+                          height instead of wrapping by width (Jen C3). */}
+                      <span data-riding className="text-xs text-text-muted max-sm:basis-full">
                         {mp.ridingName}, {mp.ridingProvince}
                       </span>
                     </div>
