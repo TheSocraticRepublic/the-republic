@@ -227,6 +227,12 @@ describe('filters (AND)', () => {
     expect(screen.getByTestId('mp-count').textContent).toBe('10 MPs')
   })
 
+  it("hides Chromium's native clear glyph on the search field, as Scout does", () => {
+    renderList()
+    expect(search().type).toBe('search')
+    expect(search().classList.contains('[&::-webkit-search-cancel-button]:appearance-none')).toBe(true)
+  })
+
   it('searches name or riding, ignoring case and accents', () => {
     const { container } = renderList()
     fireEvent.change(search(), { target: { value: 'ELISABETH' } })

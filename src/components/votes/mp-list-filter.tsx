@@ -136,7 +136,8 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
               onChange={(e) => set('query')(e.target.value)}
               placeholder="Name or riding"
               autoComplete="off"
-              className={fieldControlClass('input')}
+              // No native clear glyph, as Scout's search (Jen C1 C6, E2a C5).
+              className={`${fieldControlClass('input')} [&::-webkit-search-cancel-button]:appearance-none`}
             />
           )}
         </Field>
