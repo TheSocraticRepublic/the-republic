@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import { userProfiles, credentialEvents } from '@/lib/db/schema'
 import { eq, count, sum, sql } from 'drizzle-orm'
-import { ProfileBadge } from '@/components/profile/profile-badge'
 import { CredentialBreakdown } from '@/components/credentials/credential-breakdown'
 import { DetailHeader } from '@/components/layout/detail-header'
 import {
@@ -98,35 +97,28 @@ export default async function PublicProfilePage({ params }: PageProps) {
         backHref="/investigate"
         backLabel="Back to Investigate"
         title={profile.displayName}
+        meta={
+          <>
+            <span>Joined {formatDate(profile.createdAt)}</span>
+            {effectiveTotal > 0 && (
+              <span>
+                Civic weight{' '}
+                <span className="text-text-secondary font-medium">{effectiveTotal}</span>
+              </span>
+            )}
+          </>
+        }
       />
 
-      {/* Profile card */}
-      <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-6">
-        <div className="flex flex-col gap-4">
-          <ProfileBadge displayName={profile.displayName} size="md" />
-
-          {profile.bio && (
-            <p className="max-w-md text-sm leading-relaxed text-text-secondary">
-              {profile.bio}
-            </p>
-          )}
-
-          <div className="flex items-center gap-3">
-            <p className="text-xs text-text-faint">
-              Joined {formatDate(profile.createdAt)}
-            </p>
-            {effectiveTotal > 0 && (
-              <>
-                <span className="text-text-faint">·</span>
-                <p className="text-xs text-text-muted">
-                  Civic weight{' '}
-                  <span className="text-text-secondary font-medium">{effectiveTotal}</span>
-                </p>
-              </>
-            )}
-          </div>
+      {/* Bio card: the h1 names the person and the meta line dates them, so
+          the card exists only to hold a bio (Jen E1 C2). */}
+      {profile.bio && (
+        <div className="rounded-xl border border-border bg-surface-1 shadow-sm p-6">
+          <p className="max-w-md text-sm leading-relaxed text-text-secondary">
+            {profile.bio}
+          </p>
         </div>
-      </div>
+      )}
 
       {/* Credential breakdown */}
       <div className="mt-6">

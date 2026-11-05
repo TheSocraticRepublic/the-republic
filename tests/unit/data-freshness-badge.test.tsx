@@ -392,6 +392,39 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     expect(container.querySelector('[data-detail-header]')).not.toBeNull()
   })
 
+  // Jen E1 C2: the name once (the h1), Joined and civic weight in the meta
+  // line, and the card only when there is a bio.
+  it('/u/[displayName] names the person once and puts Joined in the meta line; no bio, no card', async () => {
+    stubNetwork()
+    dbResults.push([PROFILE], [], [{ lastActivity: null }])
+    const { container } = render(await PublicProfilePage({ params: Promise.resolve({ displayName: 'citizen' }) }))
+    const meta = container.querySelector('[data-detail-header] [data-detail-meta]')!
+    expect(meta.textContent).toBe(`Joined ${new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(PROFILE.createdAt)}`)
+    expect(meta.textContent).not.toContain('Civic weight')
+    expect(container.textContent!.split('citizen').length - 1).toBe(1)
+    // The bio card is the header's next sibling when it renders; without a
+    // bio the next sibling is the credential breakdown's wrapper.
+    const next = container.querySelector('[data-detail-header]')!.nextElementSibling!
+    expect(next.className).toBe('mt-6')
+    expect(container.querySelector('p.max-w-md')).toBeNull()
+  })
+
+  it('/u/[displayName] with a bio and civic weight: weight in the meta line, bio in the card', async () => {
+    stubNetwork()
+    dbResults.push(
+      [{ ...PROFILE, bio: 'Reads council minutes.' }],
+      [{ type: 'foi_filed', count: 2, rawWeight: '6' }],
+      [{ lastActivity: new Date().toISOString() }],
+    )
+    const { container } = render(await PublicProfilePage({ params: Promise.resolve({ displayName: 'citizen' }) }))
+    const meta = container.querySelector('[data-detail-header] [data-detail-meta]')!
+    expect(meta.textContent).toMatch(/^Joined .+Civic weight \d+$/)
+    const card = container.querySelector('[data-detail-header]')!.nextElementSibling!
+    expect(card.className).toContain('rounded-xl')
+    expect(card.textContent).toBe('Reads council minutes.')
+    expect(container.textContent!.split('citizen').length - 1).toBe(1)
+  })
+
   it('/profile goes back to Investigate, with no freshness badge', async () => {
     stubNetwork()
     dbResults.push([PROFILE], [], [{ lastActivity: null }])
