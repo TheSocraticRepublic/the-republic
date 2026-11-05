@@ -53,6 +53,7 @@ import {
   filterMps,
   groupByLetter,
   NO_FILTERS,
+  LETTER_HEADERS_AFTER,
   type MpListRow,
 } from '@/components/votes/mp-list-filter'
 import AllMPsPage from '@/app/(app)/votes/mp/page'
@@ -77,6 +78,11 @@ const ABBOTT = mp('Wren Abbott', 'Green', 'Saanich—Gulf Islands', 'British Col
 
 const ALL = [VAN_KOEVERDEN, DEBELLEFEUILLE, LEBLANC, MACDONALD, MCGUINTY, DERIDDER, GUNN, ELISABETH, BRIERE, ABBOTT]
 const PROVINCES = [...new Set(ALL.map((m) => m.ridingProvince))].sort()
+// Eleven more, all filed under X, so the list passes the 20-row header threshold.
+const XS = ['Ada', 'Ben', 'Cal', 'Dee', 'Eve', 'Fay', 'Gus', 'Hal', 'Ida', 'Jo', 'Kit'].map((given) =>
+  mp(`${given} Xu`, 'NDP', 'Vancouver East', 'British Columbia')
+)
+const BIG = [...ALL, ...XS] // 21 MPs
 
 afterEach(() => {
   cleanup()
@@ -200,18 +206,26 @@ describe('sort and grouping', () => {
     ])
   })
 
-  it('renders one divided list: a letter header before each group, a 48px link row per MP', () => {
-    const { container } = renderList()
+  it('renders one divided list: a sticky letter header before each group, a 48px link row per MP', () => {
+    const { container } = renderList(BIG)
     const lists = container.querySelectorAll('ul')
     expect(lists).toHaveLength(1)
-    for (const cls of ['divide-y', 'divide-border', 'bg-surface-1', 'border', 'border-border', 'rounded-xl']) {
+    // overflow-clip, never overflow-hidden: no scroll container, so headers stick to the shell.
+    for (const cls of ['divide-y', 'divide-border', 'bg-surface-1', 'border', 'border-border', 'rounded-xl', 'overflow-clip']) {
       expect(lists[0].classList.contains(cls)).toBe(true)
     }
-    expect(shownLetters(container)).toEqual(['A', 'B', 'D', 'G', 'L', 'M', 'V'])
-    expect(shownNames(container)).toEqual(sortByLastName(ALL).map((m) => m.name))
+    expect(lists[0].classList.contains('overflow-hidden')).toBe(false)
+    expect(shownLetters(container)).toEqual(['A', 'B', 'D', 'G', 'L', 'M', 'V', 'X'])
+    expect(shownNames(container)).toEqual(sortByLastName(BIG).map((m) => m.name))
+
+    const header = container.querySelector('ul > li[role="presentation"]')!
+    for (const cls of ['sticky', 'top-0', 'z-10', 'bg-surface-2', 'py-1', 'text-sm', 'font-semibold', 'text-text-secondary']) {
+      expect(header.classList.contains(cls)).toBe(true)
+    }
+    expect(header.classList.contains('uppercase')).toBe(false)
 
     const rows = container.querySelectorAll('ul > li:not([role="presentation"])')
-    expect(rows).toHaveLength(ALL.length)
+    expect(rows).toHaveLength(BIG.length)
     const first = rows[0].querySelector('a')!
     expect(first.getAttribute('href')).toBe(`/votes/mp/${ABBOTT.id}`)
     expect(first.className).toContain('min-h-12')
@@ -222,6 +236,24 @@ describe('sort and grouping', () => {
     const items = [...lists[0].children]
     const vHeader = items.findIndex((li) => li.getAttribute('role') === 'presentation' && li.textContent === 'V')
     expect(items[vHeader + 1].textContent).toContain('Adam van Koeverden')
+  })
+
+  it('shows letter headers only when more than 20 MPs are visible', () => {
+    expect(LETTER_HEADERS_AFTER).toBe(20)
+    const at20 = renderList(BIG.slice(0, 20))
+    expect(shownNames(at20.container)).toHaveLength(20)
+    expect(shownLetters(at20.container)).toEqual([])
+    cleanup()
+    const at21 = renderList(BIG)
+    expect(shownLetters(at21.container)).toHaveLength(8)
+  })
+
+  it('drops the headers when a filter narrows the list to 20 or fewer', () => {
+    const { container } = renderList(BIG)
+    expect(shownLetters(container)).toHaveLength(8)
+    fireEvent.change(party(), { target: { value: 'NDP' } }) // Briere + 11 Xu = 12
+    expect(shownNames(container)).toHaveLength(12)
+    expect(shownLetters(container)).toEqual([])
   })
 
   it('draws the photo or the initial as decoration only, and shows party and riding', () => {
@@ -288,7 +320,8 @@ describe('filters (AND)', () => {
     expect(shownNames(container)).toEqual(['Kelly DeRidder', 'David McGuinty', 'Adam van Koeverden'])
     fireEvent.change(party(), { target: { value: 'Liberal' } })
     expect(shownNames(container)).toEqual(['David McGuinty', 'Adam van Koeverden'])
-    expect(shownLetters(container)).toEqual(['M', 'V'])
+    // Two rows: under the threshold, so no letter headers.
+    expect(shownLetters(container)).toEqual([])
   })
 
   it('all three together', () => {

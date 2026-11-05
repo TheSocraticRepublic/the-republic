@@ -118,6 +118,11 @@ export function groupByLetter<T extends MpListRow>(rows: readonly T[]): { letter
   return groups
 }
 
+/** Letter headers appear only when the visible list has more than this many
+ *  MPs: the full list and the big parties and provinces keep them, a search
+ *  result or a narrow filter does not (Jen C2). */
+export const LETTER_HEADERS_AFTER = 20
+
 interface MpListFilterProps {
   mps: MpListRow[]
   /** The provinces and territories present, as the page already computes them. */
@@ -130,6 +135,7 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
   const parties = useMemo(() => [...new Set(mps.map((m) => m.party))].sort(collate), [mps])
   const groups = useMemo(() => groupByLetter(filterMps(mps, filters)), [mps, filters])
   const count = groups.reduce((n, g) => n + g.mps.length, 0)
+  const showLetters = count > LETTER_HEADERS_AFTER
 
   const set = (key: keyof MpFilters) => (value: string) => setFilters((f) => ({ ...f, [key]: value }))
 
@@ -231,18 +237,25 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
           }
         />
       ) : (
-        <ul className="overflow-hidden rounded-xl border border-border bg-surface-1 divide-y divide-border">
+        // overflow-clip, not overflow-hidden: it clips the rounded corners
+        // without making the list a scroll container, so the sticky headers
+        // stick to the shell's scroller (Jen C2).
+        <ul className="overflow-clip rounded-xl border border-border bg-surface-1 divide-y divide-border">
           {groups.map((group) => [
-            // A plain (not sticky) letter header. role="presentation" drops
-            // the list-item semantics so the count of items is the count of
-            // MPs; the letter's text is still read as a separator.
+            // A sticky letter header, only on lists long enough to need an
+            // index (more than LETTER_HEADERS_AFTER rows); a short result
+            // would get one header per row. role="presentation" drops the
+            // list-item semantics so the count of items is the count of MPs;
+            // the letter's text is still read as a separator.
+            showLetters && (
             <li
               key={`letter-${group.letter}`}
               role="presentation"
-              className="bg-surface-2 px-4 py-1.5 text-2xs font-semibold uppercase tracking-widest text-text-muted"
+              className="sticky top-0 z-10 bg-surface-2 px-4 py-1 text-sm font-semibold text-text-secondary"
             >
               {group.letter}
-            </li>,
+            </li>
+            ),
             ...group.mps.map((mp) => (
               <li key={mp.id}>
                 {/* The inset ring needs `!`: the unlayered global
