@@ -162,6 +162,22 @@ seconds later, forces a full reload (the 2026-08-29 fix for a blank page on
 completion). Its hard stop is derived from the same 12-minute threshold, so
 client and reaper agree on when a run has failed.
 
+**Briefing parsing (D2, 2026-11-05).** The model-written briefing is parsed
+by pure functions in `src/lib/briefing/parse.ts`: sections, blocks, players,
+governing documents, jurisdictions, access levels and `routeSection`, which
+picks a section's renderer. `src/components/briefing/briefing-view.tsx`
+renders what they return and keeps only `renderInline`, because that returns
+React nodes. The contract is losslessness: text a parser doesn't recognise as
+part of a record is emitted as prose in its source position, and never
+dropped. `tests/unit/briefing-parse.test.ts` holds it with hand-written
+goldens for every fixture in `tests/fixtures/letters.ts`'s briefing section,
+plus a word-sequence property in render order. Its only named exception is
+an empty group label. Mirror places get cards only from `###` headings, or
+from a bold-only line in a section with no `###`, and fields only from
+explicit label lines. An Access badge renders only on an exact label match.
+`src/components/scout/scout-result-view.tsx` still carries its own older
+copy of the access and field parsing (Parking Lot, republic-ui-d2).
+
 ### The Lens
 
 **Gadfly** (`src/lib/ai/`, `src/app/(app)/gadfly/`) — Socratic sessions over documents. The Gadfly asks questions and never answers them. This is enforced at the prompt level: the system prompt instructs the model to respond with a question in every turn, and to refuse to answer its own questions. The constraint is a feature, not a limitation.
