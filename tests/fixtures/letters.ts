@@ -1108,6 +1108,23 @@ export const BRIEFING_SHAPE_FIXTURES: readonly BriefingShapeFixture[] = [
     ),
   },
   {
+    id: 'outcome-word-heading',
+    shape:
+      'Comparisons under ### headings: one with plain field labels, one where the word outcome sits in prose on its own line (the shape the old outcome regex and positional fallback turned into invented Why it matters and Outcome boxes).',
+    content: lines(
+      '## How Other Places Handle This',
+      '',
+      '### Synthetic Town C (QA)',
+      'What they did: Published every *cutting permit* before approval.',
+      'Outcome: Reported but unverified.',
+      '',
+      '### Synthetic Town D (QA)',
+      'Requires a hydrology assessment above every intake.',
+      '',
+      'The outcome is not documented.'
+    ),
+  },
+  {
     id: 'mixed-list-lead-in',
     shape: 'A lead-in line in the same block as a mixed numbered and bulleted list.',
     content: lines(
