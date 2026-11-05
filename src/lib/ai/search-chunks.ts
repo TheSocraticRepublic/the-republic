@@ -19,6 +19,8 @@ import { documents, documentChunks } from '../db/schema'
 import { voyageEmbed } from './voyage'
 
 export interface ChunkSearchResult {
+  /** documentChunks.id: an opaque uuid, not citizen content. */
+  id: string
   title: string
   content: string
   similarity: number
@@ -34,7 +36,26 @@ const DEFAULT_K = 5
 const QUERY_EMBED_TIMEOUT_MS = 2500
 
 /**
+ * Why a retrieval returned what it returned. Every return path of
+ * searchDocumentChunksWithReason carries exactly one of these.
+ */
+export type RetrievalReason =
+  | 'hits'
+  | 'no-corpus'
+  | 'corpus-check-failed'
+  | 'no-query-vector'
+  | 'embed-failed'
+  | 'below-threshold'
+  | 'search-failed'
+
+export interface ChunkSearchOutcome {
+  results: ChunkSearchResult[]
+  reason: RetrievalReason
+}
+
+/**
  * Search document chunks owned by a user using cosine similarity.
+ * Thin wrapper over searchDocumentChunksWithReason that drops the reason.
  *
  * Per-user scoping is non-negotiable: the WHERE clause filters both
  * documents.userId and documents.status so a user can never retrieve
@@ -45,7 +66,7 @@ const QUERY_EMBED_TIMEOUT_MS = 2500
  * @param query - The search query text
  * @param k - Maximum number of results to return (default: 5)
  * @param _queryVec - Optional pre-computed query vector (bypasses Voyage; used by tests)
- * @returns Array of matching chunks with title, content, and similarity
+ * @returns Array of matching chunks with id, title, content, and similarity
  */
 export async function searchDocumentChunks(
   // PgDatabase is the common base for both drizzle-orm/postgres-js and pooled variants.
@@ -56,6 +77,22 @@ export async function searchDocumentChunks(
   k: number = DEFAULT_K,
   _queryVec?: number[]
 ): Promise<ChunkSearchResult[]> {
+  const { results } = await searchDocumentChunksWithReason(db, userId, query, k, _queryVec)
+  return results
+}
+
+/**
+ * Same search as searchDocumentChunks, with each return tagged by the reason
+ * it took. Used by the briefing pipeline to log what retrieval did.
+ */
+export async function searchDocumentChunksWithReason(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: PgDatabase<any, any, any>,
+  userId: string,
+  query: string,
+  k: number = DEFAULT_K,
+  _queryVec?: number[]
+): Promise<ChunkSearchOutcome> {
   // --- Empty-corpus short-circuit ---
   // Skip the Voyage call entirely if the user has no embedded chunks.
   try {
@@ -70,10 +107,10 @@ export async function searchDocumentChunks(
       ) AS found
     `)
     const found = result.rows?.[0]?.found ?? result[0]?.found ?? false
-    if (!found) return []
+    if (!found) return { results: [], reason: 'no-corpus' }
   } catch (err) {
     console.warn('[search-chunks] corpus-check failed:', err instanceof Error ? err.message : err)
-    return []
+    return { results: [], reason: 'corpus-check-failed' }
   }
 
   // --- Embed the query (or use a pre-computed vector for testing) ---
@@ -83,9 +120,9 @@ export async function searchDocumentChunks(
       const [vec] = await voyageEmbed([query], 'query', { timeoutMs: QUERY_EMBED_TIMEOUT_MS })
       queryVec = vec ?? null
     } catch {
-      return []
+      return { results: [], reason: 'embed-failed' }
     }
-    if (!queryVec) return []
+    if (!queryVec) return { results: [], reason: 'no-query-vector' }
   }
 
   // --- Cosine similarity search ---
@@ -96,6 +133,7 @@ export async function searchDocumentChunks(
   try {
     const rows = await db
       .select({
+        id: documentChunks.id,
         title: documents.title,
         content: documentChunks.content,
         similarity: sql<number>`1 - (${documentChunks.embedding} <=> ${vecLiteral}::vector)`.as('similarity'),
@@ -114,16 +152,18 @@ export async function searchDocumentChunks(
       .limit(k * 4)
 
     // Apply similarity threshold and return top-k
-    return rows
+    const results = rows
       .filter((r) => r.similarity >= SIMILARITY_THRESHOLD)
       .slice(0, k)
       .map((r) => ({
+        id: r.id,
         title: r.title,
         content: r.content,
         similarity: r.similarity,
       }))
+    return { results, reason: results.length > 0 ? 'hits' : 'below-threshold' }
   } catch (err) {
     console.warn('[search-chunks] similarity search failed:', err instanceof Error ? err.message : err)
-    return []
+    return { results: [], reason: 'search-failed' }
   }
 }

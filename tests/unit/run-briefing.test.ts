@@ -14,7 +14,7 @@
  *   - pickFreshAlerts (re-exported; canonical tests in shadow-fresh-alerts.test.ts)
  */
 
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
 
 // ---------------------------------------------------------------------------
 // Mocks — declared before dynamic import so vi.mock() hoisting applies
@@ -101,6 +101,7 @@ vi.mock('@/lib/ai/prompts/briefing-system', () => ({
 
 vi.mock('@/lib/ai/search-chunks', () => ({
   searchDocumentChunks: vi.fn(() => Promise.resolve([])),
+  searchDocumentChunksWithReason: vi.fn(() => Promise.resolve({ results: [], reason: 'no-corpus' })),
 }))
 
 vi.mock('@/lib/archive/shadow', () => ({
@@ -142,6 +143,7 @@ vi.mock('@/lib/ai/model', () => ({
 
 import { runBriefingGeneration, pickFreshAlerts } from '@/lib/investigation/run-briefing'
 import { generateText } from 'ai'
+import { searchDocumentChunksWithReason } from '@/lib/ai/search-chunks'
 import type { ShadowAlert } from '@/lib/archive/shadow'
 import type { getDb } from '@/lib/db'
 
@@ -262,5 +264,146 @@ describe('runBriefingGeneration', () => {
 
     expect(generateText).not.toHaveBeenCalled()
     expect(dbMock.transaction).not.toHaveBeenCalled()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Retrieval observability: exactly one [retrieval] line per briefing run
+// ---------------------------------------------------------------------------
+
+describe('runBriefingGeneration — [retrieval] log line', () => {
+  const CHUNK_CONTENT = 'SECRET-CHUNK-CONTENT riparian setback variance'
+  const CHUNK_TITLE = 'SECRET-DOC-TITLE Council minutes'
+  const CONCERN = 'SECRET-CONCERN the wetland on Elm Road is being filled'
+  let infoSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    selectReturnValues = [[makeInvestigationRow({ concern: CONCERN })]]
+    dbMock = buildDbMock()
+    ;(generateText as Mock).mockResolvedValue({ text: 'briefing text' })
+    infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    infoSpy.mockRestore()
+    vi.useRealTimers()
+  })
+
+  function retrievalLines(): string[] {
+    return infoSpy.mock.calls
+      .filter((c: unknown[]) => c[0] === '[retrieval]')
+      .map((c: unknown[]) => c[1] as string)
+  }
+
+  function onlyLine(): { raw: string; parsed: Record<string, unknown> } {
+    const lines = retrievalLines()
+    expect(lines).toHaveLength(1)
+    return { raw: lines[0], parsed: JSON.parse(lines[0]) }
+  }
+
+  function expectNoUserText(raw: string) {
+    expect(raw).not.toContain('SECRET-CHUNK-CONTENT')
+    expect(raw).not.toContain('SECRET-DOC-TITLE')
+    expect(raw).not.toContain('SECRET-CONCERN')
+    expect(raw).not.toContain('wetland')
+  }
+
+  it("ok with hits: logs reason 'hits', ids, rounded top similarity", async () => {
+    ;(searchDocumentChunksWithReason as Mock).mockResolvedValueOnce({
+      reason: 'hits',
+      results: [
+        { id: 'chunk-uuid-1', title: CHUNK_TITLE, content: CHUNK_CONTENT, similarity: 0.812345 },
+        { id: 'chunk-uuid-2', title: CHUNK_TITLE, content: CHUNK_CONTENT, similarity: 0.61 },
+      ],
+    })
+
+    await runBriefingGeneration({ db: dbMock as unknown as DbLike, investigationId: INVESTIGATION_ID })
+
+    const { raw, parsed } = onlyLine()
+    expect(Object.keys(parsed).sort()).toEqual(
+      ['chunkIds', 'hits', 'investigationId', 'ms', 'outcome', 'reason', 'topSimilarity'].sort()
+    )
+    expect(parsed.investigationId).toBe(INVESTIGATION_ID)
+    expect(parsed.outcome).toBe('ok')
+    expect(parsed.reason).toBe('hits')
+    expect(parsed.hits).toBe(2)
+    expect(parsed.chunkIds).toEqual(['chunk-uuid-1', 'chunk-uuid-2'])
+    expect(parsed.topSimilarity).toBe(0.812)
+    expect(typeof parsed.ms).toBe('number')
+    expect(parsed.ms as number).toBeGreaterThanOrEqual(0)
+    expectNoUserText(raw)
+
+    // Excerpt behaviour unchanged: the chunk still reaches the prompt.
+    const call = (generateText as Mock).mock.calls[0][0]
+    expect(call.messages[0].content).toContain(CHUNK_CONTENT)
+    expect(call.messages[0].content).toContain(`Document: ${CHUNK_TITLE}`)
+  })
+
+  it("ok with no-corpus: logs zero hits and a null top similarity", async () => {
+    ;(searchDocumentChunksWithReason as Mock).mockResolvedValueOnce({ results: [], reason: 'no-corpus' })
+
+    await runBriefingGeneration({ db: dbMock as unknown as DbLike, investigationId: INVESTIGATION_ID })
+
+    const { raw, parsed } = onlyLine()
+    expect(parsed).toEqual({
+      investigationId: INVESTIGATION_ID,
+      outcome: 'ok',
+      reason: 'no-corpus',
+      hits: 0,
+      chunkIds: [],
+      topSimilarity: null,
+      ms: expect.any(Number),
+    })
+    expectNoUserText(raw)
+    const call = (generateText as Mock).mock.calls[0][0]
+    expect(call.messages[0].content).not.toContain('[DOCUMENT EXCERPTS')
+  })
+
+  it('timeout: logs outcome timeout with a null reason after the 5 s race', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    ;(searchDocumentChunksWithReason as Mock).mockImplementationOnce(() => new Promise(() => {}))
+
+    let settled = false
+    const run = runBriefingGeneration({ db: dbMock as unknown as DbLike, investigationId: INVESTIGATION_ID })
+      .finally(() => { settled = true })
+    for (let i = 0; i < 20 && !settled; i++) {
+      await vi.advanceTimersByTimeAsync(1000)
+    }
+    await run
+
+    const { raw, parsed } = onlyLine()
+    expect(parsed).toEqual({
+      investigationId: INVESTIGATION_ID,
+      outcome: 'timeout',
+      reason: null,
+      hits: 0,
+      chunkIds: [],
+      topSimilarity: null,
+      ms: expect.any(Number),
+    })
+    expect(parsed.ms as number).toBeGreaterThanOrEqual(5000)
+    expectNoUserText(raw)
+    // Briefing still proceeds without excerpts
+    expect(generateText).toHaveBeenCalledOnce()
+  })
+
+  it('error: logs outcome error with a null reason when retrieval throws', async () => {
+    ;(searchDocumentChunksWithReason as Mock).mockRejectedValueOnce(new Error(`boom ${CHUNK_CONTENT}`))
+
+    await runBriefingGeneration({ db: dbMock as unknown as DbLike, investigationId: INVESTIGATION_ID })
+
+    const { raw, parsed } = onlyLine()
+    expect(parsed).toEqual({
+      investigationId: INVESTIGATION_ID,
+      outcome: 'error',
+      reason: null,
+      hits: 0,
+      chunkIds: [],
+      topSimilarity: null,
+      ms: expect.any(Number),
+    })
+    expectNoUserText(raw)
+    expect(generateText).toHaveBeenCalledOnce()
   })
 })
