@@ -389,6 +389,26 @@ describe('filters (AND)', () => {
     expect(line().textContent).toBe('2 of 10 MPs')
   })
 
+  it('either Clear filters button returns focus to the search field, never to the body', () => {
+    renderList()
+    // The count-line button.
+    fireEvent.change(party(), { target: { value: 'Liberal' } })
+    const inline = screen.getByRole('button', { name: 'Clear filters' })
+    inline.focus()
+    expect(document.activeElement).toBe(inline)
+    fireEvent.click(inline)
+    expect(document.activeElement).toBe(search())
+
+    // The EmptyState button.
+    fireEvent.change(search(), { target: { value: 'Gunn' } })
+    fireEvent.change(province(), { target: { value: 'Ontario' } })
+    const empty = screen.getByRole('button', { name: 'Clear filters' })
+    empty.focus()
+    fireEvent.click(empty)
+    expect(document.activeElement).toBe(search())
+    expect(document.activeElement).not.toBe(document.body)
+  })
+
   it('a whitespace-only search is not a filter', () => {
     renderList()
     fireEvent.change(search(), { target: { value: '   ' } })

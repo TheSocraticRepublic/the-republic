@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronDown } from 'lucide-react'
@@ -138,7 +138,13 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
   const showLetters = count > LETTER_HEADERS_AFTER
 
   const filtering = filters.query.trim() !== '' || filters.province !== '' || filters.party !== ''
-  const clear = () => setFilters(NO_FILTERS)
+  const searchRef = useRef<HTMLInputElement>(null)
+  // Both Clear buttons unmount once the filters reset, which would drop focus
+  // to <body>; it goes to the search field instead (Razor W2, Jen C7).
+  const clear = () => {
+    setFilters(NO_FILTERS)
+    searchRef.current?.focus()
+  }
 
   const set = (key: keyof MpFilters) => (value: string) => setFilters((f) => ({ ...f, [key]: value }))
 
@@ -149,6 +155,7 @@ export function MpListFilter({ mps, provinces }: MpListFilterProps) {
           {(control) => (
             <input
               {...control}
+              ref={searchRef}
               type="search"
               value={filters.query}
               onChange={(e) => set('query')(e.target.value)}
