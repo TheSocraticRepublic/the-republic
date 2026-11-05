@@ -12,8 +12,53 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: () => {}, replace: () => {}, refresh: () => {}, back: () => {}, prefetch: () => {} }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  notFound: () => { throw new Error('notFound') },
+  redirect: (to: string) => { throw new Error(`redirect ${to}`) },
+}))
+vi.mock('next/headers', () => ({
+  headers: async () => new Headers({ 'x-user-id': 'user-a' }),
+}))
+// next/link, reduced to the anchor it renders (jsdom has no app router).
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react')
+  return {
+    default: ({ href, children, ...rest }: { href: string; children?: import('react').ReactNode } & Record<string, unknown>) =>
+      createElement('a', { href, ...rest }, children),
+  }
+})
+/**
+ * The database, as a Drizzle chain: every builder method returns the chain,
+ * and awaiting it yields the next queued result set, in query order.
+ */
+const dbResults: unknown[][] = []
+vi.mock('@/lib/db', () => {
+  const chain = (): unknown =>
+    new Proxy(() => {}, {
+      get(_t, prop) {
+        if (prop === 'then') {
+          return (ok: (v: unknown) => unknown, bad: (e: unknown) => unknown) =>
+            Promise.resolve(dbResults.shift() ?? []).then(ok, bad)
+        }
+        return () => chain()
+      },
+    })
+  return { getDb: () => ({ select: () => chain() }) }
+})
+
 import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 import { DetailHeader } from '@/components/layout/detail-header'
+import AllMPsPage from '@/app/(app)/votes/mp/page'
+import RecentVotesPage from '@/app/(app)/votes/recent/page'
+import MpProfilePage from '@/app/(app)/votes/mp/[mpId]/page'
+import VoteDetailPage from '@/app/(app)/votes/vote/[voteId]/page'
+import BillDetailPage from '@/app/(app)/votes/bill/[billId]/page'
+import PublicProfilePage from '@/app/(app)/u/[displayName]/page'
+import ProfilePage from '@/app/(app)/profile/page'
 
 const COUNTS = { totalMps: 338, totalVotes: 1200, totalBills: 90 }
 
@@ -54,6 +99,7 @@ function expectNoAge(container: HTMLElement) {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  dbResults.length = 0
 })
 
 describe('DataFreshnessBadge', () => {
@@ -124,7 +170,11 @@ describe('DataFreshnessBadge', () => {
     })
 
     it('when the response is not OK', async () => {
-      respondWith({ error: 'Too many requests' }, { ok: false, status: 429 })
+      // The body carries a sync date, so ignoring the status would show one.
+      respondWith(
+        { lastSync: { startedAt: daysAgo(1), completedAt: daysAgo(1), durationMs: 1 }, counts: COUNTS },
+        { ok: false, status: 503 },
+      )
       const { container } = render(<DataFreshnessBadge />)
       await screen.findByText('Sync time unknown')
       expectNoAge(container)
@@ -175,5 +225,117 @@ describe('DetailHeader', () => {
     expect(container.querySelector('h1')!.textContent).toBe('Profile')
     const bar = container.querySelector('[data-accent-bar]') as HTMLElement
     expect(bar.getAttribute('style')).toContain('--border-strong')
+  })
+})
+
+/*
+ * The seven pages, rendered as Next calls them: the async server components
+ * awaited, then mounted. The status route answers with a known sync; every
+ * other fetch a child component makes stays open.
+ */
+describe('the detail pages carry DetailHeader, and Votes pages the badge', () => {
+  const SYNCED = daysAgo(1)
+  function stubNetwork() {
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url === '/api/parliament/sync/status') {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ lastSync: { startedAt: SYNCED, completedAt: SYNCED, durationMs: 1 }, counts: COUNTS }),
+        } as unknown as Response)
+      }
+      return new Promise(() => {})
+    }))
+  }
+
+  const MP = {
+    id: 'mp-1', name: 'Jane Doe', party: 'Liberal', ridingName: 'Nelson', ridingProvince: 'BC',
+    email: null, photoUrl: null, active: true,
+  }
+  const VOTE = {
+    id: 'v-1', session: '45-1', number: 12, date: '2026-10-01', descriptionEn: 'Second reading',
+    result: 'passed', yeaTotal: 170, nayTotal: 150, pairedTotal: 0, billId: null, partyVotes: null,
+    aiExplanation: null,
+  }
+  const BILL = {
+    id: 'b-1', number: 'C-5', titleEn: 'An Act respecting rivers', titleFr: null, shortTitleEn: null,
+    session: '45-1', statusCode: null, introduced: null, isLaw: false, legisInfoUrl: null,
+    aiSummary: null, aiSummaryPromptVersion: null, sponsorName: null, sponsorParty: null, sponsorMpId: null,
+  }
+  const PROFILE = { userId: 'user-a', displayName: 'citizen', bio: null, avatarUrl: null, createdAt: new Date('2026-01-01T12:00:00Z') }
+
+  async function expectHeader(container: HTMLElement, back: { href: string; label: string }, title: string) {
+    const link = screen.getByRole('link', { name: back.label })
+    expect(link.getAttribute('href')).toBe(back.href)
+    const h1s = container.querySelectorAll('h1')
+    expect(h1s).toHaveLength(1)
+    expect(h1s[0].textContent).toBe(title)
+    expect(h1s[0].closest('[data-detail-header]')).not.toBeNull()
+  }
+
+  async function expectBadgeInMeta(container: HTMLElement) {
+    const text = await screen.findByText(`Data as of ${localDate(SYNCED)}`)
+    const meta = container.querySelector('[data-detail-header] [data-detail-meta]')
+    expect(meta).not.toBeNull()
+    expect(meta!.contains(text)).toBe(true)
+  }
+
+  it('/votes/mp goes back to Votes and shows the badge', async () => {
+    stubNetwork()
+    dbResults.push([MP])
+    const { container } = render(await AllMPsPage())
+    await expectHeader(container, { href: '/votes', label: 'Back to Votes' }, 'Members of Parliament')
+    expect(container.querySelector('[data-detail-meta]')!.textContent).toContain('1 current MPs across 1 provinces and territories')
+    await expectBadgeInMeta(container)
+  })
+
+  it('/votes/recent goes back to Votes and shows the badge', async () => {
+    stubNetwork()
+    const { container } = render(<RecentVotesPage />)
+    await expectHeader(container, { href: '/votes', label: 'Back to Votes' }, 'Recent Votes')
+    await expectBadgeInMeta(container)
+  })
+
+  it('/votes/mp/[mpId] goes back to MPs and shows the badge', async () => {
+    stubNetwork()
+    dbResults.push([MP])
+    const { container } = render(await MpProfilePage({ params: Promise.resolve({ mpId: 'mp-1' }) }))
+    await expectHeader(container, { href: '/votes/mp', label: 'Back to MPs' }, 'Jane Doe')
+    await expectBadgeInMeta(container)
+  })
+
+  it('/votes/vote/[voteId] goes back to Votes and shows the badge', async () => {
+    stubNetwork()
+    dbResults.push([VOTE])
+    const { container } = render(await VoteDetailPage({ params: Promise.resolve({ voteId: 'v-1' }) }))
+    await expectHeader(container, { href: '/votes', label: 'Back to Votes' }, 'Vote 45-1/12')
+    await expectBadgeInMeta(container)
+  })
+
+  it('/votes/bill/[billId] goes back to Votes, titles the bill, and shows the badge', async () => {
+    stubNetwork()
+    dbResults.push([BILL], [])
+    const { container } = render(await BillDetailPage({ params: Promise.resolve({ billId: 'b-1' }) }))
+    await expectHeader(container, { href: '/votes', label: 'Back to Votes' }, 'An Act respecting rivers')
+    await expectBadgeInMeta(container)
+  })
+
+  it('/u/[displayName] goes back to Investigate, with no freshness badge', async () => {
+    stubNetwork()
+    dbResults.push([PROFILE], [], [{ lastActivity: null }])
+    const { container } = render(await PublicProfilePage({ params: Promise.resolve({ displayName: 'citizen' }) }))
+    await expectHeader(container, { href: '/investigate', label: 'Back to Investigate' }, 'citizen')
+    expect(container.querySelector('[data-freshness]')).toBeNull()
+    expect(container.querySelector('[data-detail-header]')).not.toBeNull()
+  })
+
+  it('/profile goes back to Investigate, with no freshness badge', async () => {
+    stubNetwork()
+    dbResults.push([PROFILE], [], [{ lastActivity: null }])
+    const { container } = render(await ProfilePage())
+    await expectHeader(container, { href: '/investigate', label: 'Back to Investigate' }, 'Profile')
+    expect(container.querySelector('[data-detail-meta]')!.textContent).toBe('Your public identity')
+    expect(container.querySelector('[data-freshness]')).toBeNull()
+    expect(container.querySelector('[data-detail-header]')).not.toBeNull()
   })
 })
