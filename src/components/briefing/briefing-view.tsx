@@ -620,6 +620,9 @@ function DocumentCard({
           backgroundColor: 'var(--color-island-warm-lift)',
           border: `1px solid var(--color-island-card-border)`,
           borderLeft: '3px solid color-mix(in srgb, var(--color-island-accent-scout) 50%, transparent)',
+          // 2px less than p-5: the 3px rule is 2px wider than the other cards' 1px border,
+          // so every document card's text shares one left edge.
+          paddingLeft: '18px',
         }}
       >
         {/* Header row — flexWrap for responsive */}
@@ -651,7 +654,8 @@ function DocumentCard({
               {renderInline(docName)}
             </span>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
+          {/* May shrink to the card: at 320 the pair wraps instead of painting past the edge. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '0 1 auto', minWidth: 0, maxWidth: '100%', flexWrap: 'wrap' }}>
             <span
               style={{
                 // The paper's one badge recipe (the access badge's), on its own Scout tint.

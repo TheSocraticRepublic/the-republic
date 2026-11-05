@@ -1279,6 +1279,21 @@ describe('the rendered briefing (BriefingView, react-dom/server)', () => {
   // jsdom has no layout, so this holds the cause, not the pixels: a title with a zero
   // flex basis shrinks to nothing beside the no-shrink badge group before the row wraps
   // (one word per line at 375px). The harness screenshot holds the pixels.
+  // Jen D2 C2, held at the cause for the same reason: a no-shrink badge group is as
+  // wide as its one row, so its own wrap never fires and Public paints past the card at 320.
+  it('the Primary Authority badge group may shrink to the card, and that card shares the others’ text edge', () => {
+    const doc = render(BRIEFING_SHAPE_FIXTURES.find((f) => f.id === 'document-access-values')!.content)
+    const group = findAll(doc, 'span', 'Primary Authority')[0].parentElement!
+    const s = styleOf(group)
+    expect(s).toContain('flex:0 1 auto')
+    expect(s).toContain('min-width:0')
+    expect(s).toContain('max-width:100%')
+    expect(s).toContain('flex-wrap:wrap')
+    expect(s).not.toContain('flex-shrink:0')
+    const primaryCard = cardOf(group)!
+    expect(styleOf(primaryCard)).toContain('padding-left:18px')
+  })
+
   it.each(['Synthetic Bylaw A (QA)', 'Synthetic Minutes F (QA)'])(
     'the document title on %s has a real flex basis, so the badges wrap below it on a narrow card',
     (name) => {
