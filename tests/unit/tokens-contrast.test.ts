@@ -903,8 +903,10 @@ describe('fonts', () => {
         if (vars.length === 0 || vars.some((v) => !emitted.has(v))) unknown.push(`${file}: ${m[2]}`)
       }
     }
-    // briefing-view: 2 serif base fonts + 7 body + 2 serif + 1 display (the H1). The dialog: none.
-    expect(sites).toHaveLength(12)
+    // briefing-view: 2 serif base fonts + 4 body + 2 serif + 1 display (the H1). The dialog: none.
+    // D2 fix pass: the three Mirror field labels render from one span, and the
+    // player parts from one paragraph, so body sites went from 7 to 4.
+    expect(sites).toHaveLength(9)
     expect(unknown).toEqual([])
   })
 

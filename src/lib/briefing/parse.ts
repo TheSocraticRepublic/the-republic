@@ -523,30 +523,13 @@ export function parseComparison(content: string): ComparisonItem[] {
   return items
 }
 
-// ---- Document field parser. D2 owns the parser now; the goldens in tests/unit/briefing-parse.test.ts are the contract. ----
+// ---- Document fields ----
 
 export interface DocumentField {
   label: string
   value: string
 }
 
-export function parseDocumentFields(block: string): DocumentField[] {
-  const lines = block.split('\n')
-  const fields: DocumentField[] = []
-  let current: DocumentField | null = null
-
-  for (const line of lines) {
-    const match = line.match(/^[-*]\s+\*\*(.+?):\*\*\s*(.*)$/)
-    if (match) {
-      if (current) fields.push(current)
-      current = { label: match[1].trim(), value: match[2].trim() }
-    } else if (current && line.trim()) {
-      current.value += ' ' + line.trim()
-    }
-  }
-  if (current) fields.push(current)
-  return fields
-}
 
 export type AccessLevel = 'public' | 'fippa' | 'council'
 
@@ -589,9 +572,40 @@ export function splitDocumentBlocks(content: string): string[] {
 // ---- What Governs This: blocks to documents, eyebrows and prose. D2 owns this; the goldens are the contract. ----
 
 export type GoverningBlock =
-  | { type: 'document'; name: string; fields: DocumentField[]; isPrimary: boolean }
+  | { type: 'document'; name: string; intro: string; fields: DocumentField[]; isPrimary: boolean }
   | { type: 'eyebrow'; text: string }
   | { type: 'prose'; text: string }
+
+const DOCUMENT_FIELD_LINE = /^[-*]\s+\*\*(.+?):\*\*\s*(.*)$/
+
+/**
+ * One block's fields, and the text around them that is not a field: `lead`
+ * (before the first field) and `trailing` (after the last field, past a blank
+ * line). A field value continues on the following non-field lines; text after
+ * a blank line joins the field before it only when another field follows.
+ */
+function readDocumentBlock(lines: string[]): { lead: string[]; fields: DocumentField[]; trailing: string[] } {
+  const lead: string[] = []
+  const fields: DocumentField[] = []
+  let pending: string[] = []
+  for (const line of lines) {
+    const match = line.match(DOCUMENT_FIELD_LINE)
+    if (match) {
+      if (fields.length > 0 && pending.some((l) => l.trim())) {
+        fields[fields.length - 1].value += ' ' + pending.filter((l) => l.trim()).map((l) => l.trim()).join(' ')
+      }
+      pending = []
+      fields.push({ label: match[1].trim(), value: match[2].trim() })
+    } else if (fields.length === 0) {
+      lead.push(line)
+    } else if (line.trim() && pending.length === 0) {
+      fields[fields.length - 1].value += ' ' + line.trim()
+    } else {
+      pending.push(line)
+    }
+  }
+  return { lead, fields, trailing: pending }
+}
 
 /**
  * A block with fields is a document card; its name comes from a leading `###`
@@ -599,14 +613,16 @@ export type GoverningBlock =
  * line with no fields under it is a group label (an eyebrow), never a card,
  * and any text under it is prose. A block with no heading and no fields is
  * prose. isPrimary goes to the first document, not to block 0 (which is often
- * a lead-in sentence).
+ * a lead-in sentence). Nothing is dropped (Razor C2): text between a heading
+ * and its first field is the card's intro; text before the first field of a
+ * block with no heading is prose before the card; text after the last field,
+ * past a blank line, is prose after it.
  */
 export function parseGoverningDocuments(content: string): GoverningBlock[] {
   const out: GoverningBlock[] = []
   let primaryTaken = false
 
   for (const block of splitDocumentBlocks(content)) {
-    const fields = parseDocumentFields(block)
     const lines = block.split('\n')
     const firstLine = lines[0]?.trim() ?? ''
 
@@ -617,6 +633,8 @@ export function parseGoverningDocuments(content: string): GoverningBlock[] {
       // A line wholly in bold: the bold is the heading's, not the name's.
       heading = firstLine.match(/^\*\*([^*]+)\*\*$/)?.[1].trim() ?? firstLine
     }
+
+    const { lead, fields, trailing } = readDocumentBlock(heading === null ? lines : lines.slice(1))
 
     if (fields.length === 0) {
       if (heading === null) {
@@ -630,6 +648,11 @@ export function parseGoverningDocuments(content: string): GoverningBlock[] {
       continue
     }
 
+    const leadText = proseFrom(lead) ?? ''
+    let intro = ''
+    if (heading !== null) intro = leadText
+    else if (leadText) out.push({ type: 'prose', text: leadText })
+
     let name = heading ?? ''
     let docFields = fields
     if (!name) {
@@ -642,8 +665,10 @@ export function parseGoverningDocuments(content: string): GoverningBlock[] {
       }
     }
 
-    out.push({ type: 'document', name, fields: docFields, isPrimary: !primaryTaken })
+    out.push({ type: 'document', name, intro, fields: docFields, isPrimary: !primaryTaken })
     primaryTaken = true
+    const after = proseFrom(trailing)
+    if (after) out.push({ type: 'prose', text: after })
   }
 
   return out

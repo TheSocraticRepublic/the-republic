@@ -589,10 +589,12 @@ function AccessBadge({ level }: { level: AccessLevel }) {
 
 function DocumentCard({
   name: docName,
+  intro,
   fields,
   isPrimary = false,
 }: {
   name: string
+  intro: string
   fields: DocumentField[]
   isPrimary?: boolean
 }) {
@@ -662,6 +664,12 @@ function DocumentCard({
             {accessLevel && <AccessBadge level={accessLevel} />}
           </div>
         </div>
+
+        {intro && (
+          <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', marginBottom: mainFields.length > 0 || howToFindField ? '12px' : 0 }}>
+            {renderInline(intro)}
+          </p>
+        )}
 
         {mainFields.length > 0 && (
           <div className="space-y-3">
@@ -742,6 +750,12 @@ function DocumentCard({
         {accessLevel && <AccessBadge level={accessLevel} />}
       </div>
 
+      {intro && (
+        <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', marginBottom: mainFields.length > 0 || howToFindField ? '12px' : 0 }}>
+          {renderInline(intro)}
+        </p>
+      )}
+
       {mainFields.length > 0 && (
         <div className="space-y-3">
           {mainFields.map((field, i) => (
@@ -790,7 +804,7 @@ function WhatGovernsSection({ content }: { content: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {blocks.map((block, j) => {
         if (block.type === 'document') {
-          return <DocumentCard key={j} name={block.name} fields={block.fields} isPrimary={block.isPrimary} />
+          return <DocumentCard key={j} name={block.name} intro={block.intro} fields={block.fields} isPrimary={block.isPrimary} />
         }
         // A group label with no fields under it: the eyebrow ProseSection uses for subheadings.
         if (block.type === 'eyebrow') return <SubheadingLabel key={j} text={block.text} first={j === 0} />

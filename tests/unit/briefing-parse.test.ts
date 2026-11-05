@@ -156,6 +156,7 @@ const GOLDENS: Record<string, BriefingParse> = {
           {
             type: 'document',
             name: 'Forest Stewardship Plan (QA)',
+            intro: '',
             fields: [
               { label: 'How to find it', value: '[BC forestry pages](https://www2.gov.bc.ca/gov/content/industry/forestry)' },
               { label: 'Access', value: 'Public' },
@@ -165,6 +166,7 @@ const GOLDENS: Record<string, BriefingParse> = {
           {
             type: 'document',
             name: 'Local reporting (QA)',
+            intro: '',
             fields: [
               { label: 'How to find it', value: '[a news report](https://example.com/news/mill-creek)' },
               { label: 'Access', value: 'Public' },
@@ -272,6 +274,7 @@ const SEEDED_GOLDEN: BriefingParse = {
         {
           type: 'document',
           name: 'Forest Stewardship Plan for the Cedar Ridge licence area (QA)',
+          intro: '',
           fields: [
             { label: 'What it is', value: "The licensee's plan setting results and strategies for the area." },
             { label: 'Why it matters', value: 'It states what the licensee committed to for water quality.' },
@@ -283,6 +286,7 @@ const SEEDED_GOLDEN: BriefingParse = {
         {
           type: 'document',
           name: 'Cutblock CR-14 silviculture prescription (QA)',
+          intro: '',
           fields: [
             { label: 'What it is', value: 'The site-level plan for harvesting and replanting cutblock CR-14.' },
             { label: 'Why it matters', value: 'It would show whether the intake was considered.' },
@@ -456,9 +460,34 @@ describe('parse rules', () => {
       {
         type: 'document',
         name: 'Zoning *Bylaw* 2287',
+        intro: '',
         fields: [{ label: 'What it is', value: 'The bylaw.' }],
         isPrimary: true,
       },
+    ])
+  })
+
+  it('documents: nothing is dropped; intro under the heading, prose before and after the card (Razor C2)', () => {
+    expect(
+      parseGoverningDocuments(
+        ['### Zoning Bylaw 2287', 'The bylaw was amended in 2019.', '- **What it is:** The bylaw.', '- **Access:** Public', '', 'Council can amend it again.'].join('\n')
+      )
+    ).toEqual([
+      {
+        type: 'document',
+        name: 'Zoning Bylaw 2287',
+        intro: 'The bylaw was amended in 2019.',
+        fields: [
+          { label: 'What it is', value: 'The bylaw.' },
+          { label: 'Access', value: 'Public' },
+        ],
+        isPrimary: true,
+      },
+      { type: 'prose', text: 'Council can amend it again.' },
+    ])
+    expect(parseGoverningDocuments(['Read the plan first.', '- **What it is:** A plan.', '  It runs to 2030.'].join('\n'))).toEqual([
+      { type: 'prose', text: 'Read the plan first.' },
+      { type: 'document', name: '', intro: '', fields: [{ label: 'What it is', value: 'A plan. It runs to 2030.' }], isPrimary: true },
     ])
   })
 
