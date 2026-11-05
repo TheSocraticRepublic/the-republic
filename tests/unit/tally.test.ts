@@ -302,7 +302,7 @@ describe('MpVoteList rows', () => {
     expect(column.className.split(/\s+/)).toEqual(expect.arrayContaining(['w-24', 'max-sm:w-auto']))
     const bill = Array.from(title.querySelectorAll('span.whitespace-nowrap')).map((el) => el.textContent)
     expect(bill).toEqual(['C-218'])
-    expect(row.querySelector('[data-division]')!.textContent).toBe('45-1/177')
+    expect(row.querySelector('[data-division]')!.textContent).toBe('Vote 45-1/177')
     expect(row.querySelector('[data-result]')!.textContent).toBe('Defeated')
   })
 })

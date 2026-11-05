@@ -136,8 +136,9 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
                 {keepBillNumbersWhole(vote.descriptionEn)}
               </p>
               <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                {/* The same words as the vote page's meta line (Jen E2b C11). */}
                 <span data-division className="text-2xs font-medium tabular-nums text-text-faint">
-                  {vote.session}/{vote.number}
+                  Vote {vote.session}/{vote.number}
                 </span>
                 <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
                 <ResultLabel result={vote.result} size="2xs" />
