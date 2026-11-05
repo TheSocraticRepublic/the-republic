@@ -914,11 +914,11 @@ describe('fonts', () => {
     expect(display).toHaveLength(1)
     // ...and that one site is the 22px H1.
     expect(bv.slice(display[0].index, (display[0].index as number) + 120)).toContain("fontSize: '22px'")
-    // The primary document name: the span rendering {docName} sets no family.
+    // The primary document name: the span rendering docName (through renderInline since D2) sets no family.
     const docName = bv.indexOf('{docName && (\n            <span')
     expect(docName).toBeGreaterThan(-1)
     const span = bv.slice(docName, bv.indexOf('</span>', docName))
-    expect(span).toContain('{docName}')
+    expect(span).toContain('{renderInline(docName)}')
     expect(span).not.toContain('fontFamily')
     const fd = fs.readFileSync(path.join(REPO, 'src/components/layout/feedback-dialog.tsx'), 'utf8')
     expect(fd).toContain('<Dialog.Title')
