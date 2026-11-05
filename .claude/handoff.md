@@ -49,6 +49,8 @@ in this project has already been ruled on, usually for a reason that is not obvi
 
 - **First Light Phase A, re-verified 2026-11-05.** `VOYAGE_API_KEY` is absent from Netlify (19 vars, names only). Prod holds 9 investigations, 0 documents, 0 chunks and 0 shadow_alerts (read-only transaction), so the backfill is moot. verify-retrieval runs on the QA harness only, never on prod (it inserts synthetic rows). Lee will create a Voyage key; when he hands it over, set it in functions scope and read it back by name only, then tell him to upload. The Checks page `first-light` card says it waits on the key and A0; replace its steps with real screen names once A0 is live.
 
+- **Briefing error-log sweep, before any citizen other than Lee runs a briefing** (Razor, relay republic-first-light-a0, pre-existing). In `src/lib/investigation/run-briefing.ts`, a database error on the completion write (`:479`, also `:493`) prints the full briefing text twice to Netlify function logs. The failure reason, the DB message cut to 500 characters, is saved and shown to the owner, carrying raw SQL plus the start of their own briefing. Related sites: `:117` (raw model text), `:145`, `:454` (trace). The model-API error path does not leak. Log error name and code only, and store a plain failure reason. Lee's own First Light run risks only his own data.
+
 ## Open questions awaiting Lee
 
 | Question | Why it matters | Raised |
@@ -82,6 +84,9 @@ shipped — see the trailing note in the 2026-07-09 log entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-05 — First Light A0 merged; release card for deps + A0
+Relay `republic-first-light-a0` merged at `8c4f604`: one `[retrieval]` log line per briefing, with reasons taken from the code path (`no-api-key` decided by the same `resolveVoyageApiKey` the client uses, versus `embed-failed`), candidates and best similarity before the threshold, and no user text; error logs on the retrieval path carry name and code only. Razor PASS after one fix pass; 16/16 mutants. Release branch `release/deps-a0-2026-11` at `d970608` is origin/main `c2c92d0` plus the deps batch and A0, every file byte-identical to the reviewed session versions; all gates pass; harness 8/8; pushed. D_prev `6ada8d2f` (c2c92d0). The card is on the Checks page (`release-deps-a0`); on Lee's yes, open the PR, wait for green CI, merge, verify `commit_ref`, run the probes and the 30-minute log watch. After release, merge main back into the session branch and rewrite the B1-C4 rollback note.
 
 ### 2026-11-05 — November dependency batch merged to the session branch
 Relay `republic-deps-2026-11` merged at `11bb0f1` (branch cut from origin/main `c2c92d0`). zod 4.6.7, follow-redirects 1.16.2, undici 7.30.1 and vite 8.1.6 (a new direct devDependency) clear the four high advisories. The lockfile diff equals the 109 entries plan r3 expected. All three CI audit commands exit 0 after a clean `npm ci` on npm 10.9.4, and QA harness 8/8. Razor PASS, 0 CRITICAL / 0 WARNING / 5 NOTE (ROADMAP → Deferred from republic-deps-2026-11). **Main's CI has been red since `c2c92d0`** (run 39864763808, step "Full dependency audit (allow-listed)", 2026-10-22), and that commit went live as `6ada8d2f` regardless, because branch protection is off; this batch's release turns it green. The release is cut from main and carries this batch plus First Light A0 (A0's four files are identical on main and the session branch); it waits on Lee's yes on the Checks page. Production and full-tree advisories re-measured: 0 high, 0 critical. The braces allow-list entry (DEP-2) now matches nothing, because the advisory was withdrawn 2026-10-23.
