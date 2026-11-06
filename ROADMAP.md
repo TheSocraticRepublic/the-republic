@@ -243,6 +243,7 @@ Named elsewhere and not yet scheduled:
 - Scout's own copy of the old access check and field parser; briefing label/eyebrow polish; Questions-card and Cannot-See rules; 768 badge placement; "NEXT STEPS:" run-in (see Deferred from republic-ui-d2)
 - Vote detail double name (to E2b); Lever detail back link; badge hides an earlier good sync after a failure (see Deferred from republic-ui-e1)
 - MP surnames from sync (4 of 337 misfiled); EmptyState button action; Ø/Ł headers (see Deferred from republic-ui-e2a)
+- Ballot sync drops MPs not in federal_mps; tie line (Lee: re-plan); route test for paired; investigation Votes tile contrast (see Deferred from republic-ui-e2b)
 - Next.js 404 and malformed-URL behaviour on dynamic routes (see Deferred from republic-ui-b2)
 - D4 "The Athenians" — illustration variant selection
 - Release mechanics for dependency deploys (publish boundary, post-deploy checks, containment) — see Deferred from republic-ci-green-deps
@@ -295,6 +296,16 @@ Written verbatim from `~/marvin/state/plans/republic-ui-filings-2026-10/republic
 - **Votes on the landing** (arm station plus chip, landing-public L17).
 - **Briefing mobile sticky section bar** (reading-surfaces F-P1-5).
 - **CSP walk checklist** additions: allowlisted links, grain, new fonts.
+
+### Deferred from republic-ui-e2b (2026-11-05)
+
+Named during relay `republic-ui-e2b` (Razor review and re-check, Jen's review).
+
+- **The sync drops the ballot of any MP missing from `federal_mps` (Razor C1, root cause).** The drops are at `src/lib/parliament/sync.ts:288` and `scripts/sync-parliament-full.ts:415`. In production, 61 of 173 divisions store 1-3 fewer ballot rows than the official totals. E2b removed every row-derived count shown as a division total, so no page contradicts itself any more. But a division's recorded-ballot list still omits those MPs. Fix the sync to insert the missing MP (or record the ballot against its openparliament slug), then backfill. That's a sync and data change, so it needs `/probe`.
+- **The tie rule (R-A4), per Lee 2026-11-05:** keep "a tie displays as Defeated" for now. In the post-First-Light re-plan, add a line explaining the Speaker's casting vote. A tie at second reading or report stage carries by convention. The only tie on record, 45-1/94, is shown correctly, because the Speaker voted against.
+- **"1% broke ranks" should be a count with its base (Jen, later).**
+- **No test catches a dropped paired total in `/api/parliament/votes` (Razor).** The DB mock ignores the selected fields, so Paired would silently vanish from Recent. Add a route test that asserts the selected shape.
+- **The investigation's selected Votes tile text is 1.1:1 (Jen, outside E2b).** Unreadable when selected. It's on the investigation page, so it waits for the post-First-Light re-plan, or comes sooner as a one-line contrast fix if Lee prefers.
 
 ### Deferred from republic-ui-e2a (2026-11-05)
 
