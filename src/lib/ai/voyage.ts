@@ -22,6 +22,15 @@ export interface VoyageClientOptions {
 }
 
 /**
+ * The API key voyageEmbed will use, or undefined when it will graceful-off.
+ * Exported so callers can tell "no key" apart from "key present, call failed"
+ * using the exact predicate voyageEmbed applies.
+ */
+export function resolveVoyageApiKey(options: VoyageClientOptions = {}): string | undefined {
+  return options.apiKey ?? process.env.VOYAGE_API_KEY
+}
+
+/**
  * Embed a batch of texts. Returns an aligned array of embeddings or nulls.
  * A null at position i means that text failed to embed (or the key is absent).
  *
@@ -36,7 +45,7 @@ export async function voyageEmbed(
 ): Promise<(number[] | null)[]> {
   if (texts.length === 0) return []
 
-  const apiKey = options.apiKey ?? process.env.VOYAGE_API_KEY
+  const apiKey = resolveVoyageApiKey(options)
   if (!apiKey) {
     // No key configured — graceful-off, not an error
     return texts.map(() => null)
