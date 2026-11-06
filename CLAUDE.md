@@ -83,10 +83,14 @@ src/
 
 - Theme doctrine: dark where you work, light where you read. Dark app chrome by
   default, no user toggle. Long-form reading surfaces (briefing, legal/FOI text)
-  get a light "paper" treatment from a light palette inside the reading
-  component (`LIGHT_PALETTE` in `briefing-view.tsx`) plus `.content-island`
-  grain — not a theme class. (`.dark-island` is a separate DARK overlay for the
-  Gadfly sheet, not the light-reading mechanism.) The landing page travels
+  get a light "paper" treatment from the island tokens (`--island-*` in
+  `globals.css`, `island-*` utilities / `var(--color-island-*)`) plus
+  `.content-island` grain — not a theme class, and never a palette object in a
+  component. The light paper values are shared with the PDF renderer through
+  `src/lib/design/paper-ink.ts`, held equal to the CSS by
+  `tests/unit/paper-ink.test.ts`. (`.dark-island` is a separate DARK scope for
+  the Gadfly sheet and the briefing's dark toggle, not the light-reading
+  mechanism.) The landing page travels
   dark → light on scroll via `.light-scope`. See `globals.css`'s header comment
   for the full doctrine.
 - Token mechanism: `@theme inline` in `globals.css` (required — non-inline
@@ -104,8 +108,13 @@ src/
   border border-border rounded-xl` (or `bg-surface-0/60 backdrop-blur-md` for
   overlays) — not raw `bg-black`/`border-white` opacity stacks
 - Shared primitives: `src/components/ui/` (EmptyState, StatusPill, CTAButton,
-  CrossArmActions, MarkdownProse) and `src/components/layout/arm-header.tsx`
-  (per-arm page header) — reach for these before hand-rolling
+  CrossArmActions, MarkdownProse), `src/components/layout/arm-header.tsx`
+  (per-arm landing header) and `src/components/layout/detail-header.tsx`
+  (detail pages: back link, one wrapping h1, accent bar, meta line) — reach
+  for these before hand-rolling. Votes outcomes and totals go through
+  `src/components/votes/result-label.tsx` and `tally.tsx`, which render
+  Parliament's own words and official totals, never counts derived from
+  stored ballot rows
 - PDF exports: light mode (`#fafaf9` bg), print-optimized, Instrument Sans +
   Inter + Source Serif 4 (registered independently in `src/lib/pdf/fonts.ts`
   — `@react-pdf/renderer` can't consume the app's `next/font` variables)

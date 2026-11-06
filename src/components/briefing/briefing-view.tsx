@@ -16,6 +16,30 @@ import {
   Moon,
   EyeOff,
 } from 'lucide-react'
+import {
+  type ParsedSection,
+  type RoleKey,
+  type AccessLevel,
+  type DocumentField,
+  parseSections,
+  routeSection,
+  extractTitle,
+  isInsightParagraph,
+  isPullQuote,
+  preprocessBlocks,
+  getRoleKey,
+  roleLabel,
+  parsePlayers,
+  parseComparison,
+  type JurisdictionField,
+  detectAccess,
+  parseGoverningDocuments,
+  extractFippaLetter,
+} from '@/lib/briefing/parse'
+
+// Re-exported so existing importers (tests/unit/briefing-view.test.ts,
+// tests/unit/paper-ink.test.ts) keep their import path.
+export { preprocessBlocks, getRoleKey }
 
 // ---- Types ----
 
@@ -33,85 +57,46 @@ interface BriefingViewProps {
 // Island tokens consumed via CSS custom properties (globals.css).
 // Dark overrides come from .dark-island scope class on the root element.
 
-interface ParsedSection {
-  heading: string
-  content: string
-}
-
-// ---- Arm color config (light surface values) ----
+// ---- Arm color config ----
+// `color` (the arm accent) draws shapes: tints, borders, icons, rules. Text on
+// the paper uses `ink`, the arm's light-ground ink, which .content-island
+// re-points to the light values (globals.css): the accent resolves to the dark
+// chrome's hue under <html class="dark"> and falls to ~2:1 on paper (Jen D1 C1).
 
 const ARM_COLORS: Record<
   string,
-  { color: string; bg: string; border: string }
+  { color: string; ink: string; bg: string; border: string }
 > = {
   scout: {
     color: 'var(--accent-scout)',
+    ink: 'var(--accent-scout-ink)',
     bg: 'color-mix(in srgb, var(--accent-scout) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-scout) 18%, transparent)',
   },
   oracle: {
     color: 'var(--accent-oracle)',
+    ink: 'var(--accent-oracle-ink)',
     bg: 'color-mix(in srgb, var(--accent-oracle) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
   },
   lever: {
     color: 'var(--accent-lever)',
+    ink: 'var(--accent-lever-ink)',
     bg: 'color-mix(in srgb, var(--accent-lever) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
   },
   mirror: {
     color: 'var(--accent-mirror)',
+    ink: 'var(--accent-mirror-ink)',
     bg: 'color-mix(in srgb, var(--accent-mirror) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
   },
   gadfly: {
     color: 'var(--accent-gadfly)',
+    ink: 'var(--accent-gadfly-ink)',
     bg: 'color-mix(in srgb, var(--accent-gadfly) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
   },
-}
-
-// ---- Section parser — DO NOT MODIFY (backward-compat: also strips # Title lines before section parsing) ----
-
-function parseSections(text: string): ParsedSection[] {
-  const sections: ParsedSection[] = []
-  const lines = text.split('\n')
-  let currentHeading = ''
-  let currentLines: string[] = []
-
-  for (const line of lines) {
-    // Skip the # Title line — it is extracted separately by extractTitle()
-    if (line.match(/^#\s+[^#]/)) continue
-
-    const match = line.match(/^##\s+(.+)$/)
-    if (match) {
-      if (currentHeading) {
-        sections.push({ heading: currentHeading, content: currentLines.join('\n').trim() })
-      }
-      currentHeading = match[1].trim()
-      currentLines = []
-    } else {
-      currentLines.push(line)
-    }
-  }
-
-  if (currentHeading) {
-    sections.push({ heading: currentHeading, content: currentLines.join('\n').trim() })
-  }
-
-  return sections
-}
-
-// ---- Title extractor (new prompt emits `# Title`; old prompts used ## Your Concern) ----
-
-function extractTitle(text: string): string | null {
-  // New format: `# Title text`
-  const h1Match = text.match(/^#\s+([^#\n].+)$/m)
-  if (h1Match) return h1Match[1].trim()
-
-  // Old prompts (## Context / ## Your Concern) do not emit a # Title line.
-  // Let ExecutiveCard handle the concern display — no title to extract.
-  return null
 }
 
 // ---- Section accent color map ----
@@ -157,7 +142,7 @@ function SectionHeader({
         />
       )}
       <h3
-        className="text-3xs font-semibold uppercase"
+        className="text-2xs font-semibold uppercase"
         style={{ color: color ?? 'var(--color-island-muted)' }}
       >
         {heading}
@@ -219,96 +204,25 @@ export function renderInline(text: string): React.ReactNode {
   return nodes
 }
 
-// ---- Gap/insight paragraph detection (for Gadfly-gold callout in Public Record Shows) ----
-
-function isInsightParagraph(text: string): boolean {
-  const lower = text.toLowerCase()
+/** The 11px muted uppercase label: a prose subheading, and a What Governs group label. */
+function SubheadingLabel({ text, first }: { text: string; first: boolean }) {
   return (
-    lower.includes('the gap') ||
-    lower.includes('what is absent') ||
-    lower.includes('not publicly') ||
-    lower.includes('absent from') ||
-    lower.includes('should be there') ||
-    lower.includes('remain unanswerable') ||
-    lower.includes('remains unanswerable') ||
-    lower.includes('the absence') ||
-    lower.includes('is absent')
+    <h4
+      style={{
+        fontFamily: 'var(--font-body)',
+        fontSize: '11px',
+        // The field-label recipe, so it sits under the 600 section header, not over it.
+        fontWeight: 600,
+        textTransform: 'uppercase' as const,
+        letterSpacing: '0.08em',
+        color: 'var(--color-island-muted)',
+        marginTop: first ? '0' : '24px',
+        marginBottom: '4px',
+      }}
+    >
+      {text}
+    </h4>
   )
-}
-
-// ---- Evidence citation detection ----
-
-function isEvidenceParagraph(text: string): boolean {
-  return /s\.\s*\d/.test(text) ||
-    /FIPPA/i.test(text) ||
-    /\b[A-Z][a-z]+ Act\b/.test(text) ||
-    /\bpursuant\b/i.test(text) ||
-    /\bCertificate\b/.test(text) ||
-    /\([^)]*(?:19|20)\d{2}[^)]*\)/.test(text)
-}
-
-// ---- Pull quote detection ----
-
-function isPullQuote(text: string): boolean {
-  const trimmed = text.trim()
-  // Starts and ends with quotation marks (straight or curly)
-  if (/^["""]/.test(trimmed) && /["""][\.\,\;]?$/.test(trimmed)) return true
-  // Contains a full sentence in quotes (at least 30 chars inside quotes)
-  if (/["""][^"""]{30,}["""]/.test(trimmed)) return true
-  return false
-}
-
-// ---- Block preprocessor result ----
-
-type BlockElement =
-  | { type: 'paragraph'; text: string }
-  | { type: 'subheading'; text: string }
-  | { type: 'hr' }
-  | { type: 'list'; items: string[] }
-
-// ---- Block preprocessor — handles ###, ---, bold-only lines (no colon) ----
-// Called by ProseSection before paragraph-level rendering.
-
-export function preprocessBlocks(content: string): BlockElement[] {
-  const result: BlockElement[] = []
-
-  // Split into raw paragraphs first (blank-line separated)
-  const rawParagraphs = content.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
-
-  for (const para of rawParagraphs) {
-    // --- separator → hr (only when it's JUST "---" on its own, not inside other text)
-    if (/^---\s*$/.test(para)) {
-      result.push({ type: 'hr' })
-      continue
-    }
-
-    // ### Sub-heading
-    if (para.match(/^###\s+/)) {
-      const text = para.replace(/^###\s+/, '').replace(/\*\*/g, '').trim()
-      result.push({ type: 'subheading', text })
-      continue
-    }
-
-    // Bullet/numbered list paragraph
-    if (para.match(/^[-*]\s+/m) || para.match(/^\d+[.)]\s+/m)) {
-      const lines = para.split('\n').filter((l) => l.trim())
-      const items = lines.map((l) => l.replace(/^[-*]\s+/, '').replace(/^\d+[.)]\s+/, '').trim())
-      result.push({ type: 'list', items })
-      continue
-    }
-
-    // Bold-only line (no colon) → treat as sub-heading
-    // Must be a single line, wrapped entirely in **, no colon inside
-    const boldOnlyMatch = para.match(/^\*\*([^*:]+)\*\*\s*$/)
-    if (boldOnlyMatch && !para.includes('\n')) {
-      result.push({ type: 'subheading', text: boldOnlyMatch[1].trim() })
-      continue
-    }
-
-    result.push({ type: 'paragraph', text: para })
-  }
-
-  return result
 }
 
 function ProseSection({
@@ -328,27 +242,11 @@ function ProseSection({
   const blocks = preprocessBlocks(content)
   const elements: React.ReactNode[] = []
 
-  // Insert section break rule before every 5th/9th/13th paragraph-type block
-  // (matches original i % 4 === 0 timing: divider appears before the 5th paragraph, then every 4)
+  // paraCount drives the lead paragraph only (D2 deleted the every-5th-paragraph divider).
   let paraCount = 0
 
   blocks.forEach((block, i) => {
-    if (block.type === 'paragraph') {
-      paraCount++
-      if (paraCount > 1 && paraCount % 4 === 1) {
-        elements.push(
-          <div
-            key={`rule-${i}`}
-            style={{
-              width: '40%',
-              margin: '24px auto',
-              height: '1px',
-              backgroundColor: 'var(--color-island-border)',
-            }}
-          />
-        )
-      }
-    }
+    if (block.type === 'paragraph') paraCount++
 
     switch (block.type) {
       case 'hr':
@@ -366,23 +264,7 @@ function ProseSection({
         break
 
       case 'subheading':
-        elements.push(
-          <h4
-            key={i}
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '11px',
-              fontWeight: 700,
-              textTransform: 'uppercase' as const,
-              letterSpacing: '0.06em',
-              color: 'var(--color-island-muted)',
-              marginTop: i === 0 ? '0' : '24px',
-              marginBottom: '4px',
-            }}
-          >
-            {block.text}
-          </h4>
-        )
+        elements.push(<SubheadingLabel key={i} text={block.text} first={i === 0} />)
         break
 
       case 'list': {
@@ -390,7 +272,7 @@ function ProseSection({
           <ul key={i} className="space-y-1.5 pl-0">
             {block.items.map((item, j) => (
               <li key={j} className="flex items-start gap-2" style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--color-island-secondary)' }}>
-                <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: 'var(--color-island-faint)' }} />
+                <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: 'var(--color-island-mark)' }} />
                 <span>{renderInline(item)}</span>
               </li>
             ))}
@@ -450,35 +332,14 @@ function ProseSection({
             <div
               key={i}
               style={{
-                borderLeft: `3px solid rgba(200,168,75,0.4)`,
-                backgroundColor: 'rgba(200,168,75,0.05)',
+                borderLeft: '3px solid color-mix(in srgb, var(--color-island-accent-gadfly) 40%, transparent)',
+                backgroundColor: 'color-mix(in srgb, var(--color-island-accent-gadfly) 5%, transparent)',
                 padding: '14px 16px',
                 borderRadius: '0 8px 8px 0',
                 margin: '4px 0',
               }}
             >
               <p className="whitespace-pre-wrap" style={{ ...baseFont, color: 'var(--color-island-body)', margin: 0, fontStyle: 'italic' }}>
-                {renderInline(para)}
-              </p>
-            </div>
-          )
-          break
-        }
-
-        // Evidence callout
-        if (isEvidenceParagraph(para)) {
-          elements.push(
-            <div
-              key={i}
-              style={{
-                borderLeft: `3px solid color-mix(in srgb, var(--color-island-accent-oracle) 30%, transparent)`,
-                backgroundColor: 'color-mix(in srgb, var(--color-island-accent-oracle) 6%, transparent)',
-                padding: '16px',
-                borderRadius: '0 8px 8px 0',
-                margin: '16px 0',
-              }}
-            >
-              <p className="whitespace-pre-wrap" style={{ ...baseFont, color: 'var(--color-island-body)', margin: 0 }}>
                 {renderInline(para)}
               </p>
             </div>
@@ -511,70 +372,33 @@ function ProseSection({
 
 // ---- Key Players parser and renderer (Step 1) ----
 
-interface PlayerData {
-  name: string
-  role: string
-  whyTheyMatter: string
-  trackRecord: string
-}
-
-function getRoleColor(role: string): string {
-  const r = role.toLowerCase().replace(/_/g, ' ')
-  if (r.includes('regulator') || r.includes('decision maker')) return '#0891B2'
-  if (r.includes('proponent') || r.includes('applicant') || r.includes('certificate holder')) return '#B45309'
-  if (r.includes('beneficiary') || r.includes('affected')) return '#059669'
-  if (r.includes('rights holder') || r.includes('community') || r.includes('local')) return '#059669'
-  if (r.includes('indigenous') || r.includes('nation') || r.includes('first nation')) return '#7C3AED'
-  if (r.includes('federal')) return '#64748B'
-  return '#64748B'
-}
-
-function parsePlayers(content: string): PlayerData[] {
-  const players: PlayerData[] = []
-
-  const lines = content.split('\n').map((l) => l.replace(/^\s*[-*]\s+/, '').trim()).filter((l) => l && !/^-{2,}$/.test(l))
-
-  const fieldLabels = /^(?:\*\*)?(?:role|why they matter|track record|what they do|how they relate)(?:\*\*)?[:\s]/i
-
-  let current: { name: string; role: string; whyTheyMatter: string; trackRecord: string } | null = null
-
-  for (const line of lines) {
-    const cleanLine = line.replace(/\*\*/g, '')
-
-    if (!fieldLabels.test(cleanLine) && !cleanLine.startsWith('Role:')) {
-      if (current && current.name) players.push({ ...current })
-      current = { name: cleanLine, role: '', whyTheyMatter: '', trackRecord: '' }
-      continue
-    }
-
-    if (!current) continue
-
-    const roleMatch = cleanLine.match(/^(?:role)[:\s]+(.+)/i)
-    if (roleMatch) { current.role = roleMatch[1].replace(/^[-\s]+|[-\s]+$/g, ''); continue }
-
-    const whyMatch = cleanLine.match(/^(?:why they matter)[:\s]+(.+)/i)
-    if (whyMatch) { current.whyTheyMatter = whyMatch[1].replace(/^[-\s]+|[-\s]+$/g, ''); continue }
-
-    const trackMatch = cleanLine.match(/^(?:track record)[:\s]+(.+)/i)
-    if (trackMatch) { current.trackRecord = trackMatch[1].replace(/^[-\s]+|[-\s]+$/g, ''); continue }
-  }
-
-  if (current && current.name) players.push({ ...current })
-
-  return players
+/**
+ * Each role's colour (the card rule and the badge tint) and its -ink twin (the
+ * badge text, 4.5:1 on that tint). Written out whole, never built from a key:
+ * Tailwind emits a theme variable only when it finds its full name in source.
+ */
+const ROLE_TOKENS: Record<RoleKey, { color: string; ink: string }> = {
+  regulator: { color: 'var(--color-island-role-regulator)', ink: 'var(--color-island-role-regulator-ink)' },
+  proponent: { color: 'var(--color-island-role-proponent)', ink: 'var(--color-island-role-proponent-ink)' },
+  affected: { color: 'var(--color-island-role-affected)', ink: 'var(--color-island-role-affected-ink)' },
+  indigenous: { color: 'var(--color-island-role-indigenous)', ink: 'var(--color-island-role-indigenous-ink)' },
+  other: { color: 'var(--color-island-role-other)', ink: 'var(--color-island-role-other-ink)' },
 }
 
 function PlayersSection({ content }: { content: string }) {
-  const players = parsePlayers(content)
+  const items = parsePlayers(content)
 
-  if (players.length === 0) {
+  if (items.length === 0) {
     return <ProseSection content={content} />
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {players.map((player, i) => {
-        const roleColor = getRoleColor(player.role)
+      {items.map((item, i) => {
+        if (item.type === 'prose') return <ProseSection key={i} content={item.text} />
+        const player = item.player
+        // The role colour draws the rule and the tint; badge text is its darker -ink twin (4.5:1 on the tint).
+        const { color: roleColor, ink: roleInk } = ROLE_TOKENS[getRoleKey(player.role)]
         return (
           <div
             key={i}
@@ -595,58 +419,50 @@ function PlayersSection({ content }: { content: string }) {
                   color: 'var(--color-island-text)',
                 }}
               >
-                {player.name}
+                {renderInline(player.name)}
               </span>
               {player.role && (
                 <span
                   style={{
+                    // The paper's one badge recipe (the access badge's): 12px/500,
+                    // sentence case, normal tracking, 2px 10px, 16px line, 18% border.
                     display: 'inline-block',
                     borderRadius: '9999px',
                     padding: '2px 10px',
-                    fontSize: '10px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    backgroundColor: `${roleColor}14`,
-                    color: roleColor,
+                    fontSize: '12px',
+                    lineHeight: '16px',
+                    border: '1px solid color-mix(in srgb, currentColor 18%, transparent)',
+                    // 8% of the role colour: the old `${hex}14` alpha (20/255).
+                    backgroundColor: `color-mix(in srgb, ${roleColor} 8%, transparent)`,
+                    color: roleInk,
                     fontWeight: 500,
                   }}
                 >
-                  {player.role}
+                  {roleLabel(player.role)}
                 </span>
               )}
             </div>
 
-            {/* Why they matter */}
-            {player.whyTheyMatter && (
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '14px',
-                  lineHeight: '1.5',
-                  color: 'var(--color-island-secondary)',
-                  marginTop: '8px',
-                  marginBottom: 0,
-                }}
-              >
-                {player.whyTheyMatter}
-              </p>
-            )}
-
-            {/* Track record */}
-            {player.trackRecord && (
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '13px',
-                  lineHeight: '1.5',
-                  color: 'var(--color-island-muted)',
-                  marginTop: '8px',
-                  marginBottom: 0,
-                }}
-              >
-                {player.trackRecord}
-              </p>
-            )}
+            {/* Fields and prose in source order. Track record is the quieter line;
+                why they matter, what they do and how they relate read as body. */}
+            {player.parts.map((part, j) => {
+              const quiet = part.type === 'field' && part.key === 'trackRecord'
+              return (
+                <p
+                  key={j}
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: quiet ? '13px' : '14px',
+                    lineHeight: '1.5',
+                    color: quiet ? 'var(--color-island-muted)' : 'var(--color-island-secondary)',
+                    marginTop: '8px',
+                    marginBottom: 0,
+                  }}
+                >
+                  {renderInline(part.type === 'field' ? part.value : part.text)}
+                </p>
+              )
+            })}
           </div>
         )
       })}
@@ -656,225 +472,104 @@ function PlayersSection({ content }: { content: string }) {
 
 // ---- Mirror Comparison parser and renderer (Step 2) ----
 
-interface JurisdictionData {
-  name: string
-  whatTheyDid: string
-  whyItMatters: string
-  outcome: string
-}
-
-function parseJurisdictions(content: string): JurisdictionData[] {
-  const jurisdictions: JurisdictionData[] = []
-
-  // Split on ### headings or **Bold Name** delimiters
-  const blocks = content.split(/(?=^###\s+|^\*\*[^*]+\*\*\s*$)/m).filter((b) => b.trim())
-
-  for (const block of blocks) {
-    const lines = block.split('\n').map((l) => l.trim()).filter(Boolean)
-    if (lines.length === 0) continue
-
-    // Extract jurisdiction name from heading or bold text
-    let name = ''
-    const h3Match = lines[0].match(/^###\s+(.+)/)
-    const boldMatch = lines[0].match(/^\*\*(.+?)\*\*/)
-    if (h3Match) name = h3Match[1].replace(/\*\*/g, '').trim()
-    else if (boldMatch) name = boldMatch[1].trim()
-    else continue
-
-    const restLines = lines.slice(1)
-    const restText = restLines.join('\n')
-
-    // Try structured field extraction
-    let whatTheyDid = ''
-    let whyItMatters = ''
-    let outcome = ''
-
-    // Capture only the VALUE after the label — handle optional trailing words like "differently", "for you"
-    const whatMatch = restText.match(/(?:\*\*)?[Ww]hat\s+they\s+did(?:\s+\w+)?(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Ww]hy\s+it|[Oo]utcome|$))/i)
-    if (whatMatch) whatTheyDid = whatMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
-
-    const whyMatch = restText.match(/(?:\*\*)?[Ww]hy\s+it\s+matters(?:\s+\w+)?(?:\*\*)?[:\s]+([\s\S]+?)(?=(?:\*\*)?(?:[Oo]utcome|$))/i)
-    if (whyMatch) whyItMatters = whyMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
-
-    const outcomeMatch = restText.match(/(?:\*\*)?[Oo]utcome(?:\s+\w+)?(?:\*\*)?[:\s]+([\s\S]+)/i)
-    if (outcomeMatch) outcome = outcomeMatch[1].replace(/\*\*/g, '').replace(/^[-\s]+|[-\s]+$/g, '').trim()
-
-    // Fallback: split paragraphs positionally
-    if (!whatTheyDid && !whyItMatters) {
-      const paras = restText.split(/\n{2,}/).map((p) => p.replace(/\*\*/g, '').trim()).filter(Boolean)
-      if (paras.length >= 1) whatTheyDid = paras[0]
-      if (paras.length >= 2) whyItMatters = paras[1]
-      if (paras.length >= 3) outcome = paras[2]
-    }
-
-    if (name) {
-      jurisdictions.push({ name, whatTheyDid, whyItMatters, outcome })
-    }
-  }
-
-  return jurisdictions
+const MIRROR_FIELD_LABELS: Record<JurisdictionField, string> = {
+  whatTheyDid: 'WHAT THEY DID',
+  whyItMatters: 'WHY IT MATTERS',
+  outcome: 'OUTCOME',
 }
 
 function ComparisonSection({ content }: { content: string }) {
-  const jurisdictions = parseJurisdictions(content)
+  const items = parseComparison(content)
 
-  if (jurisdictions.length === 0) {
+  if (!items.some((item) => item.type === 'jurisdiction')) {
     return <ProseSection content={content} />
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {jurisdictions.map((jur, i) => (
-        <div
-          key={i}
-          style={{
-            backgroundColor: 'var(--color-island-card)',
-            border: `1px solid var(--color-island-card-border)`,
-            borderLeft: '2px solid var(--accent-mirror)',
-            borderRadius: '12px',
-            padding: '16px 20px',
-          }}
-        >
-          {/* Jurisdiction name */}
-          <span
+      {items.map((item, i) => {
+        if (item.type === 'prose') return <ProseSection key={i} content={item.text} />
+        const jur = item.jurisdiction
+        return (
+          <div
+            key={i}
             style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: 'var(--color-island-text)',
-              display: 'block',
-              marginBottom: '12px',
+              backgroundColor: 'var(--color-island-card)',
+              border: `1px solid var(--color-island-card-border)`,
+              borderLeft: '2px solid var(--accent-mirror)',
+              borderRadius: '12px',
+              padding: '16px 20px',
             }}
           >
-            {jur.name}
-          </span>
+            {/* Jurisdiction name */}
+            <span
+              style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'var(--color-island-text)',
+                display: 'block',
+                marginBottom: jur.parts.length > 0 ? '12px' : 0,
+              }}
+            >
+              {renderInline(jur.name)}
+            </span>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {jur.whatTheyDid && (
-              <div>
-                <span
-                  style={{
-                    display: 'block',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.08em',
-                    color: 'var(--color-island-muted)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  WHAT THEY DID
-                </span>
-                <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
-                  {jur.whatTheyDid}
-                </p>
-              </div>
-            )}
-
-            {jur.whyItMatters && (
-              <div>
-                <span
-                  style={{
-                    display: 'block',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.08em',
-                    color: 'var(--color-island-muted)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  WHY IT MATTERS
-                </span>
-                <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
-                  {jur.whyItMatters}
-                </p>
-              </div>
-            )}
-
-            {jur.outcome && (
-              <div>
-                <span
-                  style={{
-                    display: 'block',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.08em',
-                    color: 'var(--color-island-muted)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  OUTCOME
-                </span>
-                <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
-                  {jur.outcome}
-                </p>
-              </div>
-            )}
+            {/* Prose and fields in source order (D2: no field is invented from prose) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {jur.parts.map((part, j) =>
+                part.type === 'body' ? (
+                  <p key={j} style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
+                    {renderInline(part.text)}
+                  </p>
+                ) : (
+                  <div key={j}>
+                    <span
+                      style={{
+                        display: 'block',
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase' as const,
+                        letterSpacing: '0.08em',
+                        color: 'var(--color-island-muted)',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      {MIRROR_FIELD_LABELS[part.key]}
+                    </span>
+                    <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', margin: 0 }}>
+                      {renderInline(part.value)}
+                    </p>
+                  </div>
+                )
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
 
-// ---- Document field parser — DO NOT MODIFY ----
-
-interface DocumentField {
-  label: string
-  value: string
-}
-
-function parseDocumentFields(block: string): DocumentField[] {
-  const lines = block.split('\n')
-  const fields: DocumentField[] = []
-  let current: DocumentField | null = null
-
-  for (const line of lines) {
-    const match = line.match(/^[-*]\s+\*\*(.+?):\*\*\s*(.*)$/)
-    if (match) {
-      if (current) fields.push(current)
-      current = { label: match[1].trim(), value: match[2].trim() }
-    } else if (current && line.trim()) {
-      current.value += ' ' + line.trim()
-    }
-  }
-  if (current) fields.push(current)
-  return fields
-}
-
 // ---- Access badge (light surface tint values) ----
-
-type AccessLevel = 'public' | 'fippa' | 'council'
-
-function detectAccess(text: string): AccessLevel | null {
-  const lower = text.toLowerCase()
-  if (lower.includes('fippa required') || lower.includes('fippa request')) return 'fippa'
-  if (lower.includes('council record')) return 'council'
-  if (lower.includes('public')) return 'public'
-  return null
-}
 
 const ACCESS_STYLES: Record<AccessLevel, { bg: string; border: string; color: string; label: string }> = {
   public: {
     bg: 'color-mix(in srgb, var(--accent-mirror) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
-    color: 'var(--accent-mirror)',
+    color: 'var(--accent-mirror-ink)',
     label: 'Public',
   },
   fippa: {
     bg: 'color-mix(in srgb, var(--accent-gadfly) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
-    color: 'var(--accent-gadfly)',
+    color: 'var(--accent-gadfly-ink)',
     label: 'FIPPA Required',
   },
   council: {
     bg: 'color-mix(in srgb, var(--accent-oracle) 6%, transparent)',
     border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
-    color: 'var(--accent-oracle)',
+    color: 'var(--accent-oracle-ink)',
     label: 'Council Record',
   },
 }
@@ -891,59 +586,62 @@ function AccessBadge({ level }: { level: AccessLevel }) {
   )
 }
 
+// ---- Document card footer: below the hairline, how to get the document ----
+// How to find it first, then an Access value the badge cannot say, both in the
+// quieter 11px faint label / 12px muted value style. One renderer for both tiers.
+
+function DocumentCardFooter({ howToFind, access }: { howToFind?: DocumentField; access?: DocumentField }) {
+  const entries = [
+    ...(howToFind ? [{ label: 'How to find it', value: howToFind.value }] : []),
+    ...(access ? [{ label: access.label, value: access.value }] : []),
+  ]
+  return (
+    <div style={{ borderTop: `1px solid var(--color-island-border)`, marginTop: '16px', paddingTop: '12px' }}>
+      {entries.map((entry, i) => (
+        <div key={entry.label} style={{ marginTop: i === 0 ? 0 : '8px' }}>
+          <span
+            className="block font-semibold uppercase tracking-[0.08em]"
+            style={{ fontSize: '11px', color: 'var(--color-island-faint)' }}
+          >
+            {entry.label}
+          </span>
+          <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: 'var(--color-island-muted)' }}>
+            {renderInline(entry.value)}
+          </p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ---- Document card — two-tier: primary authority + supporting list ----
-// First block rendered by WhatGovernsSection gets isPrimary=true.
+// parseGoverningDocuments gives isPrimary to the first block that has fields.
 // Touched: previously a single-tier flat card; now split into primary/supporting visual tiers.
 
 function DocumentCard({
-  block,
+  name: docName,
+  intro,
+  fields,
   isPrimary = false,
 }: {
-  block: string
-  
+  name: string
+  intro: string
+  fields: DocumentField[]
   isPrimary?: boolean
 }) {
-  const fields = parseDocumentFields(block)
-
-  let docName = ''
-  let bodyFields = fields
-  const firstLine = block.split('\n')[0]?.trim() ?? ''
-  if (firstLine.startsWith('###')) {
-    docName = firstLine.replace(/^###\s*/, '').replace(/\*\*/g, '').trim()
-  } else if (firstLine.startsWith('**') && firstLine.endsWith('**') && !firstLine.match(/^[-*]\s+\*\*/)) {
-    docName = firstLine.replace(/\*\*/g, '').trim()
-  }
-
-  if (!docName) {
-    const nameField = fields.find(
-      (f) => f.label.toLowerCase() === 'document name' || f.label.toLowerCase() === 'document'
-    )
-    if (nameField) {
-      docName = nameField.value
-      bodyFields = fields.filter((f) => f !== nameField)
-    }
-  }
-
-  const accessField = bodyFields.find((f) => f.label.toLowerCase() === 'access')
+  const accessField = fields.find((f) => f.label.toLowerCase() === 'access')
   const accessLevel = accessField ? detectAccess(accessField.value) : null
-  const displayFields = bodyFields.filter((f) => f.label.toLowerCase() !== 'access')
-  const howToFindField = displayFields.find(
+  const howToFindField = fields.find(
     (f) => f.label.toLowerCase().includes('how to find') || f.label.toLowerCase().includes('where to find')
   )
-  const mainFields = displayFields.filter((f) => f !== howToFindField)
-
-  if (fields.length === 0) {
-    return (
-      <div
-        className="rounded-xl p-5"
-        style={{ backgroundColor: 'var(--color-island-card)', border: `1px solid var(--color-island-card-border)` }}
-      >
-        <p className="whitespace-pre-wrap" style={{ fontSize: '16px', lineHeight: '1.7', color: 'var(--color-island-body)' }}>
-          {renderInline(block)}
-        </p>
-      </div>
-    )
-  }
+  // Access is never a body field. detectAccess gives a level only when the value IS a
+  // badge label, so a card has either the badge alone or the Access value alone, never
+  // both and never a badge that says more than the text. An Access value with no badge
+  // says how to get the document, so it sits below the hairline with How to find it, in
+  // that quieter style, not with the description (Jen D2 C4).
+  const accessFootField = accessField && !accessLevel ? accessField : undefined
+  const mainFields = fields.filter((f) => f !== howToFindField && f !== accessField)
+  const hasFooter = howToFindField !== undefined || accessFootField !== undefined
 
   // Primary Authority: warmLift bg, Scout-purple left accent
   if (isPrimary) {
@@ -953,7 +651,10 @@ function DocumentCard({
         style={{
           backgroundColor: 'var(--color-island-warm-lift)',
           border: `1px solid var(--color-island-card-border)`,
-          borderLeft: '3px solid rgba(176,136,200,0.5)',
+          borderLeft: '3px solid color-mix(in srgb, var(--color-island-accent-scout) 50%, transparent)',
+          // 2px less than p-5: the 3px rule is 2px wider than the other cards' 1px border,
+          // so every document card's text shares one left edge.
+          paddingLeft: '18px',
         }}
       >
         {/* Header row — flexWrap for responsive */}
@@ -977,25 +678,28 @@ function DocumentCard({
                 textDecoration: 'underline',
                 textDecorationThickness: '1px',
                 textUnderlineOffset: '3px',
-                flex: '1 1 0',
+                // A real basis: on a narrow card the badges wrap below the title instead of crushing it.
+                flex: '1 1 14rem',
                 minWidth: '0',
               }}
             >
-              {docName}
+              {renderInline(docName)}
             </span>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
+          {/* May shrink to the card: at 320 the pair wraps instead of painting past the edge. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '0 1 auto', minWidth: 0, maxWidth: '100%', flexWrap: 'wrap' }}>
             <span
               style={{
+                // The paper's one badge recipe (the access badge's), on its own Scout tint.
                 display: 'inline-block',
                 borderRadius: '9999px',
-                padding: '2px 8px',
-                fontSize: '10px',
-                textTransform: 'uppercase' as const,
-                letterSpacing: '0.06em',
+                padding: '2px 10px',
+                fontSize: '12px',
+                lineHeight: '16px',
+                border: '1px solid color-mix(in srgb, currentColor 18%, transparent)',
                 backgroundColor: 'color-mix(in srgb, var(--accent-scout) 10%, transparent)',
-                color: 'var(--accent-scout)',
-                fontWeight: 600,
+                color: 'var(--accent-scout-ink)',
+                fontWeight: 500,
               }}
             >
               Primary Authority
@@ -1004,13 +708,19 @@ function DocumentCard({
           </div>
         </div>
 
+        {intro && (
+          <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', marginBottom: mainFields.length > 0 || hasFooter ? '12px' : 0 }}>
+            {renderInline(intro)}
+          </p>
+        )}
+
         {mainFields.length > 0 && (
           <div className="space-y-3">
             {mainFields.map((field, i) => (
               <div key={i}>
                 <span
                   className="block font-semibold uppercase tracking-[0.08em]"
-                  style={{ fontSize: '10px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
+                  style={{ fontSize: '11px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
                 >
                   {field.label}
                 </span>
@@ -1022,25 +732,7 @@ function DocumentCard({
           </div>
         )}
 
-        {howToFindField && (
-          <div
-            style={{
-              borderTop: `1px solid var(--color-island-border)`,
-              marginTop: '16px',
-              paddingTop: '12px',
-            }}
-          >
-            <span
-              className="block font-semibold uppercase tracking-[0.08em]"
-              style={{ fontSize: '10px', color: 'var(--color-island-faint)' }}
-            >
-              How to find it
-            </span>
-            <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: 'var(--color-island-muted)' }}>
-              {renderInline(howToFindField.value)}
-            </p>
-          </div>
-        )}
+        {hasFooter && <DocumentCardFooter howToFind={howToFindField} access={accessFootField} />}
       </div>
     )
   }
@@ -1073,15 +765,22 @@ function DocumentCard({
               textDecoration: 'underline',
               textDecorationThickness: '1px',
               textUnderlineOffset: '3px',
-              flex: '1 1 0',
+              // A real basis: on a narrow card the badge wraps below the title instead of crushing it.
+              flex: '1 1 14rem',
               minWidth: '0',
             }}
           >
-            {docName}
+            {renderInline(docName)}
           </span>
         )}
         {accessLevel && <AccessBadge level={accessLevel} />}
       </div>
+
+      {intro && (
+        <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-secondary)', marginBottom: mainFields.length > 0 || hasFooter ? '12px' : 0 }}>
+          {renderInline(intro)}
+        </p>
+      )}
 
       {mainFields.length > 0 && (
         <div className="space-y-3">
@@ -1089,7 +788,7 @@ function DocumentCard({
             <div key={i}>
               <span
                 className="block font-semibold uppercase tracking-[0.08em]"
-                style={{ fontSize: '10px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
+                style={{ fontSize: '11px', color: 'var(--color-island-muted)', marginBottom: '4px' }}
               >
                 {field.label}
               </span>
@@ -1101,19 +800,7 @@ function DocumentCard({
         </div>
       )}
 
-      {howToFindField && (
-        <div style={{ borderTop: `1px solid var(--color-island-border)`, marginTop: '16px', paddingTop: '12px' }}>
-          <span
-            className="block font-semibold uppercase tracking-[0.08em]"
-            style={{ fontSize: '10px', color: 'var(--color-island-faint)' }}
-          >
-            How to find it
-          </span>
-          <p className="mt-0.5" style={{ fontSize: '12px', lineHeight: '1.5', color: 'var(--color-island-muted)' }}>
-            {renderInline(howToFindField.value)}
-          </p>
-        </div>
-      )}
+        {hasFooter && <DocumentCardFooter howToFind={howToFindField} access={accessFootField} />}
     </div>
   )
 }
@@ -1121,63 +808,30 @@ function DocumentCard({
 // ---- What Governs This section renderer (two-tier) ----
 
 function WhatGovernsSection({ content }: { content: string }) {
-  const blocks = splitDocumentBlocks(content)
-  const hasCards = blocks.some((b) => parseDocumentFields(b).length > 0)
+  const blocks = parseGoverningDocuments(content)
 
-  if (!hasCards) {
+  if (!blocks.some((b) => b.type === 'document')) {
     return <ProseSection content={content} />
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {blocks.map((block, j) => (
-        <DocumentCard key={j} block={block} isPrimary={j === 0} />
-      ))}
+      {blocks.map((block, j) => {
+        if (block.type === 'document') {
+          return <DocumentCard key={j} name={block.name} intro={block.intro} fields={block.fields} isPrimary={block.isPrimary} />
+        }
+        // A group label: the eyebrow ProseSection uses for subheadings. It is left out only
+        // when it labels nothing: no block follows it before the section ends, or the next
+        // block is another eyebrow (Jen D2 C3). A document or a paragraph under it keeps it.
+        if (block.type === 'eyebrow') {
+          const next = blocks[j + 1]
+          if (!next || next.type === 'eyebrow') return null
+          return <SubheadingLabel key={j} text={block.text} first={j === 0} />
+        }
+        return <ProseSection key={j} content={block.text} />
+      })}
     </div>
   )
-}
-
-// ---- Block splitter — DO NOT MODIFY ----
-
-function splitDocumentBlocks(content: string): string[] {
-  const blocks: string[] = []
-  const lines = content.split('\n')
-  let currentBlock: string[] = []
-
-  for (const line of lines) {
-    const isBlockStart =
-      line.match(/^###\s+/) ||
-      (line.match(/^\*\*.+\*\*$/) && !line.match(/^[-*]\s+\*\*/)) ||
-      line.match(/^[-*]\s+\*\*Document name:\*\*/i)
-
-    if (isBlockStart && currentBlock.length > 0) {
-      blocks.push(currentBlock.join('\n').trim())
-      currentBlock = [line]
-    } else {
-      currentBlock.push(line)
-    }
-  }
-
-  if (currentBlock.length > 0 && currentBlock.join('').trim()) {
-    blocks.push(currentBlock.join('\n').trim())
-  }
-
-  return blocks.length > 0 ? blocks : [content]
-}
-
-// ---- FIPPA letter extractor — DO NOT MODIFY ----
-
-function extractFippaLetter(content: string): { before: string; letter: string; after: string } | null {
-  const hrPattern = /\n---\n([\s\S]+?)\n---\n/
-  const match = content.match(hrPattern)
-  if (!match) return null
-
-  const idx = content.indexOf(match[0])
-  return {
-    before: content.slice(0, idx).trim(),
-    letter: match[1].trim(),
-    after: content.slice(idx + match[0].length).trim(),
-  }
 }
 
 // ---- FIPPA letter card (light surface, body face) ----
@@ -1224,7 +878,7 @@ function FippaLetterCard({ letter }: { letter: string }) {
       >
         <span
           className="font-bold uppercase tracking-[0.1em]"
-          style={{ fontSize: '11px', lineHeight: '1', color: 'var(--accent-lever)' }}
+          style={{ fontSize: '11px', lineHeight: '1', color: 'var(--accent-lever-ink)' }}
         >
           FIPPA Request — Ready to File
         </span>
@@ -1255,7 +909,7 @@ function FippaLetterCard({ letter }: { letter: string }) {
               border: copied
                 ? '1px solid color-mix(in srgb, var(--accent-mirror) 25%, transparent)'
                 : '1px solid color-mix(in srgb, var(--accent-lever) 15%, transparent)',
-              color: copied ? 'var(--accent-mirror)' : 'var(--color-island-muted)',
+              color: copied ? 'var(--accent-mirror-ink)' : 'var(--color-island-muted)',
             }}
           >
             {copied ? (
@@ -1370,7 +1024,7 @@ function QuestionsSection({ content }: { content: string }) {
                 lineHeight: '1',
                 backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 10%, transparent)',
                 border: '1px solid color-mix(in srgb, var(--accent-gadfly) 25%, transparent)',
-                color: 'var(--accent-gadfly)',
+                color: 'var(--accent-gadfly-ink)',
                 marginTop: '1px',
               }}
             >
@@ -1391,7 +1045,7 @@ function QuestionsSection({ content }: { content: string }) {
 
 // ---- Limitations section renderer ----
 
-function LimitationsSection({ content, darkMode }: { content: string; darkMode?: boolean }) {
+function LimitationsSection({ content }: { content: string }) {
   return (
     <div
       style={{
@@ -1403,17 +1057,18 @@ function LimitationsSection({ content, darkMode }: { content: string; darkMode?:
       <div
         role="note"
         style={{
-          // Use cardBg on dark mode (warmLift is invisible on dark)
-          backgroundColor: darkMode ? 'var(--color-island-card)' : 'rgba(120,113,108,0.04)',
+          // The note's ground is a token with a dark value (card) in .dark-island.
+          backgroundColor: 'var(--color-island-note)',
           border: `1px solid var(--color-island-card-border)`,
-          borderLeft: `3px solid var(--color-island-faint)`,
+          // A mark, not text: its own lighter ink (Jen, B1 review C4).
+          borderLeft: `3px solid var(--color-island-mark)`,
           borderRadius: '0 8px 8px 0',
           padding: '16px 20px',
         }}
       >
         <div
           className="font-semibold uppercase tracking-[0.1em]"
-          style={{ fontSize: '10px', color: 'var(--color-island-faint)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          style={{ fontSize: '11px', color: 'var(--color-island-faint)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}
         >
           <EyeOff size={14} strokeWidth={1.75} style={{ color: 'var(--color-island-faint)' }} />
           What This Analysis Cannot See
@@ -1436,7 +1091,7 @@ function InlineGadflyAction({ onOpenGadfly }: { onOpenGadfly?: () => void }) {
     lineHeight: '1' as const,
     backgroundColor: 'color-mix(in srgb, var(--accent-gadfly) 8%, transparent)',
     border: '1px solid color-mix(in srgb, var(--accent-gadfly) 20%, transparent)',
-    color: 'var(--accent-gadfly)',
+    color: 'var(--accent-gadfly-ink)',
   }
 
   return (
@@ -1543,7 +1198,7 @@ function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions }: { sect
               <li key={i} className="flex items-start gap-2.5" style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-island-body)' }}>
                 <span
                   className="flex-shrink-0 rounded-full"
-                  style={{ width: '6px', height: '6px', backgroundColor: 'var(--color-island-faint)', marginTop: '6px' }}
+                  style={{ width: '6px', height: '6px', backgroundColor: 'var(--color-island-mark)', marginTop: '6px' }}
                 />
                 {heading}
               </li>
@@ -1566,7 +1221,7 @@ function ExecutiveCard({ sections, onOpenCampaign, onScrollToQuestions }: { sect
               lineHeight: '1' as const,
               backgroundColor: arm.bg,
               border: `1px solid ${arm.border}`,
-              color: arm.color,
+              color: arm.ink,
             }
             const chipClassName = "inline-flex items-center rounded-full font-semibold transition-opacity duration-150 hover:opacity-80"
 
@@ -1624,6 +1279,7 @@ const EXPERT_LINKS = [
     href: '/scout',
     icon: Compass,
     color: 'var(--accent-scout)',
+    ink: 'var(--accent-scout-ink)',
     border: 'color-mix(in srgb, var(--accent-scout) 18%, transparent)',
   },
   {
@@ -1633,6 +1289,7 @@ const EXPERT_LINKS = [
     href: '/oracle',
     icon: Eye,
     color: 'var(--accent-oracle)',
+    ink: 'var(--accent-oracle-ink)',
     border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
   },
   {
@@ -1642,6 +1299,7 @@ const EXPERT_LINKS = [
     href: '/gadfly',
     icon: MessageCircleQuestion,
     color: 'var(--accent-gadfly)',
+    ink: 'var(--accent-gadfly-ink)',
     border: 'color-mix(in srgb, var(--accent-gadfly) 18%, transparent)',
   },
   {
@@ -1651,6 +1309,7 @@ const EXPERT_LINKS = [
     href: '/lever',
     icon: FileText,
     color: 'var(--accent-lever)',
+    ink: 'var(--accent-lever-ink)',
     border: 'color-mix(in srgb, var(--accent-lever) 18%, transparent)',
   },
   {
@@ -1660,6 +1319,7 @@ const EXPERT_LINKS = [
     href: '/mirror',
     icon: GitCompareArrows,
     color: 'var(--accent-mirror)',
+    ink: 'var(--accent-mirror-ink)',
     border: 'color-mix(in srgb, var(--accent-mirror) 18%, transparent)',
   },
 ]
@@ -1671,6 +1331,7 @@ const LENS_LINK = {
   href: '',
   icon: Search,
   color: 'var(--accent-oracle)',
+  ink: 'var(--accent-oracle-ink)',
   border: 'color-mix(in srgb, var(--accent-oracle) 18%, transparent)',
 }
 
@@ -1690,11 +1351,17 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, onOpenLens }: { onOpenCampaign
       >
         Want to go deeper?
       </p>
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+      {/* The 11px archetype ("THE PERIPATETIC", one unbreakable word, ~82px)
+          needs ~85px beside the 32px icon. One card per row below 480px, two
+          up to 1024px, three from there: two columns at 320-375 and three at
+          768 both left it short (Razor D1 W2). briefing-geometry.test.ts
+          holds it at 320 to 1440. */}
+      <div data-go-deeper className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 lg:grid-cols-3">
         {links.map((link) => {
           const Icon = link.icon
           const callback = armCallbacks[link.arm]
-          const cardClassName = "link-card flex items-center gap-3 rounded-[10px] transition-opacity duration-150 hover:opacity-85"
+          // text-left: Gadfly, Lever and Lens are <button>s, which centre by default (Jen D1 C2).
+          const cardClassName = "link-card flex items-center gap-3 rounded-[10px] text-left transition-opacity duration-150 hover:opacity-85"
           const cardStyle = {
             padding: '12px 14px',
             minHeight: '44px',
@@ -1713,18 +1380,18 @@ function GoDeeper({ onOpenCampaign, onOpenGadfly, onOpenLens }: { onOpenCampaign
               >
                 <Icon size={14} strokeWidth={1.75} style={{ color: link.color }} />
               </span>
-              <span className="flex flex-col">
+              <span className="flex min-w-0 flex-col">
                 <span
                   className="font-semibold leading-snug"
-                  style={{ fontSize: '12px', color: link.color }}
+                  style={{ fontSize: '12px', color: link.ink }}
                 >
                   {link.arm}
                 </span>
                 <span
                   style={{
-                    fontSize: '9px',
+                    fontSize: '11px',
                     textTransform: 'uppercase' as const,
-                    letterSpacing: '0.1em',
+                    letterSpacing: '0.06em',
                     color: 'var(--color-island-faint)',
                     marginTop: '1px',
                   }}
@@ -1805,7 +1472,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               right: '16px',
               borderRadius: '9999px',
               padding: '6px',
-              backgroundColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+              backgroundColor: 'var(--color-island-toggle)',
               color: 'var(--color-island-muted)',
               border: 'none',
               cursor: 'pointer',
@@ -1854,7 +1521,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
             right: '16px',
             borderRadius: '9999px',
             padding: '6px',
-            backgroundColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+            backgroundColor: 'var(--color-island-toggle)',
             color: 'var(--color-island-muted)',
             border: 'none',
             cursor: 'pointer',
@@ -1903,13 +1570,13 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
       {hasSections && <ExecutiveCard sections={sections} onOpenCampaign={onOpenCampaign} onScrollToQuestions={onScrollToQuestions} />}
 
       {sections.map((section, i) => {
-        const headingLower = section.heading.toLowerCase()
+        const kind = routeSection(section.heading)
         const isFirst = i === 0
         const showDivider = !isFirst
 
         // --- Context (new prompt) or Your Concern (old prompt, backward compat) ---
         // Both render as lead prose without a card box.
-        if (headingLower.includes('context') || headingLower.includes('your concern')) {
+        if (kind === 'context') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
@@ -1920,7 +1587,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- What Governs This (document discovery) ---
-        if (headingLower.includes('what governs') || headingLower.includes('governs this')) {
+        if (kind === 'governs') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
@@ -1931,7 +1598,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- Key Players ---
-        if (headingLower.includes('key players')) {
+        if (kind === 'players') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
@@ -1942,7 +1609,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- What the Public Record Shows (analysis, Inter only — spec 3.1) ---
-        if (headingLower.includes('public record') || headingLower.includes('record shows')) {
+        if (kind === 'record') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
@@ -1955,18 +1622,18 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- What You Can Do (civic actions + FIPPA letter) ---
-        if (headingLower.includes('what you can do') || headingLower.includes('you can do')) {
+        if (kind === 'actions') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
-              <SectionHeader heading="What You Can Do" color="var(--accent-lever)" />
+              <SectionHeader heading="What You Can Do" color="var(--accent-lever-ink)" />
               <CivicActionsSection content={section.content} />
             </div>
           )
         }
 
         // --- How Other Places Handle This (mirror comparison) ---
-        if (headingLower.includes('other places') || headingLower.includes('how other')) {
+        if (kind === 'comparison') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
@@ -1977,7 +1644,7 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
         }
 
         // --- Questions Worth Asking (gadfly) ---
-        if (headingLower.includes('questions worth') || headingLower.includes('worth asking')) {
+        if (kind === 'questions') {
           return (
             <div
               key={i}
@@ -1991,18 +1658,18 @@ export function BriefingView({ text, isStreaming, darkMode, onToggleDarkMode, on
               }}
             >
               {showDivider && <SectionDivider />}
-              <SectionHeader heading="Questions Worth Asking" color="var(--accent-gadfly)" />
+              <SectionHeader heading="Questions Worth Asking" color="var(--accent-gadfly-ink)" />
               <QuestionsSection content={section.content} />
             </div>
           )
         }
 
         // --- What This Analysis Cannot See (limitations) ---
-        if (headingLower.includes('cannot see') || headingLower.includes('limitations')) {
+        if (kind === 'limitations') {
           return (
             <div key={i}>
               {showDivider && <SectionDivider />}
-              <LimitationsSection content={section.content} darkMode={darkMode} />
+              <LimitationsSection content={section.content} />
             </div>
           )
         }

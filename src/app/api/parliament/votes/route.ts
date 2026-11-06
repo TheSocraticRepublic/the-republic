@@ -41,6 +41,7 @@ export const GET = safeRoute(async (request: NextRequest) => {
       result: federalVotes.result,
       yeaTotal: federalVotes.yeaTotal,
       nayTotal: federalVotes.nayTotal,
+      pairedTotal: federalVotes.pairedTotal,
       billId: federalVotes.billId,
     })
     .from(federalVotes)

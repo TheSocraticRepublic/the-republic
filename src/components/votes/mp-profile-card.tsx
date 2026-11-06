@@ -31,11 +31,12 @@ export function MpProfileCard({
       }}
     >
       <div className="flex items-start gap-5">
-        {/* Photo */}
+        {/* Photo: decorative, the page's h1 names the MP (Jen E1 C1) */}
         {photoUrl ? (
           <Image
             src={photoUrl}
-            alt={name}
+            alt=""
+            aria-hidden="true"
             width={64}
             height={64}
             className="h-16 w-16 rounded-full object-cover flex-shrink-0"
@@ -43,6 +44,7 @@ export function MpProfileCard({
           />
         ) : (
           <div
+            aria-hidden="true"
             className="h-16 w-16 rounded-full flex-shrink-0 flex items-center justify-center text-xl font-bold"
             style={{
               backgroundColor: 'var(--surface-3)',
@@ -54,13 +56,7 @@ export function MpProfileCard({
         )}
 
         <div className="flex-1 min-w-0">
-          <h2
-            className="text-lg font-bold text-text-primary leading-tight font-display"
-          >
-            {name}
-          </h2>
-
-          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <PartyBadge party={party} />
             <span className="text-xs text-text-muted">
               {ridingName}, {ridingProvince}

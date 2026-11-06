@@ -162,6 +162,44 @@ seconds later, forces a full reload (the 2026-08-29 fix for a blank page on
 completion). Its hard stop is derived from the same 12-minute threshold, so
 client and reaper agree on when a run has failed.
 
+**Briefing parsing (D2, 2026-11-05).** The model-written briefing is parsed
+by pure functions in `src/lib/briefing/parse.ts`: sections, blocks, players,
+governing documents, jurisdictions, access levels and `routeSection`, which
+picks a section's renderer. `src/components/briefing/briefing-view.tsx`
+renders what they return and keeps only `renderInline`, because that returns
+React nodes. The contract is losslessness: text a parser doesn't recognise as
+part of a record is emitted as prose in its source position, and never
+dropped. `tests/unit/briefing-parse.test.ts` holds it with hand-written
+goldens for every fixture in `tests/fixtures/letters.ts`'s briefing section,
+plus a word-sequence property in render order. Its only named exception is
+an empty group label. Mirror places get cards only from `###` headings, or
+from a bold-only line in a section with no `###`, and fields only from
+explicit label lines. An Access badge renders only on an exact label match.
+`src/components/scout/scout-result-view.tsx` still carries its own older
+copy of the access and field parsing (Parking Lot, republic-ui-d2).
+
+**Retrieval observability (First Light A0, live 2026-11-06 in deploy
+`6aed387a`).** `searchDocumentChunksWithReason`
+(`src/lib/ai/search-chunks.ts`) tags every return path:
+- `hits`
+- `no-corpus`
+- `corpus-check-failed`
+- `no-api-key` (decided by `resolveVoyageApiKey`, the same predicate
+  `voyageEmbed` uses)
+- `embed-failed`
+- `below-threshold`
+- `search-failed`
+
+It also reports the pre-threshold `candidates` and `bestSimilarity`.
+`searchDocumentChunks` is the unchanged wrapper. `run-briefing.ts` emits one
+`[retrieval]` JSON log line per briefing: investigationId, outcome, reason,
+hits, chunkIds, topSimilarity, candidates, bestSimilarity and ms. It never
+carries content, a title or the concern. A run that fails before the retrieval
+step emits none. Error logs on the retrieval path carry only the error name
+and code. Elsewhere in `run-briefing.ts`, a mid-write database error still
+prints the briefing text. That fix is a gate before any second citizen
+(hand-off).
+
 ### The Lens
 
 **Gadfly** (`src/lib/ai/`, `src/app/(app)/gadfly/`) — Socratic sessions over documents. The Gadfly asks questions and never answers them. This is enforced at the prompt level: the system prompt instructs the model to respond with a question in every turn, and to refuse to answer its own questions. The constraint is a feature, not a limitation.
@@ -281,6 +319,14 @@ rather than an advisory. Read the log before treating a red audit as a new
 advisory.
 
 ## The Vote Tracker
+
+**Display contract (E1-E2b, 2026-11-05).**
+- Outcomes render through `ResultLabel` as neutral text, with a tie shown as Defeated (plan rule R-A4, kept by Lee 2026-11-05; a line on the Speaker's casting vote is due in the re-plan).
+- Totals render through `Tally`, from `federal_votes.yea_total`, `nay_total` and `paired_total`.
+- Ballots read Yea, Nay, Paired and Didn't vote.
+- No page shows a count derived from `federal_mp_ballots` as a division total. Both sync paths skip the ballot of an MP missing from `federal_mps` (`src/lib/parliament/sync.ts`, `scripts/sync-parliament-full.ts`), so stored rows can fall 1-3 short of the official totals (Parking Lot, republic-ui-e2b).
+- Detail pages use `DetailHeader`. Its freshness badge says "Sync time unknown" whenever the newest sync failed, the request fails, or no time exists; it never shows a guessed age.
+- The MP list (`mp-list-filter.tsx`) sorts by a last-name key derived from the single `name` field, with particles kept as stored. 4 of 337 MPs file differently from the House's official surname until the sync stores openparliament's `family_name`.
 
 Federal legislator accountability (`src/lib/parliament/`, `/votes` routes, `/api/parliament`). Data comes from openparliament.ca (MPs, votes, bills, ballots) and the Represent API (postal code → riding → MP). Vote, bill, and MP data is synced into local tables via `/api/parliament/sync`; postal-code lookups call the Represent API at request time. AI features (bill summaries, vote explanations, voting-pattern analysis, said-X-voted-Y contradiction detection) are versioned by prompt and cached in the database. Letter generation routes through the Lever. Investigations can attach relevant votes via postal code on the concern form.
 

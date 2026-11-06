@@ -1,9 +1,10 @@
-import Image from 'next/image'
-import Link from 'next/link'
 import { getDb } from '@/lib/db'
 import { federalMps } from '@/lib/db/schema'
 import { eq, asc } from 'drizzle-orm'
-import { PartyBadge } from '@/components/votes/party-badge'
+import { MpListFilter } from '@/components/votes/mp-list-filter'
+import { EmptyState } from '@/components/ui/empty-state'
+import { DetailHeader } from '@/components/layout/detail-header'
+import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
 
 export const metadata = {
@@ -31,72 +32,25 @@ export default async function AllMPsPage() {
   return (
     <div data-arm="votes">
       <div className="mx-auto max-w-2xl px-6 py-10">
-        <div className="mb-8">
-          <h1
-            className="mb-2 text-xl font-bold tracking-tight text-text-primary"
-          >
-            Members of Parliament
-          </h1>
-          <p className="text-xs text-text-muted">
-            {mps.length} current MPs across {provinces.length} provinces and territories
-          </p>
-        </div>
+        <DetailHeader
+          arm="votes"
+          backHref="/votes"
+          backLabel="Back to Vote Tracker"
+          title="Members of Parliament"
+          meta={
+            <>
+              <span>
+                {mps.length} current MPs across {provinces.length} provinces and territories
+              </span>
+              <DataFreshnessBadge variant="meta" />
+            </>
+          }
+        />
 
         {mps.length === 0 ? (
-          <div
-            className="rounded-xl border px-6 py-10 text-center"
-            style={{
-              borderColor: 'var(--border)',
-              backgroundColor: 'var(--surface-1)',
-            }}
-          >
-            <p className="text-sm text-text-muted">
-              No MP data yet. This deployment hasn’t synced with Parliament.
-            </p>
-          </div>
+          <EmptyState message="No MP data yet. This deployment hasn’t synced with Parliament." />
         ) : (
-          <div className="space-y-2">
-            {mps.map((mp) => (
-              <Link
-                key={mp.id}
-                href={`/votes/mp/${mp.id}`}
-                className="group flex items-center gap-4 rounded-xl border px-4 py-3 transition-all duration-150 hover:bg-surface-3 hover:border-border-strong"
-                style={{
-                  borderColor: 'var(--border)',
-                  backgroundColor: 'var(--surface-1)',
-                }}
-              >
-                {mp.photoUrl ? (
-                  <Image
-                    src={mp.photoUrl}
-                    alt=""
-                    width={36}
-                    height={36}
-                    className="h-9 w-9 rounded-full object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div
-                    className="h-9 w-9 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold"
-                    style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-muted)' }}
-                  >
-                    {mp.name.charAt(0)}
-                  </div>
-                )}
-
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary leading-tight truncate">
-                    {mp.name}
-                  </p>
-                  <div className="mt-0.5 flex items-center gap-2">
-                    <PartyBadge party={mp.party} />
-                    <span className="text-2xs font-medium text-text-faint">
-                      {mp.ridingName}, {mp.ridingProvince}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <MpListFilter mps={mps} provinces={provinces} />
         )}
       </div>
     </div>

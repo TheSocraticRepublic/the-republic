@@ -1,23 +1,16 @@
 'use client'
 
-import { useState, useCallback, useSyncExternalStore } from 'react'
+import { useState } from 'react'
 import { BriefingView } from '@/components/briefing/briefing-view'
 import { LensPanel } from '@/components/lens/lens-panel'
 import { GadflySheet } from '@/components/lens/gadfly-sheet'
 import { CampaignPanel } from '@/components/campaign/campaign-panel'
 import { CivicContextStrip } from '@/components/investigation/civic-context-strip'
 
-const ISLAND_DARK_KEY = 'republic-island-dark'
-const ISLAND_DARK_EVENT = 'republic-island-dark-change'
-
-function subscribeIslandDark(callback: () => void) {
-  window.addEventListener(ISLAND_DARK_EVENT, callback)
-  window.addEventListener('storage', callback)
-  return () => {
-    window.removeEventListener(ISLAND_DARK_EVENT, callback)
-    window.removeEventListener('storage', callback)
-  }
-}
+// The island dark preference (localStorage `republic-island-dark`) is not read
+// anywhere on this page until D4 makes the dark paper real (Jen D1 C3a, Razor
+// DW1): with the toggle gone, a stored choice would leave panels dark with no
+// way back, and the inline papers never darkened anyway.
 
 interface InvestigationPageProps {
   id: string
@@ -49,19 +42,6 @@ export function InvestigationPage({
   const [civicExpanded, setCivicExpanded] = useState<'votes' | 'discussion' | 'reviews' | 'archive' | null>(null)
   const [gadflyOpen, setGadflyOpen] = useState(false)
   const [gadflySessionId, setGadflySessionId] = useState<string | null>(null)
-  // localStorage as an external store: server snapshot is false, the client
-  // corrects after hydration, and same-tab toggles notify via a custom event.
-  const islandDarkMode = useSyncExternalStore(
-    subscribeIslandDark,
-    () => localStorage.getItem(ISLAND_DARK_KEY) === 'true',
-    () => false
-  )
-
-  const handleToggleDarkMode = useCallback(() => {
-    const next = localStorage.getItem(ISLAND_DARK_KEY) !== 'true'
-    localStorage.setItem(ISLAND_DARK_KEY, String(next))
-    window.dispatchEvent(new Event(ISLAND_DARK_EVENT))
-  }, [])
 
   function handleOpenGadfly() {
     setGadflyOpen(true)
@@ -74,8 +54,10 @@ export function InvestigationPage({
         <BriefingView
           text={briefingText}
           isStreaming={false}
-          darkMode={islandDarkMode}
-          onToggleDarkMode={handleToggleDarkMode}
+          // No dark toggle and no stored dark state on the briefing until D4
+          // makes the dark paper real (Jen D1 C3a): the toggle only changed its
+          // own icon while recording a preference D4 would later act on, and a
+          // stored `true` would drop the paper's light arm inks (C1).
           onOpenLens={() => setLensOpen(true)}
           onOpenCampaign={() => setCampaignOpen(true)}
           onOpenGadfly={() => setGadflyOpen(true)}
@@ -96,7 +78,6 @@ export function InvestigationPage({
             lensContextText={lensContextText}
             gadflySeededQuestion={gadflySeededQuestion}
             onOpenGadfly={handleOpenGadfly}
-            darkMode={islandDarkMode}
           />
         </section>
       )}
@@ -108,7 +89,6 @@ export function InvestigationPage({
             investigationId={id}
             concern={concern}
             jurisdictionName={jurisdictionName}
-            darkMode={islandDarkMode}
           />
         </section>
       )}
@@ -121,7 +101,6 @@ export function InvestigationPage({
           archiveStatus={archiveStatus}
           expanded={civicExpanded}
           onExpand={setCivicExpanded}
-          darkMode={islandDarkMode}
         />
       </section>
 

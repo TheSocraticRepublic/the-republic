@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { DetailHeader } from '@/components/layout/detail-header'
+import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
+import { ResultLabel } from '@/components/votes/result-label'
+import { Tally } from '@/components/votes/tally'
 
 interface VoteSummary {
   id: string
@@ -12,6 +16,7 @@ interface VoteSummary {
   result: string
   yeaTotal: number
   nayTotal: number
+  pairedTotal: number | null
 }
 
 export default function RecentVotesPage() {
@@ -34,16 +39,18 @@ export default function RecentVotesPage() {
   return (
     <div data-arm="votes">
       <div className="mx-auto max-w-2xl px-6 py-10">
-        <div className="mb-8">
-          <h1
-            className="mb-2 text-xl font-bold tracking-tight text-text-primary"
-          >
-            Recent Votes
-          </h1>
-          <p className="text-xs text-text-muted">
-            Recorded divisions in the House of Commons
-          </p>
-        </div>
+        <DetailHeader
+          arm="votes"
+          backHref="/votes"
+          backLabel="Back to Vote Tracker"
+          title="Recent Votes"
+          meta={
+            <>
+              <span>Recorded divisions in the House of Commons</span>
+              <DataFreshnessBadge variant="meta" />
+            </>
+          }
+        />
 
         {loading ? (
           <div className="space-y-3">
@@ -83,20 +90,13 @@ export default function RecentVotesPage() {
                   <p className="text-xs font-medium text-text-secondary leading-snug line-clamp-2 mb-1.5">
                     {vote.descriptionEn}
                   </p>
-                  <div className="flex items-center gap-3">
+                  {/* The outcome and totals in the vote page's own words: a
+                      neutral ResultLabel (a tie reads Defeated) and the Tally
+                      with its paired figure (Razor W1, Jen C8). */}
+                  <div data-vote-row-meta className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
-                    <span
-                      className="rounded-md px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wider"
-                      style={{
-                        color: vote.result === 'passed' ? 'var(--status-success)' : vote.result === 'tie' ? 'var(--status-warning)' : 'var(--status-danger)',
-                        backgroundColor: `color-mix(in srgb, ${vote.result === 'passed' ? 'var(--status-success)' : vote.result === 'tie' ? 'var(--status-warning)' : 'var(--status-danger)'} 8%, transparent)`,
-                      }}
-                    >
-                      {vote.result}
-                    </span>
-                    <span className="text-xs text-text-faint">
-                      {vote.yeaTotal}Y / {vote.nayTotal}N
-                    </span>
+                    <ResultLabel result={vote.result} size="2xs" />
+                    <Tally yeaTotal={vote.yeaTotal} nayTotal={vote.nayTotal} pairedTotal={vote.pairedTotal} />
                   </div>
                 </Link>
               ))}

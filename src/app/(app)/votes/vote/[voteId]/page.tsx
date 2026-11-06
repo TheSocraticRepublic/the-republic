@@ -7,15 +7,37 @@ import { VoteDetailCard } from '@/components/votes/vote-detail-card'
 import { PartyBreakdown, parsePartyVotes } from '@/components/votes/party-breakdown'
 import { BallotList } from '@/components/votes/ballot-list'
 import { VoteExplanation } from '@/components/votes/vote-explanation'
+import { DetailHeader } from '@/components/layout/detail-header'
+import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
 
-
-export const metadata = {
-  title: 'Vote Detail',
-}
 
 interface PageProps {
   params: Promise<{ voteId: string }>
 }
+
+/**
+ * The tab names the division and its motion, so two vote tabs or two history
+ * entries never read the same (Jen E2b C10). An unknown id keeps a plain
+ * title; the page itself then 404s.
+ */
+export async function generateMetadata({ params }: PageProps) {
+  const { voteId } = await params
+  const [vote] = await getDb()
+    .select({
+      session: federalVotes.session,
+      number: federalVotes.number,
+      descriptionEn: federalVotes.descriptionEn,
+    })
+    .from(federalVotes)
+    .where(eq(federalVotes.id, voteId))
+    .limit(1)
+  if (!vote) return { title: 'Vote' }
+  return { title: `Vote ${vote.session}/${vote.number}: ${vote.descriptionEn}` }
+}
+
+// Above this many characters the motion's h1 steps down a size on phones
+// (Jen E2b C5): 49 of the 190 divisions in 45-1 are longer.
+const LONG_MOTION_CHARS = 140
 
 export default async function VoteDetailPage({ params }: PageProps) {
   const { voteId } = await params
@@ -46,15 +68,26 @@ export default async function VoteDetailPage({ params }: PageProps) {
   return (
     <div data-arm="votes">
       <div className="mx-auto max-w-2xl px-6 py-10 space-y-10">
+        <DetailHeader
+          arm="votes"
+          backHref="/votes"
+          backLabel="Back to Vote Tracker"
+          title={vote.descriptionEn}
+          long={vote.descriptionEn.length > LONG_MOTION_CHARS}
+          meta={
+            <>
+              <span data-division>Vote {vote.session}/{vote.number}</span>
+              <span>{vote.date}</span>
+              <DataFreshnessBadge variant="meta" />
+            </>
+          }
+        />
+
         <VoteDetailCard
-          date={vote.date}
-          descriptionEn={vote.descriptionEn}
           result={vote.result}
           yeaTotal={vote.yeaTotal}
           nayTotal={vote.nayTotal}
           pairedTotal={vote.pairedTotal}
-          session={vote.session}
-          number={vote.number}
         />
 
         {bill && (
@@ -69,7 +102,8 @@ export default async function VoteDetailPage({ params }: PageProps) {
             <span className="text-2xs font-semibold uppercase text-text-faint">Related Bill</span>
             <p className="mt-1 text-xs text-text-secondary">
               <span className="font-semibold" style={{ color: 'var(--accent-votes)' }}>{bill.number}</span>
-              {' — '}
+              {/* The House's own form, "C-218, An Act..."; no em dash (Jen E2b C9). */}
+              {', '}
               {bill.titleEn}
             </p>
           </Link>
