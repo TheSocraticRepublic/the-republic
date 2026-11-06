@@ -8,6 +8,8 @@ import { BillSummary } from '@/components/votes/bill-summary'
 import { BILL_SUMMARY_PROMPT_VERSION } from '@/lib/ai/prompts/vote-tracker-system'
 import { DetailHeader } from '@/components/layout/detail-header'
 import { DataFreshnessBadge } from '@/components/votes/data-freshness-badge'
+import { ResultLabel } from '@/components/votes/result-label'
+import { Tally } from '@/components/votes/tally'
 
 
 export const metadata = {
@@ -59,6 +61,7 @@ export default async function BillDetailPage({ params }: PageProps) {
       result: federalVotes.result,
       yeaTotal: federalVotes.yeaTotal,
       nayTotal: federalVotes.nayTotal,
+      pairedTotal: federalVotes.pairedTotal,
     })
     .from(federalVotes)
     .where(eq(federalVotes.billId, billId))
@@ -179,19 +182,13 @@ export default async function BillDetailPage({ params }: PageProps) {
                   <p className="text-xs text-text-secondary leading-snug mb-1.5">
                     {vote.descriptionEn}
                   </p>
-                  <div className="flex items-center gap-3">
+                  {/* The outcome and totals in the vote page's own words: a
+                      neutral ResultLabel (a tie reads Defeated) and the Tally
+                      with its paired figure (Razor W1, Jen C8). */}
+                  <div data-vote-row-meta className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
-                    <span
-                      className="text-xs"
-                      style={{
-                        color: vote.result === 'passed' ? 'var(--status-success)' : vote.result === 'tie' ? 'var(--status-warning)' : 'var(--status-danger)',
-                      }}
-                    >
-                      {vote.result}
-                    </span>
-                    <span className="text-xs text-text-faint">
-                      {vote.yeaTotal}Y / {vote.nayTotal}N
-                    </span>
+                    <ResultLabel result={vote.result} size="2xs" />
+                    <Tally yeaTotal={vote.yeaTotal} nayTotal={vote.nayTotal} pairedTotal={vote.pairedTotal} />
                   </div>
                 </Link>
               ))}

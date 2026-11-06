@@ -1,13 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
 import { VoteBadge } from './vote-badge'
+import { ResultLabel } from './result-label'
 
-function resultColor(result: string): string {
-  if (result === 'passed') return 'var(--status-success)'
-  if (result === 'tie') return 'var(--status-warning)'
-  return 'var(--status-danger)'
+// A House or Senate bill number ("C-39", "S-209"). The hyphen is a break
+// opportunity, so on a narrow row "Bill C-" and "39" could part (Jen E2b C3).
+const BILL_NUMBER = /\b([CS]-\d+)\b/
+
+/** The motion text with every bill number kept on one line. */
+export function keepBillNumbersWhole(text: string): ReactNode[] {
+  return text.split(BILL_NUMBER).map((part, i) =>
+    i % 2 === 1 ? <span key={i} className="whitespace-nowrap">{part}</span> : part
+  )
 }
 
 interface MpVoteRecord {
@@ -118,25 +124,26 @@ export function MpVoteList({ mpId }: MpVoteListProps) {
             backgroundColor: 'var(--surface-1)',
           }}
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-text-secondary leading-snug line-clamp-2">
-                {vote.descriptionEn}
+          {/* The MP's own ballot leads the row (app-arms P1-9): a 96px column
+              from 640px up, and stacked above the title below that, so a
+              phone's title keeps the row's full width (Jen E2b C3). */}
+          <div data-mp-vote-row className="flex items-start gap-3 max-sm:flex-col max-sm:gap-1.5">
+            <div data-ballot-column className="w-24 flex-shrink-0 pt-px max-sm:w-auto max-sm:pt-0">
+              <VoteBadge ballot={vote.ballot} />
+            </div>
+            <div className="flex-1 min-w-0 max-sm:self-stretch">
+              <p className="text-xs font-medium text-text-secondary leading-snug line-clamp-3 md:line-clamp-2">
+                {keepBillNumbersWhole(vote.descriptionEn)}
               </p>
-              <div className="mt-1.5 flex items-center gap-2">
-                <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
-                <span
-                  className="rounded px-1.5 py-0.5 text-xs font-medium uppercase tracking-wider"
-                  style={{
-                    color: resultColor(vote.result),
-                    backgroundColor: `color-mix(in srgb, ${resultColor(vote.result)} 8%, transparent)`,
-                  }}
-                >
-                  {vote.result}
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                {/* The same words as the vote page's meta line (Jen E2b C11). */}
+                <span data-division className="text-2xs font-medium tabular-nums text-text-faint">
+                  Vote {vote.session}/{vote.number}
                 </span>
+                <span className="text-2xs font-medium text-text-faint">{vote.date}</span>
+                <ResultLabel result={vote.result} size="2xs" />
               </div>
             </div>
-            <VoteBadge ballot={vote.ballot} />
           </div>
         </Link>
       ))}

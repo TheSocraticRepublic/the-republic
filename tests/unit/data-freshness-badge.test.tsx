@@ -68,7 +68,7 @@ import { MpProfileCard } from '@/components/votes/mp-profile-card'
 import AllMPsPage from '@/app/(app)/votes/mp/page'
 import RecentVotesPage from '@/app/(app)/votes/recent/page'
 import MpProfilePage from '@/app/(app)/votes/mp/[mpId]/page'
-import VoteDetailPage from '@/app/(app)/votes/vote/[voteId]/page'
+import VoteDetailPage, { generateMetadata as voteMetadata } from '@/app/(app)/votes/vote/[voteId]/page'
 import BillDetailPage from '@/app/(app)/votes/bill/[billId]/page'
 import PublicProfilePage from '@/app/(app)/u/[displayName]/page'
 import ProfilePage from '@/app/(app)/profile/page'
@@ -418,8 +418,57 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     stubNetwork()
     dbResults.push([VOTE])
     const { container } = render(await VoteDetailPage({ params: Promise.resolve({ voteId: 'v-1' }) }))
-    await expectHeader(container, { href: '/votes', label: 'Back to Vote Tracker' }, 'Vote 45-1/12')
+    // Jen's E1 ruling, built in E2b: the h1 is the motion, and the division
+    // number and date move to the meta line; nothing says the same thing twice.
+    await expectHeader(container, { href: '/votes', label: 'Back to Vote Tracker' }, 'Second reading')
     await expectBadgeInMeta(container)
+    const meta = container.querySelector('[data-detail-header] [data-detail-meta]')!
+    expect(meta.querySelector('[data-division]')!.textContent).toBe('Vote 45-1/12')
+    expect(meta.textContent).toContain('2026-10-01')
+    expect(container.textContent!.split('Second reading').length - 1).toBe(1)
+    expect(container.textContent!.split('45-1/12').length - 1).toBe(1)
+    expect(container.textContent!.split('2026-10-01').length - 1).toBe(1)
+  })
+
+  // Jen E2b C10: the tab names the division and the motion.
+  it('/votes/vote/[voteId] titles the tab "Vote 45-1/12: <motion>", and plainly "Vote" for an unknown id', async () => {
+    dbResults.push([{ session: '45-1', number: 12, descriptionEn: 'Second reading' }])
+    expect(await voteMetadata({ params: Promise.resolve({ voteId: 'v-1' }) })).toEqual({ title: 'Vote 45-1/12: Second reading' })
+    dbResults.push([])
+    expect(await voteMetadata({ params: Promise.resolve({ voteId: 'nope' }) })).toEqual({ title: 'Vote' })
+  })
+
+  // Jen E2b C9: the related-bill link joins number and title with a comma,
+  // the House's own form, and no em dash.
+  it('/votes/vote/[voteId] names the related bill as "C-5, An Act respecting rivers"', async () => {
+    stubNetwork()
+    dbResults.push([{ ...VOTE, billId: 'b-1' }], [{ id: 'b-1', number: 'C-5', titleEn: 'An Act respecting rivers' }])
+    const { container } = render(await VoteDetailPage({ params: Promise.resolve({ voteId: 'v-1' }) }))
+    const link = container.querySelector('a[href="/votes/bill/b-1"]')!
+    expect(link.querySelector('p')!.textContent).toBe('C-5, An Act respecting rivers')
+    expect(container.textContent).not.toContain('\u2014')
+  })
+
+  // Jen E2b C5: a motion over 140 characters steps the h1 down to 20/28 on
+  // phones; at 140 or fewer it keeps the 24px h1.
+  it('/votes/vote/[voteId] steps a motion over 140 characters down a size, and not one of 140', async () => {
+    const h1Classes = async (descriptionEn: string) => {
+      stubNetwork()
+      dbResults.push([{ ...VOTE, descriptionEn }])
+      const { container, unmount } = render(await VoteDetailPage({ params: Promise.resolve({ voteId: 'v-1' }) }))
+      const h1 = container.querySelector('h1')!
+      expect(h1.textContent).toBe(descriptionEn)
+      const cls = h1.className.split(/\s+/)
+      unmount()
+      return cls
+    }
+    const at140 = await h1Classes('m'.repeat(140))
+    expect(at140).toContain('text-2xl')
+    expect(at140).not.toContain('text-xl')
+    expect(at140).not.toContain('text-pretty')
+    const at141 = await h1Classes('m'.repeat(141))
+    expect(at141).toEqual(expect.arrayContaining(['text-xl', 'leading-7', 'sm:text-2xl', 'text-pretty', 'break-words']))
+    expect(at141).not.toContain('text-2xl')
   })
 
   it('/votes/bill/[billId] goes back to Vote Tracker, titles the bill, and shows the badge', async () => {
@@ -428,6 +477,40 @@ describe('the detail pages carry DetailHeader, and Votes pages the badge', () =>
     const { container } = render(await BillDetailPage({ params: Promise.resolve({ billId: 'b-1' }) }))
     await expectHeader(container, { href: '/votes', label: 'Back to Vote Tracker' }, 'An Act respecting rivers')
     await expectBadgeInMeta(container)
+  })
+
+  // Razor W1, Jen C8: Recent and the bill page state a division as its own
+  // page does: a neutral ResultLabel (a tie reads Defeated, never an amber
+  // "tie") and the Tally, paired figure included.
+  const TIED = { ...VOTE, id: 'v-94', number: 94, descriptionEn: 'Tied motion', result: 'tie', yeaTotal: 164, nayTotal: 164, pairedTotal: 10 }
+  function expectNeutralRow(container: HTMLElement) {
+    const meta = container.querySelector('[data-vote-row-meta]')!
+    const result = meta.querySelector('[data-result]')!
+    expect(result.textContent).toBe('Defeated')
+    expect(result.getAttribute('style')).toBeNull()
+    expect(result.className).toContain('text-text-secondary')
+    expect(Array.from(meta.querySelectorAll('[data-tally-item]')).map((el) => el.textContent)).toEqual(['164 Yea', '164 Nay', '10 Paired'])
+    expect(meta.textContent).not.toMatch(/\btie\b|\dY \/ \dN/i)
+    expect(meta.querySelector('[style]')).toBeNull()
+  }
+
+  it('/votes/bill/[billId] lists its divisions with ResultLabel and Tally', async () => {
+    stubNetwork()
+    dbResults.push([BILL], [TIED])
+    const { container } = render(await BillDetailPage({ params: Promise.resolve({ billId: 'b-1' }) }))
+    expectNeutralRow(container)
+  })
+
+  it('/votes/recent lists divisions with ResultLabel and Tally', async () => {
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.startsWith('/api/parliament/votes?')) {
+        return Promise.resolve({ ok: true, status: 200, json: async () => ({ votes: [TIED], hasMore: false }) } as unknown as Response)
+      }
+      return new Promise(() => {})
+    }))
+    const { container } = render(<RecentVotesPage />)
+    await screen.findByText('Tied motion')
+    expectNeutralRow(container)
   })
 
   it('/u/[displayName] goes back to New Investigation, with no freshness badge', async () => {
