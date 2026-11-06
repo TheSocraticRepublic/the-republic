@@ -108,8 +108,13 @@ src/
   border border-border rounded-xl` (or `bg-surface-0/60 backdrop-blur-md` for
   overlays) — not raw `bg-black`/`border-white` opacity stacks
 - Shared primitives: `src/components/ui/` (EmptyState, StatusPill, CTAButton,
-  CrossArmActions, MarkdownProse) and `src/components/layout/arm-header.tsx`
-  (per-arm page header) — reach for these before hand-rolling
+  CrossArmActions, MarkdownProse), `src/components/layout/arm-header.tsx`
+  (per-arm landing header) and `src/components/layout/detail-header.tsx`
+  (detail pages: back link, one wrapping h1, accent bar, meta line) — reach
+  for these before hand-rolling. Votes outcomes and totals go through
+  `src/components/votes/result-label.tsx` and `tally.tsx`, which render
+  Parliament's own words and official totals, never counts derived from
+  stored ballot rows
 - PDF exports: light mode (`#fafaf9` bg), print-optimized, Instrument Sans +
   Inter + Source Serif 4 (registered independently in `src/lib/pdf/fonts.ts`
   — `@react-pdf/renderer` can't consume the app's `next/font` variables)
